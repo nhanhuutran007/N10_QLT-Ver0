@@ -69,5 +69,10 @@ namespace QLKDPhongTro.Views
         {
 
         }
+
+        private void lblDangNhapLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+
+        }
     }
 }

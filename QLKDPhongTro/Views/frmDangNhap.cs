@@ -71,5 +71,33 @@ namespace QLKDPhongTro.Views
             }
         }
 
+        private void chkHienThiMatKhau_CheckedChanged(object sender, EventArgs e)
+        {
+            // Toggle hiển thị mật khẩu
+            if (chkHienThiMatKhau.Checked)
+            {
+                txtMatKhau.PasswordChar = '\0'; // Hiển thị mật khẩu
+            }
+            else
+            {
+                txtMatKhau.PasswordChar = '•'; // Ẩn mật khẩu
+            }
+        }
+
+        private void lblQuenMatKhau_Click(object sender, EventArgs e)
+        {
+            // Xử lý quên mật khẩu
+            MessageBox.Show("Tính năng quên mật khẩu đang được phát triển!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void lblWelcome_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblQuenMatKhau_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+
+        }
     }
 }
