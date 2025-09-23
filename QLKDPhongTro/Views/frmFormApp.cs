@@ -23,5 +23,15 @@ namespace QLKDPhongTro.Views
                 // Ví dụ: hiển thị tên user ở góc trên bên phải
             }
         }
+
+        private void lblTitle_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void guna2TextBox1_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

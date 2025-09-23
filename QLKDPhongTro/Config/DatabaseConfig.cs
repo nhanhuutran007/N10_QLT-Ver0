@@ -14,6 +14,8 @@ namespace QLKDPhongTro.Config
             {
                 return ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString
                     ?? "Data Source=.;Initial Catalog=QuanLyPhongTro;Integrated Security=True";
+                //private readonly string _connectionString = "Data Source=MOSINNAGANT;Initial Catalog=QLKDPhongTro;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+
             }
         }
     }
