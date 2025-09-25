@@ -35,7 +35,7 @@ namespace QLKDPhongTro.Views
 
                 // Thực hiện đăng nhập
                 bool loginSuccess = await authController.LoginAsync(txtTenDangNhap.Text, txtMatKhau.Text);
-                
+
                 if (loginSuccess)
                 {
                     // Đăng nhập thành công, form sẽ được đóng trong AuthController

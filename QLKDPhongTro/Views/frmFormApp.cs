@@ -33,5 +33,35 @@ namespace QLKDPhongTro.Views
         {
 
         }
+
+        private void btnHopDong_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panelSidebar_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void btnKhachThue_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnDienNuoc_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnHoaDon_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnThongKe_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

@@ -1,3 +1,4 @@
+
 namespace QLKDPhongTro.Views
 {
     partial class frmDangNhap

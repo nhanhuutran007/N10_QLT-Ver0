@@ -101,6 +101,7 @@
     <Compile Include="Config\DatabaseConfig.cs" />
     <!-- Utils -->
     <Compile Include="Utils\PasswordHelper.cs" />
+    <Compile Include="Utils\EffectBlur.cs" />
     <!-- Main -->
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
