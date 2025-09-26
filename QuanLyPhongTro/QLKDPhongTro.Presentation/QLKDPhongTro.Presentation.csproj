@@ -9,16 +9,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Views\Windows\Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\QLKDPhongTro.BusinessLayer\QLKDPhongTro.BusinessLayer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\Images\" />
     <Folder Include="Resources\Styles\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Views\Windows\Logo.png" />
   </ItemGroup>
 
 </Project>
