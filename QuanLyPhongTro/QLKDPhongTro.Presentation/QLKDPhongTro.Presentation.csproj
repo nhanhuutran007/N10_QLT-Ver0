@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Views\Windows\Logo.png" />
+    <None Remove="Resources\Images\Logo.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,10 +22,11 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Views\Windows\Logo.png" />
+    <Resource Include="Resources\Images\Logo.png" />
   </ItemGroup>
 
 </Project>

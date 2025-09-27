@@ -246,7 +246,7 @@
                             Width="200"
                             HorizontalAlignment="Center">
                     <!-- Logo -->
-                    <Image Source="/Views/Windows/Logo.png"
+                    <Image Source="/Resources/Images/Logo.png"
                            Width="140"/>
                     <!-- Tiêu đề -->
                     <TextBlock Text="Quản lý phòng trọ"
@@ -394,7 +394,7 @@
                                        FontSize="24"
                                        Margin="0,0,10,0"/>
                             <TextBlock Text="Tổng quan hệ thống"
-                                       FontSize="24"
+                                       FontSize="22"
                                        FontWeight="Bold"
                                        Foreground="#333"/>
                         </StackPanel>

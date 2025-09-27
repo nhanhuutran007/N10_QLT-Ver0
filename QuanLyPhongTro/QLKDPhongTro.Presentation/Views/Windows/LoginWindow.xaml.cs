@@ -107,34 +107,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        // Xử lý đăng nhập
-        private void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Lấy tên đăng nhập
-            var usernameTextBox = this.FindName("UsernameTextBox") as TextBox;
-            string username = usernameTextBox?.Text ?? "";
-            
-            string password = "";
-            
-            // Lấy mật khẩu từ PasswordBox hoặc TextBox
-            var passwordBox = this.FindName("PasswordBox") as PasswordBox;
-            var passwordTextBox = this.FindName("PasswordTextBox") as TextBox;
-            
-            if (passwordBox != null)
-                password = passwordBox.Password;
-            else if (passwordTextBox != null)
-                password = passwordTextBox.Text;
-
-            // Kiểm tra thông tin đăng nhập
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            {
-                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Hiển thị thông báo đăng nhập
-            MessageBox.Show($"Tên đăng nhập: {username}\nMật khẩu: {password}\n\nĐang thực hiện đăng nhập...", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        // Xử lý đăng nhập - đã được chuyển sang ViewModel
 
         // Xử lý quên mật khẩu
         private void ForgotPassword_Click(object sender, RoutedEventArgs e)
@@ -142,15 +115,19 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             MessageBox.Show("Tính năng quên mật khẩu sẽ được triển khai trong phiên bản tiếp theo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Xử lý đăng ký
-        private void Register_Click(object sender, RoutedEventArgs e)
+        // Xử lý đăng ký - đã được chuyển sang ViewModel
+
+        // Xử lý thay đổi password
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            // Tạo và hiển thị cửa sổ đăng ký
-            var registerWindow = new RegisterWindow();
-            registerWindow.Show();
-            
-            // Đóng cửa sổ đăng nhập hiện tại
-            this.Close();
+            if (sender is PasswordBox passwordBox)
+            {
+                // Cập nhật ViewModel với password mới
+                if (DataContext is LoginViewModel viewModel)
+                {
+                    viewModel.Password = passwordBox.Password;
+                }
+            }
         }
     }
 }

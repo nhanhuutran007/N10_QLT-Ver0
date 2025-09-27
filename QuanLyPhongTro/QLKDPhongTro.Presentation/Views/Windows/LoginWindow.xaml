@@ -1,7 +1,9 @@
 ﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:av="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="av" x:Class="QLKDPhongTro.Presentation.Views.Windows.LoginWindow"
+        xmlns:av="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="av" 
+        xmlns:local="clr-namespace:QLKDPhongTro.Presentation.Converters"
+        x:Class="QLKDPhongTro.Presentation.Views.Windows.LoginWindow"
         Title="Login" Height="650" Width="1000"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
@@ -9,6 +11,11 @@
     <!-- Thêm sự kiện này để di chuyển cửa sổ -->
 
     <Window.Resources>
+        <!-- Converters -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <local:BoolToLoadingTextConverter x:Key="BoolToLoadingTextConverter"/>
+        
         <Style TargetType="{x:Type Button}" x:Key="WindowControlButton">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="Gray"/>
@@ -181,6 +188,7 @@
                     <!-- Trường Tên Đăng Nhập -->
                     <TextBlock Text="Tên Đăng Nhập:" FontSize="14" Foreground="#333" Margin="0,0,0,5"/>
                     <TextBox x:Name="UsernameTextBox" 
+                             Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"
                              Background="White" 
                              BorderBrush="#CCCCCC" 
                              BorderThickness="1" 
@@ -191,6 +199,7 @@
                     <!-- Trường Mật Khẩu -->
                     <TextBlock Text="Mật Khẩu:" FontSize="14" Foreground="#333" Margin="0,0,0,5"/>
                     <PasswordBox x:Name="PasswordBox" 
+                                 PasswordChanged="PasswordBox_PasswordChanged"
                                  Background="White" 
                                  BorderBrush="#CCCCCC" 
                                  BorderThickness="1" 
@@ -226,14 +235,21 @@
                     </Grid>
 
                     <!-- Nút Đăng Nhập -->
-                    <Button Content="Đăng Nhập" 
+                    <Button Content="{Binding IsLoading, Converter={StaticResource BoolToLoadingTextConverter}}" 
                             Style="{StaticResource PrimaryButtonStyle}"
-                            Click="LoginButton_Click"/>
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBooleanConverter}}"/>
 
                     <!-- Link Đăng ký -->
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
                         <TextBlock Text="Bạn chưa có tài khoản? " FontSize="14" Foreground="Gray"/>
-                        <TextBlock><Hyperlink Foreground="#FF4444" FontSize="14" Click="Register_Click" TextDecorations="Underline"><Run Text="Đăng Ký tại đây"/></Hyperlink></TextBlock>
+                        <Button Content="Đăng Ký tại đây"
+                                Background="Transparent"
+                                Foreground="#FF4444"
+                                FontSize="14"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Command="{Binding NavigateToRegisterCommand}"/>
                     </StackPanel>
                 </StackPanel>
             </Grid>
