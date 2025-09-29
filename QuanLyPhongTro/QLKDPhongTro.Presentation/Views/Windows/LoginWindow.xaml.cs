@@ -1,6 +1,9 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Linq;
 using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -11,103 +14,243 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
             this.DataContext = new LoginViewModel();
+
+            // Đặt cửa sổ ở giữa màn hình
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+            // Thêm responsive behavior
+            this.SizeChanged += LoginWindow_SizeChanged;
+
+            // Focus vào email field khi load
+            this.Loaded += (s, e) => EmailTextBox?.Focus();
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            // Không drag khi click vào các nút window hoặc các control khác
+            if (e.OriginalSource is Button || e.OriginalSource is TextBox || e.OriginalSource is PasswordBox)
+                return;
+                
             if (e.ButtonState == MouseButtonState.Pressed)
             {
                 DragMove();
             }
         }
 
-        // THÊM 3 PHƯƠNG THỨC NÀY VÀO
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Không drag khi click vào các nút window hoặc các control khác
+            if (e.OriginalSource is Button || e.OriginalSource is TextBox || e.OriginalSource is PasswordBox)
+                return;
+                
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
+        // Custom Window Button Event Handlers
+        private void Close_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
         }
 
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
         {
             if (this.WindowState == WindowState.Maximized)
             {
                 this.WindowState = WindowState.Normal;
+                UpdateMaximizeButtonIcon(false);
             }
             else
             {
                 this.WindowState = WindowState.Maximized;
+                UpdateMaximizeButtonIcon(true);
             }
         }
 
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        private void UpdateMaximizeButtonIcon(bool isMaximized)
+        {
+            if (MaximizeButton != null)
+            {
+                var path = MaximizeButton.Content as Path;
+                if (path != null)
+                {
+                    if (isMaximized)
+                    {
+                        // Restore icon (two overlapping squares)
+                        path.Data = Geometry.Parse("M4,4 L16,4 L16,16 L4,16 Z M6,6 L14,6 L14,14 L6,14 Z");
+                    }
+                    else
+                    {
+                        // Maximize icon (single square)
+                        path.Data = Geometry.Parse("M6,6 L18,6 L18,18 L6,18 Z");
+                    }
+                }
+            }
+        }
+
+        private void Minimize_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
         }
 
-        // Xử lý hiện/ẩn mật khẩu
-        private void ShowPasswordCheckBox_Checked(object sender, RoutedEventArgs e)
+        // Xử lý responsive design
+        private void LoginWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            // Tìm PasswordBox hiện tại
-            var passwordBox = this.FindName("PasswordBox") as PasswordBox;
-            if (passwordBox != null)
+            // Ẩn phần bên trái khi cửa sổ quá nhỏ
+            if (e.NewSize.Width < 800)
             {
-                // Tạo TextBox để hiển thị mật khẩu
-                var textBox = new TextBox
+                if (LeftBorder != null)
+                    LeftBorder.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                if (LeftBorder != null)
+                    LeftBorder.Visibility = Visibility.Visible;
+            }
+        }
+
+        // Xử lý toggle password visibility
+        private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (PasswordBox == null) return;
+
+                var parent = PasswordBox.Parent as Panel;
+                if (parent == null) return;
+
+                var index = parent.Children.IndexOf(PasswordBox);
+                if (index == -1) return;
+
+                // Kiểm tra xem hiện tại có phải PasswordBox hay TextBox
+                var currentTextBox = parent.Children.OfType<TextBox>().FirstOrDefault(tb => tb.Name == "PasswordTextBox");
+
+                if (currentTextBox == null)
                 {
-                    Text = passwordBox.Password,
-                    Background = passwordBox.Background,
-                    BorderBrush = passwordBox.BorderBrush,
-                    BorderThickness = passwordBox.BorderThickness,
-                    Padding = passwordBox.Padding,
-                    FontSize = passwordBox.FontSize,
-                    Margin = passwordBox.Margin
-                };
-                
-                // Thay thế PasswordBox bằng TextBox
-                var parent = passwordBox.Parent as Panel;
-                if (parent != null)
-                {
-                    var index = parent.Children.IndexOf(passwordBox);
-                    parent.Children.Remove(passwordBox);
+                    // Hiện tại là PasswordBox, chuyển sang TextBox
+                    var textBox = new TextBox
+                    {
+                        Text = PasswordBox.Password,
+                        Background = PasswordBox.Background,
+                        BorderThickness = PasswordBox.BorderThickness,
+                        Padding = PasswordBox.Padding,
+                        FontSize = PasswordBox.FontSize,
+                        Margin = PasswordBox.Margin,
+                        Name = "PasswordTextBox",
+                        VerticalContentAlignment = PasswordBox.VerticalContentAlignment
+                    };
+
+                    parent.Children.Remove(PasswordBox);
                     parent.Children.Insert(index, textBox);
-                    textBox.Name = "PasswordTextBox";
-                    textBox.Tag = passwordBox.Tag;
+
+                    // Update button icon
+                    UpdateToggleButtonIcon(true);
+                }
+                else
+                {
+                    // Hiện tại là TextBox, chuyển về PasswordBox
+                    PasswordBox.Password = currentTextBox.Text;
+                    parent.Children.Remove(currentTextBox);
+                    parent.Children.Insert(index, PasswordBox);
+
+                    // Update button icon
+                    UpdateToggleButtonIcon(false);
                 }
             }
-        }
-
-        private void ShowPasswordCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            // Tìm TextBox hiện tại
-            var textBox = this.FindName("PasswordTextBox") as TextBox;
-            if (textBox != null)
+            catch (Exception ex)
             {
-                // Tạo lại PasswordBox
-                var passwordBox = new PasswordBox
+                MessageBox.Show($"Lỗi khi thay đổi hiển thị mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void UpdateToggleButtonIcon(bool isPasswordVisible)
+        {
+            if (TogglePasswordButton != null)
+            {
+                var path = TogglePasswordButton.Content as Path;
+                if (path != null)
                 {
-                    Password = textBox.Text,
-                    Background = textBox.Background,
-                    BorderBrush = textBox.BorderBrush,
-                    BorderThickness = textBox.BorderThickness,
-                    Padding = textBox.Padding,
-                    FontSize = textBox.FontSize,
-                    Margin = textBox.Margin
-                };
-                
-                // Thay thế TextBox bằng PasswordBox
-                var parent = textBox.Parent as Panel;
-                if (parent != null)
-                {
-                    var index = parent.Children.IndexOf(textBox);
-                    parent.Children.Remove(textBox);
-                    parent.Children.Insert(index, passwordBox);
-                    passwordBox.Name = "PasswordBox";
-                    passwordBox.Tag = textBox.Tag;
+                    if (isPasswordVisible)
+                    {
+                        // Eye with slash icon
+                        path.Data = Geometry.Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z");
+                    }
+                    else
+                    {
+                        // Regular eye icon
+                        path.Data = Geometry.Parse("M12 5C7 5 2.73 7.11 1 10.5C2.73 13.89 7 16 12 16C17 16 21.27 13.89 23 10.5C21.27 7.11 17 5 12 5ZM12 13.5C10.62 13.5 9.5 12.38 9.5 11C9.5 9.62 10.62 8.5 12 8.5C13.38 8.5 14.5 9.62 14.5 11C14.5 12.38 13.38 13.5 12 13.5ZM12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7Z");
+                    }
                 }
             }
         }
 
-        // Xử lý đăng nhập - đã được chuyển sang ViewModel
+        // Xử lý đăng nhập
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!(DataContext is LoginViewModel viewModel))
+                {
+                    MessageBox.Show("Lỗi khởi tạo ViewModel!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(EmailTextBox?.Text))
+                {
+                    MessageBox.Show("Vui lòng nhập tên đăng nhập!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    EmailTextBox?.Focus();
+                    return;
+                }
+
+                // Lấy password từ PasswordBox hoặc TextBox
+                string password = GetCurrentPassword();
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    MessageBox.Show("Vui lòng nhập mật khẩu!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    PasswordBox?.Focus();
+                    return;
+                }
+
+                // Perform login
+                viewModel.Username = EmailTextBox.Text.Trim();
+                viewModel.Password = password;
+
+                // Call login command from ViewModel
+                if (viewModel.LoginCommand?.CanExecute(null) == true)
+                {
+                    viewModel.LoginCommand.Execute(null);
+                }
+                else
+                {
+                    MessageBox.Show("Không thể thực hiện đăng nhập!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi đăng nhập: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Lấy password hiện tại từ PasswordBox hoặc TextBox
+        private string GetCurrentPassword()
+        {
+            if (PasswordBox != null && PasswordBox.Visibility == Visibility.Visible)
+            {
+                return PasswordBox.Password;
+            }
+
+            var passwordTextBox = this.FindName("PasswordTextBox") as TextBox;
+            return passwordTextBox?.Text ?? string.Empty;
+        }
+
+        // Xử lý tạo tài khoản mới
+        private void CreateAccount_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Tính năng tạo tài khoản sẽ được triển khai trong phiên bản tiếp theo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         // Xử lý quên mật khẩu
         private void ForgotPassword_Click(object sender, RoutedEventArgs e)
@@ -115,7 +258,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             MessageBox.Show("Tính năng quên mật khẩu sẽ được triển khai trong phiên bản tiếp theo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        // Xử lý đăng ký - đã được chuyển sang ViewModel
 
         // Xử lý thay đổi password
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
