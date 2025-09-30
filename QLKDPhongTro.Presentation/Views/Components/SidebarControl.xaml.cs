@@ -25,8 +25,8 @@ namespace QLKDPhongTro.Presentation.Views.Components
         public string SelectedMenuItem
         {
             get { return _selectedMenuItem; }
-            set 
-            { 
+            set
+            {
                 _selectedMenuItem = value;
                 UpdateMenuSelection();
             }
