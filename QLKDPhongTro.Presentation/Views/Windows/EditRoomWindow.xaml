@@ -4,8 +4,8 @@
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="av"
-    x:Class="QLKDPhongTro.Presentation.Views.Windows.AddRoomWindow"
-    Title="Thêm phòng mới"
+    x:Class="QLKDPhongTro.Presentation.Views.Windows.EditRoomWindow"
+    Title="Chỉnh sửa phòng"
     Height="520"
     Width="620"
     WindowStartupLocation="CenterOwner"
@@ -132,8 +132,8 @@
                         </Grid.ColumnDefinitions>
                         
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🏠" FontSize="20" Margin="0,0,10,0"/>
-                            <TextBlock Text="Thêm phòng mới" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                            <TextBlock Text="✏️" FontSize="20" Margin="0,0,10,0"/>
+                            <TextBlock Text="Chỉnh sửa phòng" FontSize="18" FontWeight="Bold" Foreground="White"/>
                         </StackPanel>
                         
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
@@ -149,7 +149,7 @@
                             <TextBlock Text="Tên phòng *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
                             <TextBox x:Name="RoomNameTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="Phòng 7"/>
+                                     Text="Phòng 1"/>
                         </StackPanel>
 
                         <!-- Số giường -->
@@ -157,7 +157,7 @@
                             <TextBlock Text="Số giường *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
                             <TextBox x:Name="BedCountTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="4"/>
+                                     Text="7"/>
                         </StackPanel>
 
                         <!-- Giá thuê -->
@@ -165,7 +165,7 @@
                             <TextBlock Text="Giá thuê (VNĐ) *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
                             <TextBox x:Name="RentPriceTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="2,500,000"/>
+                                     Text="3,000,000"/>
                         </StackPanel>
 
                         <!-- Trạng thái -->
@@ -173,8 +173,8 @@
                             <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
                             <ComboBox x:Name="StatusComboBox" Height="40" FontSize="14" Padding="12,8">
-                                <ComboBoxItem Content="Trống" IsSelected="True"/>
-                                <ComboBoxItem Content="Đang cho thuê"/>
+                                <ComboBoxItem Content="Trống"/>
+                                <ComboBoxItem Content="Đang cho thuê" IsSelected="True"/>
                                 <ComboBoxItem Content="Đặt trước"/>
                                 <ComboBoxItem Content="Đã hủy"/>
                             </ComboBox>
@@ -186,7 +186,7 @@
                                        Foreground="#333" Margin="0,0,0,8"/>
                             <TextBox x:Name="DescriptionTextBox" Style="{StaticResource InputTextBoxStyle}" 
                                      Height="80" TextWrapping="Wrap" AcceptsReturn="True"
-                                     Text="Phòng đẹp, thoáng mát, gần trung tâm thành phố"/>
+                                     Text="Phòng đẹp, thoáng mát, gần trung tâm thành phố. Có đầy đủ tiện nghi cơ bản."/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -196,8 +196,8 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
                                 Width="100" Margin="0,0,15,0" Click="CancelButton_Click"/>
-                        <Button Content="Thêm phòng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="120" Click="AddRoomButton_Click"/>
+                        <Button Content="Cập nhật" Style="{StaticResource PrimaryButtonStyle}" 
+                                Width="120" Click="UpdateRoomButton_Click"/>
                     </StackPanel>
                 </Border>
             </Grid>

@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.DashWindow"
     Title="Dashboard"
@@ -230,139 +231,13 @@
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR BÊN TRÁI -->
-        <Border Grid.Column="0"
-                CornerRadius="10,0,0,10">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0"
-                                     EndPoint="1,1">
-                    <GradientStop Color="#3A4E8E"
-                                  Offset="0"/>
-                    <GradientStop Color="#5B75D4"
-                                  Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-
-            <Grid>
-                <!-- Logo và tiêu đề -->
-                <StackPanel VerticalAlignment="Top"
-                            Margin="20,20,20,20"
-                            Width="200"
-                            HorizontalAlignment="Center">
-                    <!-- Logo -->
-                    <Image Source="/Resources/Images/Logo.png"
-                           Width="120"/>
-                    <!-- Tiêu đề -->
-                    <TextBlock Text="Quản lý phòng trọ"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               TextWrapping="Wrap"
-                               MaxWidth="200"
-                               HorizontalAlignment="Center"
-                               Margin="0,5,0,0"/>
-                    <TextBlock Text="Dashboard"
-                               FontSize="14"
-                               Foreground="#E0E0E0"
-                               Margin="0,2,0,0"
-                               HorizontalAlignment="Center"/>
-                </StackPanel>
-
-                <!-- Menu điều hướng -->
-                <StackPanel VerticalAlignment="Center"
-                            Margin="20,0"
-                            Width="220"
-                            HorizontalAlignment="Center">
-                    <Border CornerRadius="20"
-                            Margin="0,0,0,10"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="📊 Tổng quan"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="120"
-                                HorizontalContentAlignment="Center"
-                                Click="OverviewButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,15,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10"
-                            Margin="0,0,0,10"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="🏠 Quản lý phòng"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="150"
-                                HorizontalContentAlignment="Center"
-                                Click="RoomsButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10"
-                            Margin="0,0,0,10"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="👥 Khách thuê"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="130"
-                                HorizontalContentAlignment="Center"
-                                Click="TenantsButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10"
-                            Margin="0,0,0,10"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="💰 Hóa đơn"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="130"
-                                HorizontalContentAlignment="Center"
-                                Click="BillsButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10"
-                            Margin="0,0,0,10"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="📋 Hợp đồng"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="130"
-                                HorizontalContentAlignment="Center"
-                                Click="ContractsButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10"
-                            Margin="0,0,0,0"
-                            Background="Transparent"
-                            HorizontalAlignment="Center">
-                        <Button Content="⚙️ Cài đặt"
-                                Style="{StaticResource MenuButtonStyle}"
-                                Height="48"
-                                Width="130"
-                                HorizontalContentAlignment="Center"
-                                Click="SettingsButton_Click" VerticalAlignment="Top" Margin="20,0,12,0" HorizontalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
-
-                <!-- Thông tin người dùng -->
-                <StackPanel VerticalAlignment="Bottom"
-                            Margin="20,0,20,20">
-                    <Border Background="#4A63C1"
-                            CornerRadius="8"
-                            Padding="15" HorizontalAlignment="Center">
-                        <StackPanel>
-                            <TextBlock Text="Admin User"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="admin@example.com"
-                                       FontSize="12"
-                                       Foreground="#E0E0E0"
-                                       Margin="0,2,0,0" HorizontalAlignment="Center"/>
-                            <Button Content="Đăng xuất" Background="#FF4444" Foreground="White" 
-                                    FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" 
-                                    Margin="0,10,0,0" Width="170" Height="30" Click="LogoutButton_Click"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
+        <components:SidebarControl Grid.Column="0" 
+                                  x:Name="SidebarControl"
+                                  PageTitle="Dashboard"
+                                  SelectedMenuItem="Overview"
+                                  VerticalAlignment="Stretch"
+                                  MenuItemClicked="SidebarControl_MenuItemClicked"
+                                  LogoutClicked="SidebarControl_LogoutClicked"/>
 
         <!-- NỘI DUNG CHÍNH -->
         <Border Grid.Column="1"

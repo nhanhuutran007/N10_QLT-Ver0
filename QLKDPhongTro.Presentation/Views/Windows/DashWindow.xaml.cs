@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
@@ -59,54 +60,49 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.WindowState = WindowState.Minimized;
         }
 
-        // Các phương thức điều hướng menu
-        private void OverviewButton_Click(object sender, RoutedEventArgs e)
+        // Event handlers cho SidebarControl
+        private void SidebarControl_MenuItemClicked(object sender, string menuItem)
         {
-            MessageBox.Show("Đã chuyển đến trang Tổng quan", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            switch (menuItem)
+            {
+                case "Overview":
+                    MessageBox.Show("Đã chuyển đến trang Tổng quan", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+                case "Rooms":
+                    // Chuyển đến trang quản lý phòng
+                    var roomManagementWindow = new RoomManagementWindow();
+                    
+                    // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
+                    roomManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    
+                    // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
+                    var screenWidth = SystemParameters.PrimaryScreenWidth;
+                    var screenHeight = SystemParameters.PrimaryScreenHeight;
+                    var windowWidth = roomManagementWindow.Width;
+                    var windowHeight = roomManagementWindow.Height;
+                    
+                    roomManagementWindow.Left = (screenWidth - windowWidth) / 2;
+                    roomManagementWindow.Top = (screenHeight - windowHeight) / 2;
+                    
+                    roomManagementWindow.Show();
+                    this.Close();
+                    break;
+                case "Tenants":
+                    MessageBox.Show("Đã chuyển đến trang Khách thuê", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+                case "Invoices":
+                    MessageBox.Show("Đã chuyển đến trang Hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+                case "Contracts":
+                    MessageBox.Show("Đã chuyển đến trang Hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+                case "Settings":
+                    MessageBox.Show("Đã chuyển đến trang Cài đặt", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
+            }
         }
 
-        private void RoomsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Chuyển đến trang quản lý phòng
-            var roomManagementWindow = new RoomManagementWindow();
-            
-            // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
-            roomManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            
-            // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
-            var screenWidth = SystemParameters.PrimaryScreenWidth;
-            var screenHeight = SystemParameters.PrimaryScreenHeight;
-            var windowWidth = roomManagementWindow.Width;
-            var windowHeight = roomManagementWindow.Height;
-            
-            roomManagementWindow.Left = (screenWidth - windowWidth) / 2;
-            roomManagementWindow.Top = (screenHeight - windowHeight) / 2;
-            
-            roomManagementWindow.Show();
-            this.Close();
-        }
-
-        private void TenantsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Đã chuyển đến trang Khách thuê", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void BillsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Đã chuyển đến trang Hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void ContractsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Đã chuyển đến trang Hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show("Đã chuyển đến trang Cài đặt", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        private void SidebarControl_LogoutClicked(object sender, EventArgs e)
         {
             var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", 
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
