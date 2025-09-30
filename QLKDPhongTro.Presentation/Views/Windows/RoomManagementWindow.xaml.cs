@@ -17,8 +17,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             
             // Thiết lập kích thước tối thiểu
-            this.MinHeight = 700;
-            this.MinWidth = 1200;
+            this.MinHeight = 600;
+            this.MinWidth = 800;
             
             // Đảm bảo cửa sổ hiển thị ở giữa màn hình sau khi load
             this.Loaded += (s, e) => {
@@ -133,9 +133,40 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void AddRoom_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Mở form thêm phòng mới
-            MessageBox.Show("Chức năng thêm phòng sẽ được phát triển sau", "Thông báo", 
-                          MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                // Tạo hiệu ứng mờ cho cửa sổ chính
+                this.Opacity = 0.7;
+                this.Effect = new System.Windows.Media.Effects.BlurEffect { Radius = 5 };
+                
+                // Tạo và hiển thị popup thêm phòng
+                var addRoomWindow = new AddRoomWindow();
+                addRoomWindow.Owner = this; // Đặt cửa sổ hiện tại là owner
+                
+                // Hiển thị popup và chờ kết quả
+                bool? result = addRoomWindow.ShowDialog();
+                
+                // Khôi phục trạng thái bình thường của cửa sổ chính
+                this.Opacity = 1.0;
+                this.Effect = null;
+                
+                // Nếu người dùng thêm phòng thành công, có thể refresh danh sách
+                if (result == true)
+                {
+                    // TODO: Refresh danh sách phòng
+                    MessageBox.Show("Danh sách phòng đã được cập nhật!", "Thông báo", 
+                                  MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Đảm bảo khôi phục trạng thái bình thường ngay cả khi có lỗi
+                this.Opacity = 1.0;
+                this.Effect = null;
+                
+                MessageBox.Show($"Lỗi khi mở form thêm phòng: {ex.Message}", "Lỗi", 
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void EditRoom_Click(object sender, RoutedEventArgs e)

@@ -16,8 +16,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             
             // Thiết lập kích thước tối thiểu
-            this.MinHeight = 700;
-            this.MinWidth = 1200;
+            this.MinHeight = 600;
+            this.MinWidth = 800;
             
             // Đảm bảo cửa sổ hiển thị ở giữa màn hình sau khi load
             this.Loaded += (s, e) => {

@@ -6,10 +6,10 @@
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.DashWindow"
     Title="Dashboard"
-    Height="900"
-    Width="1600"
-    MinHeight="700"
-    MinWidth="1200"
+    Height="700"
+    Width="1200"
+    MinHeight="600"
+    MinWidth="800"
     WindowStartupLocation="CenterScreen"
     ResizeMode="CanResize"
     WindowStyle="None"
@@ -223,9 +223,9 @@
     <!-- Bố cục chính của cửa sổ -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240"/>
+            <ColumnDefinition Width="240" MinWidth="200"/>
             <!-- Sidebar -->
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" MinWidth="600"/>
             <!-- Main content -->
         </Grid.ColumnDefinitions>
 
@@ -245,28 +245,26 @@
             <Grid>
                 <!-- Logo và tiêu đề -->
                 <StackPanel VerticalAlignment="Top"
-                            Margin="20,30,20,80"
+                            Margin="20,20,20,20"
                             Width="200"
                             HorizontalAlignment="Center">
                     <!-- Logo -->
                     <Image Source="/Resources/Images/Logo.png"
-                           Width="140"/>
+                           Width="120"/>
                     <!-- Tiêu đề -->
                     <TextBlock Text="Quản lý phòng trọ"
-                               FontSize="22"
+                               FontSize="18"
                                FontWeight="Bold"
                                Foreground="White"
                                TextWrapping="Wrap"
-                               MaxWidth="220"
+                               MaxWidth="200"
                                HorizontalAlignment="Center"
-                               Margin="0,8,0,0"/>
+                               Margin="0,5,0,0"/>
                     <TextBlock Text="Dashboard"
-                               FontSize="16"
+                               FontSize="14"
                                Foreground="#E0E0E0"
-                               Margin="0,4,0,0"
+                               Margin="0,2,0,0"
                                HorizontalAlignment="Center"/>
-                    <Border Height="40"
-                            Background="Transparent"/>
                 </StackPanel>
 
                 <!-- Menu điều hướng -->
@@ -344,7 +342,7 @@
 
                 <!-- Thông tin người dùng -->
                 <StackPanel VerticalAlignment="Bottom"
-                            Margin="20,0,20,30">
+                            Margin="20,0,20,20">
                     <Border Background="#4A63C1"
                             CornerRadius="8"
                             Padding="15" HorizontalAlignment="Center">
