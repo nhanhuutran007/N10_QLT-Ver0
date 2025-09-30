@@ -11,6 +11,21 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
             this.DataContext = new DashboardViewModel();
+            
+            // Đảm bảo cửa sổ hiển thị ở giữa màn hình
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            
+            // Thiết lập kích thước tối thiểu
+            this.MinHeight = 700;
+            this.MinWidth = 1200;
+            
+            // Đảm bảo cửa sổ hiển thị ở giữa màn hình sau khi load
+            this.Loaded += (s, e) => {
+                var screenWidth = SystemParameters.PrimaryScreenWidth;
+                var screenHeight = SystemParameters.PrimaryScreenHeight;
+                this.Left = (screenWidth - this.Width) / 2;
+                this.Top = (screenHeight - this.Height) / 2;
+            };
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -52,7 +67,23 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void RoomsButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Đã chuyển đến trang Quản lý phòng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Chuyển đến trang quản lý phòng
+            var roomManagementWindow = new RoomManagementWindow();
+            
+            // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
+            roomManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            
+            // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
+            var screenWidth = SystemParameters.PrimaryScreenWidth;
+            var screenHeight = SystemParameters.PrimaryScreenHeight;
+            var windowWidth = roomManagementWindow.Width;
+            var windowHeight = roomManagementWindow.Height;
+            
+            roomManagementWindow.Left = (screenWidth - windowWidth) / 2;
+            roomManagementWindow.Top = (screenHeight - windowHeight) / 2;
+            
+            roomManagementWindow.Show();
+            this.Close();
         }
 
         private void TenantsButton_Click(object sender, RoutedEventArgs e)

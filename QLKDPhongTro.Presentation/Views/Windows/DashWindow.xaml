@@ -6,9 +6,12 @@
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.DashWindow"
     Title="Dashboard"
-    Height="800"
-    Width="1200"
+    Height="900"
+    Width="1600"
+    MinHeight="700"
+    MinWidth="1200"
     WindowStartupLocation="CenterScreen"
+    ResizeMode="CanResize"
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
@@ -354,10 +357,9 @@
                                        FontSize="12"
                                        Foreground="#E0E0E0"
                                        Margin="0,2,0,0" HorizontalAlignment="Center"/>
-                            <Button Content="Đăng xuất"
-                                    Style="{StaticResource LogoutButtonStyle}"
-                                    Click="LogoutButton_Click"
-                                    IsEnabled="False" Margin="1,10,0,0" Width="170"/>
+                            <Button Content="Đăng xuất" Background="#FF4444" Foreground="White" 
+                                    FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" 
+                                    Margin="0,10,0,0" Width="170" Height="30" Click="LogoutButton_Click"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
