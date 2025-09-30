@@ -2,7 +2,7 @@ using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace QLKDPhongTro.Presentation.Utils
+namespace QLKDPhongTro.DataLayer.Utils
 {
     /// <summary>
     /// Helper class để xử lý mật khẩu

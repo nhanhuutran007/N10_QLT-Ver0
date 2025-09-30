@@ -1,20 +1,21 @@
 using System;
 using System.Threading.Tasks;
-using QLKDPhongTro.Presentation.Models;
-using QLKDPhongTro.Presentation.Utils;
+using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Repositories;
 
-namespace QLKDPhongTro.Presentation.Services
+namespace QLKDPhongTro.BusinessLayer.Controllers
 {
     /// <summary>
-    /// Service xử lý logic nghiệp vụ cho Authentication
+    /// Controller xử lý logic nghiệp vụ cho Authentication
     /// </summary>
-    public class AuthService
+    public class AuthController
     {
-        private readonly UserService _userService;
+        private readonly IUserRepository _userRepository;
 
-        public AuthService()
+        public AuthController(IUserRepository userRepository)
         {
-            _userService = new UserService();
+            _userRepository = userRepository;
         }
 
         /// <summary>
@@ -38,7 +39,7 @@ namespace QLKDPhongTro.Presentation.Services
                     };
                 }
 
-                var user = await _userService.LoginAsync(tenDangNhap, matKhau);
+                var user = await _userRepository.LoginAsync(tenDangNhap, matKhau);
                 if (user != null)
                 {
                     CurrentUser = user;
@@ -87,7 +88,7 @@ namespace QLKDPhongTro.Presentation.Services
                 }
 
                 // Kiểm tra tên đăng nhập đã tồn tại
-                if (await _userService.IsUsernameExistsAsync(tenDangNhap))
+                if (await _userRepository.IsUsernameExistsAsync(tenDangNhap))
                 {
                     return new RegisterResult
                     {
@@ -97,7 +98,7 @@ namespace QLKDPhongTro.Presentation.Services
                 }
 
                 // Kiểm tra email đã tồn tại
-                if (await _userService.IsEmailExistsAsync(email))
+                if (await _userRepository.IsEmailExistsAsync(email))
                 {
                     return new RegisterResult
                     {
@@ -111,10 +112,10 @@ namespace QLKDPhongTro.Presentation.Services
                 {
                     TenDangNhap = tenDangNhap,
                     Email = email,
-                    MatKhau = matKhau // Sẽ được hash trong UserService
+                    MatKhau = matKhau // Sẽ được hash trong UserRepository
                 };
 
-                if (await _userService.RegisterAsync(user))
+                if (await _userRepository.RegisterAsync(user))
                 {
                     return new RegisterResult
                     {
@@ -195,33 +196,5 @@ namespace QLKDPhongTro.Presentation.Services
 
             return hasUpper || hasDigit;
         }
-    }
-
-    /// <summary>
-    /// Kết quả đăng nhập
-    /// </summary>
-    public class LoginResult
-    {
-        public bool IsSuccess { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public User? User { get; set; }
-    }
-
-    /// <summary>
-    /// Kết quả đăng ký
-    /// </summary>
-    public class RegisterResult
-    {
-        public bool IsSuccess { get; set; }
-        public string Message { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Kết quả validation
-    /// </summary>
-    public class ValidationResult
-    {
-        public bool IsValid { get; set; }
-        public string Message { get; set; } = string.Empty;
     }
 }

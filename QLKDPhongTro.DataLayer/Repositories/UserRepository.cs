@@ -2,24 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
-using QLKDPhongTro.Presentation.Models;
-using QLKDPhongTro.Presentation.Utils;
+using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Utils;
 
-namespace QLKDPhongTro.Presentation.Services
+namespace QLKDPhongTro.DataLayer.Repositories
 {
     /// <summary>
-    /// Service xử lý logic nghiệp vụ cho User
+    /// Repository xử lý dữ liệu User
     /// </summary>
-    public class UserService
+    public class UserRepository : IUserRepository
     {
         private readonly string connectionString;
 
-        public UserService()
+        public UserRepository()
         {
             // TODO: Đọc connection string từ config
             connectionString = "Data Source=.;Initial Catalog=QLKDPhongTro;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
-
 
         /// <summary>
         /// Lấy tất cả users
@@ -94,9 +93,45 @@ namespace QLKDPhongTro.Presentation.Services
         }
 
         /// <summary>
+        /// Lấy user theo username
+        /// </summary>
+        public async Task<User?> GetByUsernameAsync(string username)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT Acc, TenDangNhap, Email FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@TenDangNhap", username);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return new User
+                                {
+                                    Acc = reader["Acc"].ToString() ?? string.Empty,
+                                    TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
+                                    Email = reader["Email"].ToString() ?? string.Empty
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting user by username: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Tạo user mới
         /// </summary>
-        public async Task<bool> CreateAsync(User entity)
+        public async Task<bool> CreateAsync(User user)
         {
             try
             {
@@ -107,10 +142,10 @@ namespace QLKDPhongTro.Presentation.Services
                                   VALUES (@Acc, @TenDangNhap, @MatKhau, @Email)";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", entity.Acc);
-                        command.Parameters.AddWithValue("@TenDangNhap", entity.TenDangNhap);
-                        command.Parameters.AddWithValue("@MatKhau", entity.MatKhau);
-                        command.Parameters.AddWithValue("@Email", entity.Email);
+                        command.Parameters.AddWithValue("@Acc", user.Acc);
+                        command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
+                        command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
+                        command.Parameters.AddWithValue("@Email", user.Email);
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
@@ -127,7 +162,7 @@ namespace QLKDPhongTro.Presentation.Services
         /// <summary>
         /// Cập nhật user
         /// </summary>
-        public async Task<bool> UpdateAsync(User entity)
+        public async Task<bool> UpdateAsync(User user)
         {
             try
             {
@@ -141,10 +176,10 @@ namespace QLKDPhongTro.Presentation.Services
                                   WHERE Acc = @Acc";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", entity.Acc);
-                        command.Parameters.AddWithValue("@TenDangNhap", entity.TenDangNhap);
-                        command.Parameters.AddWithValue("@MatKhau", entity.MatKhau);
-                        command.Parameters.AddWithValue("@Email", entity.Email);
+                        command.Parameters.AddWithValue("@Acc", user.Acc);
+                        command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
+                        command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
+                        command.Parameters.AddWithValue("@Email", user.Email);
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
@@ -185,9 +220,61 @@ namespace QLKDPhongTro.Presentation.Services
         }
 
         /// <summary>
+        /// Kiểm tra tên đăng nhập đã tồn tại chưa
+        /// </summary>
+        public async Task<bool> IsUsernameExistsAsync(string username)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@TenDangNhap", username);
+                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking username exists: {ex.Message}");
+                return true; // Trả về true để tránh tạo trùng lặp khi có lỗi
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra email đã tồn tại chưa
+        /// </summary>
+        public async Task<bool> IsEmailExistsAsync(string email)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE Email = @Email";
+                    using (var command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Email", email);
+                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking email exists: {ex.Message}");
+                return true; // Trả về true để tránh tạo trùng lặp khi có lỗi
+            }
+        }
+
+        /// <summary>
         /// Đăng nhập user
         /// </summary>
-        public async Task<User?> LoginAsync(string tenDangNhap, string matKhau)
+        public async Task<User?> LoginAsync(string username, string password)
         {
             try
             {
@@ -197,34 +284,46 @@ namespace QLKDPhongTro.Presentation.Services
                     var query = "SELECT Acc, TenDangNhap, MatKhau, Email FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@TenDangNhap", tenDangNhap);
+                        command.Parameters.AddWithValue("@TenDangNhap", username);
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             if (await reader.ReadAsync())
                             {
                                 var storedPassword = reader["MatKhau"].ToString();
+                                var acc = reader["Acc"].ToString() ?? string.Empty;
+                                var tenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty;
                                 
-                                // Kiểm tra mật khẩu đã hash (ưu tiên)
-                                if (!string.IsNullOrEmpty(storedPassword) && PasswordHelper.VerifyPassword(matKhau, storedPassword))
+                                Console.WriteLine($"Debug Login - Username: '{username}', Password: '{password}'");
+                                Console.WriteLine($"Debug Login - Stored Password: '{storedPassword}'");
+                                Console.WriteLine($"Debug Login - Acc: '{acc}'");
+                                Console.WriteLine($"Debug Login - Password length: {password?.Length}, Stored length: {storedPassword?.Length}");
+                                Console.WriteLine($"Debug Login - Password equals: {storedPassword == password}");
+                                
+                                // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ như ADMIN001)
+                                if (storedPassword?.Trim() == password?.Trim())
                                 {
+                                    Console.WriteLine("Debug Login - Plain text password match!");
                                     return new User
                                     {
-                                        Acc = reader["Acc"].ToString() ?? string.Empty,
-                                        TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
+                                        Acc = acc,
+                                        TenDangNhap = tenDangNhap,
                                         Email = reader["Email"].ToString() ?? string.Empty
                                     };
                                 }
                                 
-                                // Fallback: Kiểm tra với mật khẩu plain text (cho tài khoản cũ)
-                                if (storedPassword == matKhau)
+                                // Kiểm tra mật khẩu đã hash (cho tài khoản mới)
+                                if (!string.IsNullOrEmpty(storedPassword) && PasswordHelper.VerifyPassword(password, storedPassword))
                                 {
+                                    Console.WriteLine("Debug Login - Hashed password match!");
                                     return new User
                                     {
-                                        Acc = reader["Acc"].ToString() ?? string.Empty,
-                                        TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
+                                        Acc = acc,
+                                        TenDangNhap = tenDangNhap,
                                         Email = reader["Email"].ToString() ?? string.Empty
                                     };
                                 }
+                                
+                                Console.WriteLine("Debug Login - No password match found!");
                             }
                         }
                     }
@@ -263,58 +362,6 @@ namespace QLKDPhongTro.Presentation.Services
             {
                 Console.WriteLine($"Error registering user: {ex.Message}");
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Kiểm tra tên đăng nhập đã tồn tại chưa
-        /// </summary>
-        public async Task<bool> IsUsernameExistsAsync(string tenDangNhap)
-        {
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
-                    using (var command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@TenDangNhap", tenDangNhap);
-                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
-                        return count > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error checking username exists: {ex.Message}");
-                return true; // Trả về true để tránh tạo trùng lặp khi có lỗi
-            }
-        }
-
-        /// <summary>
-        /// Kiểm tra email đã tồn tại chưa
-        /// </summary>
-        public async Task<bool> IsEmailExistsAsync(string email)
-        {
-            try
-            {
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE Email = @Email";
-                    using (var command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.AddWithValue("@Email", email);
-                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
-                        return count > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error checking email exists: {ex.Message}");
-                return true; // Trả về true để tránh tạo trùng lặp khi có lỗi
             }
         }
     }

@@ -1,6 +1,6 @@
 using System;
 
-namespace QLKDPhongTro.Presentation.Models
+namespace QLKDPhongTro.DataLayer.Models
 {
     /// <summary>
     /// Model đại diện cho User

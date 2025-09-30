@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
 using System.Linq;
+using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -10,6 +11,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         public RegisterWindow()
         {
             InitializeComponent();
+            this.DataContext = new RegisterViewModel();
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

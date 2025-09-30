@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Windows;
 using QLKDPhongTro.Presentation.Views.Windows;
@@ -9,58 +9,60 @@ using QLKDPhongTro.DataLayer.Repositories;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class LoginViewModel : ViewModelBase
+    public partial class RegisterViewModel : ViewModelBase
     {
         private readonly AuthController _authController;
 
-        public LoginViewModel()
+        public RegisterViewModel()
         {
             var userRepository = new UserRepository();
             _authController = new AuthController(userRepository);
         }
 
-        // Framework sẽ tự động tạo property "Username" từ field "_username"
-        // và tự gọi OnPropertyChanged() khi giá trị thay đổi.
         [ObservableProperty]
         private string _username = string.Empty;
+
+        [ObservableProperty]
+        private string _email = string.Empty;
 
         [ObservableProperty]
         private string _password = string.Empty;
 
         [ObservableProperty]
+        private string _confirmPassword = string.Empty;
+
+        [ObservableProperty]
         private bool _isLoading = false;
 
-        // Framework sẽ tự động tạo một ICommand tên là "LoginCommand"
-        // từ phương thức Login() này.
         [RelayCommand]
-        private async Task Login()
+        private async Task Register()
         {
             try
             {
                 IsLoading = true;
 
-                // Kiểm tra thông tin đăng nhập
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
+                // Kiểm tra thông tin đăng ký
+                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Email) || 
+                    string.IsNullOrEmpty(Password) || string.IsNullOrEmpty(ConfirmPassword))
                 {
-                    MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
-
-                // Thực hiện đăng nhập
-                var result = await _authController.LoginAsync(Username, Password);
+                // Thực hiện đăng ký
+                var result = await _authController.RegisterAsync(Username, Email, Password, ConfirmPassword);
 
                 if (result.IsSuccess)
                 {
                     MessageBox.Show(result.Message, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                     
-                    // Chuyển đến Dashboard
-                    var dashboardWindow = new DashWindow();
-                    dashboardWindow.Show();
+                    // Chuyển về màn hình đăng nhập
+                    var loginWindow = new LoginWindow();
+                    loginWindow.Show();
                     
-                    // Đóng cửa sổ đăng nhập
+                    // Đóng cửa sổ đăng ký
                     Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = dashboardWindow;
+                    Application.Current.MainWindow = loginWindow;
                 }
                 else
                 {
@@ -78,14 +80,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void NavigateToRegister()
+        private void NavigateToLogin()
         {
-            var registerWindow = new RegisterWindow();
-            registerWindow.Show();
+            var loginWindow = new LoginWindow();
+            loginWindow.Show();
             
-            // Đóng cửa sổ đăng nhập hiện tại
+            // Đóng cửa sổ đăng ký hiện tại
             Application.Current.MainWindow?.Close();
-            Application.Current.MainWindow = registerWindow;
+            Application.Current.MainWindow = loginWindow;
         }
     }
 }
