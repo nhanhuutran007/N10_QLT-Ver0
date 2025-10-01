@@ -1,9 +1,11 @@
+using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Utils;
+using QLKDPhongTro.Presentation.Utils;
+using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
-using QLKDPhongTro.DataLayer.Models;
-using QLKDPhongTro.DataLayer.Utils;
 
 namespace QLKDPhongTro.DataLayer.Repositories 
 {
@@ -16,6 +18,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public UserRepository()
         {
+            
             // TODO: Đọc connection string từ config
             connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
@@ -346,20 +349,78 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// <summary>
         /// Đăng ký user mới
         /// </summary>
+        //public async Task<bool> RegisterAsync(User user)
+        //{
+        //    try
+        //    {
+        //        // Kiểm tra tài khoản đã tồn tại chưa
+        //        if (await IsUsernameExistsAsync(user.TenDangNhap) || await IsEmailExistsAsync(user.Email))
+        //        {
+        //            return false;
+        //        }
+
+        //        // Mã hóa mật khẩu
+        //        user.MatKhau = PasswordHelper.HashPassword(user.MatKhau);
+
+        //        // Lưu vào database
+        //        return await CreateAsync(user);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Error registering user: {ex.Message}");
+        //        return false;
+        //    }
+        //}
+        /// <summary>
+        /// Gửi OTP đăng ký tới email người dùng
+        /// </summary>
+        public async Task<bool> SendOtpToEmailAsync(string email)
+        {
+            try
+            {
+                var otp = OtpHelper.GenerateOtp();
+                await EmailService.SendEmailAsync(email, "Mã OTP đăng ký", $"Mã OTP của bạn là: {otp}");
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
+        // Phiên bản async của VerifyOtp
+        public Task<bool> VerifyOtpAsync(string otp)
+        {
+            bool result = OtpHelper.VerifyOtp(otp);
+            return Task.FromResult(result);
+        }
+
+        // Đăng ký với OTP
+        public async Task<bool> RegisterWithOtpAsync(User user, string otp)
+        {
+            if (!await VerifyOtpAsync(otp))
+            {
+                Console.WriteLine("OTP không hợp lệ hoặc đã hết hạn!");
+                return false;
+            }
+
+            return await RegisterAsync(user);
+        }
+
+        /// <summary>
+        /// Phương thức RegisterAsync hiện tại vẫn được giữ nguyên
+        /// </summary>
         public async Task<bool> RegisterAsync(User user)
         {
             try
             {
-                // Kiểm tra tài khoản đã tồn tại chưa
                 if (await IsUsernameExistsAsync(user.TenDangNhap) || await IsEmailExistsAsync(user.Email))
                 {
                     return false;
                 }
 
-                // Mã hóa mật khẩu
                 user.MatKhau = PasswordHelper.HashPassword(user.MatKhau);
-
-                // Lưu vào database
                 return await CreateAsync(user);
             }
             catch (Exception ex)
@@ -370,3 +431,4 @@ namespace QLKDPhongTro.DataLayer.Repositories
         }
     }
 }
+

@@ -249,8 +249,24 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Xử lý tạo tài khoản mới
         private void CreateAccount_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng tạo tài khoản sẽ được triển khai trong phiên bản tiếp theo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                var registerWindow = new RegisterWindow
+                {
+                    DataContext = new RegisterViewModel()
+                };
+                registerWindow.Show();
+
+                // Đóng cửa sổ login hiện tại
+                Application.Current.MainWindow?.Close();
+                Application.Current.MainWindow = registerWindow;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở màn hình đăng ký: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
 
         // Xử lý quên mật khẩu
         private void ForgotPassword_Click(object sender, RoutedEventArgs e)

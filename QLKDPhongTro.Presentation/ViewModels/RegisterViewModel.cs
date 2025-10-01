@@ -1,22 +1,20 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Threading.Tasks;
 using System.Windows;
-using QLKDPhongTro.Presentation.Views.Windows;
-using QLKDPhongTro.BusinessLayer.Controllers;
-using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.Views.Windows;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class RegisterViewModel : ViewModelBase
+    public partial class RegisterViewModel : ObservableObject
     {
-        private readonly AuthController _authController;
+        private readonly UserRepository _userRepository;
 
         public RegisterViewModel()
         {
-            var userRepository = new UserRepository();
-            _authController = new AuthController(userRepository);
+            _userRepository = new UserRepository();
         }
 
         [ObservableProperty]
@@ -35,43 +33,36 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private bool _isLoading = false;
 
         [RelayCommand]
-        private async Task Register()
+        private async Task RegisterAsync()
         {
+            if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Email) ||
+                string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+            {
+                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!");
+                return;
+            }
+
+            if (Password != ConfirmPassword)
+            {
+                MessageBox.Show("Mật khẩu xác nhận không khớp!");
+                return;
+            }
+
+            IsLoading = true;
             try
             {
-                IsLoading = true;
-
-                // Kiểm tra thông tin đăng ký
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Email) || 
-                    string.IsNullOrEmpty(Password) || string.IsNullOrEmpty(ConfirmPassword))
+                bool otpSent = await _userRepository.SendOtpToEmailAsync(Email);
+                if (!otpSent)
                 {
-                    MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Gửi OTP thất bại. Vui lòng thử lại!");
                     return;
                 }
 
-                // Thực hiện đăng ký
-                var result = await _authController.RegisterAsync(Username, Email, Password, ConfirmPassword);
-
-                if (result.IsSuccess)
-                {
-                    MessageBox.Show(result.Message, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                    
-                    // Chuyển về màn hình đăng nhập
-                    var loginWindow = new LoginWindow();
-                    loginWindow.Show();
-                    
-                    // Đóng cửa sổ đăng ký
-                    Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = loginWindow;
-                }
-                else
-                {
-                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Mở cửa sổ OTP
+                var otpWindow = new OtpWindow();
+                otpWindow.DataContext = new OtpViewModel(_userRepository, Username, Email, Password);
+                otpWindow.Owner = Application.Current.MainWindow;
+                otpWindow.ShowDialog();
             }
             finally
             {
@@ -79,13 +70,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+
         [RelayCommand]
         private void NavigateToLogin()
         {
             var loginWindow = new LoginWindow();
             loginWindow.Show();
-            
-            // Đóng cửa sổ đăng ký hiện tại
+
             Application.Current.MainWindow?.Close();
             Application.Current.MainWindow = loginWindow;
         }
