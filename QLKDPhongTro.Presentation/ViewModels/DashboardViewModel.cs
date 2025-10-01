@@ -1,7 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Windows;
+using QLKDPhongTro.Presentation.Views.Windows;
 using System.Collections.ObjectModel;
+using System.Windows;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -79,7 +80,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToRooms()
         {
-            MessageBox.Show("Đã chuyển đến trang Quản lý phòng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            var rentedRoomWindow = new RentedRoomWindow();
+            rentedRoomWindow.Show();
+            // Close the current dashboard window
+            Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
 
         [RelayCommand]

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Utils;
 
-namespace QLKDPhongTro.DataLayer.Repositories
+namespace QLKDPhongTro.DataLayer.Repositories 
 {
     /// <summary>
     /// Repository xử lý dữ liệu User
