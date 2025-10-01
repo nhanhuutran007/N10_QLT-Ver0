@@ -32,6 +32,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             try
             {
+                // Kiểm tra đang loading để tránh multiple clicks
+                if (IsLoading)
+                    return;
+
                 IsLoading = true;
 
                 if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
@@ -46,6 +50,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 if (result.IsSuccess)
                 {
+                    // ✅ Hiện thông báo OTP đã được gửi
                     MessageBox.Show(result.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
 

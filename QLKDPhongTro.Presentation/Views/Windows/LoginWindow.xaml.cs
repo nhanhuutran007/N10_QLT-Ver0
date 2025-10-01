@@ -197,40 +197,25 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     return;
                 }
 
-                // Validate input
-                if (string.IsNullOrWhiteSpace(EmailTextBox?.Text))
-                {
-                    MessageBox.Show("Vui lòng nhập tên đăng nhập!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    EmailTextBox?.Focus();
+                // Kiểm tra đang loading để tránh multiple clicks
+                if (viewModel.IsLoading)
                     return;
-                }
 
-                // Lấy password từ PasswordBox hoặc TextBox
-                string password = GetCurrentPassword();
-                if (string.IsNullOrWhiteSpace(password))
-                {
-                    MessageBox.Show("Vui lòng nhập mật khẩu!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    PasswordBox?.Focus();
-                    return;
-                }
+                // Disable button ngay lập tức
+                LoginButton.IsEnabled = false;
 
-                // Perform login
-                viewModel.Username = EmailTextBox.Text.Trim();
-                viewModel.Password = password;
+                // Cập nhật ViewModel với dữ liệu từ UI
+                viewModel.Username = EmailTextBox?.Text?.Trim() ?? string.Empty;
+                viewModel.Password = GetCurrentPassword();
 
-                // Call login command from ViewModel
-                if (viewModel.LoginCommand?.CanExecute(null) == true)
-                {
-                    viewModel.LoginCommand.Execute(null);
-                }
-                else
-                {
-                    MessageBox.Show("Không thể thực hiện đăng nhập!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                // Gọi login command từ ViewModel (ViewModel sẽ tự validate)
+                viewModel.LoginCommand?.Execute(null);
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi đăng nhập: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Re-enable button nếu có lỗi
+                LoginButton.IsEnabled = true;
             }
         }
 

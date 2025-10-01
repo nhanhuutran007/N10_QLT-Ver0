@@ -34,6 +34,7 @@
                     </Trigger>
                 </Style.Triggers>
             </Style>
+            
         </Grid.Resources>
 
         <!-- Custom Window Buttons - Đặt ở góc phải trên cùng của toàn cửa sổ -->
@@ -385,7 +386,8 @@
                             BorderThickness="0"
                             Background="Transparent"
                             Cursor="Hand"
-                            Click="LoginButton_Click"/>
+                            Click="LoginButton_Click"
+                            />
                 </Border>
                 <!-- Don't have an account? Create new -->
                 <StackPanel Orientation="Horizontal"
