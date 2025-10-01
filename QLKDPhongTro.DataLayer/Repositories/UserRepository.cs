@@ -17,7 +17,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public UserRepository()
         {
             // TODO: Đọc connection string từ config
-            connectionString = "Data Source=.;Initial Catalog=QLKDPhongTro;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
 
         /// <summary>
@@ -31,7 +31,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT Acc, TenDangNhap, Email FROM tblDangNhap";
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin";
                     using (var command = new SqlCommand(query, connection))
                     {
                         using (var reader = await command.ExecuteReaderAsync())
@@ -40,9 +40,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             {
                                 users.Add(new User
                                 {
-                                    Acc = reader["Acc"].ToString() ?? string.Empty,
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
                                     TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty
+                                    Email = reader["Email"].ToString() ?? string.Empty,
+                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
                                 });
                             }
                         }
@@ -66,19 +67,20 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT Acc, TenDangNhap, Email FROM tblDangNhap WHERE Acc = @Acc";
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE MaAdmin = @MaAdmin";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", id);
+                        command.Parameters.AddWithValue("@MaAdmin", Convert.ToInt32(id));
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             if (await reader.ReadAsync())
                             {
                                 return new User
                                 {
-                                    Acc = reader["Acc"].ToString() ?? string.Empty,
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
                                     TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty
+                                    Email = reader["Email"].ToString() ?? string.Empty,
+                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
                                 };
                             }
                         }
@@ -102,7 +104,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT Acc, TenDangNhap, Email FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE TenDangNhap = @TenDangNhap";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
@@ -112,9 +114,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             {
                                 return new User
                                 {
-                                    Acc = reader["Acc"].ToString() ?? string.Empty,
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
                                     TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty
+                                    Email = reader["Email"].ToString() ?? string.Empty,
+                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
                                 };
                             }
                         }
@@ -138,14 +141,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = @"INSERT INTO tblDangNhap (Acc, TenDangNhap, MatKhau, Email) 
-                                  VALUES (@Acc, @TenDangNhap, @MatKhau, @Email)";
+                    var query = @"INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai) 
+                                  VALUES (@TenDangNhap, @MatKhau, @Email, @SoDienThoai)";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", user.Acc);
                         command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
                         command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
                         command.Parameters.AddWithValue("@Email", user.Email);
+                        command.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai);
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
@@ -169,17 +172,19 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = @"UPDATE tblDangNhap 
+                    var query = @"UPDATE Admin 
                                   SET TenDangNhap = @TenDangNhap, 
                                       MatKhau = @MatKhau, 
-                                      Email = @Email 
-                                  WHERE Acc = @Acc";
+                                      Email = @Email,
+                                      SoDienThoai = @SoDienThoai
+                                  WHERE MaAdmin = @MaAdmin";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", user.Acc);
+                        command.Parameters.AddWithValue("@MaAdmin", user.MaAdmin);
                         command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
                         command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
                         command.Parameters.AddWithValue("@Email", user.Email);
+                        command.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai);
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
@@ -203,10 +208,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "DELETE FROM tblDangNhap WHERE Acc = @Acc";
+                    var query = "DELETE FROM Admin WHERE MaAdmin = @MaAdmin";
                     using (var command = new SqlCommand(query, connection))
                     {
-                        command.Parameters.AddWithValue("@Acc", id);
+                        command.Parameters.AddWithValue("@MaAdmin", Convert.ToInt32(id));
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
                     }
@@ -229,7 +234,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
+                    var query = "SELECT COUNT(*) FROM Admin WHERE TenDangNhap = @TenDangNhap";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
@@ -255,7 +260,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM tblDangNhap WHERE Email = @Email";
+                    var query = "SELECT COUNT(*) FROM Admin WHERE Email = @Email";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Email", email);
@@ -281,7 +286,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT Acc, TenDangNhap, MatKhau, Email FROM tblDangNhap WHERE TenDangNhap = @TenDangNhap";
+                    var query = "SELECT MaAdmin, TenDangNhap, MatKhau, Email, SoDienThoai FROM Admin WHERE TenDangNhap = @TenDangNhap";
                     using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
@@ -290,24 +295,25 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             if (await reader.ReadAsync())
                             {
                                 var storedPassword = reader["MatKhau"].ToString();
-                                var acc = reader["Acc"].ToString() ?? string.Empty;
+                                var maAdmin = Convert.ToInt32(reader["MaAdmin"]);
                                 var tenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty;
                                 
                                 Console.WriteLine($"Debug Login - Username: '{username}', Password: '{password}'");
                                 Console.WriteLine($"Debug Login - Stored Password: '{storedPassword}'");
-                                Console.WriteLine($"Debug Login - Acc: '{acc}'");
+                                Console.WriteLine($"Debug Login - MaAdmin: '{maAdmin}'");
                                 Console.WriteLine($"Debug Login - Password length: {password?.Length}, Stored length: {storedPassword?.Length}");
                                 Console.WriteLine($"Debug Login - Password equals: {storedPassword == password}");
                                 
-                                // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ như ADMIN001)
+                                // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ)
                                 if (storedPassword?.Trim() == password?.Trim())
                                 {
                                     Console.WriteLine("Debug Login - Plain text password match!");
                                     return new User
                                     {
-                                        Acc = acc,
+                                        MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
-                                        Email = reader["Email"].ToString() ?? string.Empty
+                                        Email = reader["Email"].ToString() ?? string.Empty,
+                                        SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
                                     };
                                 }
                                 
@@ -317,9 +323,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                     Console.WriteLine("Debug Login - Hashed password match!");
                                     return new User
                                     {
-                                        Acc = acc,
+                                        MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
-                                        Email = reader["Email"].ToString() ?? string.Empty
+                                        Email = reader["Email"].ToString() ?? string.Empty,
+                                        SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
                                     };
                                 }
                                 
@@ -349,9 +356,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     return false;
                 }
 
-                // Tạo mã tài khoản mới
-                user.Acc = "USER" + DateTime.Now.ToString("yyyyMMddHHmmss");
-                
                 // Mã hóa mật khẩu
                 user.MatKhau = PasswordHelper.HashPassword(user.MatKhau);
 

@@ -6,9 +6,12 @@
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.DashWindow"
     Title="Dashboard"
-    Height="800"
+    Height="700"
     Width="1200"
+    MinHeight="600"
+    MinWidth="800"
     WindowStartupLocation="CenterScreen"
+    ResizeMode="CanResize"
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
@@ -149,8 +152,15 @@
     <!-- Bố cục chính của cửa sổ -->
     <Grid>
         <Grid.ColumnDefinitions>
+<<<<<<< HEAD
             <ColumnDefinition Width="240"/>
             <ColumnDefinition Width="*"/>
+=======
+            <ColumnDefinition Width="240" MinWidth="200"/>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="*" MinWidth="600"/>
+            <!-- Main content -->
+>>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR BÊN TRÁI -->
@@ -164,11 +174,35 @@
 
             <Grid>
                 <!-- Logo và tiêu đề -->
+<<<<<<< HEAD
                 <StackPanel VerticalAlignment="Top" Margin="20,30,20,80" Width="200" HorizontalAlignment="Center">
                     <Image Source="/Resources/Images/Logo.png" Width="140"/>
                     <TextBlock Text="Quản lý phòng trọ" FontSize="22" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" MaxWidth="220" HorizontalAlignment="Center" Margin="0,8,0,0"/>
                     <TextBlock Text="Dashboard" FontSize="16" Foreground="#E0E0E0" Margin="0,4,0,0" HorizontalAlignment="Center"/>
                     <Border Height="40" Background="Transparent"/>
+=======
+                <StackPanel VerticalAlignment="Top"
+                            Margin="20,20,20,20"
+                            Width="200"
+                            HorizontalAlignment="Center">
+                    <!-- Logo -->
+                    <Image Source="/Resources/Images/Logo.png"
+                           Width="120"/>
+                    <!-- Tiêu đề -->
+                    <TextBlock Text="Quản lý phòng trọ"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               TextWrapping="Wrap"
+                               MaxWidth="200"
+                               HorizontalAlignment="Center"
+                               Margin="0,5,0,0"/>
+                    <TextBlock Text="Dashboard"
+                               FontSize="14"
+                               Foreground="#E0E0E0"
+                               Margin="0,2,0,0"
+                               HorizontalAlignment="Center"/>
+>>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
                 </StackPanel>
 
                 <!-- Menu điều hướng -->
@@ -194,12 +228,32 @@
                 </StackPanel>
 
                 <!-- Thông tin người dùng -->
+<<<<<<< HEAD
                 <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,30">
                     <Border Background="#4A63C1" CornerRadius="8" Padding="15" HorizontalAlignment="Center">
                         <StackPanel>
                             <TextBlock Text="{Binding CurrentUser}" FontSize="14" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding UserEmail}" FontSize="12" Foreground="#E0E0E0" Margin="0,2,0,0" HorizontalAlignment="Center"/>
                             <Button Content="Đăng xuất" Style="{StaticResource LogoutButtonStyle}" Command="{Binding LogoutCommand}" Margin="1,10,0,0" Width="170"/>
+=======
+                <StackPanel VerticalAlignment="Bottom"
+                            Margin="20,0,20,20">
+                    <Border Background="#4A63C1"
+                            CornerRadius="8"
+                            Padding="15" HorizontalAlignment="Center">
+                        <StackPanel>
+                            <TextBlock Text="Admin User"
+                                       FontSize="14"
+                                       FontWeight="SemiBold"
+                                       Foreground="White" HorizontalAlignment="Center"/>
+                            <TextBlock Text="admin@example.com"
+                                       FontSize="12"
+                                       Foreground="#E0E0E0"
+                                       Margin="0,2,0,0" HorizontalAlignment="Center"/>
+                            <Button Content="Đăng xuất" Background="#FF4444" Foreground="White" 
+                                    FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" 
+                                    Margin="0,10,0,0" Width="170" Height="30" Click="LogoutButton_Click"/>
+>>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
                         </StackPanel>
                     </Border>
                 </StackPanel>
