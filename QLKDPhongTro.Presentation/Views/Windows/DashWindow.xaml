@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.DashWindow"
     Title="Dashboard"
@@ -19,131 +20,202 @@
 
     <Window.Resources>
         <!-- Style cho các nút điều khiển cửa sổ -->
-        <Style TargetType="{x:Type Button}" x:Key="WindowControlButton">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="Gray"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="24"/>
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style TargetType="{x:Type Button}"
+               x:Key="WindowControlButton">
+            <Setter Property="Background"
+                    Value="Transparent"/>
+            <Setter Property="Foreground"
+                    Value="Gray"/>
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+            <Setter Property="FontSize"
+                    Value="24"/>
+            <Setter Property="FontFamily"
+                    Value="Segoe MDL2 Assets"/>
+            <Setter Property="Width"
+                    Value="40"/>
+            <Setter Property="Height"
+                    Value="40"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
                         <Border Background="{TemplateBinding Background}">
-                            <TextBlock Text="{TemplateBinding Content}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="{TemplateBinding Content}"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#E5E5E5"/>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Background"
+                            Value="#E5E5E5"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Thêm Trigger cho nút đóng -->
-        <Style x:Key="CloseButton" TargetType="{x:Type Button}" BasedOn="{StaticResource WindowControlButton}">
+        <Style x:Key="CloseButton"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource WindowControlButton}">
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF6B6B"/>
-                    <Setter Property="Foreground" Value="White"/>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Background"
+                            Value="#FF6B6B"/>
+                    <!-- Màu đỏ nhạt hơn -->
+                    <Setter Property="Foreground"
+                            Value="White"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Style cho các nút menu bên trái -->
-        <Style TargetType="{x:Type Button}" x:Key="MenuButtonStyle">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="20,15"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Width" Value="220"/>
-            <Setter Property="Height" Value="56"/>
+        <Style TargetType="{x:Type Button}"
+               x:Key="MenuButtonStyle">
+            <Setter Property="Background"
+                    Value="Transparent"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+            <Setter Property="FontSize"
+                    Value="18"/>
+            <Setter Property="FontWeight"
+                    Value="Medium"/>
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Left"/>
+            <Setter Property="Padding"
+                    Value="20,15"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
+            <Setter Property="Width"
+                    Value="220"/>
+            <!-- Tăng width -->
+            <Setter Property="Height"
+                    Value="56"/>
+            <!-- Tăng height -->
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4A63C1"/>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Background"
+                            Value="#4A63C1"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Style cho nút đăng xuất -->
-        <Style TargetType="{x:Type Button}" x:Key="LogoutButtonStyle" BasedOn="{StaticResource MenuButtonStyle}">
-            <Setter Property="Background" Value="#FF4444"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="0,10"/>
-            <Setter Property="Margin" Value="0,10,0,0"/>
-            <Setter Property="Width" Value="190"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style TargetType="{x:Type Button}"
+               x:Key="LogoutButtonStyle"
+               BasedOn="{StaticResource MenuButtonStyle}">
+            <Setter Property="Background"
+                    Value="#FF4444"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center"/>
+            <Setter Property="FontWeight"
+                    Value="SemiBold"/>
+            <Setter Property="Padding"
+                    Value="0,10"/>
+            <Setter Property="Margin"
+                    Value="0,10,0,0"/>
+            <Setter Property="Width"
+                    Value="190"/>
+            <Setter Property="Height"
+                    Value="40"/>
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#D32F2F"/>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Background"
+                            Value="#D32F2F"/>
                 </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.6"/>
+                <Trigger Property="IsEnabled"
+                         Value="False">
+                    <Setter Property="Opacity"
+                            Value="0.6"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
         <!-- Style cho các card thống kê -->
-        <Style TargetType="{x:Type Border}" x:Key="StatCardStyle">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="20"/>
+        <Style TargetType="{x:Type Border}"
+               x:Key="StatCardStyle">
+            <Setter Property="Background"
+                    Value="White"/>
+            <Setter Property="CornerRadius"
+                    Value="12"/>
+            <Setter Property="Padding"
+                    Value="20"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="Black" Opacity="0.1" ShadowDepth="2" BlurRadius="8"/>
+                    <DropShadowEffect Color="Black"
+                                      Opacity="0.1"
+                                      ShadowDepth="2"
+                                      BlurRadius="8"/>
                 </Setter.Value>
             </Setter>
         </Style>
 
         <!-- Style cho nút chính -->
-        <Style TargetType="{x:Type Button}" x:Key="PrimaryButtonStyle">
-            <Setter Property="Background" Value="#5B75D4"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style TargetType="{x:Type Button}"
+               x:Key="PrimaryButtonStyle">
+            <Setter Property="Background"
+                    Value="#5B75D4"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
+            <Setter Property="FontSize"
+                    Value="14"/>
+            <Setter Property="FontWeight"
+                    Value="SemiBold"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border CornerRadius="8"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4A63C1"/>
+                <Trigger Property="IsMouseOver"
+                         Value="True">
+                    <Setter Property="Background"
+                            Value="#4A63C1"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -152,124 +224,36 @@
     <!-- Bố cục chính của cửa sổ -->
     <Grid>
         <Grid.ColumnDefinitions>
-<<<<<<< HEAD
-            <ColumnDefinition Width="240"/>
-            <ColumnDefinition Width="*"/>
-=======
             <ColumnDefinition Width="240" MinWidth="200"/>
             <!-- Sidebar -->
             <ColumnDefinition Width="*" MinWidth="600"/>
             <!-- Main content -->
->>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR BÊN TRÁI -->
-        <Border Grid.Column="0" CornerRadius="10,0,0,10">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#3A4E8E" Offset="0"/>
-                    <GradientStop Color="#5B75D4" Offset="1"/>
-                </LinearGradientBrush>
-            </Border.Background>
-
-            <Grid>
-                <!-- Logo và tiêu đề -->
-<<<<<<< HEAD
-                <StackPanel VerticalAlignment="Top" Margin="20,30,20,80" Width="200" HorizontalAlignment="Center">
-                    <Image Source="/Resources/Images/Logo.png" Width="140"/>
-                    <TextBlock Text="Quản lý phòng trọ" FontSize="22" FontWeight="Bold" Foreground="White" TextWrapping="Wrap" MaxWidth="220" HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                    <TextBlock Text="Dashboard" FontSize="16" Foreground="#E0E0E0" Margin="0,4,0,0" HorizontalAlignment="Center"/>
-                    <Border Height="40" Background="Transparent"/>
-=======
-                <StackPanel VerticalAlignment="Top"
-                            Margin="20,20,20,20"
-                            Width="200"
-                            HorizontalAlignment="Center">
-                    <!-- Logo -->
-                    <Image Source="/Resources/Images/Logo.png"
-                           Width="120"/>
-                    <!-- Tiêu đề -->
-                    <TextBlock Text="Quản lý phòng trọ"
-                               FontSize="18"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               TextWrapping="Wrap"
-                               MaxWidth="200"
-                               HorizontalAlignment="Center"
-                               Margin="0,5,0,0"/>
-                    <TextBlock Text="Dashboard"
-                               FontSize="14"
-                               Foreground="#E0E0E0"
-                               Margin="0,2,0,0"
-                               HorizontalAlignment="Center"/>
->>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
-                </StackPanel>
-
-                <!-- Menu điều hướng -->
-                <StackPanel VerticalAlignment="Center" Margin="20,0" Width="220" HorizontalAlignment="Center">
-                    <Border CornerRadius="20" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="📊 Tổng quan" Style="{StaticResource MenuButtonStyle}" Height="48" Width="120" HorizontalContentAlignment="Center" Command="{Binding NavigateToOverviewCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,15,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="🏠 Quản lý phòng" Style="{StaticResource MenuButtonStyle}" Height="48" Width="150" HorizontalContentAlignment="Center" Command="{Binding NavigateToRoomsCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="👥 Khách thuê" Style="{StaticResource MenuButtonStyle}" Height="48" Width="130" HorizontalContentAlignment="Center" Command="{Binding NavigateToTenantsCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="💰 Hóa đơn" Style="{StaticResource MenuButtonStyle}" Height="48" Width="130" HorizontalContentAlignment="Center" Command="{Binding NavigateToBillsCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="📋 Hợp đồng" Style="{StaticResource MenuButtonStyle}" Height="48" Width="130" HorizontalContentAlignment="Center" Command="{Binding NavigateToContractsCommand}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="20,0,12,0"/>
-                    </Border>
-                    <Border CornerRadius="10" Margin="0,0,0,0" Background="Transparent" HorizontalAlignment="Center">
-                        <Button Content="⚙️ Cài đặt" Style="{StaticResource MenuButtonStyle}" Height="48" Width="130" HorizontalContentAlignment="Center" Command="{Binding NavigateToSettingsCommand}" VerticalAlignment="Top" Margin="20,0,12,0" HorizontalAlignment="Center"/>
-                    </Border>
-                </StackPanel>
-
-                <!-- Thông tin người dùng -->
-<<<<<<< HEAD
-                <StackPanel VerticalAlignment="Bottom" Margin="20,0,20,30">
-                    <Border Background="#4A63C1" CornerRadius="8" Padding="15" HorizontalAlignment="Center">
-                        <StackPanel>
-                            <TextBlock Text="{Binding CurrentUser}" FontSize="14" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding UserEmail}" FontSize="12" Foreground="#E0E0E0" Margin="0,2,0,0" HorizontalAlignment="Center"/>
-                            <Button Content="Đăng xuất" Style="{StaticResource LogoutButtonStyle}" Command="{Binding LogoutCommand}" Margin="1,10,0,0" Width="170"/>
-=======
-                <StackPanel VerticalAlignment="Bottom"
-                            Margin="20,0,20,20">
-                    <Border Background="#4A63C1"
-                            CornerRadius="8"
-                            Padding="15" HorizontalAlignment="Center">
-                        <StackPanel>
-                            <TextBlock Text="Admin User"
-                                       FontSize="14"
-                                       FontWeight="SemiBold"
-                                       Foreground="White" HorizontalAlignment="Center"/>
-                            <TextBlock Text="admin@example.com"
-                                       FontSize="12"
-                                       Foreground="#E0E0E0"
-                                       Margin="0,2,0,0" HorizontalAlignment="Center"/>
-                            <Button Content="Đăng xuất" Background="#FF4444" Foreground="White" 
-                                    FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" 
-                                    Margin="0,10,0,0" Width="170" Height="30" Click="LogoutButton_Click"/>
->>>>>>> 96a7738ea35234cb083fe65021441ad60cadfb4c
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
+        <components:SidebarControl Grid.Column="0" 
+                                  x:Name="SidebarControl"
+                                  PageTitle="Dashboard"
+                                  SelectedMenuItem="Overview"
+                                  VerticalAlignment="Stretch"
+                                  MenuItemClicked="SidebarControl_MenuItemClicked"
+                                  LogoutClicked="SidebarControl_LogoutClicked"/>
 
         <!-- NỘI DUNG CHÍNH -->
-        <Border Grid.Column="1" Background="#F8F9FA" CornerRadius="0,10,10,0">
+        <Border Grid.Column="1"
+                Background="#F8F9FA"
+                CornerRadius="0,10,10,0">
             <Grid>
+                <!-- Header với các nút điều khiển -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- Header bar -->
-                <Border Grid.Row="0" Background="White" CornerRadius="0,10,0,0">
+                <Border Grid.Row="0"
+                        Background="White"
+                        CornerRadius="0,10,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -277,22 +261,41 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Tiêu đề trang -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="30,20">
-                            <TextBlock Text="📊" FontSize="24" Margin="0,0,10,0"/>
-                            <TextBlock Text="Tổng quan hệ thống" FontSize="22" FontWeight="Bold" Foreground="#333"/>
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="30,20">
+                            <TextBlock Text="📊"
+                                       FontSize="24"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="Tổng quan hệ thống"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       Foreground="#333"/>
                         </StackPanel>
 
                         <!-- Các nút điều khiển cửa sổ -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                            <Button Content="—" Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click"/>
-                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click"/>
-                            <Button Content="✕" Style="{StaticResource CloseButton}" Click="CloseButton_Click"/>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top">
+                            <Button Content="—"
+                                    Style="{StaticResource WindowControlButton}"
+                                    Click="MinimizeButton_Click"/>
+                            <Button Content="☐"
+                                    Style="{StaticResource WindowControlButton}"
+                                    Click="MaximizeButton_Click"/>
+                            <Button Content="✕"
+                                    Style="{StaticResource CloseButton}"
+                                    Click="CloseButton_Click"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- Nội dung chính -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Margin="30,30,30,30">
                         <!-- Thống kê tổng quan -->
                         <Grid>
@@ -304,38 +307,86 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Card: Tổng số phòng -->
-                            <Border Grid.Column="0" Style="{StaticResource StatCardStyle}" Margin="0,0,15,0">
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource StatCardStyle}"
+                                    Margin="0,0,15,0">
                                 <StackPanel>
-                                    <TextBlock Text="🏠" FontSize="32" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Tổng số phòng" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding TotalRooms}" FontSize="28" FontWeight="Bold" Foreground="#5B75D4" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="🏠"
+                                               FontSize="32"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Tổng số phòng"
+                                               FontSize="14"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,5,0,0"/>
+                                    <TextBlock Text="24"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#5B75D4"
+                                               HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
 
                             <!-- Card: Phòng đã thuê -->
-                            <Border Grid.Column="1" Style="{StaticResource StatCardStyle}" Margin="5,0,10,0">
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource StatCardStyle}"
+                                    Margin="5,0,10,0">
                                 <StackPanel>
-                                    <TextBlock Text="✅" FontSize="32" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Phòng đã thuê" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding OccupiedRooms}" FontSize="28" FontWeight="Bold" Foreground="#28A745" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="✅"
+                                               FontSize="32"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Phòng đã thuê"
+                                               FontSize="14"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,5,0,0"/>
+                                    <TextBlock Text="18"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#28A745"
+                                               HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
 
                             <!-- Card: Phòng trống -->
-                            <Border Grid.Column="2" Style="{StaticResource StatCardStyle}" Margin="5,0,10,0">
+                            <Border Grid.Column="2"
+                                    Style="{StaticResource StatCardStyle}"
+                                    Margin="5,0,10,0">
                                 <StackPanel>
-                                    <TextBlock Text="🆓" FontSize="32" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Phòng trống" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding EmptyRooms}" FontSize="28" FontWeight="Bold" Foreground="#FFC107" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="🆓"
+                                               FontSize="32"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Phòng trống"
+                                               FontSize="14"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,5,0,0"/>
+                                    <TextBlock Text="6"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#FFC107"
+                                               HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
 
                             <!-- Card: Tổng khách thuê -->
-                            <Border Grid.Column="3" Style="{StaticResource StatCardStyle}" Margin="5,0,0,0">
+                            <Border Grid.Column="3"
+                                    Style="{StaticResource StatCardStyle}"
+                                    Margin="5,0,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="👥" FontSize="32" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Tổng khách thuê" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" Margin="0,5,0,0"/>
-                                    <TextBlock Text="{Binding TotalTenants}" FontSize="28" FontWeight="Bold" Foreground="#17A2B8" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="👥"
+                                               FontSize="32"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Tổng khách thuê"
+                                               FontSize="14"
+                                               Foreground="Gray"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,5,0,0"/>
+                                    <TextBlock Text="32"
+                                               FontSize="28"
+                                               FontWeight="Bold"
+                                               Foreground="#17A2B8"
+                                               HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -348,95 +399,141 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- Biểu đồ và bảng thống kê -->
-                            <Border Grid.Column="0" Style="{StaticResource StatCardStyle}" Margin="0,0,15,0">
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource StatCardStyle}"
+                                    Margin="0,0,15,0">
                                 <StackPanel>
-                                    <TextBlock Text="📈 Thống kê doanh thu tháng này" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,20"/>
-                                    <Border Background="#F8F9FA" CornerRadius="8" Height="200" Margin="0,0,0,20">
-                                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                            <TextBlock Text="📊" FontSize="48" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="Biểu đồ doanh thu" FontSize="16" Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                                            <TextBlock Text="(Sẽ được tích hợp biểu đồ thực tế)" FontSize="12" Foreground="Gray" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="📈 Thống kê doanh thu tháng này"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="#333"
+                                               Margin="0,0,0,20"/>
+
+                                    <!-- Giả lập biểu đồ -->
+                                    <Border Background="#F8F9FA"
+                                            CornerRadius="8"
+                                            Height="200"
+                                            Margin="0,0,0,20">
+                                        <StackPanel VerticalAlignment="Center"
+                                                    HorizontalAlignment="Center">
+                                            <TextBlock Text="📊"
+                                                       FontSize="48"
+                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="Biểu đồ doanh thu"
+                                                       FontSize="16"
+                                                       Foreground="Gray"
+                                                       HorizontalAlignment="Center"
+                                                       Margin="0,10,0,0"/>
+                                            <TextBlock Text="(Sẽ được tích hợp biểu đồ thực tế)"
+                                                       FontSize="12"
+                                                       Foreground="Gray"
+                                                       HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
+
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="*"/>
                                         </Grid.ColumnDefinitions>
+
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="Doanh thu tháng này" FontSize="14" Foreground="Gray"/>
-                                            <TextBlock Text="{Binding MonthlyRevenue, StringFormat='N0 VNĐ'}" FontSize="20" FontWeight="Bold" Foreground="#28A745"/>
+                                            <TextBlock Text="Doanh thu tháng này"
+                                                       FontSize="14"
+                                                       Foreground="Gray"/>
+                                            <TextBlock Text="45,000,000 VNĐ"
+                                                       FontSize="20"
+                                                       FontWeight="Bold"
+                                                       Foreground="#28A745"/>
                                         </StackPanel>
+
                                         <StackPanel Grid.Column="1">
-                                            <TextBlock Text="Tăng trưởng" FontSize="14" Foreground="Gray"/>
-                                            <TextBlock Text="{Binding GrowthRate, StringFormat='+{0:F1}%'}" FontSize="20" FontWeight="Bold" Foreground="#28A745"/>
+                                            <TextBlock Text="Tăng trưởng"
+                                                       FontSize="14"
+                                                       Foreground="Gray"/>
+                                            <TextBlock Text="+12.5%"
+                                                       FontSize="20"
+                                                       FontWeight="Bold"
+                                                       Foreground="#28A745"/>
                                         </StackPanel>
                                     </Grid>
                                 </StackPanel>
                             </Border>
 
                             <!-- Thông báo và hoạt động gần đây -->
-                            <Border Grid.Column="1" Style="{StaticResource StatCardStyle}">
+                            <Border Grid.Column="1"
+                                    Style="{StaticResource StatCardStyle}">
                                 <StackPanel>
-                                    <TextBlock Text="🔔 Thông báo" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
-                                    <ItemsControl ItemsSource="{Binding Notifications}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border CornerRadius="6" Padding="10" Margin="0,0,0,10">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Info">
-                                                                    <Setter Property="Background" Value="#E3F2FD"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Warning">
-                                                                    <Setter Property="Background" Value="#FFF3E0"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Success">
-                                                                    <Setter Property="Background" Value="#E8F5E8"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding Type}" Value="Error">
-                                                                    <Setter Property="Background" Value="#FFEBEE"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Border.Style>
-                                                    <StackPanel>
-                                                        <TextBlock Text="{Binding Title}" FontSize="12" FontWeight="SemiBold">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding Type}" Value="Info">
-                                                                            <Setter Property="Foreground" Value="#1976D2"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Type}" Value="Warning">
-                                                                            <Setter Property="Foreground" Value="#F57C00"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Type}" Value="Success">
-                                                                            <Setter Property="Foreground" Value="#388E3C"/>
-                                                                        </DataTrigger>
-                                                                        <DataTrigger Binding="{Binding Type}" Value="Error">
-                                                                            <Setter Property="Foreground" Value="#D32F2F"/>
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                        <TextBlock Text="{Binding Message}" FontSize="11" Foreground="#666"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                    <Button Content="Xem tất cả" Style="{StaticResource PrimaryButtonStyle}" Margin="0,15,0,0" Command="{Binding ViewAllNotificationsCommand}"/>
+                                    <TextBlock Text="🔔 Thông báo"
+                                               FontSize="18"
+                                               FontWeight="Bold"
+                                               Foreground="#333"
+                                               Margin="0,0,0,15"/>
+
+                                    <StackPanel>
+                                        <Border Background="#E3F2FD"
+                                                CornerRadius="6"
+                                                Padding="10"
+                                                Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="Hợp đồng sắp hết hạn"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#1976D2"/>
+                                                <TextBlock Text="3 hợp đồng sẽ hết hạn trong 7 ngày tới"
+                                                           FontSize="11"
+                                                           Foreground="#666"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Background="#FFF3E0"
+                                                CornerRadius="6"
+                                                Padding="10"
+                                                Margin="0,0,0,10">
+                                            <StackPanel>
+                                                <TextBlock Text="Phòng trống"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#F57C00"/>
+                                                <TextBlock Text="Phòng 201, 305 cần dọn dẹp"
+                                                           FontSize="11"
+                                                           Foreground="#666"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Border Background="#E8F5E8"
+                                                CornerRadius="6"
+                                                Padding="10">
+                                            <StackPanel>
+                                                <TextBlock Text="Thanh toán mới"
+                                                           FontSize="12"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#388E3C"/>
+                                                <TextBlock Text="Phòng 102 đã thanh toán tiền thuê"
+                                                           FontSize="11"
+                                                           Foreground="#666"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <Button Content="Xem tất cả"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Margin="0,15,0,0"
+                                            Click="ViewAllNotifications_Click"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
 
                         <!-- Các hành động nhanh -->
-                        <Border Style="{StaticResource StatCardStyle}" Margin="0,30,0,0">
+                        <Border Style="{StaticResource StatCardStyle}"
+                                Margin="0,30,0,0">
                             <StackPanel>
-                                <TextBlock Text="⚡ Hành động nhanh" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,20"/>
+                                <TextBlock Text="⚡ Hành động nhanh"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="#333"
+                                           Margin="0,0,0,20"/>
+
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -444,10 +541,27 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Content="➕ Thêm phòng" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,10,0" Command="{Binding AddRoomCommand}"/>
-                                    <Button Grid.Column="1" Content="👤 Thêm khách" Style="{StaticResource PrimaryButtonStyle}" Margin="5,0,5,0" Command="{Binding AddTenantCommand}"/>
-                                    <Button Grid.Column="2" Content="💰 Tạo hóa đơn" Style="{StaticResource PrimaryButtonStyle}" Margin="5,0,5,0" Command="{Binding CreateBillCommand}"/>
-                                    <Button Grid.Column="3" Content="📋 Hợp đồng mới" Style="{StaticResource PrimaryButtonStyle}" Margin="10,0,0,0" Command="{Binding NewContractCommand}"/>
+
+                                    <Button Grid.Column="0"
+                                            Content="➕ Thêm phòng"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Margin="0,0,10,0"
+                                            Click="AddRoom_Click"/>
+                                    <Button Grid.Column="1"
+                                            Content="👤 Thêm khách"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Margin="5,0,5,0"
+                                            Click="AddTenant_Click"/>
+                                    <Button Grid.Column="2"
+                                            Content="💰 Tạo hóa đơn"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Margin="5,0,5,0"
+                                            Click="CreateBill_Click"/>
+                                    <Button Grid.Column="3"
+                                            Content="📋 Hợp đồng mới"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Margin="10,0,0,0"
+                                            Click="NewContract_Click"/>
                                 </Grid>
                             </StackPanel>
                         </Border>

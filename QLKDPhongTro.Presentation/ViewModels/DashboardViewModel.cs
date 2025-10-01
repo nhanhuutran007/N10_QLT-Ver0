@@ -80,7 +80,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToRooms()
         {
-            var rentedRoomWindow = new RentedRoomWindow();
+            var rentedRoomWindow = new RoomManagementWindow();
             rentedRoomWindow.Show();
             // Close the current dashboard window
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
