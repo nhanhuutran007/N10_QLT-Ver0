@@ -4,9 +4,6 @@ using QLKDPhongTro.DataLayer.Models;
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
-    /// <summary>
-    /// Interface cho User Repository
-    /// </summary>
     public interface IUserRepository
     {
         Task<List<User>> GetAllAsync();

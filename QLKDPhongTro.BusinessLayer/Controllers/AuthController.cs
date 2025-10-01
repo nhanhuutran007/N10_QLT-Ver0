@@ -1,8 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.Utils;
+using System;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
@@ -24,7 +25,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public static User? CurrentUser { get; set; }
 
         /// <summary>
-        /// Xử lý đăng nhập
+        /// Xử lý đăng nhập thường
         /// </summary>
         public async Task<LoginResult> LoginAsync(string tenDangNhap, string matKhau)
         {
@@ -40,6 +41,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 }
 
                 var user = await _userRepository.LoginAsync(tenDangNhap, matKhau);
+
                 if (user != null)
                 {
                     CurrentUser = user;
@@ -148,53 +150,97 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         private ValidationResult ValidateRegistrationInput(string tenDangNhap, string email, string matKhau, string xacNhanMatKhau)
         {
             if (string.IsNullOrEmpty(tenDangNhap))
-            {
                 return new ValidationResult { IsValid = false, Message = "Vui lòng nhập tên đăng nhập!" };
-            }
 
             if (string.IsNullOrEmpty(email))
-            {
                 return new ValidationResult { IsValid = false, Message = "Vui lòng nhập email!" };
-            }
 
             if (string.IsNullOrEmpty(matKhau))
-            {
                 return new ValidationResult { IsValid = false, Message = "Vui lòng nhập mật khẩu!" };
-            }
 
             if (matKhau != xacNhanMatKhau)
-            {
                 return new ValidationResult { IsValid = false, Message = "Mật khẩu xác nhận không khớp!" };
-            }
 
             if (!ValidatePassword(matKhau))
-            {
                 return new ValidationResult { IsValid = false, Message = "Mật khẩu không đáp ứng yêu cầu!" };
-            }
 
             return new ValidationResult { IsValid = true };
         }
 
         /// <summary>
-        /// Validate mật khẩu
+        /// Validate mật khẩu (>=6 ký tự, có số hoặc chữ hoa)
         /// </summary>
         private bool ValidatePassword(string password)
         {
-            if (password.Length < 6)
-                return false;
+            if (password.Length < 6) return false;
 
             bool hasUpper = false;
             bool hasDigit = false;
 
             foreach (char c in password)
             {
-                if (char.IsUpper(c))
-                    hasUpper = true;
-                if (char.IsDigit(c))
-                    hasDigit = true;
+                if (char.IsUpper(c)) hasUpper = true;
+                if (char.IsDigit(c)) hasDigit = true;
             }
 
             return hasUpper || hasDigit;
+        }
+
+        /// <summary>
+        /// Đăng nhập có OTP
+        /// </summary>
+        public async Task<LoginResult> LoginWithOtpAsync(string tenDangNhap, string matKhau)
+        {
+            try
+            {
+                var user = await _userRepository.LoginAsync(tenDangNhap, matKhau);
+
+                if (user != null)
+                {
+                    // Sinh OTP
+                    var otp = OtpHelper.GenerateOtp();
+
+                    // Gửi email
+                    await EmailService.SendEmailAsync(
+                        user.Email,
+                        "Mã OTP đăng nhập",
+                        $"Xin chào {user.TenDangNhap},\n\nMã OTP của bạn là: {otp}\nCó hiệu lực trong 5 phút."
+                    );
+
+                    CurrentUser = user;
+
+                    return new LoginResult
+                    {
+                        IsSuccess = true,
+                        Message = "Mật khẩu đúng. OTP đã được gửi tới email của bạn.",
+                        User = user
+                    };
+                }
+                else
+                {
+                    return new LoginResult
+                    {
+                        IsSuccess = false,
+                        Message = "Tên đăng nhập hoặc mật khẩu không đúng!"
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new LoginResult
+                {
+                    IsSuccess = false,
+                    Message = $"Lỗi đăng nhập: {ex.Message}"
+                };
+            }
+        }
+
+        /// <summary>
+        /// Xác thực OTP nhập từ form
+        /// </summary>
+        public bool VerifyOtp(string otp)
+        {
+            return OtpHelper.VerifyOtp(otp);
         }
     }
 }
