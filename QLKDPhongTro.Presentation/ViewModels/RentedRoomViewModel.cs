@@ -71,10 +71,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             NewRoom = new RentedRoomDto();
             IsAddEditPanelVisible = true;
             var window = new AddRoomWindow(this);
-            if (window.ShowDialog() == true)
-            {
-                IsAddEditPanelVisible = false;
-            }
+            window.Owner = Application.Current.MainWindow; // thêm dòng này cho chắc
+            window.ShowDialog();
+
         }
 
         [RelayCommand]

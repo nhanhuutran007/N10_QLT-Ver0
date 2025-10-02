@@ -12,8 +12,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         public RoomManagementWindow()
         {
             InitializeComponent();
-            _viewModel = (RentedRoomViewModel)DataContext;
-            Loaded += async (s, e) => await _viewModel.LoadRoomsCommand.ExecuteAsync(null);
+            DataContext = new RentedRoomViewModel(); // Luôn lấy ViewModel mới nhất
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

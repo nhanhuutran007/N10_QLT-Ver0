@@ -20,10 +20,8 @@
     Background="Transparent"
     MouseLeftButtonDown="Window_MouseLeftButtonDown"
     DataContext="{Binding Source={StaticResource ViewModel}}">
-    
+
     <Window.Resources>
-        <local:RentedRoomViewModel x:Key="ViewModel"/>
-        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
 
         <!-- Style cho các nút điều khiển cửa sổ -->
         <Style TargetType="{x:Type Button}" x:Key="WindowControlButton">
