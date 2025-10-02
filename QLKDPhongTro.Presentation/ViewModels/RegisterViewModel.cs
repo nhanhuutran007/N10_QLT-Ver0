@@ -33,35 +33,86 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private bool _isLoading = false;
 
         [RelayCommand]
-        private async Task RegisterAsync()
+        public async Task RegisterAsync()
         {
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Email) ||
                 string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!");
+                MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             if (Password != ConfirmPassword)
             {
-                MessageBox.Show("Mật khẩu xác nhận không khớp!");
+                MessageBox.Show("Mật khẩu xác nhận không khớp!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Kiểm tra định dạng email
+            if (!Email.Contains("@") || !Email.Contains("."))
+            {
+                MessageBox.Show("Vui lòng nhập địa chỉ email hợp lệ!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Kiểm tra điều kiện mật khẩu
+            if (Password.Length < 6)
+            {
+                MessageBox.Show("Mật khẩu phải có ít nhất 6 ký tự!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             IsLoading = true;
             try
             {
-                bool otpSent = await _userRepository.SendOtpToEmailAsync(Email);
-                if (!otpSent)
+                // Tạo tài khoản mới trực tiếp
+                var newUser = new User
                 {
-                    MessageBox.Show("Gửi OTP thất bại. Vui lòng thử lại!");
-                    return;
-                }
+                    TenDangNhap = Username,
+                    Email = Email,
+                    MatKhau = Password,
+                    SoDienThoai = "" // Có thể thêm trường này nếu cần
+                };
 
-                // Mở cửa sổ OTP
-                var otpWindow = new OtpWindow(Username, Email, Password);
-                otpWindow.Owner = Application.Current.MainWindow;
-                otpWindow.ShowDialog();
+                bool accountCreated = await _userRepository.RegisterAsync(newUser);
+                
+                if (accountCreated)
+                {
+                    // Hiển thị thông báo thành công
+                    MessageBox.Show("🎉 Tài khoản đã được tạo thành công!\n\n" +
+                                  $"Tên đăng nhập: {Username}\n" +
+                                  $"Email: {Email}\n\n" +
+                                  "Bạn có thể đăng nhập ngay bây giờ.", 
+                                  "Đăng ký thành công", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Information);
+
+                    // Chuyển về màn hình đăng nhập
+                    var loginWindow = new LoginWindow();
+                    loginWindow.Show();
+                    
+                    // Đóng cửa sổ đăng ký
+                    Application.Current.MainWindow?.Close();
+                    Application.Current.MainWindow = loginWindow;
+                }
+                else
+                {
+                    MessageBox.Show("❌ Không thể tạo tài khoản.\n\n" +
+                                  "Có thể tên đăng nhập hoặc email đã tồn tại.\n" +
+                                  "Vui lòng thử lại với thông tin khác.", 
+                                  "Lỗi tạo tài khoản", 
+                                  MessageBoxButton.OK, 
+                                  MessageBoxImage.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tạo tài khoản: {ex.Message}", "Lỗi", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {

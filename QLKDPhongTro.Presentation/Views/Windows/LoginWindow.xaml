@@ -37,43 +37,20 @@
             
         </Grid.Resources>
 
-        <!-- Custom Window Buttons - Đặt ở góc phải trên cùng của toàn cửa sổ -->
-        <Canvas HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Panel.ZIndex="1000">
-            <StackPanel Orientation="Horizontal"
-                        Canvas.Right="8"
-                        Canvas.Top="8">
+        <!-- CÁC NÚT ĐIỀU KHIỂN CỬA SỔ -->
+        <Canvas Grid.ColumnSpan="2" HorizontalAlignment="Right" VerticalAlignment="Top" Panel.ZIndex="1000">
+            <StackPanel Orientation="Horizontal" Canvas.Right="16" Canvas.Top="16">
                 <!-- Minimize Button -->
-                <Button Width="40"
-                        Height="32"
-                        Click="Minimize_Click"
-                        Background="Transparent"
-                        BorderThickness="0">
-                    <Path Data="M6,16 L34,16"
-                          Stroke="#586A84"
-                          StrokeThickness="2"/>
+                <Button Width="40" Height="32" Click="Minimize_Click" Background="Transparent" BorderThickness="0">
+                    <Path Data="M6,16 L34,16" Stroke="#586A84" StrokeThickness="2"/>
                 </Button>
                 <!-- Maximize/Restore Button -->
-                <Button x:Name="MaximizeButton"
-                        Width="40"
-                        Height="32"
-                        Click="MaximizeRestore_Click"
-                        Background="Transparent"
-                        BorderThickness="0">
-                    <Path Data="M8,8 L32,8 L32,24 L8,24 Z"
-                          Stroke="#586A84"
-                          StrokeThickness="2"/>
+                <Button x:Name="MaximizeButton" Width="40" Height="32" Click="MaximizeRestore_Click" Background="Transparent" BorderThickness="0">
+                    <Path Data="M8,8 L32,8 L32,24 L8,24 Z" Stroke="#586A84" StrokeThickness="2"/>
                 </Button>
                 <!-- Close Button -->
-                <Button Width="40"
-                        Height="32"
-                        Click="Close_Click"
-                        Background="Transparent"
-                        BorderThickness="0">
-                    <Path Data="M10,10 L30,22 M30,10 L10,22"
-                          Stroke="#E74C3C"
-                          StrokeThickness="2"/>
+                <Button Width="40" Height="32" Click="Close_Click" Background="Transparent" BorderThickness="0">
+                    <Path Data="M10,10 L30,22 M30,10 L10,22" Stroke="#E74C3C" StrokeThickness="2"/>
                 </Button>
             </StackPanel>
         </Canvas>
