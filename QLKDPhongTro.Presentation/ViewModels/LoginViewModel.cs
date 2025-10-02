@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using QLKDPhongTro.Presentation.Views.Windows;
@@ -46,7 +47,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                var result = await _authController.LoginAsync(Username, Password);
+                // ✅ Gọi login có OTP
+                var result = await _authController.LoginWithOtpAsync(Username, Password);
 
                 if (result.IsSuccess)
                 {
@@ -54,21 +56,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     MessageBox.Show(result.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    var dashboardWindow = new DashWindow()
-                    {
-                        DataContext = new DashboardViewModel()
-                    };
+                    // ✅ Mở form OTP
+                    var otpWindow = new OtpWindow(Username, "", Password);
+                    otpWindow.Show();
 
-                    dashboardWindow.Show();
-
-                    // Đóng cửa sổ login cũ và gán MainWindow mới
+                    // Đóng cửa sổ login
                     Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = dashboardWindow;
+                    Application.Current.MainWindow = otpWindow;
                 }
                 else
                 {
                     MessageBox.Show(result.Message, "Lỗi",
                         MessageBoxButton.OK, MessageBoxImage.Error);
+                    
+                    // Reset button state khi đăng nhập thất bại
+                    ResetLoginButtonState();
                 }
             }
             catch (Exception ex)
@@ -79,6 +81,26 @@ namespace QLKDPhongTro.Presentation.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        // Reset button state khi đăng nhập thất bại
+        private void ResetLoginButtonState()
+        {
+            try
+            {
+                // Tìm LoginWindow trong Application.Current.Windows
+                var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                if (loginWindow != null)
+                {
+                    // Gọi method reset button từ LoginWindow
+                    loginWindow.ResetLoginButton();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error nếu cần
+                System.Diagnostics.Debug.WriteLine($"Error resetting login button: {ex.Message}");
             }
         }
 

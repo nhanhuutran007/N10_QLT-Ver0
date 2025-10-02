@@ -22,6 +22,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
+        private void Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Không drag khi click vào các nút window hoặc các control khác
+            if (e.OriginalSource is Button || e.OriginalSource is TextBox || e.OriginalSource is PasswordBox)
+                return;
+                
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
         // THÊM 3 PHƯƠNG THỨC NÀY VÀO
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {

@@ -59,8 +59,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
 
                 // Mở cửa sổ OTP
-                var otpWindow = new OtpWindow();
-                otpWindow.DataContext = new OtpViewModel(_userRepository, Username, Email, Password);
+                var otpWindow = new OtpWindow(Username, Email, Password);
                 otpWindow.Owner = Application.Current.MainWindow;
                 otpWindow.ShowDialog();
             }

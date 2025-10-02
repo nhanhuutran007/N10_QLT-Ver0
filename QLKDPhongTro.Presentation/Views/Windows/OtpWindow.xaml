@@ -1,7 +1,7 @@
 ﻿<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.OtpWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Xác thực OTP" Height="250" Width="400"
+        Title="Xác thực OTP" Height="284" Width="400"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
         Background="#F5F5F5">
@@ -84,12 +84,11 @@
                          Height="40"
                          Margin="0,0,0,20"
                          HorizontalAlignment="Center"/>
-
                 <Button Content="Xác nhận" 
                         Command="{Binding VerifyOtpCommand}" 
                         Width="150" 
                         Height="40"
-                        HorizontalAlignment="Center"/>
+                        />
             </StackPanel>
         </Border>
     </Grid>

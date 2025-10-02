@@ -7,14 +7,13 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class OtpWindow : Window
     {
-        public OtpWindow()
+        public OtpWindow(string username, string email, string password)
         {
             InitializeComponent();
             
-            // Khởi tạo AuthController và ViewModel
+            // Khởi tạo UserRepository và ViewModel
             var userRepository = new UserRepository();
-            var authController = new AuthController(userRepository);
-            this.DataContext = new OtpViewModel(authController);
+            this.DataContext = new OtpViewModel(userRepository, username, email, password);
         }
     }
 }
