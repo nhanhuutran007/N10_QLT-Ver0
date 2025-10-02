@@ -1,4 +1,3 @@
-using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Input;
@@ -12,7 +11,13 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         public RoomManagementWindow()
         {
             InitializeComponent();
-            DataContext = new RentedRoomViewModel(); // Luôn lấy ViewModel mới nhất
+
+            // Dùng cùng một instance ViewModel cho DataContext và _viewModel
+            _viewModel = new RentedRoomViewModel();
+            DataContext = _viewModel;
+
+            // Load dữ liệu khi mở form
+            Loaded += async (s, e) => await _viewModel.LoadRoomsAsync();
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -21,9 +26,14 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 DragMove();
         }
 
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+            => WindowState = WindowState.Minimized;
+
+        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
+            => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+            => Close();
 
         private void ViewRoom_Click(object sender, RoutedEventArgs e)
         {
@@ -39,18 +49,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void RoomCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.DataContext is RentedRoomDto room)
+            if (sender is FrameworkElement element && element.DataContext is BusinessLayer.DTOs.RentedRoomDto room)
                 _viewModel.SelectedRoom = room;
         }
 
         private void SidebarControl_MenuItemClicked(object sender, string menuItem)
         {
-            // Xử lý chuyển trang (nếu cần)
+            // TODO: xử lý chuyển trang
         }
 
         private void SidebarControl_LogoutClicked(object sender, RoutedEventArgs e)
         {
-            // Xử lý đăng xuất (nếu cần)
             Close();
         }
     }

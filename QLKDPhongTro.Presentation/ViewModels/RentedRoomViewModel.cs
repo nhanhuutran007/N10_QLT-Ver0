@@ -40,8 +40,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private RentedRoomDto? _selectedRoom;
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private string _statusMessage = string.Empty;
-        [ObservableProperty] private bool _isAddEditPanelVisible;
         [ObservableProperty] private RentedRoomDto _newRoom = new();
+
+        public async Task LoadRoomsAsync()
+        {
+            Rooms.Clear();
+            var rooms = await _rentedRoomController.GetAllRoomsAsync();
+            foreach (var room in rooms)
+                Rooms.Add(room);
+        }
 
         [RelayCommand]
         private async Task LoadRooms()
@@ -69,11 +76,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private void ShowAddRoomPanel()
         {
             NewRoom = new RentedRoomDto();
-            IsAddEditPanelVisible = true;
-            var window = new AddRoomWindow(this);
-            window.Owner = Application.Current.MainWindow; // thêm dòng này cho chắc
+            var window = new RoomManagementWindow
+            {
+                DataContext = this,
+                Owner = Application.Current.MainWindow
+            };
             window.ShowDialog();
-
         }
 
         [RelayCommand]
@@ -84,6 +92,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show("Vui lòng chọn phòng cần sửa.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
+
             NewRoom = new RentedRoomDto
             {
                 MaPhong = SelectedRoom.MaPhong,
@@ -94,12 +103,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 GhiChu = SelectedRoom.GhiChu,
                 SoGiuong = SelectedRoom.SoGiuong
             };
-            IsAddEditPanelVisible = true;
-            var window = new EditRoomWindow(this);
-            if (window.ShowDialog() == true)
+
+            var window = new RoomManagementWindow
             {
-                IsAddEditPanelVisible = false;
-            }
+                DataContext = this,
+                Owner = Application.Current.MainWindow
+            };
+            window.ShowDialog();
         }
 
         [RelayCommand]
@@ -150,8 +160,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         Rooms.Add(NewRoom);
                         StatusMessage = msg;
                         MessageBox.Show(msg, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                        IsAddEditPanelVisible = false;
-                        Application.Current.Windows.OfType<AddRoomWindow>().FirstOrDefault()?.Close();
+                        Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
                     }
                     else
                     {
@@ -175,8 +184,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         }
                         StatusMessage = "Cập nhật phòng thành công.";
                         MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                        IsAddEditPanelVisible = false;
-                        Application.Current.Windows.OfType<EditRoomWindow>().FirstOrDefault()?.Close();
+                        Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
                     }
                     else
                     {
@@ -199,10 +207,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void CancelAddEdit()
         {
-            IsAddEditPanelVisible = false;
             NewRoom = new RentedRoomDto();
-            Application.Current.Windows.OfType<AddRoomWindow>().FirstOrDefault()?.Close();
-            Application.Current.Windows.OfType<EditRoomWindow>().FirstOrDefault()?.Close();
+            Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
         }
 
         [RelayCommand]
