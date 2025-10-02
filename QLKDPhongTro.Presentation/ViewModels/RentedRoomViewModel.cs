@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Threading;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -41,13 +41,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private string _statusMessage = string.Empty;
         [ObservableProperty] private RentedRoomDto _newRoom = new();
+        [ObservableProperty] private string _searchText = string.Empty;
 
         public async Task LoadRoomsAsync()
         {
             Rooms.Clear();
             var rooms = await _rentedRoomController.GetAllRoomsAsync();
-            foreach (var room in rooms)
-                Rooms.Add(room);
+            if (rooms != null)
+            {
+                foreach (var room in rooms)
+                    Rooms.Add(room);
+            }
         }
 
         [RelayCommand]
@@ -57,7 +61,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 var list = await _rentedRoomController.GetAllRoomsAsync();
-                Rooms = new ObservableCollection<RentedRoomDto>(list ?? new());
+                Rooms = list != null ? new ObservableCollection<RentedRoomDto>(list) : new ObservableCollection<RentedRoomDto>();
                 StatusMessage = "Tải danh sách phòng trọ thành công.";
                 _statusTimer.Start();
             }
@@ -113,9 +117,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
+        private async Task ViewRoom()
+        {
+            if (SelectedRoom == null)
+            {
+                MessageBox.Show("Vui lòng chọn phòng để xem.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var viewRoomWindow = new ViewRoomWindow(this);
+            viewRoomWindow.ShowDialog();
+        }
+
+        [RelayCommand]
         private async Task SaveRoom()
         {
-            // Validation
             if (NewRoom.MaPhong <= 0)
             {
                 MessageBox.Show("Mã phòng phải là số nguyên dương.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -253,6 +269,39 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
+        private async Task SearchRooms()
+        {
+            try
+            {
+                IsLoading = true;
+                var list = await _rentedRoomController.GetAllRoomsAsync();
+                if (list != null)
+                {
+                    var filteredList = string.IsNullOrEmpty(SearchText)
+                        ? list
+                        : list.Where(r => r.TenPhong.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                          r.MaPhong.ToString().Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+                    Rooms = new ObservableCollection<RentedRoomDto>(filteredList);
+                }
+                else
+                {
+                    Rooms = new ObservableCollection<RentedRoomDto>();
+                }
+                StatusMessage = "Tìm kiếm phòng thành công.";
+                _statusTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Lỗi khi tìm kiếm phòng: {ex.Message}";
+                MessageBox.Show(StatusMessage, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        [RelayCommand]
         private async Task UpdateStatus(string newStatus)
         {
             if (SelectedRoom == null)
@@ -286,6 +335,27 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        [RelayCommand]
+        private void MinimizeWindow()
+        {
+            Application.Current.MainWindow.WindowState = WindowState.Minimized;
+        }
+
+        [RelayCommand]
+        private void MaximizeWindow()
+        {
+            Application.Current.MainWindow.WindowState =
+                Application.Current.MainWindow.WindowState == WindowState.Maximized
+                ? WindowState.Normal
+                : WindowState.Maximized;
+        }
+
+        [RelayCommand]
+        private void CloseWindow()
+        {
+            Application.Current.MainWindow.Close();
         }
     }
 }

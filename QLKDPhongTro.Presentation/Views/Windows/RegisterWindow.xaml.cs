@@ -22,6 +22,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
+        private void Grid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // Không drag khi click vào các nút window hoặc các control khác
+            if (e.OriginalSource is Button || e.OriginalSource is TextBox || e.OriginalSource is PasswordBox)
+                return;
+                
+            if (e.ButtonState == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
         // THÊM 3 PHƯƠNG THỨC NÀY VÀO
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -165,7 +177,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         }
 
         // Xử lý đăng ký
-        private void RegisterButton_Click(object sender, RoutedEventArgs e)
+        private async void RegisterButton_Click(object sender, RoutedEventArgs e)
         {
             // Lấy thông tin từ các trường
             var emailTextBox = this.FindName("EmailTextBox") as TextBox;
@@ -193,38 +205,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             else if (confirmPasswordTextBox != null)
                 confirmPassword = confirmPasswordTextBox.Text;
 
-            // Kiểm tra thông tin đăng ký
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(username) || 
-                string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword))
+            // Cập nhật ViewModel với dữ liệu từ UI
+            var viewModel = this.DataContext as RegisterViewModel;
+            if (viewModel != null)
             {
-                MessageBox.Show("Vui lòng nhập đầy đủ tất cả thông tin!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                viewModel.Email = email;
+                viewModel.Username = username;
+                viewModel.Password = password;
+                viewModel.ConfirmPassword = confirmPassword;
+                
+                // Gọi phương thức đăng ký từ ViewModel
+                await viewModel.RegisterAsync();
             }
-
-            // Kiểm tra định dạng email
-            if (!email.Contains("@") || !email.Contains("."))
-            {
-                MessageBox.Show("Vui lòng nhập địa chỉ email hợp lệ!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Kiểm tra mật khẩu khớp nhau
-            if (password != confirmPassword)
-            {
-                MessageBox.Show("Mật khẩu và xác nhận mật khẩu không khớp!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Kiểm tra điều kiện mật khẩu
-            if (!ValidatePassword(password))
-            {
-                MessageBox.Show("Mật khẩu không đáp ứng các điều kiện yêu cầu!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // Hiển thị thông báo đăng ký
-            MessageBox.Show($"Email: {email}\nTên đăng nhập: {username}\nMật khẩu: {password}\n\nĐang tạo tài khoản...", 
-                           "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         // Xử lý thay đổi mật khẩu

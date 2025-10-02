@@ -21,8 +21,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Thêm responsive behavior
             this.SizeChanged += LoginWindow_SizeChanged;
 
-            // Focus vào email field khi load
-            this.Loaded += (s, e) => EmailTextBox?.Focus();
+            // Focus vào email field khi load và reset button state
+            this.Loaded += (s, e) => 
+            {
+                EmailTextBox?.Focus();
+                ResetLoginButton();
+            };
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -216,6 +220,28 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 MessageBox.Show($"Lỗi khi đăng nhập: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 // Re-enable button nếu có lỗi
                 LoginButton.IsEnabled = true;
+            }
+        }
+
+        // Reset login button state
+        public void ResetLoginButton()
+        {
+            try
+            {
+                if (LoginButton != null)
+                {
+                    LoginButton.IsEnabled = true;
+                }
+
+                if (DataContext is LoginViewModel viewModel)
+                {
+                    viewModel.IsLoading = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error nếu cần
+                System.Diagnostics.Debug.WriteLine($"Error resetting login button: {ex.Message}");
             }
         }
 

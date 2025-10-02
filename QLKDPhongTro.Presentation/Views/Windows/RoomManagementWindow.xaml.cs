@@ -1,23 +1,16 @@
-using QLKDPhongTro.Presentation.ViewModels;
 using System.Windows;
 using System.Windows.Input;
+using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class RoomManagementWindow : Window
     {
-        private readonly RentedRoomViewModel _viewModel;
-
         public RoomManagementWindow()
         {
             InitializeComponent();
-
-            // Dùng cùng một instance ViewModel cho DataContext và _viewModel
-            _viewModel = new RentedRoomViewModel();
-            DataContext = _viewModel;
-
-            // Load dữ liệu khi mở form
-            Loaded += async (s, e) => await _viewModel.LoadRoomsAsync();
+            // Set DataContext here
+            this.DataContext = new RentedRoomViewModel();
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -26,41 +19,57 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 DragMove();
         }
 
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState.Minimized;
-
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-            => Close();
-
-        private void ViewRoom_Click(object sender, RoutedEventArgs e)
+        // Handle individual sidebar button clicks
+        private void OverviewButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_viewModel.SelectedRoom == null)
-            {
-                MessageBox.Show("Vui lòng chọn phòng để xem.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            // Handle overview navigation
+        }
 
-            var viewRoomWindow = new ViewRoomWindow(_viewModel);
-            viewRoomWindow.ShowDialog();
+        private void RoomsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Already in rooms management, do nothing or refresh
+        }
+
+        private void TenantsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to tenants management
+        }
+
+        private void InvoicesButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to invoices management
+        }
+
+        private void ContractsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to contracts management
+        }
+
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to settings
+        }
+
+        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Handle logout
+            var mainWindow = Application.Current.MainWindow;
+            if (mainWindow != this)
+            {
+                mainWindow?.Close();
+            }
+            Application.Current.Shutdown();
         }
 
         private void RoomCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (sender is FrameworkElement element && element.DataContext is BusinessLayer.DTOs.RentedRoomDto room)
-                _viewModel.SelectedRoom = room;
-        }
-
-        private void SidebarControl_MenuItemClicked(object sender, string menuItem)
-        {
-            // TODO: xử lý chuyển trang
-        }
-
-        private void SidebarControl_LogoutClicked(object sender, RoutedEventArgs e)
-        {
-            Close();
+            {
+                if (DataContext is RentedRoomViewModel viewModel)
+                {
+                    viewModel.SelectedRoom = room;
+                }
+            }
         }
     }
 }

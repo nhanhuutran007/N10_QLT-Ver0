@@ -18,10 +18,11 @@
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
-    MouseLeftButtonDown="Window_MouseLeftButtonDown"
-    DataContext="{Binding Source={StaticResource ViewModel}}">
+    MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
+        <!-- Converter for status to color -->
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
 
         <!-- Style cho các nút điều khiển cửa sổ -->
         <Style TargetType="{x:Type Button}" x:Key="WindowControlButton">
@@ -170,10 +171,7 @@
         <components:SidebarControl Grid.Column="0" 
                                   x:Name="SidebarControl"
                                   PageTitle="Quản lý phòng ở"
-                                  SelectedMenuItem="Rooms"
-                                  VerticalAlignment="Stretch"
-                                  MenuItemClicked="SidebarControl_MenuItemClicked"
-                                  LogoutClicked="SidebarControl_LogoutClicked"/>
+                                  SelectedMenuItem="Rooms"/>
 
         <!-- NỘI DUNG CHÍNH -->
         <Border Grid.Column="1" Background="#F8F9FA" CornerRadius="0,10,10,0">
@@ -199,9 +197,9 @@
 
                         <!-- Các nút điều khiển cửa sổ -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                            <Button Content="—" Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click"/>
-                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click"/>
-                            <Button Content="✕" Style="{StaticResource CloseButton}" Click="CloseButton_Click"/>
+                            <Button Content="—" Style="{StaticResource WindowControlButton}" Command="{Binding MinimizeWindowCommand}"/>
+                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Command="{Binding MaximizeWindowCommand}"/>
+                            <Button Content="✕" Style="{StaticResource CloseButton}" Command="{Binding CloseWindowCommand}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -219,11 +217,11 @@
                                     <Button Content="✏️ Sửa phòng" Style="{StaticResource ActionButtonStyle}" 
                                             Margin="0,0,10,0" Command="{Binding ShowEditRoomPanelCommand}"/>
                                     <Button Content="👁️ Xem phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Click="ViewRoom_Click"/>
+                                            Margin="0,0,10,0" Command="{Binding ViewRoomCommand}"/>
                                     <Button Content="🗑️ Xóa phòng" Style="{StaticResource ActionButtonStyle}" 
                                             Margin="0,0,10,0" Command="{Binding DeleteRoomCommand}"/>
                                 </WrapPanel>
-                                
+
                                 <!-- Tìm kiếm -->
                                 <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <Border Background="#F0F0F0" CornerRadius="6" Padding="10,8" Margin="0,0,10,0">
