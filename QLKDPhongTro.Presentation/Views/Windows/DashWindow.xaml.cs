@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Controls;
 using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -12,16 +11,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
             this.DataContext = new DashboardViewModel();
-            
+
             // Đảm bảo cửa sổ hiển thị ở giữa màn hình
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            
+
             // Thiết lập kích thước tối thiểu
             this.MinHeight = 600;
             this.MinWidth = 800;
-            
+
             // Đảm bảo cửa sổ hiển thị ở giữa màn hình sau khi load
-            this.Loaded += (s, e) => {
+            this.Loaded += (s, e) =>
+            {
                 var screenWidth = SystemParameters.PrimaryScreenWidth;
                 var screenHeight = SystemParameters.PrimaryScreenHeight;
                 this.Left = (screenWidth - this.Width) / 2;
@@ -37,7 +37,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        // Các phương thức điều khiển cửa sổ
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Application.Current.Shutdown();
@@ -45,14 +44,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void MaximizeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Normal;
-            }
-            else
-            {
-                this.WindowState = WindowState.Maximized;
-            }
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -104,9 +96,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void SidebarControl_LogoutClicked(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", 
+            var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
                 // Quay lại cửa sổ đăng nhập

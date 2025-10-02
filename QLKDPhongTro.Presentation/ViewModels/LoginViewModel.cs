@@ -1,14 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System;
+using System.Threading.Tasks;
 using System.Windows;
 using QLKDPhongTro.Presentation.Views.Windows;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.DataLayer.Repositories;
-using System.Threading.Tasks;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class LoginViewModel : ViewModelBase
+    public partial class LoginViewModel : ObservableObject
     {
         private readonly AuthController _authController;
 
@@ -30,6 +31,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private async Task Login()
         {
+            if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
+            {
+                MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!",
+                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 // Kiểm tra đang loading để tránh multiple clicks
@@ -38,15 +46,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                if (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password))
-                {
-                    MessageBox.Show("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!",
-                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                // ✅ Gọi login có OTP
-                var result = await _authController.LoginWithOtpAsync(Username, Password);
+                var result = await _authController.LoginAsync(Username, Password);
 
                 if (result.IsSuccess)
                 {
@@ -54,16 +54,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     MessageBox.Show(result.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    // ✅ Mở form OTP
-                    var otpWindow = new OtpWindow
+                    var dashboardWindow = new DashWindow()
                     {
-                        DataContext = new OtpViewModel(_authController)
+                        DataContext = new DashboardViewModel()
                     };
-                    otpWindow.Show();
 
-                    // Đóng cửa sổ login
+                    dashboardWindow.Show();
+
+                    // Đóng cửa sổ login cũ và gán MainWindow mới
                     Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = otpWindow;
+                    Application.Current.MainWindow = dashboardWindow;
                 }
                 else
                 {
@@ -88,7 +88,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             var registerWindow = new RegisterWindow();
             registerWindow.Show();
 
-            // Đóng cửa sổ đăng nhập hiện tại
             Application.Current.MainWindow?.Close();
             Application.Current.MainWindow = registerWindow;
         }

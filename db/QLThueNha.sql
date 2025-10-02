@@ -11,6 +11,7 @@ CREATE TABLE Admin (
     Email NVARCHAR(100),
     SoDienThoai NVARCHAR(15)
 );
+GO
 
 CREATE TABLE Nha (
     MaNha INT IDENTITY(1,1) PRIMARY KEY,
@@ -18,6 +19,7 @@ CREATE TABLE Nha (
     TongSoPhong INT CHECK (TongSoPhong BETWEEN 1 AND 10),
     GhiChu NVARCHAR(255)
 );
+GO
 
 CREATE TABLE Phong (
     MaPhong INT IDENTITY(1,1) PRIMARY KEY,
@@ -28,6 +30,7 @@ CREATE TABLE Phong (
     TrangThai NVARCHAR(20) CHECK (TrangThai IN (N'Trống', N'Đang thuê')),
     GhiChu NVARCHAR(255)
 );
+GO
 
 CREATE TABLE NguoiThue (
     MaNguoiThue INT IDENTITY(1,1) PRIMARY KEY,
@@ -38,6 +41,7 @@ CREATE TABLE NguoiThue (
     TrangThai NVARCHAR(20) CHECK (TrangThai IN (N'Đang ở', N'Đã trả phòng')),
     GhiChu NVARCHAR(255)
 );
+GO
 
 CREATE TABLE HopDong (
     MaHopDong INT IDENTITY(1,1) PRIMARY KEY,
@@ -49,6 +53,7 @@ CREATE TABLE HopDong (
     FileHopDong NVARCHAR(255),
     TrangThai NVARCHAR(20) CHECK (TrangThai IN (N'Hiệu lực', N'Hết hạn', N'Hủy'))
 );
+GO
 
 CREATE TABLE ThanhToan (
     MaThanhToan INT IDENTITY(1,1) PRIMARY KEY,
@@ -65,6 +70,7 @@ CREATE TABLE ThanhToan (
     TrangThaiThanhToan NVARCHAR(20) CHECK (TrangThaiThanhToan IN (N'Đã trả', N'Chưa trả')),
     NgayThanhToan DATE
 );
+GO
 
 CREATE TABLE BaoTri_SuCo (
     MaSuCo INT IDENTITY(1,1) PRIMARY KEY,
@@ -74,6 +80,7 @@ CREATE TABLE BaoTri_SuCo (
     TrangThai NVARCHAR(20) CHECK (TrangThai IN (N'Chưa xử lý', N'Đang xử lý', N'Hoàn tất')),
     ChiPhi DECIMAL(18,0) DEFAULT 0
 );
+GO
 
 CREATE TABLE TaiSanNguoiThue (
     MaTaiSan INT IDENTITY(1,1) PRIMARY KEY,
@@ -82,7 +89,9 @@ CREATE TABLE TaiSanNguoiThue (
     MoTa NVARCHAR(255),
     PhiPhuThu DECIMAL(18,0) DEFAULT 0
 );
+GO
 
+GO
 CREATE TRIGGER trg_CapNhatTrangThaiPhong
 ON HopDong
 AFTER INSERT
@@ -92,7 +101,9 @@ BEGIN
     SET TrangThai = N'Đang thuê'
     WHERE MaPhong IN (SELECT MaPhong FROM inserted);
 END;
+GO
 
+GO
 CREATE TRIGGER trg_HopDongHetHan
 ON HopDong
 AFTER UPDATE
@@ -106,10 +117,13 @@ BEGIN
         WHERE i.TrangThai = N'Hết hạn' OR i.TrangThai = N'Hủy'
     );
 END;
+GO
 
 ALTER TABLE HopDong
 ADD CONSTRAINT CK_HopDong_Ngay CHECK (NgayKetThuc > NgayBatDau);
+GO
 
+GO
 CREATE TRIGGER trg_DefaultThanhToan
 ON ThanhToan
 AFTER INSERT
@@ -120,7 +134,9 @@ BEGIN
     WHERE MaThanhToan IN (SELECT MaThanhToan FROM inserted)
       AND TrangThaiThanhToan IS NULL;
 END;
+GO
 
+GO
 CREATE PROCEDURE sp_TaoHopDong
     @MaNguoiThue INT,
     @MaPhong INT,
@@ -163,7 +179,9 @@ BEGIN
         THROW;
     END CATCH
 END;
+GO
 
+GO
 CREATE PROCEDURE sp_KetThucHopDong
     @MaHopDong INT,
     @TrangThai NVARCHAR(20)  -- 'Hết hạn' hoặc 'Hủy'
@@ -200,7 +218,9 @@ BEGIN
         THROW;
     END CATCH
 END;
+GO
 
+GO
 CREATE PROCEDURE sp_TaoThongBaoPhi
     @MaHopDong INT,
     @ThangNam CHAR(7) -- vd: '09/2025'
@@ -225,7 +245,9 @@ BEGIN
     INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TrangThaiThanhToan)
     VALUES (@MaHopDong, @ThangNam, @GiaCoBan, N'Chưa trả');
 END;
+GO
 
+GO
 CREATE PROCEDURE sp_GhiNhanSuCo
     @MaPhong INT,
     @MoTaSuCo NVARCHAR(255)
@@ -242,16 +264,10 @@ BEGIN
     INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, NgayBaoCao, TrangThai, ChiPhi)
     VALUES (@MaPhong, @MoTaSuCo, GETDATE(), N'Chưa xử lý', 0);
 END;
+GO
 
 -- Dữ liệu mẫu đăng nhập --
 INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai)
-VALUES (N'admin', N'admin123', example@gmail, N'0123456789');
--- Mật khẩu nên được mã hóa trong thực tế --    
-
-
-
-
-
-
-
-
+VALUES (N'admin', N'admin123', N'example@gmail.com', N'0123456789');
+-- Mật khẩu nên được mã hóa trong thực tế --
+GO
