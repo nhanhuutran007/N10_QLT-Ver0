@@ -19,43 +19,30 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<RentedRoomDto>> GetAllRoomsAsync()
         {
             var rooms = await _rentedRoomRepository.GetAllAsync();
-            return rooms.Select(r =>
+            return rooms.Select(r => new RentedRoomDto
             {
-                var dto = new RentedRoomDto
-                {
-                    MaPhong = r.MaPhong,
-                    TenPhong = r.TenPhong,
-                    DienTich = r.DienTich,
-                    GiaCoBan = r.GiaCoBan,
-                    TrangThai = r.TrangThai,
-                    GhiChu = r.GhiChu
-                };
-                // Lấy SoGiuong từ GhiChu nếu có
-                if (!string.IsNullOrEmpty(r.GhiChu) && r.GhiChu.StartsWith("Số giường:"))
-                {
-                    if (int.TryParse(r.GhiChu.Replace("Số giường:", "").Trim(), out int soGiuong))
-                        dto.SoGiuong = soGiuong;
-                }
-                return dto;
+                MaPhong = r.MaPhong,
+                TenPhong = r.TenPhong,
+                DienTich = (double)r.DienTich,
+                GiaCoBan = r.GiaCoBan,
+                TrangThai = r.TrangThai,
+                GhiChu = r.GhiChu
             }).ToList();
         }
 
         public async Task<string> CreateRoomAsync(RentedRoomDto dto)
         {
-            // Kiểm tra trùng mã phòng
-            var existingRoom = await _rentedRoomRepository.GetByIdAsync(dto.MaPhong);
-            if (existingRoom != null)
-                return "Mã phòng đã tồn tại!";
-
+            // Không kiểm tra mã phòng trùng nữa vì database tự động tạo
             var room = new RentedRoom
             {
-                MaPhong = dto.MaPhong,
+                // Không set MaPhong - để database tự động tăng
                 TenPhong = dto.TenPhong,
-                DienTich = dto.DienTich,
+                DienTich = (decimal)dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = $"Số giường: {dto.SoGiuong}" // Lưu SoGiuong vào GhiChu
+                GhiChu = dto.GhiChu
             };
+
             var result = await _rentedRoomRepository.CreateAsync(room);
             return result ? "Thêm phòng thành công!" : "Có lỗi xảy ra khi thêm phòng!";
         }
@@ -64,16 +51,15 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         {
             var room = new RentedRoom
             {
-                MaPhong = dto.MaPhong,
+                MaPhong = dto.MaPhong, // Giữ mã phòng khi cập nhật
                 TenPhong = dto.TenPhong,
-                DienTich = dto.DienTich,
+                DienTich = (decimal)dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = $"Số giường: {dto.SoGiuong}" // Lưu SoGiuong vào GhiChu
+                GhiChu = dto.GhiChu
             };
             return await _rentedRoomRepository.UpdateAsync(room);
         }
-
         public async Task<bool> DeleteRoomAsync(int id)
         {
             return await _rentedRoomRepository.DeleteAsync(id);
@@ -81,11 +67,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<bool> UpdateRoomStatusAsync(int id, string status)
         {
-            var room = await _rentedRoomRepository.GetByIdAsync(id);
-            if (room == null) return false;
-
-            room.TrangThai = status;
-            return await _rentedRoomRepository.UpdateAsync(room);
+            return await _rentedRoomRepository.UpdateStatusAsync(id, status);
         }
     }
 }

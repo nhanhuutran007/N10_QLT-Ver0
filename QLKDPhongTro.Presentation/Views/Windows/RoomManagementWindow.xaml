@@ -90,7 +90,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho các nút chức năng -->
+        <!-- Style cho các nút chức năng chính -->
         <Style TargetType="{x:Type Button}" x:Key="ActionButtonStyle">
             <Setter Property="Background" Value="#5B75D4"/>
             <Setter Property="Foreground" Value="White"/>
@@ -98,7 +98,33 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="40"/>
-            <Setter Property="Width" Value="200"/>
+            <Setter Property="MinWidth" Value="120"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border CornerRadius="6" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#4A63C1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style cho nút tìm kiếm -->
+        <Style TargetType="{x:Type Button}" x:Key="SearchButtonStyle">
+            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Width" Value="100"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
@@ -121,8 +147,9 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Padding" Value="5"/>
-            <Setter Property="Width" Value="200"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Width" Value="250"/>
+            <Setter Property="Height" Value="36"/>
         </Style>
 
         <!-- Style cho các card phòng -->
@@ -211,29 +238,27 @@
                         <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,30">
                             <StackPanel>
                                 <!-- Các nút chức năng -->
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
+                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,20">
                                     <Button Content="➕ Thêm phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Command="{Binding ShowAddRoomPanelCommand}"/>
+                                            Margin="0,0,12,0" Command="{Binding ShowAddRoomPanelCommand}"/>
                                     <Button Content="✏️ Sửa phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Command="{Binding ShowEditRoomPanelCommand}"/>
-                                    <Button Content="👁️ Xem phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Command="{Binding ViewRoomCommand}"/>
+                                            Margin="0,0,12,0" Command="{Binding ShowEditRoomPanelCommand}"/>
                                     <Button Content="🗑️ Xóa phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Command="{Binding DeleteRoomCommand}"/>
+                                            Margin="0,0,0,0" Command="{Binding DeleteRoomCommand}"/>
                                 </WrapPanel>
 
                                 <!-- Tìm kiếm -->
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <Border Background="#F0F0F0" CornerRadius="6" Padding="10,8" Margin="0,0,10,0">
+                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Border Background="#F0F0F0" CornerRadius="6" Padding="0" Margin="0,0,12,0">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🔍" FontSize="16" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="🔍" FontSize="16" VerticalAlignment="Center" Margin="10,0,5,0"/>
                                             <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
                                                      Style="{StaticResource SearchTextBoxStyle}" 
                                                      Tag="Tìm kiếm phòng..."/>
                                         </StackPanel>
                                     </Border>
-                                    <Button Content="Tìm kiếm" Style="{StaticResource ActionButtonStyle}" 
-                                            Width="100" Command="{Binding SearchRoomsCommand}"/>
+                                    <Button Content="Tìm kiếm" Style="{StaticResource SearchButtonStyle}" 
+                                            Command="{Binding SearchRoomsCommand}"/>
                                 </WrapPanel>
                             </StackPanel>
                         </Border>
@@ -248,7 +273,8 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20"
-                                            MouseLeftButtonDown="RoomCard_MouseLeftButtonDown">
+                                            MouseLeftButtonDown="RoomCard_MouseLeftButtonDown"
+                                            MouseDown="RoomCard_MouseDown">
                                         <Grid>
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>

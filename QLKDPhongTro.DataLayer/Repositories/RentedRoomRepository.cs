@@ -30,8 +30,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             MaPhong = reader.GetInt32(0),
                             TenPhong = reader.GetString(1),
-                            DienTich = reader.GetDouble(2),
-                            GiaCoBan = reader.GetDouble(3),
+                            DienTich = reader.GetDecimal(2),
+                            GiaCoBan = reader.GetDecimal(3),
                             TrangThai = reader.GetString(4),
                             GhiChu = reader.GetString(5)
                         });
@@ -57,8 +57,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             MaPhong = reader.GetInt32(0),
                             TenPhong = reader.GetString(1),
-                            DienTich = reader.GetDouble(2),
-                            GiaCoBan = reader.GetDouble(3),
+                            DienTich = reader.GetDecimal(2),
+                            GiaCoBan = reader.GetDecimal(3),
                             TrangThai = reader.GetString(4),
                             GhiChu = reader.GetString(5)
                         };
@@ -85,8 +85,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("INSERT INTO Phong(MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu) VALUES(@MaPhong, @TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu)", conn);
-                cmd.Parameters.AddWithValue("@MaPhong", room.MaPhong);
+                var cmd = new SqlCommand("INSERT INTO Phong(TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu) VALUES(@TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu)", conn);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
                 cmd.Parameters.AddWithValue("@GiaCoBan", room.GiaCoBan);

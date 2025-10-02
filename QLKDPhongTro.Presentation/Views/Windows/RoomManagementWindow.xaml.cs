@@ -1,11 +1,16 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Views.Windows;
+using System;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class RoomManagementWindow : Window
     {
+        private DateTime _lastClickTime;
+        private object _lastClickedItem;
+
         public RoomManagementWindow()
         {
             InitializeComponent();
@@ -70,6 +75,51 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     viewModel.SelectedRoom = room;
                 }
             }
+        }
+
+        private void RoomCard_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                var currentTime = DateTime.Now;
+                var currentItem = (sender as FrameworkElement)?.DataContext;
+
+                // Kiểm tra double click (trong vòng 300ms và cùng một item)
+                if (currentItem != null &&
+                    currentItem == _lastClickedItem &&
+                    (currentTime - _lastClickTime).TotalMilliseconds < 300)
+                {
+                    // Double click detected
+                    if (currentItem is BusinessLayer.DTOs.RentedRoomDto room)
+                    {
+                        if (DataContext is RentedRoomViewModel viewModel)
+                        {
+                            viewModel.SelectedRoom = room;
+                            viewModel.ShowRoomDetailsWindow();
+                        }
+                    }
+
+                    // Reset sau khi xử lý double click
+                    _lastClickedItem = null;
+                    _lastClickTime = DateTime.MinValue;
+                }
+                else
+                {
+                    // Single click - chỉ cập nhật thời gian và item
+                    _lastClickedItem = currentItem;
+                    _lastClickTime = currentTime;
+                }
+            }
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

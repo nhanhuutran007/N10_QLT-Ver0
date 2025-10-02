@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.ViewRoomWindow"
     Title="Chi tiết phòng"
@@ -16,6 +17,9 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
+        <!-- Thêm Converter vào đây -->
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+
         <!-- Style cho nút đóng -->
         <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="Transparent"/>
@@ -98,7 +102,7 @@
                         </StackPanel>
 
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
-                                Command="{Binding CancelAddEditCommand}"/>
+                                Click="CloseButton_Click"/>
                     </Grid>
                 </Border>
 
@@ -128,8 +132,8 @@
                                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Tên phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedRoom.TenPhong}" Margin="0,0,0,8"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Số giường:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedRoom.SoGiuong}" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Diện tích:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedRoom.DienTich, StringFormat='{}{0} m²'}" Margin="0,0,0,8"/>
 
                                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Giá thuê:" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                     <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}/tháng'}" Margin="0,0,0,8"/>
@@ -162,6 +166,36 @@
                                             <TextBlock Text="⭐⭐⭐⭐⭐" FontSize="16" Margin="0,0,8,0"/>
                                             <TextBlock Text="N/A" FontWeight="Bold" Foreground="#FFC107"/>
                                         </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Thông tin bổ sung -->
+                        <Border Style="{StaticResource InfoCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="📝 Thông tin bổ sung" FontSize="16" FontWeight="Bold" 
+                                           Foreground="#333" Margin="0,0,0,15"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Tầng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+
+                                        <TextBlock Text="Hướng phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+
+                                        <TextBlock Text="Số người tối đa:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="Ghi chú:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{Binding SelectedRoom.GhiChu}" TextWrapping="Wrap" Margin="0,0,0,15"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -232,42 +266,6 @@
                                 </Grid>
                             </StackPanel>
                         </Border>
-
-                        <!-- Thông tin bổ sung -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="📝 Thông tin bổ sung" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Ngày thêm:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
-
-                                        <TextBlock Text="Diện tích:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="{Binding SelectedRoom.DienTich, StringFormat='{}{0} m²'}" Margin="0,0,0,15"/>
-
-                                        <TextBlock Text="Tầng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Hướng phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
-
-                                        <TextBlock Text="Số người tối đa:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
-
-                                        <TextBlock Text="Ghi chú:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="{Binding SelectedRoom.GhiChu}" TextWrapping="Wrap" Margin="0,0,0,15"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                 </ScrollViewer>
 
@@ -275,7 +273,7 @@
                 <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Đóng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="100" Command="{Binding CancelAddEditCommand}"/>
+                                Width="100" Click="CloseButton_Click"/>
                     </StackPanel>
                 </Border>
             </Grid>

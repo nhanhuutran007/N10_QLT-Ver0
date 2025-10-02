@@ -7,6 +7,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class AddRoomWindow : Window
     {
+        public AddRoomWindow()
+        {
+            InitializeComponent();
+        }
+
         public AddRoomWindow(RentedRoomViewModel viewModel)
         {
             InitializeComponent();
@@ -21,7 +26,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            ((RentedRoomViewModel)DataContext).CancelAddEditCommand.Execute(null);
+            this.Close();
         }
     }
 }

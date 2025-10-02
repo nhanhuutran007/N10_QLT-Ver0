@@ -43,6 +43,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private RentedRoomDto _newRoom = new();
         [ObservableProperty] private string _searchText = string.Empty;
 
+        // Add status options for combobox
+        public string[] StatusOptions { get; } = new[] { "Trống", "Đã thuê", "Bảo trì" };
+
         public async Task LoadRoomsAsync()
         {
             Rooms.Clear();
@@ -79,11 +82,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void ShowAddRoomPanel()
         {
-            NewRoom = new RentedRoomDto();
-            var window = new RoomManagementWindow
+            NewRoom = new RentedRoomDto
             {
-                DataContext = this,
-                Owner = Application.Current.MainWindow
+                TrangThai = "Trống" // Set default status
+            };
+            var window = new AddRoomWindow(this)
+            {
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
             };
             window.ShowDialog();
         }
@@ -104,109 +109,46 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 DienTich = SelectedRoom.DienTich,
                 GiaCoBan = SelectedRoom.GiaCoBan,
                 TrangThai = SelectedRoom.TrangThai,
-                GhiChu = SelectedRoom.GhiChu,
-                SoGiuong = SelectedRoom.SoGiuong
+                GhiChu = SelectedRoom.GhiChu
             };
 
-            var window = new RoomManagementWindow
+            var window = new AddRoomWindow(this)
             {
-                DataContext = this,
-                Owner = Application.Current.MainWindow
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
             };
             window.ShowDialog();
         }
 
         [RelayCommand]
-        private async Task ViewRoom()
-        {
-            if (SelectedRoom == null)
-            {
-                MessageBox.Show("Vui lòng chọn phòng để xem.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var viewRoomWindow = new ViewRoomWindow(this);
-            viewRoomWindow.ShowDialog();
-        }
-
-        [RelayCommand]
         private async Task SaveRoom()
         {
-            if (NewRoom.MaPhong <= 0)
-            {
-                MessageBox.Show("Mã phòng phải là số nguyên dương.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+            // Validate data before saving
+            if (!ValidateRoomData())
                 return;
-            }
-            if (string.IsNullOrEmpty(NewRoom.TenPhong))
-            {
-                MessageBox.Show("Vui lòng điền tên phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (NewRoom.DienTich < 5)
-            {
-                MessageBox.Show("Diện tích phải lớn hơn hoặc bằng 5 m².", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (NewRoom.GiaCoBan < 500000)
-            {
-                MessageBox.Show("Giá cơ bản phải lớn hơn hoặc bằng 500,000.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (NewRoom.SoGiuong <= 0)
-            {
-                MessageBox.Show("Số giường phải lớn hơn 0.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-            if (string.IsNullOrEmpty(NewRoom.TrangThai))
-            {
-                MessageBox.Show("Vui lòng chọn trạng thái phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
 
             try
             {
                 IsLoading = true;
-                bool isAdding = !Rooms.Any(r => r.MaPhong == NewRoom.MaPhong);
 
-                if (isAdding)
+                // Ensure status is a valid string, not a control
+                if (string.IsNullOrEmpty(NewRoom.TrangThai) || NewRoom.TrangThai.Length > 50)
                 {
-                    var msg = await _rentedRoomController.CreateRoomAsync(NewRoom);
-                    if (msg.Contains("thành công", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Rooms.Add(NewRoom);
-                        StatusMessage = msg;
-                        MessageBox.Show(msg, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                        Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
-                    }
-                    else
-                    {
-                        MessageBox.Show(msg ?? "Thêm phòng thất bại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    NewRoom.TrangThai = "Trống"; // Default value
+                }
+
+                var msg = await _rentedRoomController.CreateRoomAsync(NewRoom);
+                if (msg.Contains("thành công", StringComparison.OrdinalIgnoreCase))
+                {
+                    await LoadRoomsAsync();
+                    StatusMessage = msg;
+                    MessageBox.Show(msg, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CloseAddRoomWindows();
                 }
                 else
                 {
-                    var ok = await _rentedRoomController.UpdateRoomAsync(NewRoom);
-                    if (ok)
-                    {
-                        var room = Rooms.FirstOrDefault(r => r.MaPhong == NewRoom.MaPhong);
-                        if (room != null)
-                        {
-                            room.TenPhong = NewRoom.TenPhong;
-                            room.DienTich = NewRoom.DienTich;
-                            room.GiaCoBan = NewRoom.GiaCoBan;
-                            room.TrangThai = NewRoom.TrangThai;
-                            room.GhiChu = NewRoom.GhiChu;
-                            room.SoGiuong = NewRoom.SoGiuong;
-                        }
-                        StatusMessage = "Cập nhật phòng thành công.";
-                        MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                        Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Cập nhật phòng thất bại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    MessageBox.Show(msg ?? "Thêm phòng thất bại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+
                 _statusTimer.Start();
             }
             catch (Exception ex)
@@ -221,10 +163,126 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
+        private async Task UpdateRoom()
+        {
+            if (SelectedRoom == null)
+            {
+                MessageBox.Show("Vui lòng chọn phòng cần sửa.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!ValidateRoomData())
+                return;
+
+            try
+            {
+                IsLoading = true;
+
+                // Ensure status is a valid string
+                if (string.IsNullOrEmpty(NewRoom.TrangThai) || NewRoom.TrangThai.Length > 50)
+                {
+                    NewRoom.TrangThai = "Trống";
+                }
+
+                var ok = await _rentedRoomController.UpdateRoomAsync(NewRoom);
+                if (ok)
+                {
+                    // Update the existing room in the collection
+                    var room = Rooms.FirstOrDefault(r => r.MaPhong == NewRoom.MaPhong);
+                    if (room != null)
+                    {
+                        room.TenPhong = NewRoom.TenPhong;
+                        room.DienTich = NewRoom.DienTich;
+                        room.GiaCoBan = NewRoom.GiaCoBan;
+                        room.TrangThai = NewRoom.TrangThai;
+                        room.GhiChu = NewRoom.GhiChu;
+                    }
+
+                    StatusMessage = "Cập nhật phòng thành công.";
+                    MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    CloseAddRoomWindows();
+                }
+                else
+                {
+                    MessageBox.Show("Cập nhật phòng thất bại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                _statusTimer.Start();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Lỗi khi cập nhật phòng: {ex.Message}";
+                MessageBox.Show(StatusMessage, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private bool ValidateRoomData()
+        {
+            if (string.IsNullOrEmpty(NewRoom.TenPhong))
+            {
+                MessageBox.Show("Vui lòng điền tên phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            if (NewRoom.DienTich < 5)
+            {
+                MessageBox.Show("Diện tích phải lớn hơn hoặc bằng 5 m².", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            if (NewRoom.GiaCoBan < 500000)
+            {
+                MessageBox.Show("Giá cơ bản phải lớn hơn hoặc bằng 500,000.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+            if (string.IsNullOrEmpty(NewRoom.TrangThai))
+            {
+                MessageBox.Show("Vui lòng chọn trạng thái phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        private void CloseAddRoomWindows()
+        {
+            var addRoomWindows = Application.Current.Windows.OfType<AddRoomWindow>();
+            foreach (var window in addRoomWindows)
+            {
+                window.Close();
+            }
+        }
+
+        [RelayCommand]
         private void CancelAddEdit()
         {
             NewRoom = new RentedRoomDto();
-            Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault()?.Close();
+            CloseAddRoomWindows();
+        }
+
+        // ... rest of your methods (DeleteRoom, SearchRooms, etc.) remain the same
+        [RelayCommand]
+        private void ViewRoom()
+        {
+            if (SelectedRoom == null)
+            {
+                MessageBox.Show("Vui lòng chọn phòng để xem.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            ShowRoomDetailsWindow();
+        }
+
+        public void ShowRoomDetailsWindow()
+        {
+            if (SelectedRoom == null) return;
+
+            var viewRoomWindow = new ViewRoomWindow(this)
+            {
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
+            };
+            viewRoomWindow.ShowDialog();
         }
 
         [RelayCommand]
