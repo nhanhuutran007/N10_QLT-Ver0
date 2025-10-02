@@ -110,6 +110,46 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Style cho ComboBox -->
+        <Style x:Key="InputComboBoxStyle" TargetType="{x:Type ComboBox}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}"
+                                                  Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                                <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom" x:Name="Popup">
+                                    <Grid MinWidth="{TemplateBinding ActualWidth}" MaxHeight="200">
+                                        <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1"/>
+                                        <ScrollViewer>
+                                            <StackPanel IsItemsHost="True"/>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#5B75D4"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
     <!-- Background overlay với hiệu ứng mờ -->
@@ -130,49 +170,66 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="🏠" FontSize="20" Margin="0,0,10,0"/>
                             <TextBlock Text="Thêm phòng mới" FontSize="18" FontWeight="Bold" Foreground="White"/>
                         </StackPanel>
-                        
+
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
-                                Click="CloseButton_Click"/>
+                                Command="{Binding CancelAddEditCommand}"/>
                     </Grid>
                 </Border>
 
                 <!-- Form content -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
                     <StackPanel>
+                        <!-- Mã phòng -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Mã phòng *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewRoom.MaPhong, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
                         <!-- Tên phòng -->
                         <StackPanel Margin="0,0,0,20">
                             <TextBlock Text="Tên phòng *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
-                            <TextBox x:Name="RoomNameTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="Phòng 7"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewRoom.TenPhong, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Số giường -->
+                        <!-- Diện tích -->
                         <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Số giường *" FontSize="14" FontWeight="SemiBold" 
+                            <TextBlock Text="Diện tích (m²) *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
-                            <TextBox x:Name="BedCountTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="4"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewRoom.DienTich, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <!-- Giá thuê -->
                         <StackPanel Margin="0,0,0,20">
                             <TextBlock Text="Giá thuê (VNĐ) *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
-                            <TextBox x:Name="RentPriceTextBox" Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="2,500,000"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewRoom.GiaCoBan, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <!-- Số giường -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Số giường *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewRoom.SoGiuong, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <!-- Trạng thái -->
                         <StackPanel Margin="0,0,0,20">
                             <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
-                            <ComboBox x:Name="StatusComboBox" Height="40" FontSize="14" Padding="12,8">
+                            <ComboBox Style="{StaticResource InputComboBoxStyle}" 
+                                      SelectedItem="{Binding NewRoom.TrangThai}">
                                 <ComboBoxItem Content="Trống" IsSelected="True"/>
                                 <ComboBoxItem Content="Đang cho thuê"/>
                                 <ComboBoxItem Content="Đặt trước"/>
@@ -180,13 +237,13 @@
                             </ComboBox>
                         </StackPanel>
 
-                        <!-- Mô tả -->
+                        <!-- Ghi chú -->
                         <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Mô tả" FontSize="14" FontWeight="SemiBold" 
+                            <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333" Margin="0,0,0,8"/>
-                            <TextBox x:Name="DescriptionTextBox" Style="{StaticResource InputTextBoxStyle}" 
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
                                      Height="80" TextWrapping="Wrap" AcceptsReturn="True"
-                                     Text="Phòng đẹp, thoáng mát, gần trung tâm thành phố"/>
+                                     Text="{Binding NewRoom.GhiChu, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -195,9 +252,9 @@
                 <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
-                                Width="100" Margin="0,0,15,0" Click="CancelButton_Click"/>
+                                Width="100" Margin="0,0,15,0" Command="{Binding CancelAddEditCommand}"/>
                         <Button Content="Thêm phòng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="120" Click="AddRoomButton_Click"/>
+                                Width="120" Command="{Binding SaveRoomCommand}"/>
                     </StackPanel>
                 </Border>
             </Grid>

@@ -91,14 +91,14 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="👁️" FontSize="20" Margin="0,0,10,0"/>
                             <TextBlock Text="Chi tiết phòng" FontSize="18" FontWeight="Bold" Foreground="White"/>
                         </StackPanel>
-                        
+
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
-                                Click="CloseButton_Click"/>
+                                Command="{Binding CancelAddEditCommand}"/>
                     </Grid>
                 </Border>
 
@@ -119,16 +119,20 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Tên phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Phòng 1" Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Số giường:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="7 giường" Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Giá thuê:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="2,500,000 VNĐ/tháng" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Mã phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedRoom.MaPhong}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Tên phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedRoom.TenPhong}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Số giường:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedRoom.SoGiuong}" Margin="0,0,0,8"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Giá thuê:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}/tháng'}" Margin="0,0,0,8"/>
                                 </Grid>
                             </StackPanel>
                         </Border>
@@ -143,19 +147,20 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Trạng thái hiện tại:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <Border Background="#28A745" CornerRadius="12" Padding="8,4" Width="100">
-                                            <TextBlock Text="Đặt trước" Foreground="White" FontSize="12" HorizontalAlignment="Center"/>
+                                        <Border Background="{Binding SelectedRoom.TrangThai, Converter={StaticResource StatusToColorConverter}}" 
+                                                CornerRadius="12" Padding="8,4" Width="100">
+                                            <TextBlock Text="{Binding SelectedRoom.TrangThai}" Foreground="White" FontSize="12" HorizontalAlignment="Center"/>
                                         </Border>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Đánh giá chất lượng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="⭐⭐⭐⭐⭐" FontSize="16" Margin="0,0,8,0"/>
-                                            <TextBlock Text="5.0/5" FontWeight="Bold" Foreground="#FFC107"/>
+                                            <TextBlock Text="N/A" FontWeight="Bold" Foreground="#FFC107"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -206,7 +211,7 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="20" Margin="0,0,10,0">
                                         <StackPanel HorizontalAlignment="Center">
                                             <Image Source="/Resources/Images/Logo.png" Width="120" Height="80" 
@@ -215,7 +220,7 @@
                                                        HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
-                                    
+
                                     <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="20" Margin="10,0,0,0">
                                         <StackPanel HorizontalAlignment="Center">
                                             <Image Source="/Resources/Images/Logo.png" Width="120" Height="80" 
@@ -238,28 +243,27 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
-                                    
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Text="Ngày thêm:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="10/11/2025" Margin="0,0,0,15"/>
-                                        
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+
                                         <TextBlock Text="Diện tích:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="25m²" Margin="0,0,0,15"/>
-                                        
+                                        <TextBlock Text="{Binding SelectedRoom.DienTich, StringFormat='{}{0} m²'}" Margin="0,0,0,15"/>
+
                                         <TextBlock Text="Tầng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Tầng 2" Margin="0,0,0,15"/>
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
                                     </StackPanel>
-                                    
+
                                     <StackPanel Grid.Column="1">
                                         <TextBlock Text="Hướng phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Đông Nam" Margin="0,0,0,15"/>
-                                        
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+
                                         <TextBlock Text="Số người tối đa:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="2 người" Margin="0,0,0,15"/>
-                                        
-                                        <TextBlock Text="Mô tả:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Phòng đẹp, thoáng mát, gần trung tâm thành phố. Có đầy đủ tiện nghi cơ bản." 
-                                                   TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                        <TextBlock Text="N/A" Margin="0,0,0,15"/>
+
+                                        <TextBlock Text="Ghi chú:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Text="{Binding SelectedRoom.GhiChu}" TextWrapping="Wrap" Margin="0,0,0,15"/>
                                     </StackPanel>
                                 </Grid>
                             </StackPanel>
@@ -271,7 +275,7 @@
                 <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Đóng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="100" Click="CloseButton_Click"/>
+                                Width="100" Command="{Binding CancelAddEditCommand}"/>
                     </StackPanel>
                 </Border>
             </Grid>

@@ -21,7 +21,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM RentedRooms", conn);
+                var cmd = new SqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM Phong", conn);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -47,7 +47,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM RentedRooms WHERE MaPhong=@MaPhong", conn);
+                var cmd = new SqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM Phong WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -73,7 +73,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT COUNT(*) FROM RentedRooms WHERE MaPhong=@MaPhong", conn);
+                var cmd = new SqlCommand("SELECT COUNT(*) FROM Phong WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 var count = (int)await cmd.ExecuteScalarAsync();
                 return count > 0;
@@ -85,7 +85,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("INSERT INTO RentedRooms(MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu) VALUES(@MaPhong, @TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu)", conn);
+                var cmd = new SqlCommand("INSERT INTO Phong(MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu) VALUES(@MaPhong, @TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu)", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", room.MaPhong);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
@@ -101,7 +101,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("UPDATE RentedRooms SET TenPhong=@TenPhong, DienTich=@DienTich, GiaCoBan=@GiaCoBan, TrangThai=@TrangThai, GhiChu=@GhiChu WHERE MaPhong=@MaPhong", conn);
+                var cmd = new SqlCommand("UPDATE Phong SET TenPhong=@TenPhong, DienTich=@DienTich, GiaCoBan=@GiaCoBan, TrangThai=@TrangThai, GhiChu=@GhiChu WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
                 cmd.Parameters.AddWithValue("@GiaCoBan", room.GiaCoBan);
@@ -117,7 +117,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("DELETE FROM RentedRooms WHERE MaPhong=@MaPhong", conn);
+                var cmd = new SqlCommand("DELETE FROM Phong WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
@@ -128,7 +128,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("UPDATE RentedRooms SET TrangThai=@TrangThai WHERE MaPhong=@MaPhong", conn);
+                var cmd = new SqlCommand("UPDATE Phong SET TrangThai=@TrangThai WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@TrangThai", trangThai);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 return await cmd.ExecuteNonQueryAsync() > 0;

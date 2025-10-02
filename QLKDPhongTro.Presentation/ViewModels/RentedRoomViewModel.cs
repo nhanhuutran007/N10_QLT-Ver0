@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.Views.Windows;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -49,7 +50,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 var list = await _rentedRoomController.GetAllRoomsAsync();
-                Rooms = new ObservableCollection<RentedRoomDto>(list ?? new System.Collections.Generic.List<RentedRoomDto>());
+                Rooms = new ObservableCollection<RentedRoomDto>(list ?? new());
                 StatusMessage = "Tải danh sách phòng trọ thành công.";
                 _statusTimer.Start();
             }
@@ -69,6 +70,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             NewRoom = new RentedRoomDto();
             IsAddEditPanelVisible = true;
+            var window = new AddRoomWindow(this);
+            if (window.ShowDialog() == true)
+            {
+                IsAddEditPanelVisible = false;
+            }
         }
 
         [RelayCommand]
@@ -86,15 +92,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 DienTich = SelectedRoom.DienTich,
                 GiaCoBan = SelectedRoom.GiaCoBan,
                 TrangThai = SelectedRoom.TrangThai,
-                GhiChu = SelectedRoom.GhiChu
+                GhiChu = SelectedRoom.GhiChu,
+                SoGiuong = SelectedRoom.SoGiuong
             };
             IsAddEditPanelVisible = true;
+            var window = new EditRoomWindow(this);
+            if (window.ShowDialog() == true)
+            {
+                IsAddEditPanelVisible = false;
+            }
         }
 
         [RelayCommand]
         private async Task SaveRoom()
         {
-            // Validate MaPhong and TenPhong
+            // Validation
             if (NewRoom.MaPhong <= 0)
             {
                 MessageBox.Show("Mã phòng phải là số nguyên dương.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -102,33 +114,45 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
             if (string.IsNullOrEmpty(NewRoom.TenPhong))
             {
-                MessageBox.Show("Vui lòng điền Tên phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vui lòng điền tên phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            if (NewRoom.DienTich <= 0)
+            if (NewRoom.DienTich < 5)
             {
-                MessageBox.Show("Diện tích phải là số nguyên dương.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Diện tích phải lớn hơn hoặc bằng 5 m².", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-            if (NewRoom.GiaCoBan <= 0)
+            if (NewRoom.GiaCoBan < 500000)
             {
-                MessageBox.Show("Giá cơ bản phải là số nguyên dương.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Giá cơ bản phải lớn hơn hoặc bằng 500,000.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (NewRoom.SoGiuong <= 0)
+            {
+                MessageBox.Show("Số giường phải lớn hơn 0.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (string.IsNullOrEmpty(NewRoom.TrangThai))
+            {
+                MessageBox.Show("Vui lòng chọn trạng thái phòng.", "Cảnh báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
                 IsLoading = true;
-                // Check for duplicate MaPhong (for add operation)
-                if (Rooms.Any(r => r.MaPhong == NewRoom.MaPhong && SelectedRoom?.MaPhong != NewRoom.MaPhong))
+                bool isAdding = !Rooms.Any(r => r.MaPhong == NewRoom.MaPhong);
+
+                if (isAdding)
                 {
                     var msg = await _rentedRoomController.CreateRoomAsync(NewRoom);
-                    if (!string.IsNullOrEmpty(msg) && msg.Contains("thành công", StringComparison.CurrentCultureIgnoreCase))
+                    if (msg.Contains("thành công", StringComparison.OrdinalIgnoreCase))
                     {
                         Rooms.Add(NewRoom);
                         StatusMessage = msg;
                         MessageBox.Show(msg, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                         IsAddEditPanelVisible = false;
+                        Application.Current.Windows.OfType<AddRoomWindow>().FirstOrDefault()?.Close();
                     }
                     else
                     {
@@ -148,10 +172,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
                             room.GiaCoBan = NewRoom.GiaCoBan;
                             room.TrangThai = NewRoom.TrangThai;
                             room.GhiChu = NewRoom.GhiChu;
+                            room.SoGiuong = NewRoom.SoGiuong;
                         }
                         StatusMessage = "Cập nhật phòng thành công.";
-                        MessageBox.Show("Cập nhật phòng thành công.", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                        MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                         IsAddEditPanelVisible = false;
+                        Application.Current.Windows.OfType<EditRoomWindow>().FirstOrDefault()?.Close();
                     }
                     else
                     {
@@ -176,6 +202,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             IsAddEditPanelVisible = false;
             NewRoom = new RentedRoomDto();
+            Application.Current.Windows.OfType<AddRoomWindow>().FirstOrDefault()?.Close();
+            Application.Current.Windows.OfType<EditRoomWindow>().FirstOrDefault()?.Close();
         }
 
         [RelayCommand]
@@ -187,7 +215,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            var confirm = MessageBox.Show($"Bạn có chắc muốn xóa phòng {SelectedRoom.MaPhong}?", "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var confirm = MessageBox.Show($"Bạn có chắc muốn xóa phòng {SelectedRoom.TenPhong} (Mã: {SelectedRoom.MaPhong})?",
+                "Xác nhận", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (confirm != MessageBoxResult.Yes) return;
 
             try

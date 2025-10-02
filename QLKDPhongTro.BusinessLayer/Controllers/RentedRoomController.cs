@@ -1,5 +1,4 @@
-﻿// Controllers/RentedRoomController.cs
-using QLKDPhongTro.BusinessLayer.DTOs;
+﻿using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using System.Collections.Generic;
@@ -20,20 +19,30 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<RentedRoomDto>> GetAllRoomsAsync()
         {
             var rooms = await _rentedRoomRepository.GetAllAsync();
-            return rooms.Select(r => new RentedRoomDto
+            return rooms.Select(r =>
             {
-                MaPhong = r.MaPhong,
-                TenPhong = r.TenPhong,
-                DienTich = r.DienTich,
-                GiaCoBan = r.GiaCoBan,
-                TrangThai = r.TrangThai,
-                GhiChu = r.GhiChu
+                var dto = new RentedRoomDto
+                {
+                    MaPhong = r.MaPhong,
+                    TenPhong = r.TenPhong,
+                    DienTich = r.DienTich,
+                    GiaCoBan = r.GiaCoBan,
+                    TrangThai = r.TrangThai,
+                    GhiChu = r.GhiChu
+                };
+                // Lấy SoGiuong từ GhiChu nếu có
+                if (!string.IsNullOrEmpty(r.GhiChu) && r.GhiChu.StartsWith("Số giường:"))
+                {
+                    if (int.TryParse(r.GhiChu.Replace("Số giường:", "").Trim(), out int soGiuong))
+                        dto.SoGiuong = soGiuong;
+                }
+                return dto;
             }).ToList();
         }
 
         public async Task<string> CreateRoomAsync(RentedRoomDto dto)
         {
-            // kiểm tra trùng mã phòng
+            // Kiểm tra trùng mã phòng
             var existingRoom = await _rentedRoomRepository.GetByIdAsync(dto.MaPhong);
             if (existingRoom != null)
                 return "Mã phòng đã tồn tại!";
@@ -45,7 +54,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DienTich = dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = dto.GhiChu
+                GhiChu = $"Số giường: {dto.SoGiuong}" // Lưu SoGiuong vào GhiChu
             };
             var result = await _rentedRoomRepository.CreateAsync(room);
             return result ? "Thêm phòng thành công!" : "Có lỗi xảy ra khi thêm phòng!";
@@ -60,7 +69,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DienTich = dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = dto.GhiChu
+                GhiChu = $"Số giường: {dto.SoGiuong}" // Lưu SoGiuong vào GhiChu
             };
             return await _rentedRoomRepository.UpdateAsync(room);
         }
