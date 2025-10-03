@@ -318,12 +318,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Xử lý quay lại đăng nhập
         private void BackToLogin_Click(object sender, RoutedEventArgs e)
         {
+            // Đóng cửa sổ đăng ký hiện tại
+            this.Close();
+            
             // Tạo và hiển thị cửa sổ đăng nhập
             var loginWindow = new LoginWindow();
             loginWindow.Show();
-            
-            // Đóng cửa sổ đăng ký hiện tại
-            this.Close();
         }
     }
 }

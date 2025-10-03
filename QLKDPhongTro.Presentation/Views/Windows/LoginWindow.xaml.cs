@@ -266,11 +266,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 {
                     DataContext = new RegisterViewModel()
                 };
-                registerWindow.Show();
-
                 // Đóng cửa sổ login hiện tại
                 Application.Current.MainWindow?.Close();
                 Application.Current.MainWindow = registerWindow;
+                registerWindow.Show();
             }
             catch (Exception ex)
             {

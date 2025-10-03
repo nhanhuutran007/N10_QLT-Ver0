@@ -9,10 +9,10 @@
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.RoomManagementWindow"
     Title="Room Management"
-    Height="800"
-    Width="1400"
+    Height="700"
+    Width="1200"
     MinHeight="600"
-    MinWidth="1000"
+    MinWidth="800"
     WindowStartupLocation="CenterScreen"
     ResizeMode="CanResize"
     WindowStyle="None"
@@ -193,179 +193,39 @@
         </Style>
     </Window.Resources>
 
-    <!-- Background với hiệu ứng mờ -->
-    <Border Background="#CC000000">
-        <!-- Bố cục chính của cửa sổ -->
-        <Border Background="White" CornerRadius="12" Margin="20">
+    <!-- Bố cục chính của cửa sổ -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" MinWidth="200"/>
+            <!-- Sidebar -->
+            <ColumnDefinition Width="*" MinWidth="600"/>
+            <!-- Main content -->
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR BÊN TRÁI -->
+        <components:SidebarControl Grid.Column="0" 
+                                  x:Name="SidebarControl"
+                                  PageTitle="Room Management"
+                                  SelectedMenuItem="Rooms"
+                                  VerticalAlignment="Stretch"
+                                  MenuItemClicked="SidebarControl_MenuItemClicked"
+                                  LogoutClicked="SidebarControl_LogoutClicked" Loaded="SidebarControl_Loaded"/>
+
+        <!-- NỘI DUNG CHÍNH -->
+        <Border Grid.Column="1"
+                Background="#F8F9FA"
+                CornerRadius="0,10,10,0">
             <Grid>
+                <!-- Header với các nút điều khiển -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Title bar -->
-
-                <!-- Nội dung chính -->
-                <Grid Grid.Row="1">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="4*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <!-- Sidebar -->
-                    <components:SidebarControl Grid.Column="0" 
-                                              x:Name="SidebarControl"
-                                              PageTitle="Room Management"
-                                              SelectedMenuItem="Rooms"/>
-
-                    <!-- Main content -->
-                    <Border Grid.Column="1" Background="#f8f9fa" CornerRadius="0,0,12,0">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24" Margin="-10,63,10,-63">
-                            <StackPanel>
-                                <!-- Action Bar -->
-                                <Border Style="{StaticResource ActionCardStyle}" Margin="0,0,0,24">
-                                    <StackPanel>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <StackPanel Grid.Column="0">
-                                                <TextBlock Text="Các chức năng cơ bản quản lý" FontSize="14" Foreground="#6b7280" Margin="0,4,0,0"/>
-                                                <TextBlock Text="Chức năng " FontSize="18" FontWeight="SemiBold" Foreground="#374151"/>
-                                            </StackPanel>
-
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                                <!-- Search Box -->
-                                                <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
-                                                         Style="{StaticResource SearchTextBoxStyle}" 
-                                                         Margin="0,0,12,0"/>
-
-                                                <!-- Action Button (Only Add Room) -->
-                                                <Button Style="{StaticResource PrimaryButtonStyle}" 
-                                                        Margin="0,0,12,0" Command="{Binding ShowAddRoomPanelCommand}">
-                                                    <StackPanel Orientation="Horizontal">
-                                                        <TextBlock Text="+" FontSize="16" Margin="0,0,6,0"/>
-                                                        <TextBlock Text="Thêm phòng" VerticalAlignment="Center"/>
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Danh sách phòng (hiển thị khi có phòng) -->
-                                <ItemsControl ItemsSource="{Binding Rooms}" 
-                                              Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter='inverse'}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Style="{StaticResource RoomCardStyle}" Width="320" Margin="0,0,24,24"
-                                                    MouseLeftButtonDown="RoomCard_MouseLeftButtonDown">
-                                                <Grid>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="*"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
-
-                                                    <!-- Card Header -->
-                                                    <Border Grid.Row="0" Background="#1a7bff" CornerRadius="12,12,0,0" Padding="24,20" Margin="0,4,0,0">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                            </Grid.ColumnDefinitions>
-
-                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding TenPhong}" FontSize="18" FontWeight="Bold" 
-                                                                           Foreground="White"/>
-                                                                <TextBlock Text="{Binding MaPhong, StringFormat='ID: {0}'}" 
-                                                                           FontSize="12" Foreground="#e0ebff" Margin="0,2,0,0"/>
-                                                            </StackPanel>
-
-                                                            <Border Grid.Column="1" Style="{StaticResource StatusBadgeStyle}">
-                                                                <TextBlock Text="{Binding TrangThai}" FontSize="11" FontWeight="SemiBold" 
-                                                                           Foreground="White" HorizontalAlignment="Center"/>
-                                                            </Border>
-                                                        </Grid>
-                                                    </Border>
-
-                                                    <!-- Card Content -->
-                                                    <StackPanel Grid.Row="1" Margin="24,20">
-                                                        <StackPanel Margin="0,0,0,16">
-                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                                <TextBlock Text="#️⃣" FontSize="12" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding MaPhong, StringFormat='Room ID: {0}'}" 
-                                                                           FontSize="13" Foreground="#6b7280"/>
-                                                            </StackPanel>
-                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                                <TextBlock Text="📐" FontSize="12" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding DienTich, StringFormat='Area: {0} m²'}" 
-                                                                           FontSize="13" Foreground="#6b7280"/>
-                                                            </StackPanel>
-                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                                <TextBlock Text="💰" FontSize="12" Margin="0,0,8,0"/>
-                                                                <TextBlock Text="{Binding GiaCoBan, StringFormat='Price: {0:C}/month'}" 
-                                                                           FontSize="13" Foreground="#6b7280"/>
-                                                            </StackPanel>
-                                                        </StackPanel>
-                                                    </StackPanel>
-
-                                                    <!-- Card Footer -->
-                                                    <Border Grid.Row="2" Background="#f8f9fa" CornerRadius="0,0,12,12" Padding="24,16">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
-
-                                                            <Button Grid.Column="0" Style="{StaticResource PrimaryButtonStyle}" 
-                                                                    Margin="0,0,6,0" Command="{Binding DataContext.ShowEditRoomPanelCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="✏️" FontSize="12" Margin="0,0,4,0"/>
-                                                                    <TextBlock Text="Edit" VerticalAlignment="Center"/>
-                                                                </StackPanel>
-                                                            </Button>
-
-                                                            <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" 
-                                                                    Margin="6,0,0,0" Command="{Binding DataContext.DeleteRoomCommand, RelativeSource={RelativeSource AncestorType=Window}}">
-                                                                <StackPanel Orientation="Horizontal">
-                                                                    <TextBlock Text="🗑️" FontSize="12" Margin="0,0,4,0"/>
-                                                                    <TextBlock Text="Delete" VerticalAlignment="Center"/>
-                                                                </StackPanel>
-                                                            </Button>
-                                                        </Grid>
-                                                    </Border>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- Empty State (chỉ hiển thị khi không có phòng) -->
-                                <Border Background="White" CornerRadius="12" Padding="40" 
-                                        Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}}" Height="358">
-                                    <StackPanel HorizontalAlignment="Center">
-                                        <TextBlock Text="🏠" FontSize="48" Margin="0,0,0,16" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Không tồn tại phòng" FontSize="18" FontWeight="SemiBold" Foreground="#374151" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Hãy bắt đầu thêm phòng mới" FontSize="14" Foreground="#6b7280" Margin="0,8,0,0" HorizontalAlignment="Center"/>
-                                        <Button Style="{StaticResource PrimaryButtonStyle}" 
-                                                Margin="0,16,0,0" Command="{Binding ShowAddRoomPanelCommand}">
-                                            <TextBlock Text="Thêm phòng mới"/>
-                                        </Button>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-                </Grid>
-                <Border Grid.Row="0" Background="White" CornerRadius="12,12,0,0" Margin="274,0,0,692" Grid.RowSpan="2">
+                <!-- Header bar -->
+                <Border Grid.Row="0"
+                        Background="White"
+                        CornerRadius="0,10,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -373,20 +233,184 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Tiêu đề trang -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="30,20">
-                            <TextBlock Text="🏠" FontSize="24" Margin="0,0,10,0"/>
-                            <TextBlock Text="Quản lý phòng" FontSize="22" FontWeight="Bold" Foreground="#333"/>
+                        <StackPanel Grid.Column="0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="30,20">
+                            <TextBlock Text="🏠"
+                                       FontSize="24"
+                                       Margin="0,0,10,0"/>
+                            <TextBlock Text="Quản lý phòng"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       Foreground="#333"/>
                         </StackPanel>
 
                         <!-- Các nút điều khiển cửa sổ -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                            <Button Content="—" Style="{StaticResource WindowControlButton}" Command="{Binding MinimizeWindowCommand}"/>
-                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Command="{Binding MaximizeWindowCommand}"/>
-                            <Button Content="✕" Style="{StaticResource CloseButton}" Command="{Binding CloseWindowCommand}"/>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top">
+                            <Button Content="—"
+                                    Style="{StaticResource WindowControlButton}"
+                                    Click="MinimizeButton_Click"/>
+                            <Button Content="☐"
+                                    Style="{StaticResource WindowControlButton}"
+                                    Click="MaximizeButton_Click"/>
+                            <Button Content="✕"
+                                    Style="{StaticResource CloseButton}"
+                                    Click="CloseButton_Click"/>
                         </StackPanel>
                     </Grid>
                 </Border>
+
+                <!-- Nội dung chính -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="30,30,30,30">
+                        <!-- Action Bar -->
+                        <Border Style="{StaticResource ActionCardStyle}" Margin="0,0,0,24">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Các chức năng cơ bản quản lý" FontSize="14" Foreground="#6b7280" Margin="0,4,0,0"/>
+                                        <TextBlock Text="Chức năng " FontSize="18" FontWeight="SemiBold" Foreground="#374151"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <!-- Search Box -->
+                                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                                 Style="{StaticResource SearchTextBoxStyle}" 
+                                                 Margin="0,0,12,0" Width="411" Height="35"/>
+
+                                        <!-- Action Button (Only Add Room) -->
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" 
+                                                Margin="0,0,12,0" Command="{Binding ShowAddRoomPanelCommand}" Width="122">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="+" FontSize="16" Margin="0,0,6,0"/>
+                                                <TextBlock Text="Thêm phòng" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Danh sách phòng (hiển thị khi có phòng) -->
+                        <ItemsControl ItemsSource="{Binding Rooms}" 
+                                      Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter='inverse'}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource RoomCardStyle}" Width="320" Margin="0,0,24,24"
+                                            MouseLeftButtonDown="RoomCard_MouseLeftButtonDown">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Card Header -->
+                                            <Border Grid.Row="0" Background="#1a7bff" CornerRadius="12,12,0,0" Padding="24,20" Margin="0,4,0,0">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding TenPhong}" FontSize="18" FontWeight="Bold" 
+                                                                   Foreground="White"/>
+                                                        <TextBlock Text="{Binding MaPhong, StringFormat='ID: {0}'}" 
+                                                                   FontSize="12" Foreground="#e0ebff" Margin="0,2,0,0"/>
+                                                    </StackPanel>
+
+                                                    <Border Grid.Column="1" Style="{StaticResource StatusBadgeStyle}">
+                                                        <TextBlock Text="{Binding TrangThai}" FontSize="11" FontWeight="SemiBold" 
+                                                                   Foreground="White" HorizontalAlignment="Center"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Card Content -->
+                                            <StackPanel Grid.Row="1" Margin="24,20">
+                                                <StackPanel Margin="0,0,0,16">
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                        <TextBlock Text="#️⃣" FontSize="12" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding MaPhong, StringFormat='Room ID: {0}'}" 
+                                                                   FontSize="13" Foreground="#6b7280"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                        <TextBlock Text="📐" FontSize="12" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding DienTich, StringFormat='Area: {0} m²'}" 
+                                                                   FontSize="13" Foreground="#6b7280"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                        <TextBlock Text="💰" FontSize="12" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="{Binding GiaCoBan, StringFormat='Price: {0:C}/month'}" 
+                                                                   FontSize="13" Foreground="#6b7280"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- Card Footer -->
+                                            <Border Grid.Row="2" Background="#f8f9fa" CornerRadius="0,0,12,12" Padding="24,16">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <Button Grid.Column="0" Style="{StaticResource PrimaryButtonStyle}" 
+                                                            Margin="0,0,6,0" Command="{Binding DataContext.ShowEditRoomPanelCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="✏️" FontSize="12" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Edit" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" 
+                                                            Margin="6,0,0,0" Command="{Binding DataContext.DeleteRoomCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="🗑️" FontSize="12" Margin="0,0,4,0"/>
+                                                            <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty State (chỉ hiển thị khi không có phòng) -->
+                        <Border Background="White" CornerRadius="12" Padding="40" 
+                                Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}}" Height="358">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="🏠" FontSize="48" Margin="0,0,0,16" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Không tồn tại phòng" FontSize="18" FontWeight="SemiBold" Foreground="#374151" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Hãy bắt đầu thêm phòng mới" FontSize="14" Foreground="#6b7280" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+                                <Button Style="{StaticResource PrimaryButtonStyle}" 
+                                        Margin="0,16,0,0" Command="{Binding ShowAddRoomPanelCommand}" Click="Button_Click">
+                                    <TextBlock Text="Thêm phòng mới"/>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
-    </Border>
+    </Grid>
 </Window>

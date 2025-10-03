@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Input;
 using QLKDPhongTro.Presentation.ViewModels;
@@ -61,22 +62,32 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     MessageBox.Show("Đã chuyển đến trang Tổng quan", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     break;
                 case "Rooms":
-                    // Chuyển đến trang quản lý phòng
-                    var roomManagementWindow = new RoomManagementWindow();
-                    
-                    // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
-                    roomManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                    
-                    // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
-                    var screenWidth = SystemParameters.PrimaryScreenWidth;
-                    var screenHeight = SystemParameters.PrimaryScreenHeight;
-                    var windowWidth = roomManagementWindow.Width;
-                    var windowHeight = roomManagementWindow.Height;
-                    
-                    roomManagementWindow.Left = (screenWidth - windowWidth) / 2;
-                    roomManagementWindow.Top = (screenHeight - windowHeight) / 2;
-                    
-                    roomManagementWindow.Show();
+                    // Tìm cửa sổ Room Management hiện có hoặc tạo mới
+                    var existingRoomManagement = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
+                    if (existingRoomManagement != null)
+                    {
+                        existingRoomManagement.Activate();
+                        existingRoomManagement.WindowState = WindowState.Normal;
+                    }
+                    else
+                    {
+                        // Chuyển đến trang quản lý phòng
+                        var roomManagementWindow = new RoomManagementWindow();
+                        
+                        // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
+                        roomManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                        
+                        // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
+                        var screenWidth = SystemParameters.PrimaryScreenWidth;
+                        var screenHeight = SystemParameters.PrimaryScreenHeight;
+                        var windowWidth = roomManagementWindow.Width;
+                        var windowHeight = roomManagementWindow.Height;
+                        
+                        roomManagementWindow.Left = (screenWidth - windowWidth) / 2;
+                        roomManagementWindow.Top = (screenHeight - windowHeight) / 2;
+                        
+                        roomManagementWindow.Show();
+                    }
                     this.Close();
                     break;
                 case "Tenants":

@@ -163,14 +163,16 @@
                            Margin="0,0,0,32"
                            HorizontalAlignment="Center"/>
 
-                <!-- Sign in with Google Button -->
+                <!-- Sign in with Google Button - ĐÃ ẨN -->
+                <!-- Google Login Button Hidden -->
                 <Border BorderBrush="#7D8FA9"
                         BorderThickness="1"
                         CornerRadius="8"
                         Height="50"
                         Margin="0,0,0,20"
                         Cursor="Hand"
-                        Background="White">
+                        Background="White"
+                        Visibility="Collapsed">
                     <Border.Style>
                         <Style TargetType="Border">
                             <Style.Triggers>
@@ -185,7 +187,7 @@
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
-                        <!-- Google Icon -->
+                        <!-- Google Icon (commented out) -->
                         <Canvas Width="20"
                                 Height="20"
                                 Margin="0,0,12,0">
@@ -201,7 +203,7 @@
                 </Border>
 
                 <!-- Or separator -->
-                <Grid Margin="0,16,0,16">
+                <Grid Margin="0,16,0,16" Visibility="Collapsed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>

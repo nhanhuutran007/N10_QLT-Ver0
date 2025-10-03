@@ -20,7 +20,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             
             // TODO: Đọc connection string từ config
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
 
         /// <summary>

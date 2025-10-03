@@ -83,9 +83,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     {
                         DataContext = new DashboardViewModel()
                     };
-                    dashboardWindow.Show();
-                    Application.Current.MainWindow?.Close();
+                    
+                    // Đóng cửa sổ đăng nhập hiện tại trước
+                    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                    loginWindow?.Close();
+                    
+                    // Đặt Dashboard làm MainWindow và hiển thị
                     Application.Current.MainWindow = dashboardWindow;
+                    dashboardWindow.Show();
                 }
                 else
                 {
