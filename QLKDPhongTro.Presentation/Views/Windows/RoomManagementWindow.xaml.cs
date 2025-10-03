@@ -1,8 +1,9 @@
-﻿using System.Windows;
-using System.Windows.Input;
+﻿using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.Presentation.ViewModels;
 using QLKDPhongTro.Presentation.Views.Windows;
 using System;
+using System.Windows;
+using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -14,7 +15,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         public RoomManagementWindow()
         {
             InitializeComponent();
-            // Set DataContext here
             this.DataContext = new RentedRoomViewModel();
         }
 
@@ -24,102 +24,99 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 DragMove();
         }
 
-        // Handle individual sidebar button clicks
+        // Handle sidebar button clicks
         private void OverviewButton_Click(object sender, RoutedEventArgs e)
         {
-            // Handle overview navigation
+            var mainWindow = new DashWindow();
+            mainWindow.Show();
+            this.Close();
         }
 
         private void RoomsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Already in rooms management, do nothing or refresh
+            if (DataContext is RentedRoomViewModel viewModel)
+            {
+                viewModel.LoadRoomsCommand.Execute(null);
+            }
         }
 
         private void TenantsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to tenants management
+            MessageBox.Show("Chuyển đến quản lý khách thuê", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void InvoicesButton_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to invoices management
+            MessageBox.Show("Chuyển đến quản lý hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void ContractsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to contracts management
+            MessageBox.Show("Chuyển đến quản lý hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Navigate to settings
+            MessageBox.Show("Chuyển đến cài đặt", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
-            // Handle logout
-            var mainWindow = Application.Current.MainWindow;
-            if (mainWindow != this)
+            var result = MessageBox.Show("Bạn có chắc muốn đăng xuất?", "Xác nhận đăng xuất",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
             {
-                mainWindow?.Close();
+                var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                if (loginWindow != null)
+                {
+                    loginWindow.Show();
+                }
+                else
+                {
+                    Application.Current.Shutdown();
+                }
+                this.Close();
             }
-            Application.Current.Shutdown();
         }
 
         private void RoomCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.DataContext is BusinessLayer.DTOs.RentedRoomDto room)
+            if (sender is FrameworkElement element && element.DataContext is RentedRoomDto room)
             {
                 if (DataContext is RentedRoomViewModel viewModel)
                 {
-                    viewModel.SelectedRoom = room;
-                }
-            }
-        }
-
-        private void RoomCard_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                var currentTime = DateTime.Now;
-                var currentItem = (sender as FrameworkElement)?.DataContext;
-
-                // Kiểm tra double click (trong vòng 300ms và cùng một item)
-                if (currentItem != null &&
-                    currentItem == _lastClickedItem &&
-                    (currentTime - _lastClickTime).TotalMilliseconds < 300)
-                {
-                    // Double click detected
-                    if (currentItem is BusinessLayer.DTOs.RentedRoomDto room)
+                    if (room == null)
                     {
-                        if (DataContext is RentedRoomViewModel viewModel)
-                        {
-                            viewModel.SelectedRoom = room;
-                            viewModel.ShowRoomDetailsWindow();
-                        }
+                        MessageBox.Show("Không thể chọn phòng: Dữ liệu phòng không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
                     }
 
-                    // Reset sau khi xử lý double click
-                    _lastClickedItem = null;
-                    _lastClickTime = DateTime.MinValue;
+                    viewModel.SelectedRoom = room;
+
+                    // Handle double click to view room details
+                    var currentTime = DateTime.Now;
+                    if (_lastClickedItem == room && (currentTime - _lastClickTime).TotalMilliseconds < 500)
+                    {
+                        viewModel.ShowRoomDetailsWindow();
+                        _lastClickedItem = null;
+                        _lastClickTime = DateTime.MinValue;
+                    }
+                    else
+                    {
+                        _lastClickedItem = room;
+                        _lastClickTime = currentTime;
+                    }
                 }
                 else
                 {
-                    // Single click - chỉ cập nhật thời gian và item
-                    _lastClickedItem = currentItem;
-                    _lastClickTime = currentTime;
+                    MessageBox.Show("Không thể truy cập ViewModel.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-
+            else
+            {
+                MessageBox.Show("Không thể chọn phòng: Dữ liệu không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

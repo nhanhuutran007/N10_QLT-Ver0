@@ -16,16 +16,25 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
-        <!-- Style cho nút đóng -->
+        <!-- [Styles remain unchanged, omitted for brevity] -->
         <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontSize" Value="16"/>
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="Width" Value="30"/>
             <Setter Property="Height" Value="30"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="#FF6B6B"/>
@@ -34,7 +43,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho nút chính -->
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="#5B75D4"/>
             <Setter Property="Foreground" Value="White"/>
@@ -43,6 +51,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
@@ -54,12 +63,11 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4A63C1"/>
+                    <Setter Property="Background" Value="#485BB0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho nút hủy -->
         <Style x:Key="CancelButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="#6C757D"/>
             <Setter Property="Foreground" Value="White"/>
@@ -68,6 +76,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
@@ -79,15 +88,14 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#5A6268"/>
+                    <Setter Property="Background" Value="#495057"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho TextBox -->
         <Style x:Key="InputTextBoxStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -107,43 +115,144 @@
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
                     <Setter Property="BorderBrush" Value="#5B75D4"/>
-                    <Setter Property="BorderThickness" Value="1.5"/>
+                    <Setter Property="BorderThickness" Value="1"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho ComboBox -->
         <Style x:Key="InputComboBoxStyle" TargetType="{x:Type ComboBox}">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="#E0E0E0"/>
-            <Setter Property="Height" Value="40"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" 
+                                            Background="Transparent" 
+                                            BorderThickness="0" 
+                                            IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                <ContentPresenter x:Name="ContentSite" 
+                                                IsHitTestVisible="False" 
+                                                Content="{TemplateBinding SelectionBoxItem}"
+                                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                Margin="{TemplateBinding Padding}"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Left"/>
+                                <Popup x:Name="Popup" 
+                                       Placement="Bottom" 
+                                       IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                       AllowsTransparency="True" 
+                                       Focusable="False" 
+                                       PopupAnimation="Slide">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="White" 
+                                            BorderThickness="1" 
+                                            BorderBrush="#E0E0E0"
+                                            MinWidth="{TemplateBinding ActualWidth}"
+                                            MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <ScrollViewer>
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsFocused" Value="True">
                     <Setter Property="BorderBrush" Value="#5B75D4"/>
-                    <Setter Property="BorderThickness" Value="1.5"/>
+                    <Setter Property="BorderThickness" Value="1"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho CheckBox -->
         <Style x:Key="EquipmentCheckBoxStyle" TargetType="{x:Type CheckBox}">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#333"/>
+            <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Margin" Value="0,8"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type CheckBox}">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="CheckBoxBorder" 
+                                    Width="20" 
+                                    Height="20" 
+                                    BorderThickness="2" 
+                                    BorderBrush="#E0E0E0" 
+                                    Background="Transparent" 
+                                    CornerRadius="6">
+                                <TextBlock x:Name="CheckMark" 
+                                           Text="✓" 
+                                           Foreground="White" 
+                                           FontSize="12" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center" 
+                                           Visibility="Hidden"/>
+                            </Border>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckBoxBorder" Property="Background" Value="#5B75D4"/>
+                                <Setter TargetName="CheckBoxBorder" Property="BorderBrush" Value="#5B75D4"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CustomScrollBar" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Background" Value="#F1F1F1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate>
+                                                <Rectangle Fill="#C7D7FE" RadiusX="4" RadiusY="4"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
     <!-- Background overlay với hiệu ứng mờ -->
-    <Border Background="#80000000" CornerRadius="12">
+    <Border Background="#F8F9FA" CornerRadius="12">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
+        </Border.Effect>
         <!-- Main content -->
         <Border Background="White" CornerRadius="12" Margin="5" BorderThickness="0">
             <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -159,8 +268,10 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="➕" FontSize="20" Margin="0,0,10,0"/>
-                            <TextBlock Text="Thêm phòng mới" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                            <Border Background="#33FFFFFF" CornerRadius="8" Padding="8" Margin="0,0,10,0">
+                                <TextBlock Text="➕" FontSize="20" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="White"/>
                         </StackPanel>
 
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
@@ -170,53 +281,59 @@
 
                 <!-- Form content -->
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource CustomScrollBar}"/>
+                    </ScrollViewer.Resources>
                     <StackPanel>
                         <!-- Tên phòng -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Tên phòng *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333" Margin="0,0,0,8"/>
+                                       Foreground="#333333" Margin="0,0,0,8"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" 
                                      Text="{Binding NewRoom.TenPhong, UpdateSourceTrigger=PropertyChanged}"
                                      Tag="Nhập tên phòng"/>
                         </StackPanel>
 
                         <!-- Diện tích -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Diện tích (m²) *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333" Margin="0,0,0,8"/>
+                                       Foreground="#333333" Margin="0,0,0,8"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" 
                                      Text="{Binding NewRoom.DienTich, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập diện tích (≥ 5 m²)"/>
+                                     Tag="Nhập diện tích (lớn hơn 0)"/>
                         </StackPanel>
 
                         <!-- Giá thuê -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Giá thuê (VNĐ) *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333" Margin="0,0,0,8"/>
+                                       Foreground="#333333" Margin="0,0,0,8"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" 
                                      Text="{Binding NewRoom.GiaCoBan, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập giá thuê (≥ 500,000 VNĐ)"/>
+                                     Tag="Nhập giá thuê (không âm)"/>
                         </StackPanel>
 
                         <!-- Trạng thái -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333" Margin="0,0,0,8"/>
+                                       Foreground="#333333" Margin="0,0,0,8"/>
                             <ComboBox Style="{StaticResource InputComboBoxStyle}" 
-                                      SelectedValue="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}">
-                                <ComboBoxItem Content="Trống"/>
-                                <ComboBoxItem Content="Đã thuê"/>
-                                <ComboBoxItem Content="Bảo trì"/>
-                            </ComboBox>
+                                      ItemsSource="{Binding StatusOptions, RelativeSource={RelativeSource AncestorType=Window, AncestorLevel=1}}"
+                                      SelectedItem="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"
+                                      DisplayMemberPath="Value"/>
                         </StackPanel>
 
                         <!-- Trang thiết bị -->
-                        <Border Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                        <Border Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,24">
                             <StackPanel>
-                                <TextBlock Text="🏠 Trang thiết bị" FontSize="14" FontWeight="SemiBold" 
-                                           Foreground="#333" Margin="0,0,0,10"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Background="#F0F4FF" CornerRadius="8" Padding="8" Margin="0,0,8,0">
+                                        <TextBlock Text="🏠" FontSize="14" Foreground="#5B75D4"/>
+                                    </Border>
+                                    <TextBlock Text="Trang thiết bị" FontSize="14" FontWeight="SemiBold" 
+                                               Foreground="#333333"/>
+                                </StackPanel>
                                 <TextBlock Text="Chọn các trang thiết bị có trong phòng (không lưu vào database)" 
-                                           FontSize="12" Foreground="#666" Margin="0,0,0,10"/>
+                                           FontSize="12" Foreground="#6C757D" Margin="0,0,0,10"/>
 
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -242,11 +359,11 @@
                         </Border>
 
                         <!-- Ghi chú -->
-                        <StackPanel Margin="0,0,0,20">
+                        <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333" Margin="0,0,0,8"/>
+                                       Foreground="#333333" Margin="0,0,0,8"/>
                             <TextBox Style="{StaticResource InputTextBoxStyle}" 
-                                     Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                     Height="96" TextWrapping="Wrap" AcceptsReturn="True"
                                      Text="{Binding NewRoom.GhiChu, UpdateSourceTrigger=PropertyChanged}"
                                      Tag="Nhập ghi chú (tùy chọn)"/>
                         </StackPanel>
@@ -258,8 +375,8 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
                                 Width="100" Margin="0,0,15,0" Command="{Binding CancelAddEditCommand}"/>
-                        <Button Content="Thêm phòng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="120" Command="{Binding SaveRoomCommand}"/>
+                        <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" 
+                                Width="120" Command="{Binding SaveCommand}"/>
                     </StackPanel>
                 </Border>
             </Grid>
