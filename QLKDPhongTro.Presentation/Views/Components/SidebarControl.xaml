@@ -1,227 +1,180 @@
 <UserControl
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="av"
-        x:Class="QLKDPhongTro.Presentation.Views.Components.SidebarControl">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="av"
+    x:Class="QLKDPhongTro.Presentation.Views.Components.SidebarControl">
 
-        <UserControl.Resources>
-                <!-- Style cho các nút menu bên trái -->
-                <Style TargetType="{x:Type Button}"
-                       x:Key="MenuButtonStyle">
-                        <Setter Property="Background"
-                                Value="Transparent"/>
-                        <Setter Property="Foreground"
-                                Value="White"/>
-                        <Setter Property="BorderThickness"
-                                Value="0"/>
-                        <Setter Property="FontSize"
-                                Value="18"/>
-                        <Setter Property="FontWeight"
-                                Value="Medium"/>
-                        <Setter Property="HorizontalContentAlignment"
-                                Value="Left"/>
-                        <Setter Property="Padding"
-                                Value="20,15"/>
-                        <Setter Property="Cursor"
-                                Value="Hand"/>
-                        <Setter Property="Width"
-                                Value="220"/>
-                        <Setter Property="Height"
-                                Value="56"/>
-                        <Setter Property="Template">
-                                <Setter.Value>
-                                        <ControlTemplate TargetType="{x:Type Button}">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        CornerRadius="6">
-                                                        <ContentPresenter HorizontalAlignment="Stretch"
-                                                                          VerticalAlignment="Center"/>
-                                                </Border>
-                                        </ControlTemplate>
-                                </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                                <Trigger Property="IsMouseOver"
-                                         Value="True">
-                                        <Setter Property="Background"
-                                                Value="#4A63C1"/>
-                                </Trigger>
-                        </Style.Triggers>
-                </Style>
-        </UserControl.Resources>
+    <UserControl.Resources>
+        <!-- Style cho các nút menu bên trái -->
+        <Style TargetType="{x:Type Button}" x:Key="MenuButtonStyle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="20,15"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="220"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1A7BFF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
 
-        <!-- Sidebar -->
-        <Border CornerRadius="10,0,0,10"
-                VerticalAlignment="Stretch">
-                <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0"
-                                             EndPoint="1,1">
-                                <GradientStop Color="#3A4E8E"
-                                              Offset="0"/>
-                                <GradientStop Color="#5B75D4"
-                                              Offset="1"/>
-                        </LinearGradientBrush>
-                </Border.Background>
+        <!-- Style cho nút active -->
+        <Style TargetType="{x:Type Button}" x:Key="ActiveMenuButtonStyle" BasedOn="{StaticResource MenuButtonStyle}">
+            <Setter Property="Background" Value="#1A7BFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </UserControl.Resources>
 
-                <Grid Height="700">
-                        <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"
-                                               MinHeight="196"/>
-                                <RowDefinition/>
-                                <RowDefinition Height="Auto"
-                                               MinHeight="107"/>
-                        </Grid.RowDefinitions>
+    <!-- Sidebar -->
+    <Border CornerRadius="10,0,0,10" VerticalAlignment="Stretch">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#003580" Offset="0"/>
+                <GradientStop Color="#004bb3" Offset="0.5"/>
+                <GradientStop Color="#0062e6" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
 
-                        <!-- Logo và tiêu đề -->
-                        <StackPanel VerticalAlignment="Center"
-                                    Width="200"
-                                    HorizontalAlignment="Center"
-                                    Height="170">
-                                <Image Source="/Resources/Images/Logo.png"
-                                       Width="120"/>
-                                <TextBlock Text="Quản lý phòng trọ"
-                                           FontSize="18"
-                                           FontWeight="Bold"
-                                           Foreground="White"
-                                           TextWrapping="Wrap"
-                                           MaxWidth="200"
-                                           HorizontalAlignment="Center"
-                                           Margin="0,5,0,0"/>
-                                <TextBlock x:Name="PageTitleTextBlock"
-                                           Text="Dashboard"
-                                           FontSize="14"
-                                           Foreground="#E0E0E0"
-                                           Margin="0,2,0,0"
-                                           HorizontalAlignment="Center"/>
-                        </StackPanel>
+        <Grid Height="700">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" MinHeight="196"/>
+                <RowDefinition/>
+                <RowDefinition Height="Auto" MinHeight="107"/>
+            </Grid.RowDefinitions>
 
-                        <!-- Menu điều hướng -->
-                        <StackPanel VerticalAlignment="Top"
-                                    Margin="0,175,0,0"
-                                    Width="220"
-                                    HorizontalAlignment="Center"
-                                    Grid.RowSpan="2"
-                                    Height="413">
-                                <Border CornerRadius="20"
-                                        Margin="0,0,0,10"
-                                        Background="Transparent"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="📊 Tổng quan"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="120"
-                                                HorizontalContentAlignment="Center"
-                                                Click="OverviewButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,15,12,0"/>
-                                </Border>
-                                <Border CornerRadius="10"
-                                        Margin="0,0,0,10"
-                                        Background="#4A63C1"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="🏠 Quản lý phòng"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="150"
-                                                HorizontalContentAlignment="Center"
-                                                Click="RoomsButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,0,12,0"/>
-                                </Border>
-                                <Border CornerRadius="20"
-                                        Margin="0,0,0,10"
-                                        Background="Transparent"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="👥 Khách thuê"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="120"
-                                                HorizontalContentAlignment="Center"
-                                                Click="TenantsButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,15,12,0"/>
-                                </Border>
-                                <Border CornerRadius="20"
-                                        Margin="0,0,0,10"
-                                        Background="Transparent"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="💰 Hóa đơn"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="120"
-                                                HorizontalContentAlignment="Center"
-                                                Click="InvoicesButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,15,12,0"/>
-                                </Border>
-                                <Border CornerRadius="20"
-                                        Margin="0,0,0,10"
-                                        Background="Transparent"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="📜 Hợp đồng"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="120"
-                                                HorizontalContentAlignment="Center"
-                                                Click="ContractsButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,15,12,0"/>
-                                </Border>
-                                <Border CornerRadius="20"
-                                        Margin="0,0,0,0"
-                                        Background="Transparent"
-                                        HorizontalAlignment="Center">
-                                        <Button Content="⚙️ Cài đặt"
-                                                Style="{StaticResource MenuButtonStyle}"
-                                                Height="48"
-                                                Width="120"
-                                                HorizontalContentAlignment="Center"
-                                                Click="SettingsButton_Click"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="20,15,12,0"/>
-                                </Border>
-                        </StackPanel>
+            <!-- Logo và tiêu đề -->
+            <StackPanel VerticalAlignment="Center" Width="200" HorizontalAlignment="Center" Height="170">
+                <Image Source="/Resources/Images/Logo.png" Width="120"/>
+                <TextBlock Text="Quản lý phòng trọ"
+                           FontSize="18"
+                           FontWeight="Bold"
+                           Foreground="White"
+                           TextWrapping="Wrap"
+                           MaxWidth="200"
+                           HorizontalAlignment="Center"
+                           Margin="0,5,0,0"/>
+                <TextBlock x:Name="PageTitleTextBlock"
+                           Text="Dashboard"
+                           FontSize="14"
+                           Foreground="#E0EBFF"
+                           Margin="0,2,0,0"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
 
-                        <!-- Thông tin người dùng -->
-                        <StackPanel Grid.Row="2"
-                                    VerticalAlignment="Center"
-                                    Width="200"
-                                    HorizontalAlignment="Center"
-                                    Height="107">
-                                <Border Background="#4A63C1"
-                                        CornerRadius="8"
-                                        Padding="15,6,15,15">
-                                        <StackPanel>
-                                                <TextBlock Text="Admin User"
-                                                           FontSize="14"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="White"
-                                                           HorizontalAlignment="Center"/>
-                                                <TextBlock Text="admin@example.com"
-                                                           FontSize="12"
-                                                           Foreground="#E0E0E0"
-                                                           Margin="0,2,0,0"
-                                                           HorizontalAlignment="Center"/>
-                                                <Button Content="Đăng xuất"
-                                                        Background="#FF4444"
-                                                        Foreground="White"
-                                                        FontSize="12"
-                                                        FontWeight="SemiBold"
-                                                        HorizontalAlignment="Center"
-                                                        Margin="0,10,0,0"
-                                                        Width="170"
-                                                        Height="30"
-                                                        Click="LogoutButton_Click"/>
-                                        </StackPanel>
-                                </Border>
-                        </StackPanel>
-                </Grid>
-        </Border>
+            <!-- Menu điều hướng -->
+            <StackPanel VerticalAlignment="Top" Margin="0,175,0,0" Width="220" HorizontalAlignment="Center" Grid.RowSpan="2" Height="413">
+                <Border CornerRadius="20" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="📊 Tổng quan"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="120"
+                            HorizontalContentAlignment="Center"
+                            Click="OverviewButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,15,12,0"/>
+                </Border>
+                <Border CornerRadius="10" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="🏠 Quản lý phòng"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="150"
+                            HorizontalContentAlignment="Center"
+                            Click="RoomsButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,0,12,0"/>
+                </Border>
+                <Border CornerRadius="20" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="👥 Khách thuê"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="120"
+                            HorizontalContentAlignment="Center"
+                            Click="TenantsButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,15,12,0"/>
+                </Border>
+                <Border CornerRadius="20" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="💰 Hóa đơn"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="120"
+                            HorizontalContentAlignment="Center"
+                            Click="InvoicesButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,15,12,0"/>
+                </Border>
+                <Border CornerRadius="20" Margin="0,0,0,10" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="📜 Hợp đồng"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="120"
+                            HorizontalContentAlignment="Center"
+                            Click="ContractsButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,15,12,0"/>
+                </Border>
+                <Border CornerRadius="20" Margin="0,0,0,0" Background="Transparent" HorizontalAlignment="Center">
+                    <Button Content="⚙️ Cài đặt"
+                            Style="{StaticResource MenuButtonStyle}"
+                            Height="48"
+                            Width="120"
+                            HorizontalContentAlignment="Center"
+                            Click="SettingsButton_Click"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Margin="20,15,12,0"/>
+                </Border>
+            </StackPanel>
+
+            <!-- Thông tin người dùng -->
+            <StackPanel Grid.Row="2" VerticalAlignment="Center" Width="200" HorizontalAlignment="Center" Height="107">
+                <Border Background="#001f4d" CornerRadius="8" Padding="15,6,15,15">
+                    <StackPanel>
+                        <TextBlock Text="Admin User"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="admin@example.com"
+                                   FontSize="12"
+                                   Foreground="#E0EBFF"
+                                   Margin="0,2,0,0"
+                                   HorizontalAlignment="Center"/>
+                        <Button Content="Đăng xuất"
+                                Background="#FF4444"
+                                Foreground="White"
+                                FontSize="12"
+                                FontWeight="SemiBold"
+                                HorizontalAlignment="Center"
+                                Margin="0,10,0,0"
+                                Width="170"
+                                Height="30"
+                                Click="LogoutButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

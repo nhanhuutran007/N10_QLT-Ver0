@@ -4,13 +4,15 @@
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
+    xmlns:local="clr-namespace:QLKDPhongTro.Presentation.ViewModels"
+    xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.RoomManagementWindow"
-    Title="Quản lý phòng ở"
-    Height="700"
-    Width="1200"
+    Title="Room Management"
+    Height="800"
+    Width="1400"
     MinHeight="600"
-    MinWidth="800"
+    MinWidth="1000"
     WindowStartupLocation="CenterScreen"
     ResizeMode="CanResize"
     WindowStyle="None"
@@ -19,6 +21,12 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
+        <!-- Converter for status to color -->
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+
+        <!-- Converter để ẩn/hiện empty state -->
+        <converters:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter"/>
+
         <!-- Style cho các nút điều khiển cửa sổ -->
         <Style TargetType="{x:Type Button}" x:Key="WindowControlButton">
             <Setter Property="Background" Value="Transparent"/>
@@ -57,47 +65,20 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho các nút menu bên trái -->
-        <Style TargetType="{x:Type Button}" x:Key="MenuButtonStyle">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="18"/>
-            <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="HorizontalContentAlignment" Value="Left"/>
-            <Setter Property="Padding" Value="20,15"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Width" Value="220"/>
-            <Setter Property="Height" Value="56"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4A63C1"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Style cho các nút chức năng -->
-        <Style TargetType="{x:Type Button}" x:Key="ActionButtonStyle">
+        <!-- Style cho các nút chức năng chính -->
+        <Style TargetType="{x:Type Button}" x:Key="PrimaryButtonStyle">
             <Setter Property="Background" Value="#5B75D4"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="40"/>
-            <Setter Property="Width" Value="200"/>
+            <Setter Property="Padding" Value="16,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
-                        <Border CornerRadius="6" Background="{TemplateBinding Background}">
+                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -110,27 +91,71 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho ô tìm kiếm -->
+        <Style TargetType="{x:Type TextBox}" x:Key="SearchTextBoxStyle">
+            <Setter Property="Background" Value="#f8f9fa"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#d1d5db"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Regular"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="40,10,16,10"/>
+            <Setter Property="Width" Value="350"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="10">
+                            <Grid>
+                                <TextBlock Text="🔍" FontSize="16" VerticalAlignment="Center" 
+                                           Margin="12,0,0,0" Foreground="#6b7280"/>
+                                <ScrollViewer x:Name="PART_ContentHost" Margin="40,0,16,0"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#1a7bff"/>
+                    <Setter Property="BorderThickness" Value="2"/>
+                    <Setter Property="Background" Value="White"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#a5b4fc"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Style cho các card phòng -->
         <Style TargetType="{x:Type Border}" x:Key="RoomCardStyle">
             <Setter Property="Background" Value="White"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="Black" Opacity="0.1" ShadowDepth="2" BlurRadius="8"/>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" ShadowDepth="0" BlurRadius="20"/>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Effect">
                         <Setter.Value>
-                            <DropShadowEffect Color="#5B75D4" Opacity="0.3" ShadowDepth="4" BlurRadius="12"/>
+                            <DropShadowEffect Color="#1a7bff" Opacity="0.2" ShadowDepth="0" BlurRadius="30"/>
                         </Setter.Value>
                     </Setter>
                     <Setter Property="RenderTransform">
                         <Setter.Value>
                             <ScaleTransform ScaleX="1.02" ScaleY="1.02"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransformOrigin">
+                        <Setter.Value>
+                            <Point X="0.5" Y="0.5"/>
                         </Setter.Value>
                     </Setter>
                 </Trigger>
@@ -139,38 +164,208 @@
 
         <!-- Style cho status badge -->
         <Style TargetType="{x:Type Border}" x:Key="StatusBadgeStyle">
-            <Setter Property="CornerRadius" Value="9"/>
-            <Setter Property="Padding" Value="12,9"/>
-            <Setter Property="Height" Value="18"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="24"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TrangThai}" Value="Đang thuê">
+                    <Setter Property="Background" Value="#10B981"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TrangThai}" Value="Trống">
+                    <Setter Property="Background" Value="#3B82F6"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding TrangThai}" Value="Đang bảo trì">
+                    <Setter Property="Background" Value="#F59E0B"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style cho action card -->
+        <Style TargetType="{x:Type Border}" x:Key="ActionCardStyle">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" ShadowDepth="0" BlurRadius="20"/>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
 
-    <!-- Bố cục chính của cửa sổ -->
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="240" MinWidth="200"/>
-            <ColumnDefinition Width="*" MinWidth="600"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- SIDEBAR BÊN TRÁI -->
-        <components:SidebarControl Grid.Column="0" 
-                                  x:Name="SidebarControl"
-                                  PageTitle="Quản lý phòng ở"
-                                  SelectedMenuItem="Rooms"
-                                  VerticalAlignment="Stretch"
-                                  MenuItemClicked="SidebarControl_MenuItemClicked"
-                                  LogoutClicked="SidebarControl_LogoutClicked"/>
-
-        <!-- NỘI DUNG CHÍNH -->
-        <Border Grid.Column="1" Background="#F8F9FA" CornerRadius="0,10,10,0">
+    <!-- Background với hiệu ứng mờ -->
+    <Border Background="#CC000000">
+        <!-- Bố cục chính của cửa sổ -->
+        <Border Background="White" CornerRadius="12" Margin="20">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header bar -->
-                <Border Grid.Row="0" Background="White" CornerRadius="0,10,0,0">
+                <!-- Title bar -->
+
+                <!-- Nội dung chính -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="4*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sidebar -->
+                    <components:SidebarControl Grid.Column="0" 
+                                              x:Name="SidebarControl"
+                                              PageTitle="Room Management"
+                                              SelectedMenuItem="Rooms"/>
+
+                    <!-- Main content -->
+                    <Border Grid.Column="1" Background="#f8f9fa" CornerRadius="0,0,12,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="24" Margin="-10,63,10,-63">
+                            <StackPanel>
+                                <!-- Action Bar -->
+                                <Border Style="{StaticResource ActionCardStyle}" Margin="0,0,0,24">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="Các chức năng cơ bản quản lý" FontSize="14" Foreground="#6b7280" Margin="0,4,0,0"/>
+                                                <TextBlock Text="Chức năng " FontSize="18" FontWeight="SemiBold" Foreground="#374151"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                <!-- Search Box -->
+                                                <TextBox Grid.Column="1" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                                         Style="{StaticResource SearchTextBoxStyle}" 
+                                                         Margin="0,0,12,0"/>
+
+                                                <!-- Action Button (Only Add Room) -->
+                                                <Button Style="{StaticResource PrimaryButtonStyle}" 
+                                                        Margin="0,0,12,0" Command="{Binding ShowAddRoomPanelCommand}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="+" FontSize="16" Margin="0,0,6,0"/>
+                                                        <TextBlock Text="Thêm phòng" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Danh sách phòng (hiển thị khi có phòng) -->
+                                <ItemsControl ItemsSource="{Binding Rooms}" 
+                                              Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter='inverse'}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal" HorizontalAlignment="Stretch"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource RoomCardStyle}" Width="320" Margin="0,0,24,24"
+                                                    MouseLeftButtonDown="RoomCard_MouseLeftButtonDown">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="*"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- Card Header -->
+                                                    <Border Grid.Row="0" Background="#1a7bff" CornerRadius="12,12,0,0" Padding="24,20" Margin="0,4,0,0">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding TenPhong}" FontSize="18" FontWeight="Bold" 
+                                                                           Foreground="White"/>
+                                                                <TextBlock Text="{Binding MaPhong, StringFormat='ID: {0}'}" 
+                                                                           FontSize="12" Foreground="#e0ebff" Margin="0,2,0,0"/>
+                                                            </StackPanel>
+
+                                                            <Border Grid.Column="1" Style="{StaticResource StatusBadgeStyle}">
+                                                                <TextBlock Text="{Binding TrangThai}" FontSize="11" FontWeight="SemiBold" 
+                                                                           Foreground="White" HorizontalAlignment="Center"/>
+                                                            </Border>
+                                                        </Grid>
+                                                    </Border>
+
+                                                    <!-- Card Content -->
+                                                    <StackPanel Grid.Row="1" Margin="24,20">
+                                                        <StackPanel Margin="0,0,0,16">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                                <TextBlock Text="#️⃣" FontSize="12" Margin="0,0,8,0"/>
+                                                                <TextBlock Text="{Binding MaPhong, StringFormat='Room ID: {0}'}" 
+                                                                           FontSize="13" Foreground="#6b7280"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                                <TextBlock Text="📐" FontSize="12" Margin="0,0,8,0"/>
+                                                                <TextBlock Text="{Binding DienTich, StringFormat='Area: {0} m²'}" 
+                                                                           FontSize="13" Foreground="#6b7280"/>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                                                <TextBlock Text="💰" FontSize="12" Margin="0,0,8,0"/>
+                                                                <TextBlock Text="{Binding GiaCoBan, StringFormat='Price: {0:C}/month'}" 
+                                                                           FontSize="13" Foreground="#6b7280"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </StackPanel>
+
+                                                    <!-- Card Footer -->
+                                                    <Border Grid.Row="2" Background="#f8f9fa" CornerRadius="0,0,12,12" Padding="24,16">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <Button Grid.Column="0" Style="{StaticResource PrimaryButtonStyle}" 
+                                                                    Margin="0,0,6,0" Command="{Binding DataContext.ShowEditRoomPanelCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="✏️" FontSize="12" Margin="0,0,4,0"/>
+                                                                    <TextBlock Text="Edit" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+
+                                                            <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" 
+                                                                    Margin="6,0,0,0" Command="{Binding DataContext.DeleteRoomCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="🗑️" FontSize="12" Margin="0,0,4,0"/>
+                                                                    <TextBlock Text="Delete" VerticalAlignment="Center"/>
+                                                                </StackPanel>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Empty State (chỉ hiển thị khi không có phòng) -->
+                                <Border Background="White" CornerRadius="12" Padding="40" 
+                                        Visibility="{Binding Rooms.Count, Converter={StaticResource EmptyToVisibilityConverter}}" Height="358">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="🏠" FontSize="48" Margin="0,0,0,16" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Không tồn tại phòng" FontSize="18" FontWeight="SemiBold" Foreground="#374151" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Hãy bắt đầu thêm phòng mới" FontSize="14" Foreground="#6b7280" Margin="0,8,0,0" HorizontalAlignment="Center"/>
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" 
+                                                Margin="0,16,0,0" Command="{Binding ShowAddRoomPanelCommand}">
+                                            <TextBlock Text="Thêm phòng mới"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+                <Border Grid.Row="0" Background="White" CornerRadius="12,12,0,0" Margin="274,0,0,692" Grid.RowSpan="2">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -180,526 +375,18 @@
                         <!-- Tiêu đề trang -->
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="30,20">
                             <TextBlock Text="🏠" FontSize="24" Margin="0,0,10,0"/>
-                            <TextBlock Text="Quản lý phòng ở" FontSize="22" FontWeight="Bold" Foreground="#333"/>
+                            <TextBlock Text="Quản lý phòng" FontSize="22" FontWeight="Bold" Foreground="#333"/>
                         </StackPanel>
 
                         <!-- Các nút điều khiển cửa sổ -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
-                            <Button Content="—" Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click"/>
-                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click"/>
-                            <Button Content="✕" Style="{StaticResource CloseButton}" Click="CloseButton_Click"/>
+                            <Button Content="—" Style="{StaticResource WindowControlButton}" Command="{Binding MinimizeWindowCommand}"/>
+                            <Button Content="☐" Style="{StaticResource WindowControlButton}" Command="{Binding MaximizeWindowCommand}"/>
+                            <Button Content="✕" Style="{StaticResource CloseButton}" Command="{Binding CloseWindowCommand}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
-
-                <!-- Nội dung chính -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="30,30,30,30">
-                        <!-- Thanh công cụ -->
-                        <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,30">
-                            <StackPanel>
-                                <!-- Các nút chức năng -->
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,10">
-                                    <Button Content="➕ Thêm phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Click="AddRoom_Click"/>
-                                    <Button Content="✏️ Sửa phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Click="EditRoom_Click"/>
-                                    <Button Content="👁️ Xem phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Click="ViewRoom_Click"/>
-                                    <Button Content="🗑️ Xóa phòng" Style="{StaticResource ActionButtonStyle}" 
-                                            Margin="0,0,10,0" Click="DeleteRoom_Click"/>
-                                </WrapPanel>
-                                
-                                <!-- Tìm kiếm và sắp xếp -->
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <!-- Tìm kiếm -->
-                                    <Border Background="#F0F0F0" CornerRadius="6" Padding="10,8" Margin="0,0,10,0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="🔍" FontSize="16" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBox Text="Tìm kiếm phòng..." Width="200" BorderThickness="0" 
-                                                     Background="Transparent" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-
-                                    <!-- Sắp xếp -->
-                                    <Border Background="#F0F0F0" CornerRadius="6" Padding="10,8">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Mới nhất" FontSize="14" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                            <TextBlock Text="▼" FontSize="12" VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Border>
-                                </WrapPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Danh sách phòng -->
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <!-- Danh sách phòng responsive -->
-                            <WrapPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
-                                <!-- Phòng 1 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 1" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#28A745" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đặt trước" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Nov 10, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số giường: 7" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="406.762"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Phòng 2 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 2" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#FFC107" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đang cho thuê" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Nov 10, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số giường: 4" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="289.98"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Phòng 3 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 3" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#DC3545" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đã hủy" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Oct 20, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số phòng: 6" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="441.222"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                                <Ellipse Grid.Column="2" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Phòng 4 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 4" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#28A745" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đặt trước" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Nov 10, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số giường: 7" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="406.762"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Phòng 5 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 5" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#FFC107" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đang cho thuê" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Nov 10, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số giường: 4" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="289.98"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-
-                                <!-- Phòng 6 -->
-                                <Border Style="{StaticResource RoomCardStyle}" Width="350" Margin="26.25,0,26.25,20">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-
-                                        <!-- Header phòng -->
-                                        <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" 
-                                                Margin="-20,-20,-20,0" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <!-- Icon -->
-                                                <Border Grid.Column="0" Background="White" CornerRadius="2" Width="30" Height="30" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="🏠" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                
-                                                <!-- Tên phòng -->
-                                                <TextBlock Grid.Column="1" Text="Phòng 6" FontSize="16" FontWeight="Bold" 
-                                                          Foreground="White" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                                                
-                                                <!-- Trạng thái -->
-                                                <Border Grid.Column="2" Background="#DC3545" CornerRadius="9" Padding="12,9" 
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="Đã hủy" FontSize="12" Foreground="White" HorizontalAlignment="Center"/>
-                                                </Border>
-                                            </Grid>
-                                        </Border>
-
-                                        <!-- Nội dung phòng -->
-                                        <StackPanel Grid.Row="1" Margin="0,20,0,0">
-                                            <TextBlock Text="Chi tiết phòng" FontSize="14" FontWeight="SemiBold" 
-                                                       Foreground="#333" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Ngày thêm: Oct 20, 2025" FontSize="12" Foreground="Gray" Margin="0,0,0,5"/>
-                                            <TextBlock Text="Số giường: 5" FontSize="12" Foreground="Gray" Margin="0,0,0,15"/>
-                                            
-                                            <!-- Progress bar -->
-                                            <Border Background="#E0E0E0" CornerRadius="2" Height="4" Margin="0,0,0,10">
-                                                <Border Background="#5B75D4" CornerRadius="2" Width="441.222"/>
-                                            </Border>
-                                        </StackPanel>
-
-                                        <!-- Footer phòng -->
-                                        <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" 
-                                                Margin="-20,0,-20,-20" Padding="20,15">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                </Grid.ColumnDefinitions>
-                                                
-                                                <Ellipse Grid.Column="0" Width="38" Height="38" Fill="#5B75D4"/>
-                                                <Ellipse Grid.Column="1" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                                <Ellipse Grid.Column="2" Width="38" Height="38" Fill="#5B75D4" Margin="10,0,0,0"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                </Border>
-                            </WrapPanel>
-
-                            <!-- Phân trang -->
-                            <Border Grid.Row="1" Background="White" CornerRadius="12" Padding="20">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0" Text="Hiển thị 1 đến 9 trong 111" 
-                                               FontSize="14" Foreground="Gray" VerticalAlignment="Center"/>
-
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button Content="◀" Background="#F0F0F0" Foreground="#666" 
-                                                Width="32" Height="32" Margin="0,0,10,0">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" 
-                                                            CornerRadius="16" 
-                                                            BorderThickness="0">
-                                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                                          VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                        <Button Content="1" Background="#5B75D4" Foreground="White" 
-                                                Width="32" Height="32" Margin="0,0,10,0">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" 
-                                                            CornerRadius="16" 
-                                                            BorderThickness="0">
-                                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                                          VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                        <Button Content="▶" Background="#F0F0F0" Foreground="#666" 
-                                                Width="32" Height="32">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" 
-                                                            CornerRadius="16" 
-                                                            BorderThickness="0">
-                                                        <ContentPresenter HorizontalAlignment="Center" 
-                                                                          VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                    </StackPanel>
-                </ScrollViewer>
             </Grid>
         </Border>
-    </Grid>
+    </Border>
 </Window>

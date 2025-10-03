@@ -3,11 +3,12 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.ViewRoomWindow"
     Title="Chi tiết phòng"
-    Height="600"
-    Width="700"
+    Height="700"
+    Width="900"
     WindowStartupLocation="CenterOwner"
     ResizeMode="NoResize"
     WindowStyle="None"
@@ -16,6 +17,9 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
+        <!-- Thêm Converter vào đây -->
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+
         <!-- Style cho nút đóng -->
         <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="Transparent"/>
@@ -36,7 +40,7 @@
 
         <!-- Style cho nút chính -->
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Background" Value="#1a7bff"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -54,22 +58,57 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#4A63C1"/>
+                    <Setter Property="Background" Value="#0062e6"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho info card -->
-        <Style x:Key="InfoCardStyle" TargetType="{x:Type Border}">
+        <!-- Style cho nút phụ -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#1a7bff"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#1a7bff"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#f0f5ff"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style cho card -->
+        <Style x:Key="CardStyle" TargetType="{x:Type Border}">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect Color="Black" Opacity="0.1" ShadowDepth="1" BlurRadius="4"/>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" ShadowDepth="0" BlurRadius="20"/>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- Style cho status badge với pulse effect -->
+        <Style x:Key="StatusBadgeStyle" TargetType="{x:Type Border}">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang thuê">
+                    <Setter Property="Background" Value="#10B981"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#10B981" Opacity="0.7" ShadowDepth="0" BlurRadius="10"/>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Trống">
+                    <Setter Property="Background" Value="#3B82F6"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang bảo trì">
+                    <Setter Property="Background" Value="#F59E0B"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
@@ -85,193 +124,249 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header -->
-                <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" Padding="20,15">
+                <Border Grid.Row="0" Background="#1a7bff" CornerRadius="12,12,0,0" Padding="20,15">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        
+
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="👁️" FontSize="20" Margin="0,0,10,0"/>
-                            <TextBlock Text="Chi tiết phòng" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                            <Border Background="White" CornerRadius="8" Padding="8" Margin="0,0,12,0">
+                                <TextBlock Text="🏠" FontSize="16" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel>
+                                <TextBlock Text="Chi tiết phòng" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text="{Binding SelectedRoom.TenPhong}" FontSize="14" Foreground="#e0ebff" Margin="0,2,0,0"/>
+                            </StackPanel>
                         </StackPanel>
-                        
+
                         <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
                                 Click="CloseButton_Click"/>
                     </Grid>
                 </Border>
 
                 <!-- Content -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
-                    <StackPanel>
-                        <!-- Thông tin cơ bản -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="📋 Thông tin cơ bản" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Tên phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="Phòng 1" Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Số giường:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="7 giường" Margin="0,0,0,8"/>
-                                    
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Giá thuê:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="2,500,000 VNĐ/tháng" Margin="0,0,0,8"/>
-                                </Grid>
-                            </StackPanel>
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0">
+                    <Grid Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Room Header Info -->
+                        <Border Grid.Row="0" Grid.ColumnSpan="2" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                            <Grid Margin="20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Border Background="#f0f5ff" CornerRadius="12" Padding="12" Margin="0,0,16,0">
+                                        <TextBlock Text="🏠" FontSize="20"/>
+                                    </Border>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding SelectedRoom.TenPhong}" FontSize="24" FontWeight="Bold" Foreground="#1f2937"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <Border Style="{StaticResource StatusBadgeStyle}">
+                                                <TextBlock Text="{Binding SelectedRoom.TrangThai}" Foreground="White" FontSize="12" FontWeight="SemiBold"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding SelectedRoom.MaPhong, StringFormat='ID: {0}'}" 
+                                                       FontSize="12" Foreground="#6b7280" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border Grid.Column="1" Background="#f0f5ff" CornerRadius="8" Padding="16">
+                                    <StackPanel Orientation="Horizontal">
+                                        <StackPanel Margin="0,0,20,0">
+                                            <TextBlock Text="Giá thuê" FontSize="12" Foreground="#6b7280"/>
+                                            <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}/tháng'}" 
+                                                       FontSize="18" FontWeight="Bold" Foreground="#1f2937"/>
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,20,0">
+                                            <TextBlock Text="Diện tích" FontSize="12" Foreground="#6b7280"/>
+                                            <TextBlock Text="{Binding SelectedRoom.DienTich, StringFormat='{}{0} m²'}" 
+                                                       FontSize="18" FontWeight="Bold" Foreground="#1f2937"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </Border>
 
-                        <!-- Trạng thái và đánh giá -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="⭐ Trạng thái &amp; Đánh giá" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Trạng thái hiện tại:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <Border Background="#28A745" CornerRadius="12" Padding="8,4" Width="100">
-                                            <TextBlock Text="Đặt trước" Foreground="White" FontSize="12" HorizontalAlignment="Center"/>
-                                        </Border>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Đánh giá chất lượng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <!-- Left Column -->
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                            <!-- Room Details -->
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <Border Background="#f8f9fa" Padding="20" CornerRadius="12,12,0,0">
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="⭐⭐⭐⭐⭐" FontSize="16" Margin="0,0,8,0"/>
-                                            <TextBlock Text="5.0/5" FontWeight="Bold" Foreground="#FFC107"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Trang bị phòng -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="🏠 Trang bị &amp; Tiện nghi" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <WrapPanel>
-                                    <Border Background="#E3F2FD" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="🛏️ Giường đôi" FontSize="12" Foreground="#1976D2"/>
-                                    </Border>
-                                    <Border Background="#E8F5E8" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="❄️ Điều hòa" FontSize="12" Foreground="#388E3C"/>
-                                    </Border>
-                                    <Border Background="#FFF3E0" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="📺 TV" FontSize="12" Foreground="#F57C00"/>
-                                    </Border>
-                                    <Border Background="#F3E5F5" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="🚿 Nhà tắm riêng" FontSize="12" Foreground="#7B1FA2"/>
-                                    </Border>
-                                    <Border Background="#E0F2F1" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="🍳 Bếp mini" FontSize="12" Foreground="#00695C"/>
-                                    </Border>
-                                    <Border Background="#FFEBEE" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="📶 WiFi miễn phí" FontSize="12" Foreground="#C62828"/>
-                                    </Border>
-                                    <Border Background="#E1F5FE" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="🚗 Chỗ đỗ xe" FontSize="12" Foreground="#0277BD"/>
-                                    </Border>
-                                    <Border Background="#F1F8E9" CornerRadius="15" Padding="10,5" Margin="0,0,8,8">
-                                        <TextBlock Text="🌳 Ban công" FontSize="12" Foreground="#558B2F"/>
-                                    </Border>
-                                </WrapPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Hình ảnh phòng -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="📸 Hình ảnh phòng" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="20" Margin="0,0,10,0">
-                                        <StackPanel HorizontalAlignment="Center">
-                                            <Image Source="/Resources/Images/Logo.png" Width="120" Height="80" 
-                                                   Stretch="Uniform" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Hình ảnh chính" FontSize="12" Foreground="#666" 
-                                                       HorizontalAlignment="Center"/>
+                                            <TextBlock Text="📋" FontSize="16" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Thông tin chi tiết" FontSize="16" FontWeight="SemiBold" Foreground="#374151"/>
                                         </StackPanel>
                                     </Border>
-                                    
-                                    <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="20" Margin="10,0,0,0">
-                                        <StackPanel HorizontalAlignment="Center">
-                                            <Image Source="/Resources/Images/Logo.png" Width="120" Height="80" 
-                                                   Stretch="Uniform" Margin="0,0,0,10"/>
-                                            <TextBlock Text="Góc phòng" FontSize="12" Foreground="#666" 
-                                                       HorizontalAlignment="Center"/>
+                                    <Grid Margin="20">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Basic Info -->
+                                        <Border Grid.Row="0" Grid.Column="0" Background="#f8f9fa" CornerRadius="8" Padding="16" Margin="0,0,8,8">
+                                            <StackPanel>
+                                                <TextBlock Text="THÔNG TIN CƠ BẢN" FontSize="11" FontWeight="SemiBold" Foreground="#6b7280" Margin="0,0,0,8"/>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                        <TextBlock Text="Loại phòng:" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                        <TextBlock Text="Tiêu chuẩn" FontSize="12" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                        <TextBlock Text="Tầng:" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                        <TextBlock Text="Tầng 1" FontSize="12" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="Tòa nhà:" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                        <TextBlock Text="Tòa chính" FontSize="12" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Amenities -->
+                                        <Border Grid.Row="0" Grid.Column="1" Background="#f8f9fa" CornerRadius="8" Padding="16" Margin="8,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="TIỆN NGHI" FontSize="11" FontWeight="SemiBold" Foreground="#6b7280" Margin="0,0,0,8"/>
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                        <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Điều hòa" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                        <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Wi-Fi" FontSize="12"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="✓" Foreground="#10B981" FontWeight="Bold" Margin="0,0,8,0"/>
+                                                        <TextBlock Text="Nhà tắm riêng" FontSize="12"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Notes -->
+                                        <Border Grid.Row="1" Grid.ColumnSpan="2" Background="#f8f9fa" CornerRadius="8" Padding="16" Margin="0,8,0,0">
+                                            <StackPanel>
+                                                <TextBlock Text="GHI CHÚ" FontSize="11" FontWeight="SemiBold" Foreground="#6b7280" Margin="0,0,0,8"/>
+                                                <TextBlock Text="{Binding SelectedRoom.GhiChu, FallbackValue='Không có ghi chú'}" 
+                                                           FontSize="12" TextWrapping="Wrap" Foreground="#374151"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Right Column -->
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                            <!-- Payment Status -->
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,15">
+                                <StackPanel>
+                                    <Border Background="#f8f9fa" Padding="20" CornerRadius="12,12,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="💰" FontSize="16" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Thanh toán" FontSize="16" FontWeight="SemiBold" Foreground="#374151"/>
                                         </StackPanel>
                                     </Border>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                                    <StackPanel Margin="20">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="Tháng hiện tại" FontSize="12" Foreground="#6b7280"/>
+                                                <TextBlock Text="Tháng 10, 2024" FontSize="14" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <Border Background="#d1fae5" CornerRadius="12" Padding="8,4" Margin="20,0,0,0">
+                                                <TextBlock Text="Đã thanh toán" FontSize="11" FontWeight="SemiBold" Foreground="#065f46"/>
+                                            </Border>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Margin="0,12,0,0">
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Tiền thuê" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}'}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Điện" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                <TextBlock Text="450,000" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Text="Nước" FontSize="12" Foreground="#6b7280" Width="80"/>
+                                                <TextBlock Text="120,000" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
+                                            </StackPanel>
+                                            <Border Background="#f8f9fa" Height="1" Margin="0,8,0,8"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Tổng" FontSize="12" FontWeight="SemiBold" Width="80"/>
+                                                <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}'}" FontSize="12" FontWeight="Bold" Foreground="#1a7bff" HorizontalAlignment="Right" Width="60"/>
+                                            </StackPanel>
+                                        </StackPanel>
 
-                        <!-- Thông tin bổ sung -->
-                        <Border Style="{StaticResource InfoCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="📝 Thông tin bổ sung" FontSize="16" FontWeight="Bold" 
-                                           Foreground="#333" Margin="0,0,0,15"/>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Ngày thêm:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="10/11/2025" Margin="0,0,0,15"/>
-                                        
-                                        <TextBlock Text="Diện tích:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="25m²" Margin="0,0,0,15"/>
-                                        
-                                        <TextBlock Text="Tầng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Tầng 2" Margin="0,0,0,15"/>
+                                        <Button Content="Xem lịch sử thanh toán" Style="{StaticResource SecondaryButtonStyle}" Margin="0,15,0,0"/>
                                     </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Text="Hướng phòng:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Đông Nam" Margin="0,0,0,15"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Maintenance -->
+                            <Border Style="{StaticResource CardStyle}">
+                                <StackPanel>
+                                    <Border Background="#f8f9fa" Padding="20" CornerRadius="12,12,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="🔧" FontSize="16" Margin="0,0,8,0"/>
+                                            <TextBlock Text="Bảo trì" FontSize="16" FontWeight="SemiBold" Foreground="#374151"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <StackPanel Margin="20">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                            <StackPanel>
+                                                <TextBlock Text="Yêu cầu đang mở" FontSize="12" Foreground="#6b7280"/>
+                                                <TextBlock Text="1 yêu cầu" FontSize="14" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <Button Content="+ Mới" Style="{StaticResource PrimaryButtonStyle}" Margin="20,0,0,0" Padding="12,4" FontSize="11"/>
+                                        </StackPanel>
                                         
-                                        <TextBlock Text="Số người tối đa:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="2 người" Margin="0,0,0,15"/>
-                                        
-                                        <TextBlock Text="Mô tả:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <TextBlock Text="Phòng đẹp, thoáng mát, gần trung tâm thành phố. Có đầy đủ tiện nghi cơ bản." 
-                                                   TextWrapping="Wrap" Margin="0,0,0,15"/>
+                                        <Border Background="#fffbeb" CornerRadius="8" Padding="12" BorderThickness="1" BorderBrush="#fef3c7">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Background="#fef3c7" CornerRadius="6" Padding="6" Margin="0,0,8,0">
+                                                    <TextBlock Text="⚠️" FontSize="12"/>
+                                                </Border>
+                                                <StackPanel>
+                                                    <TextBlock Text="Điều hòa hỏng" FontSize="12" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="Đã gửi: 15/10/2024" FontSize="10" Foreground="#6b7280" Margin="0,2,0,0"/>
+                                                    <TextBlock Text="Trạng thái: Đang xử lý" FontSize="10" Foreground="#6b7280" Margin="0,2,0,0"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <Button Content="Xem tất cả yêu cầu" Style="{StaticResource SecondaryButtonStyle}" Margin="0,12,0,0"/>
                                     </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
                 </ScrollViewer>
 
                 <!-- Footer buttons -->
-                <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
+                <Border Grid.Row="2" Background="#f8f9fa" CornerRadius="0,0,12,12" Padding="20">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Đóng" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="100" Click="CloseButton_Click"/>
+                        <Button Content="Chỉnh sửa" Style="{StaticResource PrimaryButtonStyle}" Width="100" Margin="0,0,10,0"/>
+                        <Button Content="Đóng" Style="{StaticResource SecondaryButtonStyle}" Width="80" Click="CloseButton_Click"/>
                     </StackPanel>
                 </Border>
             </Grid>
