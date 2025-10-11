@@ -271,3 +271,18 @@ INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai)
 VALUES (N'admin', N'admin123', N'example@gmail.com', N'0123456789');
 -- Mật khẩu nên được mã hóa trong thực tế --
 GO
+
+-- Script thêm dữ liệu mẫu vào bảng NguoiThue
+USE QLThueNhaV1;
+GO
+
+-- Thêm dữ liệu mẫu cho bảng NguoiThue
+INSERT INTO NguoiThue (HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu)
+VALUES 
+    (N'Nguyễn Văn An', '123456789012', '0123456789', '2024-01-15', N'Đang ở', N'Khách thuê ổn định'),
+    (N'Trần Thị Bình', '234567890123', '0987654321', '2024-02-20', N'Đang ở', N'Thanh toán đúng hạn'),
+    (N'Lê Văn Cường', '345678901234', '0369258147', '2024-03-10', N'Đang ở', N'Khách thuê mới'),
+    (N'Phạm Thị Dung', '456789012345', '0741852963', '2024-04-25', N'Đang ở', N'Gia đình có con nhỏ'),
+    (N'Hoàng Văn Em', '567890123456', '0852741963', '2024-05-18', N'Đang ở', N'Thuê ngắn hạn');
+
+PRINT 'Dữ liệu mẫu đã được thêm vào bảng NguoiThue!';

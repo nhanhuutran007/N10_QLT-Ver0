@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.Presentation.ViewModels;
 using QLKDPhongTro.Presentation.Views.Windows;
 using System;
@@ -8,15 +8,15 @@ using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
-    public partial class RoomManagementWindow : Window
+    public partial class TenantManagementWindow : Window
     {
         private DateTime _lastClickTime;
         private object _lastClickedItem;
 
-        public RoomManagementWindow()
+        public TenantManagementWindow()
         {
             InitializeComponent();
-            this.DataContext = new RentedRoomViewModel();
+            this.DataContext = new TenantViewModel();
 
             // Đảm bảo cửa sổ hiển thị ở giữa màn hình (giống Dashboard)
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -66,24 +66,24 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     this.Close();
                     break;
                 case "Rooms":
-                    if (DataContext is RentedRoomViewModel viewModel)
+                    var existingRoomWindow = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
+                    if (existingRoomWindow != null)
                     {
-                        viewModel.LoadRoomsCommand.Execute(null);
-                    }
-                    break;
-                case "Tenants":
-                    var existingTenantWindow = Application.Current.Windows.OfType<TenantManagementWindow>().FirstOrDefault();
-                    if (existingTenantWindow != null)
-                    {
-                        existingTenantWindow.Activate();
-                        existingTenantWindow.WindowState = WindowState.Normal;
+                        existingRoomWindow.Activate();
+                        existingRoomWindow.WindowState = WindowState.Normal;
                     }
                     else
                     {
-                        var tenantWindow = new TenantManagementWindow();
-                        tenantWindow.Show();
+                        var roomWindow = new RoomManagementWindow();
+                        roomWindow.Show();
                     }
                     this.Close();
+                    break;
+                case "Tenants":
+                    if (DataContext is TenantViewModel viewModel)
+                    {
+                        viewModel.LoadTenantsCommand.Execute(null);
+                    }
                     break;
                 case "Invoices":
                     MessageBox.Show("Chuyển đến quản lý hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -126,31 +126,31 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.WindowState = WindowState.Minimized;
         }
 
-        private void RoomCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void TenantCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (sender is FrameworkElement element && element.DataContext is RentedRoomDto room)
+            if (sender is FrameworkElement element && element.DataContext is TenantDto tenant)
             {
-                if (DataContext is RentedRoomViewModel viewModel)
+                if (DataContext is TenantViewModel viewModel)
                 {
-                    if (room == null)
+                    if (tenant == null)
                     {
-                        MessageBox.Show("Không thể chọn phòng: Dữ liệu phòng không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Không thể chọn khách thuê: Dữ liệu khách thuê không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
 
-                    viewModel.SelectedRoom = room;
+                    viewModel.SelectedTenant = tenant;
 
-                    // Handle double click to view room details
+                    // Handle double click to view tenant details
                     var currentTime = DateTime.Now;
-                    if (_lastClickedItem == room && (currentTime - _lastClickTime).TotalMilliseconds < 500)
+                    if (_lastClickedItem == tenant && (currentTime - _lastClickTime).TotalMilliseconds < 500)
                     {
-                        viewModel.ShowRoomDetailsWindow();
+                        viewModel.ShowTenantDetailsWindow();
                         _lastClickedItem = null;
                         _lastClickTime = DateTime.MinValue;
                     }
                     else
                     {
-                        _lastClickedItem = room;
+                        _lastClickedItem = tenant;
                         _lastClickTime = currentTime;
                     }
                 }
@@ -161,7 +161,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
             else
             {
-                MessageBox.Show("Không thể chọn phòng: Dữ liệu không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Không thể chọn khách thuê: Dữ liệu không hợp lệ.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

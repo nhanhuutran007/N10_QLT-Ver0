@@ -91,7 +91,33 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     this.Close();
                     break;
                 case "Tenants":
-                    MessageBox.Show("Đã chuyển đến trang Khách thuê", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // Tìm cửa sổ Tenant Management hiện có hoặc tạo mới
+                    var existingTenantManagement = Application.Current.Windows.OfType<TenantManagementWindow>().FirstOrDefault();
+                    if (existingTenantManagement != null)
+                    {
+                        existingTenantManagement.Activate();
+                        existingTenantManagement.WindowState = WindowState.Normal;
+                    }
+                    else
+                    {
+                        // Chuyển đến trang quản lý khách thuê
+                        var tenantManagementWindow = new TenantManagementWindow();
+                        
+                        // Đảm bảo cửa sổ mới hiển thị ở giữa màn hình
+                        tenantManagementWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                        
+                        // Tính toán vị trí chính xác để đảm bảo ở giữa màn hình
+                        var screenWidth = SystemParameters.PrimaryScreenWidth;
+                        var screenHeight = SystemParameters.PrimaryScreenHeight;
+                        var windowWidth = tenantManagementWindow.Width;
+                        var windowHeight = tenantManagementWindow.Height;
+                        
+                        tenantManagementWindow.Left = (screenWidth - windowWidth) / 2;
+                        tenantManagementWindow.Top = (screenHeight - windowHeight) / 2;
+                        
+                        tenantManagementWindow.Show();
+                    }
+                    this.Close();
                     break;
                 case "Invoices":
                     MessageBox.Show("Đã chuyển đến trang Hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
