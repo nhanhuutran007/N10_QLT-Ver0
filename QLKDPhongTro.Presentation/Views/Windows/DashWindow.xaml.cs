@@ -123,7 +123,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     MessageBox.Show("Đã chuyển đến trang Hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
                     break;
                 case "Contracts":
-                    MessageBox.Show("Đã chuyển đến trang Hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // SỬA LỖI Ở ĐÂY
+                    var contractWindow = new ContractManagementWindow();
+                    contractWindow.Show();
                     break;
                 case "Settings":
                     MessageBox.Show("Đã chuyển đến trang Cài đặt", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -163,7 +165,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void NewContract_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng tạo hợp đồng mới sẽ được triển khai", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            // SỬA LỖI Ở ĐÂY - PHƯƠNG THỨC NÀY GIỜ ĐÃ ĐÚNG
+            var contractWindow = new ContractManagementWindow();
+            contractWindow.Show();
         }
 
         private void ViewAllNotifications_Click(object sender, RoutedEventArgs e)
