@@ -6,23 +6,22 @@ using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Utils;
 using QLKDPhongTro.Presentation.Views.Windows;
+using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics.Contracts;
+using System.Threading.Tasks;
 using System.Windows;
-
-
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
     public partial class AddContractViewModel : ObservableObject
     {
-        private readonly ContractController _conTractController;
-        // private readonly NguoiThueRepository _nguoiThueRepo;
-        // private readonly PhongRepository _phongRepo;
+        private readonly ContractController _contractController;
+        private readonly TenantRepository _tenantRepo;
+        private readonly RentedRoomRepository _roomRepo;
 
         public event EventHandler<bool> RequestClose; // true = saved, false = canceled
 
-        // Mock model đơn giản tạm thời
+        // Model hiển thị tạm trong ComboBox
         public class NguoiThueTmp
         {
             public int MaNguoiThue { get; set; }
@@ -56,34 +55,62 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         private string _ghiChu;
 
-        public AddContractViewModel(ContractController conTractController)
+        public AddContractViewModel(ContractController contractController)
         {
-            _conTractController = conTractController;
-            //_nguoiThueRepo = new NguoiThueRepository();
-            //_phongRepo = new PhongRepository();
+            _contractController = contractController;
+            _tenantRepo = new TenantRepository();
+            _roomRepo = new RentedRoomRepository();
 
-            LoadLookups();
+            // gọi hàm load dữ liệu async
+            _ = LoadLookupsAsync();
         }
 
-        private void LoadLookups()
+        /// <summary>
+        /// Load danh sách người thuê và phòng từ database
+        /// </summary>
+        private async Task LoadLookupsAsync()
         {
             try
             {
-                // Khi có repo thật, chỉ cần thay phần mock này bằng GetAllNguoiThue / GetAllPhong
-                NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = 1, HoTen = "Nguyễn Văn A" });
-                NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = 2, HoTen = "Trần Thị B" });
+                NguoiThueList.Clear();
+                PhongList.Clear();
 
-                PhongList.Add(new PhongTmp { MaPhong = 1, TenPhong = "BANANA" });
-                PhongList.Add(new PhongTmp { MaPhong = 102, TenPhong = "Phòng 102" });
+                // lấy danh sách người thuê và phòng từ repo
+                var tenants = await _tenantRepo.GetAllAsync();
+                var rooms = await _roomRepo.GetAllAsync();
+
+                foreach (var t in tenants)
+                {
+                    NguoiThueList.Add(new NguoiThueTmp
+                    {
+                        MaNguoiThue = t.MaKhachThue,
+                        HoTen = t.HoTen
+                    });
+                }
+
+                foreach (var r in rooms)
+                {
+                    PhongList.Add(new PhongTmp
+                    {
+                        MaPhong = r.MaPhong,
+                        TenPhong = r.TenPhong
+                    });
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}");
+                MessageBox.Show($"Lỗi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         [RelayCommand]
-        private void Save()
+        private void Cancel()
+        {
+            RequestClose?.Invoke(this, false);
+        }
+
+        [RelayCommand]
+        private async Task SaveAsync()
         {
             if (SelectedNguoiThue == null)
             {
@@ -121,8 +148,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     NgayKetThuc.Value,
                     tienCocValue);
 
-                // 2️⃣ Gọi controller để thêm hợp đồng vào DB
-                _conTractController.CreateHopDong(new QLKDPhongTro.BusinessLayer.DTOs.ContractDto
+                // 2️⃣ Lưu hợp đồng vào DB
+                _contractController.CreateHopDong(new QLKDPhongTro.BusinessLayer.DTOs.ContractDto
                 {
                     MaNguoiThue = SelectedNguoiThue.MaNguoiThue,
                     MaPhong = SelectedPhong.MaPhong,
@@ -144,13 +171,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"Lỗi khi tạo hợp đồng:\n{ex.Message}",
                     "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-        }
-
-
-        [RelayCommand]
-        private void Cancel()
-        {
-            RequestClose?.Invoke(this, false);
         }
     }
 }
