@@ -39,6 +39,10 @@
 
   <ItemGroup>
     <Resource Include="Resources\Images\Logo.png" />
+    <Resource Include="Resources\Images\avatar.jpg" />
+    <Resource Include="Resources\Images\avatar1.jpg" />
+    <Resource Include="Resources\Images\email_icon.png" />
+    <Resource Include="Resources\Images\password_icon.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,10 +51,5 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Page Update="Views\Components\SidebarControl.xaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Page>
-  </ItemGroup>
 
 </Project>

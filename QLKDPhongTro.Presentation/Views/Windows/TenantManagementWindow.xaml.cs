@@ -4,7 +4,9 @@ using QLKDPhongTro.Presentation.Views.Windows;
 using System;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -16,114 +18,61 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         public TenantManagementWindow()
         {
             InitializeComponent();
-            this.DataContext = new TenantViewModel();
-
-            // Đảm bảo cửa sổ hiển thị ở giữa màn hình (giống Dashboard)
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-            // Thiết lập kích thước tối thiểu (giống Dashboard)
             this.MinHeight = 600;
             this.MinWidth = 800;
-
-            // Đảm bảo cửa sổ hiển thị ở giữa màn hình sau khi load (giống Dashboard)
-            this.Loaded += (s, e) =>
-            {
-                var screenWidth = SystemParameters.PrimaryScreenWidth;
-                var screenHeight = SystemParameters.PrimaryScreenHeight;
-                this.Left = (screenWidth - this.Width) / 2;
-                this.Top = (screenHeight - this.Height) / 2;
-            };
-
-            // Kết nối events với SidebarControl
-            SidebarControl.MenuItemClicked += SidebarControl_MenuItemClicked;
-            SidebarControl.LogoutClicked += SidebarControl_LogoutClicked;
+            this.Height = 700;
+            this.Width = 1200;
+            
+            // Khởi tạo DataContext với ViewModel
+            this.DataContext = new TenantViewModel();
+            
+            // Load dữ liệu từ database
+            LoadTenantData();
+            
+            // Thêm event handler cho việc thay đổi kích thước cửa sổ
+            this.SizeChanged += TenantManagementWindow_SizeChanged;
         }
 
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        // Load dữ liệu khách thuê
+        private void LoadTenantData()
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
-                DragMove();
+            if (DataContext is TenantViewModel viewModel)
+            {
+                // Load tenants data từ database
+                viewModel.LoadTenantsCommand?.Execute(null);
+            }
         }
 
-        // Event handlers cho SidebarControl
+        // Handler cho TopbarControl events
+        private void TopbarControl_MenuButtonClicked(object sender, EventArgs e)
+        {
+            // Logic chung đã được chuyển vào TopbarControl.xaml.cs
+            // Chỉ xử lý logic riêng của TenantManagementWindow nếu cần
+        }
+
+        private void TopbarControl_SearchTextChanged(object sender, string searchText)
+        {
+            // Logic search chung đã được chuyển vào TopbarControl.xaml.cs
+            // Chỉ xử lý search logic riêng của TenantManagementWindow nếu cần
+            if (DataContext is TenantViewModel viewModel)
+            {
+                // TODO: Implement search logic
+                System.Diagnostics.Debug.WriteLine($"Searching for: {searchText}");
+            }
+        }
+
+        private void TopbarControl_SettingsButtonClicked(object sender, EventArgs e)
+        {
+            // Logic settings chung đã được chuyển vào TopbarControl.xaml.cs
+            // Chỉ xử lý settings logic riêng của TenantManagementWindow nếu cần
+        }
+
+        // Handler cho SidebarControl events
         private void SidebarControl_MenuItemClicked(object sender, string menuItem)
         {
-            switch (menuItem)
-            {
-                case "Overview":
-                    // Tìm cửa sổ Dashboard hiện có hoặc tạo mới
-                    var existingDashboard = Application.Current.Windows.OfType<DashWindow>().FirstOrDefault();
-                    if (existingDashboard != null)
-                    {
-                        existingDashboard.Activate();
-                        existingDashboard.WindowState = WindowState.Normal;
-                    }
-                    else
-                    {
-                        var mainWindow = new DashWindow();
-                        mainWindow.Show();
-                    }
-                    this.Close();
-                    break;
-                case "Rooms":
-                    var existingRoomWindow = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
-                    if (existingRoomWindow != null)
-                    {
-                        existingRoomWindow.Activate();
-                        existingRoomWindow.WindowState = WindowState.Normal;
-                    }
-                    else
-                    {
-                        var roomWindow = new RoomManagementWindow();
-                        roomWindow.Show();
-                    }
-                    this.Close();
-                    break;
-                case "Tenants":
-                    if (DataContext is TenantViewModel viewModel)
-                    {
-                        viewModel.LoadTenantsCommand.Execute(null);
-                    }
-                    break;
-                case "Invoices":
-                    MessageBox.Show("Chuyển đến quản lý hóa đơn", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    break;
-                case "Contracts":
-                    MessageBox.Show("Chuyển đến quản lý hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    break;
-                case "Settings":
-                    MessageBox.Show("Chuyển đến cài đặt", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    break;
-            }
-        }
-
-        private void SidebarControl_LogoutClicked(object sender, EventArgs e)
-        {
-            var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất",
-                MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                // Quay lại cửa sổ đăng nhập
-                var loginWindow = new LoginWindow();
-                loginWindow.Show();
-                this.Close();
-            }
-        }
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
-
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        }
-
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            this.WindowState = WindowState.Minimized;
+            // Logic navigation đã được chuyển vào SidebarControl.xaml.cs
+            // Chỉ xử lý logic riêng của TenantManagementWindow nếu cần
         }
 
         private void TenantCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -170,9 +119,40 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         }
 
+        // Event handler cho SizeChanged
+        private void TenantManagementWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            // Cập nhật layout khi kích thước cửa sổ thay đổi
+            UpdateTenantCardsLayout();
+        }
+
+        // Cập nhật layout của tenant cards
+        private void UpdateTenantCardsLayout()
+        {
+            // Tìm ItemsControl trong XAML
+            var tenantsItemsControl = FindName("TenantsItemsControl") as ItemsControl;
+            if (tenantsItemsControl?.ItemsPanel != null)
+            {
+                // Sử dụng WrapPanel để tự động wrap các card
+                var itemsPanelTemplate = new ItemsPanelTemplate();
+                var wrapPanelFactory = new FrameworkElementFactory(typeof(WrapPanel));
+                wrapPanelFactory.SetValue(WrapPanel.OrientationProperty, Orientation.Horizontal);
+                wrapPanelFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Stretch);
+                wrapPanelFactory.SetValue(MarginProperty, new Thickness(0));
+                
+                itemsPanelTemplate.VisualTree = wrapPanelFactory;
+                tenantsItemsControl.ItemsPanel = itemsPanelTemplate;
+            }
+        }
+
+        // Event handler cho Button click (thêm khách thuê)
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-
+            if (DataContext is TenantViewModel viewModel)
+            {
+                // Trigger add tenant command
+                viewModel.ShowAddTenantPanelCommand?.Execute(null);
+            }
         }
     }
 }
