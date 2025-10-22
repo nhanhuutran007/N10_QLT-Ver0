@@ -16,10 +16,6 @@ namespace QLKDPhongTro.Presentation.Converters
             {
                 return doubleValue.ToString("N1") + "%";
             }
-            if (value is float floatValue)
-            {
-                return floatValue.ToString("N1") + "%";
-            }
             return "0%";
         }
 
