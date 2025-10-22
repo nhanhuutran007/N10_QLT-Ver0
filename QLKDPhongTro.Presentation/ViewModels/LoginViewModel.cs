@@ -47,53 +47,53 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                //// ✅ Gọi login có OTP
-                //var result = await _authController.LoginWithOtpAsync(Username, Password);
+                // ✅ Gọi login có OTP
+                var result = await _authController.LoginWithOtpAsync(Username, Password);
 
-                //if (result.IsSuccess)
-                //{
-                //    // ✅ Hiện thông báo OTP đã được gửi
-                //    MessageBox.Show(result.Message, "Thông báo",
-                //        MessageBoxButton.OK, MessageBoxImage.Information);
-
-                //    // ✅ Mở form OTP
-                //    var otpWindow = new OtpWindow(Username, "", Password);
-                //    otpWindow.Show();
-
-
-                //    // Đóng cửa sổ login
-                //    Application.Current.MainWindow?.Close();
-                //    Application.Current.MainWindow = otpWindow;
-                //}
-                //else
-                //{
-                //    MessageBox.Show(result.Message, "Lỗi",
-                //        MessageBoxButton.OK, MessageBoxImage.Error);
-
-                //    // Reset button state khi đăng nhập thất bại
-                //    ResetLoginButtonState();
-                //}
-                var result = await _authController.LoginAsync(Username, Password);
                 if (result.IsSuccess)
                 {
-                    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
+                    // ✅ Hiện thông báo OTP đã được gửi
+                    MessageBox.Show(result.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
-                    // Mở Dashboard
-                    var dashboardWindow = new DashWindow
-                    {
-                        DataContext = new DashboardViewModel()
-                    };
-                    dashboardWindow.Show();
+
+                    // ✅ Mở form OTP
+                    var otpWindow = new OtpWindow(Username, "", Password);
+                    otpWindow.Show();
+
+
+                    // Đóng cửa sổ login
                     Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = dashboardWindow;
+                    Application.Current.MainWindow = otpWindow;
                 }
                 else
                 {
                     MessageBox.Show(result.Message, "Lỗi",
                         MessageBoxButton.OK, MessageBoxImage.Error);
+
                     // Reset button state khi đăng nhập thất bại
                     ResetLoginButtonState();
                 }
+                //var result = await _authController.LoginAsync(Username, Password);
+                //if (result.IsSuccess)
+                //{
+                //    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
+                //        MessageBoxButton.OK, MessageBoxImage.Information);
+                //    // Mở Dashboard
+                //    var dashboardWindow = new DashWindow
+                //    {
+                //        DataContext = new DashboardViewModel()
+                //    };
+                //    dashboardWindow.Show();
+                //    Application.Current.MainWindow?.Close();
+                //    Application.Current.MainWindow = dashboardWindow;
+                //}
+                //else
+                //{
+                //    MessageBox.Show(result.Message, "Lỗi",
+                //        MessageBoxButton.OK, MessageBoxImage.Error);
+                //    // Reset button state khi đăng nhập thất bại
+                //    ResetLoginButtonState();
+                //}
             }
             catch (Exception ex)
             {
