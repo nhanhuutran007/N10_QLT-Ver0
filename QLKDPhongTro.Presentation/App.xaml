@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:QLKDPhongTro.Presentation"
              StartupUri="Views/Windows/LoginWindow.xaml">
     <Application.Resources>
-
+        <!-- Set icon cho toàn bộ ứng dụng -->
+        <Image x:Key="AppIcon" Source="/Resources/Images/Logo.png" />
     </Application.Resources>
 </Application>

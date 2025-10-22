@@ -1,0 +1,355 @@
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    mc:Ignorable="av"
+    x:Class="QLKDPhongTro.Presentation.Views.Windows.AddTenantWindow"
+    Title="Thêm khách thuê mới"
+    Height="650"
+    Width="700"
+    WindowStartupLocation="CenterOwner"
+    ResizeMode="NoResize"
+    WindowStyle="None"
+    AllowsTransparency="True"
+    Background="Transparent"
+    MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Window.Resources>
+        <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FF6B6B"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#485BB0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CancelButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#6C757D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#495057"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="InputTextBoxStyle" TargetType="{x:Type TextBox}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#5B75D4"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="InputComboBoxStyle" TargetType="{x:Type ComboBox}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" 
+                                            Background="Transparent" 
+                                            BorderThickness="0" 
+                                            IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"/>
+                                <ContentPresenter x:Name="ContentSite" 
+                                                IsHitTestVisible="False" 
+                                                Content="{TemplateBinding SelectionBoxItem}"
+                                                ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                Margin="{TemplateBinding Padding}"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Left"/>
+                                <Popup x:Name="Popup" 
+                                       Placement="Bottom" 
+                                       IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                       AllowsTransparency="True" 
+                                       Focusable="False" 
+                                       PopupAnimation="Slide">
+                                    <Border x:Name="DropDownBorder" 
+                                            Background="White" 
+                                            BorderThickness="1" 
+                                            BorderBrush="#E0E0E0"
+                                            MinWidth="{TemplateBinding ActualWidth}"
+                                            MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <ScrollViewer>
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#5B75D4"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DatePickerStyle" TargetType="{x:Type DatePicker}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DatePicker}">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="8">
+                            <Grid>
+                                <DatePickerTextBox x:Name="PART_TextBox" 
+                                                   Background="Transparent" 
+                                                   BorderThickness="0" 
+                                                   Padding="12,10"
+                                                   VerticalContentAlignment="Center"/>
+                                <Button x:Name="PART_Button" 
+                                        Background="Transparent" 
+                                        BorderThickness="0" 
+                                        HorizontalAlignment="Right" 
+                                        Width="40">
+                                    <Path Data="M0,0 L0,1 L1,1 L1,0 Z" 
+                                          Fill="#666666" 
+                                          Width="16" 
+                                          Height="16"/>
+                                </Button>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#5B75D4"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CustomScrollBar" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Width" Value="8"/>
+            <Setter Property="Background" Value="#F1F1F1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate>
+                                                <Rectangle Fill="#C7D7FE" RadiusX="4" RadiusY="4"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Background overlay với hiệu ứng mờ -->
+    <Border Background="#F8F9FA" CornerRadius="12">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
+        </Border.Effect>
+        <!-- Main content -->
+        <Border Background="White" CornerRadius="12" Margin="5" BorderThickness="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" Padding="20,15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Background="#33FFFFFF" CornerRadius="8" Padding="8" Margin="0,0,10,0">
+                                <TextBlock Text="👥" FontSize="20" Foreground="White"/>
+                            </Border>
+                            <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
+                                Click="CloseButton_Click"/>
+                    </Grid>
+                </Border>
+
+                <!-- Form content -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
+                    <ScrollViewer.Resources>
+                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource CustomScrollBar}"/>
+                    </ScrollViewer.Resources>
+                    <StackPanel>
+                        <!-- Họ tên -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Họ tên *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewTenant.HoTen, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="Nhập họ tên"/>
+                        </StackPanel>
+
+                        <!-- CCCD -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="CCCD *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewTenant.CCCD, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="Nhập số CCCD"/>
+                        </StackPanel>
+
+                        <!-- Số điện thoại -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Số điện thoại *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Text="{Binding NewTenant.SoDienThoai, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="Nhập số điện thoại"/>
+                        </StackPanel>
+
+
+                        <!-- Ngày bắt đầu thuê -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Ngày bắt đầu thuê *" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333333" Margin="0,0,0,8"/>
+                            <DatePicker Style="{StaticResource DatePickerStyle}" 
+                                        SelectedDate="{Binding NewTenant.NgaySinh, UpdateSourceTrigger=PropertyChanged}"
+                                        DisplayDateStart="{x:Static sys:DateTime.Today}"
+                                        DisplayDate="{x:Static sys:DateTime.Today}"/>
+                        </StackPanel>
+
+
+                        <!-- Ghi chú -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" 
+                                       Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                     Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                     Text="{Binding NewTenant.GhiChu, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="Nhập ghi chú (tùy chọn)"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer buttons -->
+                <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
+                                Width="100" Margin="0,0,15,0" Click="CloseButton_Click"/>
+                        <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" 
+                                Width="120" Command="{Binding SaveCommand}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+</Window>

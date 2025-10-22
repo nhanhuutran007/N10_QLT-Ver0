@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,6 +11,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class LoginWindow : Window
     {
+        private bool _isPasswordVisible = false; // Theo dõi trạng thái hiển thị mật khẩu
+        private TextBox _currentPasswordTextBox = null; // Lưu trữ TextBox hiện tại
+        
         public LoginWindow()
         {
             InitializeComponent();
@@ -75,23 +79,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void UpdateMaximizeButtonIcon(bool isMaximized)
         {
-            if (MaximizeButton != null)
-            {
-                var path = MaximizeButton.Content as Path;
-                if (path != null)
-                {
-                    if (isMaximized)
-                    {
-                        // Restore icon (two overlapping squares)
-                        path.Data = Geometry.Parse("M4,4 L16,4 L16,16 L4,16 Z M6,6 L14,6 L14,14 L6,14 Z");
-                    }
-                    else
-                    {
-                        // Maximize icon (single square)
-                        path.Data = Geometry.Parse("M6,6 L18,6 L18,18 L6,18 Z");
-                    }
-                }
-            }
+            // Không cần cập nhật icon vì đã dùng nút hệ thống
+            // Method này giữ lại để tương thích nhưng không làm gì
         }
 
         private void Minimize_Click(object sender, RoutedEventArgs e)
@@ -105,13 +94,16 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Ẩn phần bên trái khi cửa sổ quá nhỏ
             if (e.NewSize.Width < 800)
             {
-                if (LeftBorder != null)
-                    LeftBorder.Visibility = Visibility.Collapsed;
+                // Tìm Grid cột trái thông qua tên cột
+                var leftColumn = this.FindName("LeftBorder") as FrameworkElement;
+                if (leftColumn != null)
+                    leftColumn.Visibility = Visibility.Collapsed;
             }
             else
             {
-                if (LeftBorder != null)
-                    LeftBorder.Visibility = Visibility.Visible;
+                var leftColumn = this.FindName("LeftBorder") as FrameworkElement;
+                if (leftColumn != null)
+                    leftColumn.Visibility = Visibility.Visible;
             }
         }
 
@@ -122,7 +114,24 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 if (PasswordBox == null) return;
 
-                var parent = PasswordBox.Parent as Panel;
+                // Tìm parent panel của PasswordBox
+                var mainGrid = this.Content as Grid;
+                Panel parent = null;
+                if (mainGrid != null)
+                {
+                    foreach (var child in mainGrid.Children)
+                    {
+                        if (child is Grid grid && grid.Children != null)
+                        {
+                            if (grid.Children.Contains(PasswordBox))
+                            {
+                                parent = grid;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
                 if (parent == null) return;
 
                 var index = parent.Children.IndexOf(PasswordBox);
@@ -171,9 +180,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void UpdateToggleButtonIcon(bool isPasswordVisible)
         {
-            if (TogglePasswordButton != null)
+            var toggleButton = this.FindName("TogglePasswordButton") as Button;
+            if (toggleButton != null)
             {
-                var path = TogglePasswordButton.Content as Path;
+                var path = toggleButton.Content as Path;
                 if (path != null)
                 {
                     if (isPasswordVisible)
@@ -248,11 +258,14 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Lấy password hiện tại từ PasswordBox hoặc TextBox
         private string GetCurrentPassword()
         {
-            if (PasswordBox != null && PasswordBox.Visibility == Visibility.Visible)
+            // Kiểm tra PasswordBox trước
+            var passwordBox = this.FindName("PasswordBox") as PasswordBox;
+            if (passwordBox != null && passwordBox.Visibility == Visibility.Visible)
             {
-                return PasswordBox.Password;
+                return passwordBox.Password;
             }
 
+            // Nếu không có PasswordBox, kiểm tra TextBox
             var passwordTextBox = this.FindName("PasswordTextBox") as TextBox;
             return passwordTextBox?.Text ?? string.Empty;
         }
@@ -266,11 +279,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 {
                     DataContext = new RegisterViewModel()
                 };
-                registerWindow.Show();
-
                 // Đóng cửa sổ login hiện tại
                 Application.Current.MainWindow?.Close();
                 Application.Current.MainWindow = registerWindow;
+                registerWindow.Show();
             }
             catch (Exception ex)
             {
@@ -296,6 +308,139 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 {
                     viewModel.Password = passwordBox.Password;
                 }
+            }
+        }
+
+        // Xử lý hiện/ẩn mật khẩu
+        private void ShowPasswordCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_isPasswordVisible) return; // Đã hiển thị rồi
+                if (PasswordBox == null) return;
+
+                // Tìm parent panel của PasswordBox
+                var mainGrid = this.Content as Grid;
+                Panel parent = null;
+                if (mainGrid != null)
+                {
+                    foreach (var child in mainGrid.Children)
+                    {
+                        if (child is Grid grid && grid.Children != null)
+                        {
+                            if (grid.Children.Contains(PasswordBox))
+                            {
+                                parent = grid;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (parent == null) return;
+
+                var index = parent.Children.IndexOf(PasswordBox);
+                if (index == -1) return;
+
+                // Tạo TextBox để hiển thị mật khẩu
+                var textBox = new TextBox
+                {
+                    Text = PasswordBox.Password,
+                    Background = PasswordBox.Background,
+                    BorderThickness = PasswordBox.BorderThickness,
+                    BorderBrush = PasswordBox.BorderBrush,
+                    Padding = PasswordBox.Padding,
+                    FontSize = PasswordBox.FontSize,
+                    Margin = PasswordBox.Margin,
+                    Name = "PasswordTextBox",
+                    VerticalContentAlignment = PasswordBox.VerticalContentAlignment,
+                    Foreground = PasswordBox.Foreground
+                };
+
+                parent.Children.Remove(PasswordBox);
+                parent.Children.Insert(index, textBox);
+                _currentPasswordTextBox = textBox; // Lưu trữ TextBox
+                _isPasswordVisible = true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi hiển thị mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ShowPasswordCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (!_isPasswordVisible) return; // Đã ẩn rồi
+                if (_currentPasswordTextBox == null) return; // Không có TextBox để chuyển đổi
+                
+                // Tìm parent panel của TextBox
+                var mainGrid = this.Content as Grid;
+                Panel parentPanel = null;
+                if (mainGrid != null)
+                {
+                    foreach (var child in mainGrid.Children)
+                    {
+                        if (child is Grid grid && grid.Children != null)
+                        {
+                            if (grid.Children.Contains(_currentPasswordTextBox))
+                            {
+                                parentPanel = grid;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (parentPanel == null) return;
+
+                var index = parentPanel.Children.IndexOf(_currentPasswordTextBox);
+                if (index == -1) return;
+
+                // Tạo lại PasswordBox với mật khẩu từ TextBox
+                var passwordBox = new PasswordBox
+                {
+                    Password = _currentPasswordTextBox.Text,
+                    Background = _currentPasswordTextBox.Background,
+                    BorderThickness = _currentPasswordTextBox.BorderThickness,
+                    BorderBrush = _currentPasswordTextBox.BorderBrush,
+                    Padding = _currentPasswordTextBox.Padding,
+                    FontSize = _currentPasswordTextBox.FontSize,
+                    Margin = _currentPasswordTextBox.Margin,
+                    Name = "PasswordBox",
+                    VerticalContentAlignment = _currentPasswordTextBox.VerticalContentAlignment,
+                    Foreground = _currentPasswordTextBox.Foreground
+                };
+
+                parentPanel.Children.Remove(_currentPasswordTextBox);
+                parentPanel.Children.Insert(index, passwordBox);
+                _currentPasswordTextBox = null; // Xóa reference
+                _isPasswordVisible = false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi ẩn mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Xử lý nhấn Enter trong EmailTextBox
+        private void EmailTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Chuyển focus sang PasswordBox
+                PasswordBox.Focus();
+            }
+        }
+
+        // Xử lý nhấn Enter trong PasswordBox
+        private void PasswordBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                // Thực hiện đăng nhập
+                LoginButton_Click(sender, e);
             }
         }
     }

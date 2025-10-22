@@ -80,7 +80,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToRooms()
         {
-            var rentedRoomWindow = new RoomManagementWindow();
+            var rentedRoomWindow = new RoomWindow();
             rentedRoomWindow.Show();
             // Close the current dashboard window
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
@@ -89,7 +89,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToTenants()
         {
-            MessageBox.Show("Đã chuyển đến trang Khách thuê", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            var tenantWindow = new TenantManagementWindow();
+            tenantWindow.Show();
+            // Close the current dashboard window
+            Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
 
         [RelayCommand]

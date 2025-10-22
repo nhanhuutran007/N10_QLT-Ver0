@@ -10,6 +10,14 @@
 
   <ItemGroup>
     <None Remove="Resources\Images\Logo.png" />
+    <None Remove="Resources\Templates\HopDongMau.docx" />
+    <None Remove="Templates\HopDongMau.docx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\Templates\HopDongMau.docx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -21,12 +29,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="ViewModels\AddContractViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="Resources\Images\Logo.png" />
+    <Resource Include="Resources\Images\avatar.jpg" />
+    <Resource Include="Resources\Images\avatar1.jpg" />
+    <Resource Include="Resources\Images\email_icon.png" />
+    <Resource Include="Resources\Images\password_icon.png" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Templates\HopDongMau.docx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 
 </Project>

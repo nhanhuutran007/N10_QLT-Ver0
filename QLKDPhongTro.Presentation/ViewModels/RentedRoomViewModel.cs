@@ -357,7 +357,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void MinimizeWindow()
         {
-            var window = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
+            var window = Application.Current.Windows.OfType<RoomWindow>().FirstOrDefault();
             if (window != null)
             {
                 window.WindowState = WindowState.Minimized;
@@ -367,7 +367,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void MaximizeWindow()
         {
-            var window = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
+            var window = Application.Current.Windows.OfType<RoomWindow>().FirstOrDefault();
             if (window != null)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized
@@ -379,7 +379,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void CloseWindow()
         {
-            var window = Application.Current.Windows.OfType<RoomManagementWindow>().FirstOrDefault();
+            var window = Application.Current.Windows.OfType<RoomWindow>().FirstOrDefault();
             window?.Close();
         }
 

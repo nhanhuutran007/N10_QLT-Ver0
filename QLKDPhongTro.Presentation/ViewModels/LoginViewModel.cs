@@ -55,15 +55,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     // ✅ Hiện thông báo OTP đã được gửi
                     MessageBox.Show(result.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // ✅ Mở form OTP
-                    var otpWindow = new OtpWindow(Username, "", Password);
-                    otpWindow.Show();
-
-
-                    // Đóng cửa sổ login
-                    Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = otpWindow;
+                    // Mở Dashboard
+                    var dashboardWindow = new DashWindow
+                    {
+                        DataContext = new DashboardViewModel()
+                    };
+                    
+                    // Đóng cửa sổ đăng nhập hiện tại trước
+                    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                    loginWindow?.Close();
+                    
+                    // Đặt Dashboard làm MainWindow và hiển thị
+                    Application.Current.MainWindow = dashboardWindow;
+                    dashboardWindow.Show();
                 }
                 else
                 {

@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Controls;
@@ -75,7 +76,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     BorderThickness = passwordBox.BorderThickness,
                     Padding = passwordBox.Padding,
                     FontSize = passwordBox.FontSize,
-                    Margin = passwordBox.Margin
+                    Margin = passwordBox.Margin,
+                    VerticalContentAlignment = passwordBox.VerticalContentAlignment,
+                    Foreground = passwordBox.Foreground
                 };
                 textBox.TextChanged += PasswordTextBox_TextChanged;
                 
@@ -101,7 +104,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     BorderThickness = confirmPasswordBox.BorderThickness,
                     Padding = confirmPasswordBox.Padding,
                     FontSize = confirmPasswordBox.FontSize,
-                    Margin = confirmPasswordBox.Margin
+                    Margin = confirmPasswordBox.Margin,
+                    VerticalContentAlignment = confirmPasswordBox.VerticalContentAlignment,
+                    Foreground = confirmPasswordBox.Foreground
                 };
                 confirmTextBox.TextChanged += PasswordTextBox_TextChanged;
                 
@@ -119,60 +124,96 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void ShowPasswordCheckBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            // Tìm TextBox hiện tại
-            var textBox = this.FindName("PasswordTextBox") as TextBox;
-            var confirmTextBox = this.FindName("ConfirmPasswordTextBox") as TextBox;
-            
-            if (textBox != null)
+            try
             {
-                // Tạo lại PasswordBox với mật khẩu từ TextBox
-                var passwordBox = new PasswordBox
-                {
-                    Password = textBox.Text,
-                    Background = textBox.Background,
-                    BorderBrush = textBox.BorderBrush,
-                    BorderThickness = textBox.BorderThickness,
-                    Padding = textBox.Padding,
-                    FontSize = textBox.FontSize,
-                    Margin = textBox.Margin
-                };
-                passwordBox.PasswordChanged += PasswordBox_PasswordChanged;
+                // Tìm TextBox hiện tại bằng cách duyệt qua tất cả TextBox trong window
+                TextBox passwordTextBox = null;
+                TextBox confirmPasswordTextBox = null;
+                Panel parentPanel = null;
                 
-                // Thay thế TextBox bằng PasswordBox
-                var parent = textBox.Parent as Panel;
-                if (parent != null)
+                // Tìm TextBox và parent panel của chúng
+                var mainGrid = this.Content as Grid;
+                if (mainGrid != null)
                 {
-                    var index = parent.Children.IndexOf(textBox);
-                    parent.Children.Remove(textBox);
-                    parent.Children.Insert(index, passwordBox);
-                    passwordBox.Name = "PasswordBox";
+                    foreach (var child in mainGrid.Children)
+                    {
+                        if (child is Grid grid && grid.Children != null)
+                        {
+                            foreach (var gridChild in grid.Children)
+                            {
+                                if (gridChild is TextBox tb)
+                                {
+                                    if (tb.Name == "PasswordTextBox")
+                                    {
+                                        passwordTextBox = tb;
+                                        parentPanel = grid;
+                                    }
+                                    else if (tb.Name == "ConfirmPasswordTextBox")
+                                    {
+                                        confirmPasswordTextBox = tb;
+                                        if (parentPanel == null) parentPanel = grid;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Xử lý PasswordBox chính
+                if (passwordTextBox != null && parentPanel != null)
+                {
+                    var index = parentPanel.Children.IndexOf(passwordTextBox);
+                    if (index != -1)
+                    {
+                        var passwordBox = new PasswordBox
+                        {
+                            Password = passwordTextBox.Text,
+                            Background = passwordTextBox.Background,
+                            BorderBrush = passwordTextBox.BorderBrush,
+                            BorderThickness = passwordTextBox.BorderThickness,
+                            Padding = passwordTextBox.Padding,
+                            FontSize = passwordTextBox.FontSize,
+                            Margin = passwordTextBox.Margin,
+                            VerticalContentAlignment = passwordTextBox.VerticalContentAlignment,
+                            Foreground = passwordTextBox.Foreground
+                        };
+                        passwordBox.PasswordChanged += PasswordBox_PasswordChanged;
+
+                        parentPanel.Children.Remove(passwordTextBox);
+                        parentPanel.Children.Insert(index, passwordBox);
+                        passwordBox.Name = "PasswordBox";
+                    }
+                }
+
+                // Xử lý ConfirmPasswordBox
+                if (confirmPasswordTextBox != null && parentPanel != null)
+                {
+                    var index = parentPanel.Children.IndexOf(confirmPasswordTextBox);
+                    if (index != -1)
+                    {
+                        var confirmPasswordBox = new PasswordBox
+                        {
+                            Password = confirmPasswordTextBox.Text,
+                            Background = confirmPasswordTextBox.Background,
+                            BorderBrush = confirmPasswordTextBox.BorderBrush,
+                            BorderThickness = confirmPasswordTextBox.BorderThickness,
+                            Padding = confirmPasswordTextBox.Padding,
+                            FontSize = confirmPasswordTextBox.FontSize,
+                            Margin = confirmPasswordTextBox.Margin,
+                            VerticalContentAlignment = confirmPasswordTextBox.VerticalContentAlignment,
+                            Foreground = confirmPasswordTextBox.Foreground
+                        };
+                        confirmPasswordBox.PasswordChanged += ConfirmPasswordBox_PasswordChanged;
+
+                        parentPanel.Children.Remove(confirmPasswordTextBox);
+                        parentPanel.Children.Insert(index, confirmPasswordBox);
+                        confirmPasswordBox.Name = "ConfirmPasswordBox";
+                    }
                 }
             }
-
-            if (confirmTextBox != null)
+            catch (Exception ex)
             {
-                // Tạo lại ConfirmPasswordBox với mật khẩu từ TextBox
-                var confirmPasswordBox = new PasswordBox
-                {
-                    Password = confirmTextBox.Text,
-                    Background = confirmTextBox.Background,
-                    BorderBrush = confirmTextBox.BorderBrush,
-                    BorderThickness = confirmTextBox.BorderThickness,
-                    Padding = confirmTextBox.Padding,
-                    FontSize = confirmTextBox.FontSize,
-                    Margin = confirmTextBox.Margin
-                };
-                confirmPasswordBox.PasswordChanged += ConfirmPasswordBox_PasswordChanged;
-                
-                // Thay thế TextBox bằng PasswordBox
-                var parent = confirmTextBox.Parent as Panel;
-                if (parent != null)
-                {
-                    var index = parent.Children.IndexOf(confirmTextBox);
-                    parent.Children.Remove(confirmTextBox);
-                    parent.Children.Insert(index, confirmPasswordBox);
-                    confirmPasswordBox.Name = "ConfirmPasswordBox";
-                }
+                MessageBox.Show($"Lỗi khi ẩn mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -318,12 +359,19 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Xử lý quay lại đăng nhập
         private void BackToLogin_Click(object sender, RoutedEventArgs e)
         {
-            // Tạo và hiển thị cửa sổ đăng nhập
-            var loginWindow = new LoginWindow();
-            loginWindow.Show();
-            
-            // Đóng cửa sổ đăng ký hiện tại
-            this.Close();
+            try
+            {
+                // Tạo và hiển thị cửa sổ đăng nhập trước
+                var loginWindow = new LoginWindow();
+                loginWindow.Show();
+                
+                // Đóng cửa sổ đăng ký hiện tại
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển về trang đăng nhập: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

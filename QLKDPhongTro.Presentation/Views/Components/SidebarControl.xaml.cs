@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using QLKDPhongTro.Presentation.Views.Windows;
 
 namespace QLKDPhongTro.Presentation.Views.Components
 {
@@ -8,18 +10,30 @@ namespace QLKDPhongTro.Presentation.Views.Components
     {
         public event EventHandler<string> MenuItemClicked;
         public event EventHandler LogoutClicked;
+        
+        private bool _isInitializing = true;
 
         public SidebarControl()
         {
             InitializeComponent();
+            // Đánh dấu đã khởi tạo xong sau một khoảng thời gian ngắn
+            this.Loaded += (s, e) => 
+            {
+                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ => 
+                {
+                    Dispatcher.Invoke(() => _isInitializing = false);
+                });
+            };
         }
 
         // Property để set tiêu đề trang
         public string PageTitle
         {
-            get { return PageTitleTextBlock.Text; }
-            set { PageTitleTextBlock.Text = value; }
+            get { return _pageTitle; }
+            set { _pageTitle = value; }
         }
+
+        private string _pageTitle = "";
 
         // Property để set menu item được chọn
         public string SelectedMenuItem
@@ -40,39 +54,84 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Có thể thêm logic để thay đổi background của các button
         }
 
-        private void OverviewButton_Click(object sender, RoutedEventArgs e)
+
+        // Centralized navigation helper method
+        private void NavigateToWindow<T>() where T : Window, new()
         {
-            MenuItemClicked?.Invoke(this, "Overview");
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+                
+            var currentWindow = Window.GetWindow(this);
+            
+            // Kiểm tra currentWindow có null không
+            if (currentWindow == null)
+            {
+                // Nếu không tìm thấy window hiện tại, chỉ tạo window mới
+                var newWindow = new T();
+                newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                newWindow.Show();
+                return;
+            }
+            
+            // Nếu đã ở window cùng loại thì không cần chuyển
+            if (currentWindow is T)
+                return;
+            
+            // Kiểm tra xem window đã tồn tại chưa
+            var existingWindow = Application.Current.Windows.OfType<T>().FirstOrDefault();
+            
+            if (existingWindow != null)
+            {
+                existingWindow.Activate();
+                existingWindow.WindowState = WindowState.Normal;
+            }
+            else
+            {
+                var newWindow = new T();
+                newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                newWindow.Show();
+            }
+            
+            // Đóng cửa sổ hiện tại (chỉ khi currentWindow không null)
+            currentWindow.Close();
         }
 
-        private void RoomsButton_Click(object sender, RoutedEventArgs e)
+        // Handlers với logic navigation tập trung - sử dụng event system để tránh đệ quy
+        private void Overview_Checked(object sender, RoutedEventArgs e)
         {
-            MenuItemClicked?.Invoke(this, "Rooms");
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+                
+            NavigateToWindow<DashWindow>();
         }
 
-        private void TenantsButton_Click(object sender, RoutedEventArgs e)
+        private void Assets_Checked(object sender, RoutedEventArgs e)
         {
-            MenuItemClicked?.Invoke(this, "Tenants");
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+                
+            NavigateToWindow<RoomWindow>();
         }
 
-        private void InvoicesButton_Click(object sender, RoutedEventArgs e)
+        private void Tenants_Checked(object sender, RoutedEventArgs e)
         {
-            MenuItemClicked?.Invoke(this, "Invoices");
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+                
+            NavigateToWindow<TenantManagementWindow>();
         }
 
-        private void ContractsButton_Click(object sender, RoutedEventArgs e)
+        private void Contracts_Checked(object sender, RoutedEventArgs e)
         {
-            MenuItemClicked?.Invoke(this, "Contracts");
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            MenuItemClicked?.Invoke(this, "Settings");
-        }
-
-        private void LogoutButton_Click(object sender, RoutedEventArgs e)
-        {
-            LogoutClicked?.Invoke(this, EventArgs.Empty);
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+                
+            NavigateToWindow<ContractManagementWindow>();
         }
     }
 }
