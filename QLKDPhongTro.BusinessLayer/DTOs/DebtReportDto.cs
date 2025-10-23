@@ -2,7 +2,7 @@ using System;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class DebtReportDTO
+    public class DebtReportDto
     {
         public int MaThanhToan { get; set; }
         public int MaHopDong { get; set; }

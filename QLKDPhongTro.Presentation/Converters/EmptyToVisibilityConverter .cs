@@ -11,9 +11,16 @@ namespace QLKDPhongTro.Presentation.Converters
         {
             if (parameter?.ToString() == "inverse")
             {
-                return value == null || (value is int intValue && intValue == 0) ? Visibility.Collapsed : Visibility.Visible;
+                // Đổi tên biến intValue thành intVal để tránh trùng lặp
+                if (value is int intVal && intVal == 0 || value == null)
+                    return Visibility.Collapsed;
+                return Visibility.Visible;
             }
-            return value == null || (value is int intValue && intValue == 0) ? Visibility.Visible : Visibility.Collapsed;
+
+            // Biến khác tên
+            if (value is int intVal2 && intVal2 == 0 || value == null)
+                return Visibility.Visible;
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

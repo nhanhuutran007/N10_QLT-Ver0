@@ -412,7 +412,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 {
                     while (await reader.ReadAsync())
                     {
-                        stats.ThongKeTheoThang.Add(new MonthlyStat
+                        stats.ThongKeTheoThang.Add(new MonthlyStats
                         {
                             ThangNam = reader.GetString(0),
                             ThuNhap = reader.GetDecimal(1),

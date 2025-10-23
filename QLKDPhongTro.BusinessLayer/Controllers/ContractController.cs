@@ -1,24 +1,25 @@
 ﻿using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
     public class ContractController
     {
-        private readonly ContractRepository _repository;
+        private readonly IContractRepository _repository;
 
-        public ContractController(ContractRepository repository)
+        public ContractController(IContractRepository repository)
         {
             _repository = repository;
         }
 
-        public List<ContractDto> GetAllHopDong()
+        public async Task<List<ContractDto>> GetAllHopDongAsync()
         {
-            var entities = _repository.GetAllHopDong();
+            var entities = await _repository.GetAllHopDongAsync();
             return entities.Select(e => new ContractDto
             {
                 MaHopDong = e.MaHopDong,
@@ -29,14 +30,53 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = e.TenNguoiThue,
-                TenPhong = e.TenPhong
+                // Bỏ TenNguoiThue và TenPhong vì model Contract không có
+                TenNguoiThue = "", // Cần lấy từ repository khác
+                TenPhong = "" // Cần lấy từ repository khác
             }).ToList();
         }
 
-        public void CreateHopDong(ContractDto dto)
+        public async Task<ContractDto?> GetByIdAsync(int maHopDong)
         {
-            var entity = new HopDong
+            var entity = await _repository.GetByIdAsync(maHopDong);
+            if (entity == null) return null;
+
+            return new ContractDto
+            {
+                MaHopDong = entity.MaHopDong,
+                MaNguoiThue = entity.MaNguoiThue,
+                MaPhong = entity.MaPhong,
+                NgayBatDau = entity.NgayBatDau,
+                NgayKetThuc = entity.NgayKetThuc,
+                TienCoc = entity.TienCoc,
+                FileHopDong = entity.FileHopDong,
+                TrangThai = entity.TrangThai,
+                TenNguoiThue = "", // Cần lấy từ repository khác
+                TenPhong = "" // Cần lấy từ repository khác
+            };
+        }
+
+        public async Task<List<ContractDto>> GetActiveContractsAsync()
+        {
+            var entities = await _repository.GetActiveContractsAsync();
+            return entities.Select(e => new ContractDto
+            {
+                MaHopDong = e.MaHopDong,
+                MaNguoiThue = e.MaNguoiThue,
+                MaPhong = e.MaPhong,
+                NgayBatDau = e.NgayBatDau,
+                NgayKetThuc = e.NgayKetThuc,
+                TienCoc = e.TienCoc,
+                FileHopDong = e.FileHopDong,
+                TrangThai = e.TrangThai,
+                TenNguoiThue = "", // Cần lấy từ repository khác
+                TenPhong = "" // Cần lấy từ repository khác
+            }).ToList();
+        }
+
+        public async Task CreateHopDongAsync(ContractDto dto)
+        {
+            var entity = new Contract
             {
                 MaNguoiThue = dto.MaNguoiThue,
                 MaPhong = dto.MaPhong,
@@ -46,12 +86,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 FileHopDong = dto.FileHopDong,
                 TrangThai = dto.TrangThai
             };
-            _repository.AddHopDong(entity);
+            await _repository.AddHopDongAsync(entity);
         }
 
-        public void UpdateHopDong(ContractDto dto)
+        public async Task UpdateHopDongAsync(ContractDto dto)
         {
-            var entity = new HopDong
+            var entity = new Contract
             {
                 MaHopDong = dto.MaHopDong,
                 MaNguoiThue = dto.MaNguoiThue,
@@ -62,17 +102,17 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 FileHopDong = dto.FileHopDong,
                 TrangThai = dto.TrangThai
             };
-            _repository.UpdateHopDong(entity);
+            await _repository.UpdateHopDongAsync(entity);
         }
 
-        public void DeleteHopDong(int id)
+        public async Task DeleteHopDongAsync(int id)
         {
-            _repository.DeleteHopDong(id);
+            await _repository.DeleteHopDongAsync(id);
         }
 
-        public List<ContractDto> GetExpiringContracts(int days)
+        public async Task<List<ContractDto>> GetExpiringContractsAsync(int days)
         {
-            var entities = _repository.GetExpiringContracts(days);
+            var entities = await _repository.GetExpiringContractsAsync(days);
             return entities.Select(e => new ContractDto
             {
                 MaHopDong = e.MaHopDong,
@@ -81,9 +121,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayBatDau = e.NgayBatDau,
                 NgayKetThuc = e.NgayKetThuc,
                 TienCoc = e.TienCoc,
+                FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = e.TenNguoiThue,
-                TenPhong = e.TenPhong
+                TenNguoiThue = "", // Cần lấy từ repository khác
+                TenPhong = "" // Cần lấy từ repository khác
             }).ToList();
         }
     }

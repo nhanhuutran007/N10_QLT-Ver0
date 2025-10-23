@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class PaymentDTO
+    public class PaymentDto
     {
         public int MaThanhToan { get; set; }
 

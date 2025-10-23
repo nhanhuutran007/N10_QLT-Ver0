@@ -1,139 +1,153 @@
 ﻿using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class ContractRepository : IContractRepository
     {
-        // THAY THẾ CHUỖI KẾT NỐI NÀY BẰNG CHUỖI CỦA BẠN
-        private readonly string _connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+        private readonly string _connectionString =
+            "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
 
-        // Sử dụng JOIN để lấy thêm Tên Người Thuê và Tên Phòng
-        public List<HopDong> GetAllHopDong()
+        public async Task<List<Contract>> GetAllHopDongAsync()
         {
-            var hopDongs = new List<HopDong>();
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand(
-                    @"SELECT hd.*, nt.HoTen AS TenNguoiThue, p.TenPhong 
-                      FROM HopDong hd
-                      LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
-                      LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong", connection);
+            var contracts = new List<Contract>();
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand("SELECT * FROM HopDong", connection);
 
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var hopDong = new HopDong
-                        {
-                            MaHopDong = (int)reader["MaHopDong"],
-                            MaNguoiThue = (int)reader["MaNguoiThue"],
-                            MaPhong = (int)reader["MaPhong"],
-                            NgayBatDau = (DateTime)reader["NgayBatDau"],
-                            NgayKetThuc = (DateTime)reader["NgayKetThuc"],
-                            TienCoc = (decimal)reader["TienCoc"],
-                            FileHopDong = reader["FileHopDong"] as string,
-                            TrangThai = (string)reader["TrangThai"],
-                            // Thêm các thuộc tính JOIN
-                            TenNguoiThue = reader["TenNguoiThue"] as string,
-                            TenPhong = reader["TenPhong"] as string
-                        };
-                        hopDongs.Add(hopDong);
-                    }
-                }
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContract(reader));
             }
-            return hopDongs;
+            return contracts;
         }
 
-        public void AddHopDong(HopDong hopDong)
+        public async Task AddHopDongAsync(Contract contract)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("INSERT INTO HopDong (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai)", connection);
-                command.Parameters.AddWithValue("@MaNguoiThue", hopDong.MaNguoiThue);
-                command.Parameters.AddWithValue("@MaPhong", hopDong.MaPhong);
-                command.Parameters.AddWithValue("@NgayBatDau", hopDong.NgayBatDau);
-                command.Parameters.AddWithValue("@NgayKetThuc", hopDong.NgayKetThuc);
-                command.Parameters.AddWithValue("@TienCoc", hopDong.TienCoc);
-                command.Parameters.AddWithValue("@FileHopDong", (object)hopDong.FileHopDong ?? DBNull.Value);
-                command.Parameters.AddWithValue("@TrangThai", hopDong.TrangThai);
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand(
+                @"INSERT INTO HopDong 
+                  (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
+                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai)",
+                connection);
 
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+            command.Parameters.AddWithValue("@MaNguoiThue", contract.MaNguoiThue);
+            command.Parameters.AddWithValue("@MaPhong", contract.MaPhong);
+            command.Parameters.AddWithValue("@NgayBatDau", contract.NgayBatDau);
+            command.Parameters.AddWithValue("@NgayKetThuc", contract.NgayKetThuc);
+            command.Parameters.AddWithValue("@TienCoc", contract.TienCoc);
+            command.Parameters.AddWithValue("@FileHopDong", string.IsNullOrEmpty(contract.FileHopDong) ? (object)DBNull.Value : contract.FileHopDong);
+            command.Parameters.AddWithValue("@TrangThai", contract.TrangThai);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
         }
 
-        public void UpdateHopDong(HopDong hopDong)
+        public async Task UpdateHopDongAsync(Contract contract)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("UPDATE HopDong SET MaNguoiThue = @MaNguoiThue, MaPhong = @MaPhong, NgayBatDau = @NgayBatDau, NgayKetThuc = @NgayKetThuc, TienCoc = @TienCoc, FileHopDong = @FileHopDong, TrangThai = @TrangThai WHERE MaHopDong = @MaHopDong", connection);
-                command.Parameters.AddWithValue("@MaHopDong", hopDong.MaHopDong);
-                command.Parameters.AddWithValue("@MaNguoiThue", hopDong.MaNguoiThue);
-                command.Parameters.AddWithValue("@MaPhong", hopDong.MaPhong);
-                command.Parameters.AddWithValue("@NgayBatDau", hopDong.NgayBatDau);
-                command.Parameters.AddWithValue("@NgayKetThuc", hopDong.NgayKetThuc);
-                command.Parameters.AddWithValue("@TienCoc", hopDong.TienCoc);
-                command.Parameters.AddWithValue("@FileHopDong", (object)hopDong.FileHopDong ?? DBNull.Value);
-                command.Parameters.AddWithValue("@TrangThai", hopDong.TrangThai);
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand(
+                @"UPDATE HopDong SET 
+                    MaNguoiThue = @MaNguoiThue,
+                    MaPhong = @MaPhong,
+                    NgayBatDau = @NgayBatDau,
+                    NgayKetThuc = @NgayKetThuc,
+                    TienCoc = @TienCoc,
+                    FileHopDong = @FileHopDong,
+                    TrangThai = @TrangThai
+                  WHERE MaHopDong = @MaHopDong", connection);
 
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+            command.Parameters.AddWithValue("@MaHopDong", contract.MaHopDong);
+            command.Parameters.AddWithValue("@MaNguoiThue", contract.MaNguoiThue);
+            command.Parameters.AddWithValue("@MaPhong", contract.MaPhong);
+            command.Parameters.AddWithValue("@NgayBatDau", contract.NgayBatDau);
+            command.Parameters.AddWithValue("@NgayKetThuc", contract.NgayKetThuc);
+            command.Parameters.AddWithValue("@TienCoc", contract.TienCoc);
+            command.Parameters.AddWithValue("@FileHopDong", string.IsNullOrEmpty(contract.FileHopDong) ? (object)DBNull.Value : contract.FileHopDong);
+            command.Parameters.AddWithValue("@TrangThai", contract.TrangThai);
+
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
         }
 
-        public void DeleteHopDong(int maHopDong)
+        public async Task DeleteHopDongAsync(int maHopDong)
         {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var command = new SqlCommand("DELETE FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
-                command.Parameters.AddWithValue("@MaHopDong", maHopDong);
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand("DELETE FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
+            command.Parameters.AddWithValue("@MaHopDong", maHopDong);
 
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
+            await connection.OpenAsync();
+            await command.ExecuteNonQueryAsync();
         }
 
-        public List<HopDong> GetExpiringContracts(int days)
+        public async Task<List<Contract>> GetExpiringContractsAsync(int days)
         {
-            var hopDongs = new List<HopDong>();
-            using (var connection = new SqlConnection(_connectionString))
+            var contracts = new List<Contract>();
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand(
+                @"SELECT * FROM HopDong 
+                  WHERE TrangThai = N'Hiệu lực' 
+                  AND DATEDIFF(day, GETDATE(), NgayKetThuc) BETWEEN 0 AND @Days", connection);
+
+            command.Parameters.AddWithValue("@Days", days);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
-                var command = new SqlCommand("SELECT * FROM HopDong WHERE TrangThai = N'Hiệu lực' AND DATEDIFF(day, GETDATE(), NgayKetThuc) BETWEEN 0 AND @Days", connection);
-                command.Parameters.AddWithValue("@Days", days);
-
-                connection.Open();
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var hopDong = new HopDong { /* ... map data ... */ };
-                        hopDongs.Add(hopDong);
-                    }
-                }
+                contracts.Add(ReadContract(reader));
             }
-            return hopDongs;
+            return contracts;
         }
-    }
 
-    // Cập nhật model để chứa thêm thông tin JOIN
-    public class HopDong
-    {
-        public int MaHopDong { get; set; }
-        public int MaNguoiThue { get; set; }
-        public int MaPhong { get; set; }
-        public DateTime NgayBatDau { get; set; }
-        public DateTime NgayKetThuc { get; set; }
-        public decimal TienCoc { get; set; }
-        public string FileHopDong { get; set; }
-        public string TrangThai { get; set; }
+        public async Task<Contract?> GetByIdAsync(int maHopDong)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand("SELECT * FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
+            command.Parameters.AddWithValue("@MaHopDong", maHopDong);
 
-        // Thuộc tính chỉ dùng để hiển thị, không có trong bảng HopDong
-        public string TenNguoiThue { get; set; }
-        public string TenPhong { get; set; }
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return ReadContract(reader);
+            }
+            return null;
+        }
+
+        public async Task<List<Contract>> GetActiveContractsAsync()
+        {
+            var contracts = new List<Contract>();
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand("SELECT * FROM HopDong WHERE TrangThai = N'Hiệu lực'", connection);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContract(reader));
+            }
+            return contracts;
+        }
+
+        private static Contract ReadContract(SqlDataReader reader)
+        {
+            return new Contract
+            {
+                MaHopDong = reader.GetInt32(reader.GetOrdinal("MaHopDong")),
+                MaNguoiThue = reader.GetInt32(reader.GetOrdinal("MaNguoiThue")),
+                MaPhong = reader.GetInt32(reader.GetOrdinal("MaPhong")),
+                NgayBatDau = reader.GetDateTime(reader.GetOrdinal("NgayBatDau")),
+                NgayKetThuc = reader.GetDateTime(reader.GetOrdinal("NgayKetThuc")),
+                TienCoc = reader.GetDecimal(reader.GetOrdinal("TienCoc")),
+                FileHopDong = reader.IsDBNull(reader.GetOrdinal("FileHopDong")) ? string.Empty : reader.GetString(reader.GetOrdinal("FileHopDong")),
+                TrangThai = reader.GetString(reader.GetOrdinal("TrangThai"))
+            };
+        }
+
     }
 }

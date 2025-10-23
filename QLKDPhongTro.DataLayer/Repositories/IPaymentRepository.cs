@@ -69,37 +69,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// Tạo thanh toán hàng tháng tự động
         /// </summary>
         Task<int> GenerateMonthlyPaymentsAsync(string thangNam);
+
     }
 
     /// <summary>
     /// Model cho thống kê tài chính
     /// </summary>
-    public class FinancialStats
-    {
-        public decimal TongThuNhap { get; set; }
-        public decimal TongChiPhi { get; set; }
-        public decimal LoiNhuan { get; set; }
-        public decimal TongCongNo { get; set; }
-        public int SoPhongNo { get; set; }
-        public decimal TangTruongThuNhap { get; set; }
-        public decimal TangTruongChiPhi { get; set; }
-        public decimal TyLeLoiNhuan { get; set; }
-        public List<MonthlyStat> ThongKeTheoThang { get; set; } = new List<MonthlyStat>();
-        public List<ExpenseCategory> PhanLoaiChiPhi { get; set; } = new List<ExpenseCategory>();
-    }
-
-    public class MonthlyStat
-    {
-        public string ThangNam { get; set; } = string.Empty;
-        public decimal ThuNhap { get; set; }
-        public decimal ChiPhi { get; set; }
-        public decimal LoiNhuan { get; set; }
-    }
-
-    public class ExpenseCategory
-    {
-        public string TenLoai { get; set; } = string.Empty;
-        public decimal SoTien { get; set; }
-        public decimal TyLe { get; set; }
-    }
 }

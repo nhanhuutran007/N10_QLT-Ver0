@@ -9,13 +9,14 @@ namespace QLKDPhongTro.Presentation.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is decimal decimalValue)
-            {
-                return decimalValue.ToString("N1") + "%";
-            }
+                return decimalValue.ToString("P1");
+
             if (value is double doubleValue)
-            {
-                return doubleValue.ToString("N1") + "%";
-            }
+                return doubleValue.ToString("P1");
+
+            if (value is float floatValue)
+                return floatValue.ToString("P1");
+
             return "0%";
         }
 

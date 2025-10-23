@@ -94,7 +94,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             // Close the current dashboard window
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
-
+        [RelayCommand]
+        private void NavigateToFinances()
+        {
+            var financialDashboardWindow = new FinancialDashboardWindow();
+            financialDashboardWindow.Show();
+            Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
+        }
         [RelayCommand]
         private void NavigateToBills()
         {

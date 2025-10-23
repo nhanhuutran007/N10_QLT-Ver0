@@ -149,7 +149,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     tienCocValue);
 
                 // 2️⃣ Lưu hợp đồng vào DB
-                _contractController.CreateHopDong(new QLKDPhongTro.BusinessLayer.DTOs.ContractDto
+                _contractController.CreateHopDongAsync(new QLKDPhongTro.BusinessLayer.DTOs.ContractDto
                 {
                     MaNguoiThue = SelectedNguoiThue.MaNguoiThue,
                     MaPhong = SelectedPhong.MaPhong,

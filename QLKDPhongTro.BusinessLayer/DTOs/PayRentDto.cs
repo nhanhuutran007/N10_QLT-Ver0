@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class PayRentDTO
+    public class PayRentDto
     {
         [Required(ErrorMessage = "Mã thanh toán là bắt buộc")]
         public int MaThanhToan { get; set; }

@@ -2,7 +2,7 @@
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class CreatePaymentDTO
+    public class CreatePaymentDto
     {
         [Required(ErrorMessage = "Mã hợp đồng là bắt buộc")]
         public int MaHopDong { get; set; }

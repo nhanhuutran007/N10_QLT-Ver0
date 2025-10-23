@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.Views.Windows;
@@ -132,6 +133,12 @@ namespace QLKDPhongTro.Presentation.Views.Components
                 return;
                 
             NavigateToWindow<ContractManagementWindow>();
+        }
+        private void Financial_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+            NavigateToWindow<FinancialDashboardWindow>();
         }
     }
 }

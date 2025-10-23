@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class FinancialStatsDTO
+    public class FinancialStatsDto
     {
         public decimal TongThuNhap { get; set; }
         public decimal TongChiPhi { get; set; }
@@ -15,11 +15,11 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TyLeLoiNhuan { get; set; }
 
         // Thống kê theo thời gian
-        public List<MonthlyStatsDTO> ThongKeTheoThang { get; set; } = new List<MonthlyStatsDTO>();
-        public List<ExpenseCategoryDTO> PhanLoaiChiPhi { get; set; } = new List<ExpenseCategoryDTO>();
+        public List<MonthlyStatsDto> ThongKeTheoThang { get; set; } = new List<MonthlyStatsDto>();
+        public List<ExpenseCategoryDto> PhanLoaiChiPhi { get; set; } = new List<ExpenseCategoryDto>();
     }
 
-    public class MonthlyStatsDTO
+    public class MonthlyStatsDto
     {
         public string ThangNam { get; set; }
         public decimal ThuNhap { get; set; }
@@ -27,7 +27,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal LoiNhuan { get; set; }
     }
 
-    public class ExpenseCategoryDTO
+    public class ExpenseCategoryDto
     {
         public string TenLoai { get; set; }
         public decimal SoTien { get; set; }

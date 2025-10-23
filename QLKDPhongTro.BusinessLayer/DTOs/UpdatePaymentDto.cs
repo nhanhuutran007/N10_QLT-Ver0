@@ -2,7 +2,7 @@
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class UpdatePaymentDTO
+    public class UpdatePaymentDto
     {
         [Required]
         public int MaThanhToan { get; set; }

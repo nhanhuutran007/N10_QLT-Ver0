@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class ExpenseDTO
+    public class ExpenseDto
     {
         public int MaChiPhi { get; set; }
 

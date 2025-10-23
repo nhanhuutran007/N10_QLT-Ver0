@@ -2,7 +2,7 @@
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    public class TransactionHistoryDTO
+    public class TransactionHistoryDto
     {
         public int MaThanhToan { get; set; }
         public string TenPhong { get; set; }
