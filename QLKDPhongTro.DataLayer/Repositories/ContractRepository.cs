@@ -9,7 +9,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
     public class ContractRepository : IContractRepository
     {
         private readonly string _connectionString =
-            "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
 
         public async Task<List<Contract>> GetAllHopDongAsync()
         {

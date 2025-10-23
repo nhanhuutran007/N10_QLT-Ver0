@@ -389,6 +389,24 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             return result;
         }
+        // Thêm vào class FinancialController
+        public async Task<List<ContractDto>> GetActiveContractsAsync()
+        {
+            var contracts = await _contractRepository.GetActiveContractsAsync();
+            return contracts.Select(c => new ContractDto
+            {
+                MaHopDong = c.MaHopDong,
+                MaNguoiThue = c.MaNguoiThue,
+                MaPhong = c.MaPhong,
+                NgayBatDau = c.NgayBatDau,
+                NgayKetThuc = c.NgayKetThuc,
+                TienCoc = c.TienCoc,
+                FileHopDong = c.FileHopDong,
+                TrangThai = c.TrangThai,
+                TenNguoiThue = c.MaNguoiThue.ToString(), // Có thể lấy từ tenant repository
+                TenPhong = c.MaPhong.ToString() // Có thể lấy từ room repository
+            }).ToList();
+        }
 
         #region Private Methods
 

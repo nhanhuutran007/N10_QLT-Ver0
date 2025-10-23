@@ -15,7 +15,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public TenantRepository()
         {
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
 
         public async Task<List<Tenant>> GetAllAsync()

@@ -1,7 +1,9 @@
-﻿using System.Windows;
-using System.Windows.Input;
+﻿using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.Presentation.ViewModels;
 using QLKDPhongTro.Presentation.Views.Components;
+using System;
+using System.Windows;
+using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -13,38 +15,50 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
 
-            // Khởi tạo ViewModel
             _viewModel = new FinancialDashboardViewModel();
             DataContext = _viewModel;
 
-            // Đăng ký sự kiện
+            // Đăng ký sự kiện từ ViewModel
+            _viewModel.ShowPaymentFormRequested += OnShowPaymentFormRequested;
+            _viewModel.ShowExpenseFormRequested += OnShowExpenseFormRequested;
+            _viewModel.ShowMessageRequested += OnShowMessageRequested;
+            _viewModel.DataRefreshed += OnDataRefreshed;
+
+            // Đăng ký sự kiện từ Sidebar
+            SubscribeToSidebarEvents();
+
+            // Set window properties
+            this.MinHeight = 600;
+            this.MinWidth = 800;
+            this.Height = 700;
+            this.Width = 1200;
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
             Loaded += OnLoaded;
+        }
+
+        private void SubscribeToSidebarEvents()
+        {
+            var sidebar = FindName("SidebarControl") as SidebarControl;
+            if (sidebar != null)
+            {
+                sidebar.MenuItemClicked += SidebarControl_MenuItemClicked;
+                sidebar.LogoutClicked += SidebarControl_LogoutClicked;
+            }
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            // Load dữ liệu khi window được load
             _ = _viewModel.LoadDataAsync();
         }
 
-        #region Window Control Events
+        #region ViewModel Event Handlers
 
-        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
-
-        private void MaximizeButton_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState == WindowState.Maximized
-                ? WindowState.Normal
-                : WindowState.Maximized;
-        }
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
+        private void OnShowPaymentFormRequested(object sender, EventArgs e) => ShowPaymentForm();
+        private void OnShowExpenseFormRequested(object sender, EventArgs e) => ShowExpenseForm();
+        private void OnShowMessageRequested(object sender, string message)
+            => MessageBox.Show(message, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+        private void OnDataRefreshed(object sender, EventArgs e) { /* Update UI if needed */ }
 
         #endregion
 
@@ -52,215 +66,291 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         public void NavigateToContractManagement()
         {
-            var contractWindow = new ContractManagementWindow();
-            contractWindow.Show();
-            this.Close();
+            try
+            {
+                var contractWindow = new ContractManagementWindow();
+                contractWindow.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển đến Quản lý Hợp đồng: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void NavigateToRoomManagement()
         {
-            var roomWindow = new RoomWindow();
-            roomWindow.Show();
-            this.Close();
+            try
+            {
+                var roomWindow = new RoomWindow();
+                roomWindow.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển đến Quản lý Phòng: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void NavigateToTenantManagement()
         {
-            var tenantWindow = new TenantManagementWindow();
-            tenantWindow.Show();
-            this.Close();
+            try
+            {
+                var tenantWindow = new TenantManagementWindow();
+                tenantWindow.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển đến Quản lý Người thuê: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void NavigateToOverview()
         {
-            var overviewWindow = new OverviewWindow();
-            overviewWindow.Show();
-            this.Close();
+            try
+            {
+                var overviewWindow = new DashWindow();
+                overviewWindow.Show();
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi chuyển đến Tổng quan: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void ShowPaymentForm()
         {
-            var paymentWindow = new PaymentFormWindow();
-            paymentWindow.Owner = this;
-            paymentWindow.Closed += (s, e) => _ = _viewModel.LoadDataAsync();
-            paymentWindow.ShowDialog();
+            try
+            {
+                var paymentWindow = new PaymentFormWindow();
+        
+                // Đăng ký sự kiện để refresh data sau khi lưu
+                if (paymentWindow.DataContext is PaymentFormViewModel paymentVM)
+                {
+                    paymentVM.PaymentSaved += (s, e) => _ = _viewModel.RefreshDataAsync();
+                }
+        
+                paymentWindow.Owner = this;
+                paymentWindow.ShowDialog(); // ✅ Chỉ đóng dialog, không đóng window chính
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở form thanh toán: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         public void ShowExpenseForm()
         {
-            var expenseWindow = new ExpenseFormWindow();
-            expenseWindow.Owner = this;
-            expenseWindow.Closed += (s, e) => _ = _viewModel.LoadDataAsync();
-            expenseWindow.ShowDialog();
-        }
-
-        public void ShowSettings()
-        {
-            var settingsWindow = new SettingsWindow();
-            settingsWindow.Owner = this;
-            settingsWindow.ShowDialog();
-        }
-
-        public void ShowHelp()
-        {
-            MessageBox.Show(
-                "Hướng dẫn sử dụng Quản lý Tài chính:\n\n" +
-                "• Ghi nhận tiền thuê: Thêm khoản thu từ hợp đồng\n" +
-                "• Ghi nhận chi phí: Thêm chi phí phát sinh\n" +
-                "• Tạo công nợ tự động: Tạo công nợ cho tất cả hợp đồng\n" +
-                "• Xuất báo cáo: Xuất báo cáo tài chính\n\n" +
-                "Liên hệ hỗ trợ: support@qlyphongtro.com",
-                "Hướng dẫn sử dụng",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-        }
-
-        #endregion
-
-        #region Event Handlers for Components
-
-        // Xử lý sự kiện từ TopbarControl (nếu có)
-        private void TopbarControl_MenuButtonClicked(object sender, RoutedEventArgs e)
-        {
-            // Hiển thị sidebar hoặc thực hiện hành động menu
-            ToggleSidebar();
-        }
-
-        private void TopbarControl_SearchTextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
-        {
-            // Xử lý tìm kiếm
-            if (sender is System.Windows.Controls.TextBox textBox)
+            try
             {
-                _viewModel.SearchDebtText = textBox.Text;
-            }
-        }
-
-        private void TopbarControl_SettingsButtonClicked(object sender, RoutedEventArgs e)
-        {
-            ShowSettings();
-        }
-
-        // Xử lý sự kiện từ SidebarControl (nếu có)
-        private void SidebarControl_MenuItemClicked(object sender, RoutedEventArgs e)
-        {
-            // Xử lý chuyển đổi giữa các trang
-            if (sender is SidebarControl sidebar)
-            {
-                HandleSidebarNavigation(sidebar.SelectedMenuItem);
-            }
-        }
-
-        private void SidebarControl_LogoutClicked(object sender, RoutedEventArgs e)
-        {
-            PerformLogout();
-        }
-
-        #endregion
-
-        #region Private Helper Methods
-
-        private void ToggleSidebar()
-        {
-            // Logic ẩn/hiện sidebar
-            // Cần implement dựa trên UI design của bạn
-        }
-
-        private void HandleSidebarNavigation(string menuItem)
-        {
-            switch (menuItem?.ToLower())
-            {
-                case "tổng quan":
-                case "overview":
-                    NavigateToOverview();
-                    break;
-                case "hợp đồng":
-                case "contracts":
-                    NavigateToContractManagement();
-                    break;
-                case "phòng":
-                case "rooms":
-                    NavigateToRoomManagement();
-                    break;
-                case "người thuê":
-                case "tenants":
-                    NavigateToTenantManagement();
-                    break;
-                case "tài chính":
-                case "financial":
-                    // Đã ở trang tài chính, không cần chuyển
-                    break;
-                case "cài đặt":
-                case "settings":
-                    ShowSettings();
-                    break;
-                case "trợ giúp":
-                case "help":
-                    ShowHelp();
-                    break;
-            }
-        }
-
-        private void PerformLogout()
-        {
-            var result = MessageBox.Show(
-                "Bạn có chắc chắn muốn đăng xuất?",
-                "Xác nhận đăng xuất",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                // Đóng tất cả windows và mở login window
-                var loginWindow = new LoginWindow();
-                loginWindow.Show();
-
-                // Đóng window hiện tại
-                this.Close();
-            }
-        }
-
-        // Xử lý keyboard shortcuts
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            if (Keyboard.Modifiers == ModifierKeys.Control)
-            {
-                switch (e.Key)
+                var expenseWindow = new ExpenseFormWindow();
+        
+                // Đăng ký sự kiện để refresh data sau khi lưu
+                if (expenseWindow.DataContext is ExpenseFormViewModel expenseVM)
                 {
-                    case Key.N:
-                        ShowPaymentForm();
-                        e.Handled = true;
+                    expenseVM.ExpenseSaved += (s, e) => _ = _viewModel.RefreshDataAsync();
+                }
+        
+                expenseWindow.Owner = this;
+                expenseWindow.ShowDialog(); // ✅ Chỉ đóng dialog, không đóng window chính
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở form chi phí: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Sidebar Navigation
+
+        private void SidebarControl_MenuItemClicked(object sender, string menuItem)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(menuItem)) return;
+
+                switch (menuItem.ToLower())
+                {
+                    case "overview":
+                        NavigateToOverview();
                         break;
-                    case Key.E:
-                        ShowExpenseForm();
-                        e.Handled = true;
+                    case "rooms":
+                        NavigateToRoomManagement();
                         break;
-                    case Key.R:
-                        _ = _viewModel.AutoGenerateDebtsAsync();
-                        e.Handled = true;
+                    case "tenants":
+                        NavigateToTenantManagement();
                         break;
-                    case Key.P:
-                        _ = _viewModel.ExportReportAsync();
-                        e.Handled = true;
+                    case "contracts":
+                        NavigateToContractManagement();
                         break;
-                    case Key.F5:
-                        _ = _viewModel.LoadDataAsync();
-                        e.Handled = true;
+                    case "financial":
+                        // Đã ở trang tài chính, refresh data
+                        _ = _viewModel.RefreshDataAsync();
+                        break;
+                    default:
+                        MessageBox.Show($"Chức năng '{menuItem}' đang được phát triển", "Thông báo",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
                         break;
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi xử lý menu: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void SidebarControl_LogoutClicked(object sender, System.EventArgs e)
+        {
+            try
+            {
+                var result = MessageBox.Show(
+                    "Bạn có chắc chắn muốn đăng xuất?",
+                    "Xác nhận đăng xuất",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    this.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi đăng xuất: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         #endregion
 
-        #region Window Drag Move
+        #region Topbar Event Handlers
 
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        private void TopbarControl_MenuButtonClicked(object sender, System.EventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            try
             {
-                DragMove();
+                // Toggle sidebar visibility
+                var sidebar = FindName("SidebarControl") as System.Windows.Controls.Grid;
+                if (sidebar != null)
+                {
+                    sidebar.Visibility = sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi xử lý nút menu: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void TopbarControl_SearchTextChanged(object sender, string searchText)
+        {
+            try
+            {
+                if (_viewModel != null)
+                {
+                    _viewModel.SearchText = searchText;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tìm kiếm: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void TopbarControl_SettingsButtonClicked(object sender, System.EventArgs e)
+        {
+            MessageBox.Show("Tính năng cài đặt đang được phát triển", "Thông báo",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        #endregion
+
+        #region Keyboard Shortcuts
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            try
+            {
+                base.OnKeyDown(e);
+
+                if (Keyboard.Modifiers == ModifierKeys.Control)
+                {
+                    switch (e.Key)
+                    {
+                        case Key.N:
+                            ShowPaymentForm();
+                            e.Handled = true;
+                            break;
+                        case Key.E:
+                            ShowExpenseForm();
+                            e.Handled = true;
+                            break;
+                        case Key.R:
+                            _ = _viewModel.AutoGenerateDebtsAsync();
+                            e.Handled = true;
+                            break;
+                        case Key.P:
+                            _ = _viewModel.ExportReportAsync();
+                            e.Handled = true;
+                            break;
+                        case Key.F5:
+                            _ = _viewModel.RefreshDataAsync();
+                            e.Handled = true;
+                            break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi phím tắt: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #endregion
+
+        #region Cleanup
+
+        protected override void OnClosed(EventArgs e)
+        {
+            try
+            {
+                // Hủy đăng ký sự kiện từ ViewModel
+                if (_viewModel != null)
+                {
+                    _viewModel.ShowPaymentFormRequested -= OnShowPaymentFormRequested;
+                    _viewModel.ShowExpenseFormRequested -= OnShowExpenseFormRequested;
+                    _viewModel.ShowMessageRequested -= OnShowMessageRequested;
+                    _viewModel.DataRefreshed -= OnDataRefreshed;
+                }
+
+                // Hủy đăng ký sự kiện từ Sidebar
+                var sidebar = FindName("SidebarControl") as SidebarControl;
+                if (sidebar != null)
+                {
+                    sidebar.MenuItemClicked -= SidebarControl_MenuItemClicked;
+                    sidebar.LogoutClicked -= SidebarControl_LogoutClicked;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cleanup error: {ex.Message}");
+            }
+            finally
+            {
+                base.OnClosed(e);
             }
         }
 

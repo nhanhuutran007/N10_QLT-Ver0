@@ -12,7 +12,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public HouseRepository()
         {
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV0;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
         }
 
         public async Task<List<House>> GetAllAsync()
