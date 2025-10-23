@@ -1,7 +1,7 @@
-﻿<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddContractWindow"
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.EditContractWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Thêm hợp đồng mới"
+        Title="Sửa thông tin hợp đồng"
         Height="500" Width="600"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize"
@@ -16,7 +16,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Grid.Row="0" Text="Thông tin hợp đồng mới" 
+        <TextBlock Grid.Row="0" Text="Sửa thông tin hợp đồng" 
                    FontSize="24" FontWeight="Bold" Foreground="#3B4758"
                    Margin="0,0,0,20"/>
 
@@ -62,7 +62,7 @@
             <!-- Tiền cọc -->
             <StackPanel Grid.Row="4" Margin="0,0,0,15">
                 <TextBlock Text="Tiền cọc (VNĐ):" FontWeight="Medium" Foreground="#3B4758" Margin="0,0,0,5"/>
-                <TextBox x:Name="DepositTextBox" Height="40" Padding="10" 
+                <TextBox x:Name="DepositTextBox" Height="29" Padding="10" 
                          BorderBrush="#586A84" BorderThickness="1" Background="White"/>
             </StackPanel>
 

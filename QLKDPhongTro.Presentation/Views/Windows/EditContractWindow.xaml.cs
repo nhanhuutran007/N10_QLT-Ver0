@@ -1,17 +1,30 @@
-﻿using System;
+using System;
 using System.Windows;
+using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
-    public partial class AddContractWindow : Window
+    public partial class EditContractWindow : Window
     {
-        public AddContractWindow()
+        private ContractViewModel _contract;
+
+        public EditContractWindow(ContractViewModel contract)
         {
             InitializeComponent();
-            
-            // Set default values
-            StartDatePicker.SelectedDate = DateTime.Now;
-            EndDatePicker.SelectedDate = DateTime.Now.AddMonths(12);
+            _contract = contract;
+            LoadContractData();
+        }
+
+        private void LoadContractData()
+        {
+            if (_contract != null)
+            {
+                ContractNameTextBox.Text = _contract.ContractName;
+                TenantNameTextBox.Text = _contract.TenantName;
+                StartDatePicker.SelectedDate = _contract.CreatedDate;
+                EndDatePicker.SelectedDate = _contract.EndDate;
+                // TODO: Load other fields from database
+            }
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
@@ -47,8 +60,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 return;
             }
 
+            // Update contract data
+            if (_contract != null)
+            {
+                _contract.ContractName = ContractNameTextBox.Text;
+                _contract.TenantName = TenantNameTextBox.Text;
+                _contract.CreatedDate = StartDatePicker.SelectedDate.Value;
+                _contract.EndDate = EndDatePicker.SelectedDate.Value;
+            }
+
             // TODO: Save to database
-            MessageBox.Show("Hợp đồng đã được thêm thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("Hợp đồng đã được cập nhật thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
             
             DialogResult = true;
             Close();
