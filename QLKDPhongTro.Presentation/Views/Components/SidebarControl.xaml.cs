@@ -58,43 +58,42 @@ namespace QLKDPhongTro.Presentation.Views.Components
         // Centralized navigation helper method
         private void NavigateToWindow<T>() where T : Window, new()
         {
-            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             var currentWindow = Window.GetWindow(this);
-            
-            // Kiểm tra currentWindow có null không
             if (currentWindow == null)
-            {
-                // Nếu không tìm thấy window hiện tại, chỉ tạo window mới
-                var newWindow = new T();
-                newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                newWindow.Show();
                 return;
-            }
-            
-            // Nếu đã ở window cùng loại thì không cần chuyển
+
+            // Nếu là cùng loại window thì bỏ qua
             if (currentWindow is T)
                 return;
-            
-            // Kiểm tra xem window đã tồn tại chưa
-            var existingWindow = Application.Current.Windows.OfType<T>().FirstOrDefault();
-            
-            if (existingWindow != null)
+
+            if (typeof(T) == typeof(ContractManagementWindow))
             {
-                existingWindow.Activate();
-                existingWindow.WindowState = WindowState.Normal;
+                // Ẩn dashboard
+                currentWindow.Hide();
+
+                var contractWindow = new ContractManagementWindow();
+                contractWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // Khi tắt hợp đồng → show lại dashboard
+                contractWindow.Closed += (s, e) =>
+                {
+                    currentWindow.Show();
+                    currentWindow.Activate();
+                };
+
+                contractWindow.Show();
             }
             else
             {
+                // Các cửa sổ khác vẫn đóng dashboard cũ
                 var newWindow = new T();
                 newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 newWindow.Show();
+                currentWindow.Close();
             }
-            
-            // Đóng cửa sổ hiện tại (chỉ khi currentWindow không null)
-            currentWindow.Close();
         }
 
         // Handlers với logic navigation tập trung - sử dụng event system để tránh đệ quy

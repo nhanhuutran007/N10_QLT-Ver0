@@ -104,7 +104,40 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToContracts()
         {
-            MessageBox.Show("Đã chuyển đến trang Hợp đồng", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Lấy cửa sổ Dashboard hiện tại
+            var dashboard = Application.Current.Windows
+                .OfType<Window>()
+                .FirstOrDefault(w => w.DataContext is DashboardViewModel);
+
+            if (dashboard == null)
+            {
+                MessageBox.Show("Không tìm thấy cửa sổ Dashboard!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            // Ẩn Dashboard
+            dashboard.Hide();
+
+            // Mở cửa sổ Hợp đồng
+            var contractWindow = new ContractManagementWindow
+            {
+                Owner = dashboard, // 👈 Gắn Owner là Dashboard
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                ShowInTaskbar = true
+            };
+
+            // Khi cửa sổ Hợp đồng đóng → hiện lại Dashboard
+            contractWindow.Closed += (s, e) =>
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    dashboard.Show();
+                    dashboard.Activate();
+                });
+            };
+
+            // Mở theo kiểu không chặn UI
+            contractWindow.Show();
         }
 
         [RelayCommand]
