@@ -3,56 +3,106 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         mc:Ignorable="d"
-        Title="Quản lý Hợp đồng" Height="600" Width="1000"
-        WindowStartupLocation="CenterScreen">
+        Title="Quản lý Hợp đồng - Quản Lý Phòng Trọ"
+        MinHeight="600" MinWidth="900"
+        Height="700" Width="1200"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="#F5F5F5"
+        FontFamily="Roboto"
+        Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
-        <Style TargetType="Button">
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Margin" Value="5,0"/>
-            <Setter Property="MinWidth" Value="80"/>
+        <!-- Style cho nút cơ bản -->
+        <Style TargetType="Button" x:Key="PrimaryButtonStyle">
+            <Setter Property="Background" Value="#10D096"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#0DB882"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="15">
+    <Grid>
+        <!-- ====== Layout chính chia làm 2 cột ====== -->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="729*"/>
-            <ColumnDefinition Width="241*"/>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,15" Grid.ColumnSpan="2">
-            <TextBlock Text="Danh sách Hợp đồng" FontSize="20" FontWeight="Bold"
-                       VerticalAlignment="Center"/>
+        <!-- ====== SIDEBAR (trái) ====== -->
+        <components:SidebarControl Grid.Column="0"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Thêm" Command="{Binding AddContractCommand}"/>
-                <Button Content="Sửa" Command="{Binding EditContractCommand}"/>
-                <Button Content="Xóa" Command="{Binding DeleteContractCommand}"/>
-            </StackPanel>
-        </DockPanel>
+        <!-- ====== NỘI DUNG CHÍNH (phải) ====== -->
+        <Grid Grid.Column="1" Margin="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-        <DataGrid Grid.Row="1"
-                  ItemsSource="{Binding Contracts}"
-                  SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  AlternatingRowBackground="#f2f2f2" Grid.ColumnSpan="2">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
-                <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
-                <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
-                <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
-                <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="Danh sách Hợp đồng" 
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="#3B4758" Width="226"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Thêm" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Command="{Binding AddContractCommand}" Width="75"/>
+                    <Button Content="Sửa" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Background="#F6AD55" Command="{Binding EditContractCommand}" Margin="5,0" Width="72"/>
+                    <Button Content="Xóa" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Background="#EF4444" Command="{Binding DeleteContractCommand}" Margin="5,0" Width="65"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- DataGrid danh sách hợp đồng -->
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding Contracts}"
+                      SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      RowHeight="35"
+                      AlternatingRowBackground="#f2f2f2"
+                      HeadersVisibility="Column"
+                      SelectionMode="Single"
+                      GridLinesVisibility="Horizontal"
+                      BorderBrush="#E0E0E0"
+                      BorderThickness="1" Margin="-53,0,0,0">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
+                    <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
+                    <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
+                    <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                    <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                    <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </Grid>
 </Window>
