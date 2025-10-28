@@ -133,5 +133,14 @@ namespace QLKDPhongTro.Presentation.Views.Components
                 
             NavigateToWindow<ContractManagementWindow>();
         }
+
+        private void Finance_Checked(object sender, RoutedEventArgs e)
+        {
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+
+            NavigateToWindow<FinancialWindow>();
+        }
     }
 }
