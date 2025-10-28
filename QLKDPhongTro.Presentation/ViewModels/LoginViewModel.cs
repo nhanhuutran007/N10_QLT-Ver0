@@ -76,9 +76,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var result = await _authController.LoginAsync(Username, Password);
                 if (result.IsSuccess)
                 {
-                    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
-                    // Mở Dashboard
+                    // Mở Dashboard ngay, không hiển thị MessageBox
                     var dashboardWindow = new DashWindow
                     {
                         DataContext = new DashboardViewModel()

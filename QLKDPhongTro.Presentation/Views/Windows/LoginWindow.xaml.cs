@@ -107,98 +107,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        // Xử lý toggle password visibility
-        private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                if (PasswordBox == null) return;
-
-                // Tìm parent panel của PasswordBox
-                var mainGrid = this.Content as Grid;
-                Panel parent = null;
-                if (mainGrid != null)
-                {
-                    foreach (var child in mainGrid.Children)
-                    {
-                        if (child is Grid grid && grid.Children != null)
-                        {
-                            if (grid.Children.Contains(PasswordBox))
-                            {
-                                parent = grid;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (parent == null) return;
-
-                var index = parent.Children.IndexOf(PasswordBox);
-                if (index == -1) return;
-
-                // Kiểm tra xem hiện tại có phải PasswordBox hay TextBox
-                var currentTextBox = parent.Children.OfType<TextBox>().FirstOrDefault(tb => tb.Name == "PasswordTextBox");
-
-                if (currentTextBox == null)
-                {
-                    // Hiện tại là PasswordBox, chuyển sang TextBox
-                    var textBox = new TextBox
-                    {
-                        Text = PasswordBox.Password,
-                        Background = PasswordBox.Background,
-                        BorderThickness = PasswordBox.BorderThickness,
-                        Padding = PasswordBox.Padding,
-                        FontSize = PasswordBox.FontSize,
-                        Margin = PasswordBox.Margin,
-                        Name = "PasswordTextBox",
-                        VerticalContentAlignment = PasswordBox.VerticalContentAlignment
-                    };
-
-                    parent.Children.Remove(PasswordBox);
-                    parent.Children.Insert(index, textBox);
-
-                    // Update button icon
-                    UpdateToggleButtonIcon(true);
-                }
-                else
-                {
-                    // Hiện tại là TextBox, chuyển về PasswordBox
-                    PasswordBox.Password = currentTextBox.Text;
-                    parent.Children.Remove(currentTextBox);
-                    parent.Children.Insert(index, PasswordBox);
-
-                    // Update button icon
-                    UpdateToggleButtonIcon(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi thay đổi hiển thị mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void UpdateToggleButtonIcon(bool isPasswordVisible)
-        {
-            var toggleButton = this.FindName("TogglePasswordButton") as Button;
-            if (toggleButton != null)
-            {
-                var path = toggleButton.Content as Path;
-                if (path != null)
-                {
-                    if (isPasswordVisible)
-                    {
-                        // Eye with slash icon
-                        path.Data = Geometry.Parse("M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z");
-                    }
-                    else
-                    {
-                        // Regular eye icon
-                        path.Data = Geometry.Parse("M12 5C7 5 2.73 7.11 1 10.5C2.73 13.89 7 16 12 16C17 16 21.27 13.89 23 10.5C21.27 7.11 17 5 12 5ZM12 13.5C10.62 13.5 9.5 12.38 9.5 11C9.5 9.62 10.62 8.5 12 8.5C13.38 8.5 14.5 9.62 14.5 11C14.5 12.38 13.38 13.5 12 13.5ZM12 7C13.66 7 15 8.34 15 10C15 11.66 13.66 13 12 13C10.34 13 9 11.66 9 10C9 8.34 10.34 7 12 7Z");
-                    }
-                }
-            }
-        }
 
         // Xử lý đăng nhập
         private void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -258,16 +166,14 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Lấy password hiện tại từ PasswordBox hoặc TextBox
         private string GetCurrentPassword()
         {
-            // Kiểm tra PasswordBox trước
-            var passwordBox = this.FindName("PasswordBox") as PasswordBox;
-            if (passwordBox != null && passwordBox.Visibility == Visibility.Visible)
+            if (_isPasswordVisible && _currentPasswordTextBox != null)
             {
-                return passwordBox.Password;
+                return _currentPasswordTextBox.Text;
             }
-
-            // Nếu không có PasswordBox, kiểm tra TextBox
-            var passwordTextBox = this.FindName("PasswordTextBox") as TextBox;
-            return passwordTextBox?.Text ?? string.Empty;
+            
+            // Tìm PasswordBox hiện tại trong UI
+            var passwordBox = this.FindName("PasswordBox") as PasswordBox;
+            return passwordBox?.Password ?? string.Empty;
         }
 
         // Xử lý tạo tài khoản mới
@@ -311,56 +217,57 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        // Xử lý hiện/ẩn mật khẩu
+        // Xử lý hiện/ẩn mật khẩu - Logic đơn giản và hiệu quả
         private void ShowPasswordCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            ShowPassword();
+        }
+
+        private void ShowPasswordCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            HidePassword();
+        }
+
+        private void ShowPassword()
         {
             try
             {
-                if (_isPasswordVisible) return; // Đã hiển thị rồi
-                if (PasswordBox == null) return;
+                if (_isPasswordVisible) return;
 
-                // Tìm parent panel của PasswordBox
-                var mainGrid = this.Content as Grid;
-                Panel parent = null;
-                if (mainGrid != null)
-                {
-                    foreach (var child in mainGrid.Children)
-                    {
-                        if (child is Grid grid && grid.Children != null)
-                        {
-                            if (grid.Children.Contains(PasswordBox))
-                            {
-                                parent = grid;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                if (parent == null) return;
+                // Tìm PasswordBox hiện tại trong UI (có thể đã được tạo lại)
+                var currentPasswordBox = FindPasswordBox();
+                if (currentPasswordBox == null) return;
 
-                var index = parent.Children.IndexOf(PasswordBox);
+                // Tìm StackPanel chứa PasswordBox
+                var stackPanel = FindParent<StackPanel>(currentPasswordBox);
+                if (stackPanel == null) return;
+
+                var index = stackPanel.Children.IndexOf(currentPasswordBox);
                 if (index == -1) return;
 
                 // Tạo TextBox để hiển thị mật khẩu
                 var textBox = new TextBox
                 {
-                    Text = PasswordBox.Password,
-                    Background = PasswordBox.Background,
-                    BorderThickness = PasswordBox.BorderThickness,
-                    BorderBrush = PasswordBox.BorderBrush,
-                    Padding = PasswordBox.Padding,
-                    FontSize = PasswordBox.FontSize,
-                    Margin = PasswordBox.Margin,
+                    Text = currentPasswordBox.Password,
+                    Style = (Style)this.FindResource("InputTextBoxStyle"),
+                    Margin = currentPasswordBox.Margin,
                     Name = "PasswordTextBox",
-                    VerticalContentAlignment = PasswordBox.VerticalContentAlignment,
-                    Foreground = PasswordBox.Foreground
+                    VerticalContentAlignment = currentPasswordBox.VerticalContentAlignment
                 };
+                
+                // Thêm event handler cho KeyDown
+                textBox.KeyDown += PasswordTextBox_KeyDown;
 
-                parent.Children.Remove(PasswordBox);
-                parent.Children.Insert(index, textBox);
-                _currentPasswordTextBox = textBox; // Lưu trữ TextBox
+                // Thay thế PasswordBox bằng TextBox
+                stackPanel.Children.Remove(currentPasswordBox);
+                stackPanel.Children.Insert(index, textBox);
+                
+                _currentPasswordTextBox = textBox;
                 _isPasswordVisible = true;
+                
+                // Focus vào TextBox mới
+                textBox.Focus();
+                textBox.CaretIndex = textBox.Text.Length;
             }
             catch (Exception ex)
             {
@@ -368,59 +275,103 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        private void ShowPasswordCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        private void HidePassword()
         {
             try
             {
-                if (!_isPasswordVisible) return; // Đã ẩn rồi
-                if (_currentPasswordTextBox == null) return; // Không có TextBox để chuyển đổi
-                
-                // Tìm parent panel của TextBox
-                var mainGrid = this.Content as Grid;
-                Panel parentPanel = null;
-                if (mainGrid != null)
-                {
-                    foreach (var child in mainGrid.Children)
-                    {
-                        if (child is Grid grid && grid.Children != null)
-                        {
-                            if (grid.Children.Contains(_currentPasswordTextBox))
-                            {
-                                parentPanel = grid;
-                                break;
-                            }
-                        }
-                    }
-                }
+                if (!_isPasswordVisible) return;
 
-                if (parentPanel == null) return;
+                // Tìm TextBox hiện tại trong UI
+                var currentTextBox = FindPasswordTextBox();
+                if (currentTextBox == null) return;
 
-                var index = parentPanel.Children.IndexOf(_currentPasswordTextBox);
+                // Tìm StackPanel chứa TextBox
+                var stackPanel = FindParent<StackPanel>(currentTextBox);
+                if (stackPanel == null) return;
+
+                var index = stackPanel.Children.IndexOf(currentTextBox);
                 if (index == -1) return;
 
                 // Tạo lại PasswordBox với mật khẩu từ TextBox
                 var passwordBox = new PasswordBox
                 {
-                    Password = _currentPasswordTextBox.Text,
-                    Background = _currentPasswordTextBox.Background,
-                    BorderThickness = _currentPasswordTextBox.BorderThickness,
-                    BorderBrush = _currentPasswordTextBox.BorderBrush,
-                    Padding = _currentPasswordTextBox.Padding,
-                    FontSize = _currentPasswordTextBox.FontSize,
-                    Margin = _currentPasswordTextBox.Margin,
+                    Password = currentTextBox.Text,
+                    Style = (Style)this.FindResource("InputPasswordBoxStyle"),
+                    Margin = currentTextBox.Margin,
                     Name = "PasswordBox",
-                    VerticalContentAlignment = _currentPasswordTextBox.VerticalContentAlignment,
-                    Foreground = _currentPasswordTextBox.Foreground
+                    VerticalContentAlignment = currentTextBox.VerticalContentAlignment
                 };
+                
+                // Thêm event handler cho KeyDown
+                passwordBox.KeyDown += PasswordBox_KeyDown;
 
-                parentPanel.Children.Remove(_currentPasswordTextBox);
-                parentPanel.Children.Insert(index, passwordBox);
-                _currentPasswordTextBox = null; // Xóa reference
+                // Thay thế TextBox bằng PasswordBox
+                stackPanel.Children.Remove(currentTextBox);
+                stackPanel.Children.Insert(index, passwordBox);
+                
+                _currentPasswordTextBox = null;
                 _isPasswordVisible = false;
+                
+                // Focus vào PasswordBox mới
+                passwordBox.Focus();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Lỗi khi ẩn mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Helper methods để tìm control một cách đáng tin cậy
+        private PasswordBox FindPasswordBox()
+        {
+            // Tìm PasswordBox trong toàn bộ visual tree
+            return FindVisualChild<PasswordBox>(this);
+        }
+
+        private TextBox FindPasswordTextBox()
+        {
+            // Tìm TextBox có tên "PasswordTextBox" trong toàn bộ visual tree
+            return FindVisualChild<TextBox>(this, tb => tb.Name == "PasswordTextBox");
+        }
+
+        // Generic method để tìm visual child
+        private T FindVisualChild<T>(DependencyObject parent, Func<T, bool> predicate = null) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T result)
+                {
+                    if (predicate == null || predicate(result))
+                        return result;
+                }
+                
+                var childOfChild = FindVisualChild<T>(child, predicate);
+                if (childOfChild != null)
+                    return childOfChild;
+            }
+            return null;
+        }
+
+        // Helper method để tìm parent control
+        private T FindParent<T>(DependencyObject child) where T : DependencyObject
+        {
+            DependencyObject parentObject = VisualTreeHelper.GetParent(child);
+            
+            if (parentObject == null) return null;
+            
+            if (parentObject is T parent)
+                return parent;
+            else
+                return FindParent<T>(parentObject);
+        }
+
+        // Xử lý Enter trong TextBox mật khẩu
+        private void PasswordTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                LoginButton_Click(sender, e);
             }
         }
 

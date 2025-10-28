@@ -75,50 +75,62 @@ BusinessLayer/
 ### 3. Presentation (View)
 
 **Vị trí**: `QLKDPhongTro.Presentation/`
-**Chức năng**: Giao diện người dùng và ViewModels
+**Chức năng**: Giao diện người dùng (Views), chuyển hướng, binding dữ liệu với ViewModels
 
-**Cấu trúc**:
+**Cấu trúc (hiện tại)**:
 
 ```
 Presentation/
+├── App.xaml, App.xaml.cs, AssemblyInfo.cs
 ├── ViewModels/
-│   ├── LoginViewModel.cs         # ViewModel cho đăng nhập
-│   ├── RegisterViewModel.cs      # ViewModel cho đăng ký
-│   ├── OtpViewModel.cs           # ViewModel cho OTP
-│   ├── DashboardViewModel.cs     # ViewModel cho Dashboard
-│   ├── RentedRoomViewModel.cs    # ViewModel cho quản lý phòng
-│   └── ViewModelBase.cs          # Base class cho ViewModels
+│   ├── LoginViewModel.cs
+│   ├── RegisterViewModel.cs
+│   ├── OtpViewModel.cs
+│   ├── DashboardViewModel.cs
+│   ├── ContractManagementViewModel.cs
+│   ├── AddContractViewModel.cs
+│   ├── RentedRoomViewModel.cs
+│   ├── TenantViewModel.cs
+│   └── ViewModelBase.cs
 ├── Views/
-│   ├── Windows/
-│   │   ├── LoginWindow.xaml      # Giao diện đăng nhập
-│   │   ├── LoginWindow.xaml.cs   # Code-behind đăng nhập
-│   │   ├── RegisterWindow.xaml   # Giao diện đăng ký
-│   │   ├── RegisterWindow.xaml.cs # Code-behind đăng ký
-│   │   ├── OtpWindow.xaml        # Giao diện OTP
-│   │   ├── OtpWindow.xaml.cs     # Code-behind OTP
-│   │   ├── DashWindow.xaml       # Giao diện Dashboard
-│   │   ├── DashWindow.xaml.cs    # Code-behind Dashboard
-│   │   ├── RoomManagementWindow.xaml # Giao diện quản lý phòng
-│   │   ├── RoomManagementWindow.xaml.cs # Code-behind quản lý phòng
-│   │   ├── AddRoomWindow.xaml    # Giao diện thêm phòng
-│   │   ├── AddRoomWindow.xaml.cs # Code-behind thêm phòng
-│   │   ├── EditRoomWindow.xaml   # Giao diện sửa phòng
-│   │   ├── EditRoomWindow.xaml.cs # Code-behind sửa phòng
-│   │   ├── ViewRoomWindow.xaml   # Giao diện xem phòng
-│   │   └── ViewRoomWindow.xaml.cs # Code-behind xem phòng
-│   └── Components/
-│       ├── SidebarControl.xaml   # Component sidebar
-│       └── SidebarControl.xaml.cs # Code-behind sidebar
+│   ├── Components/
+│   │   ├── SidebarControl.xaml(.cs)
+│   │   └── TopbarControl.xaml(.cs)
+│   └── Windows/
+│       ├── LoginWindow.xaml(.cs)
+│       ├── RegisterWindow.xaml(.cs)
+│       ├── OtpWindow.xaml(.cs)
+│       ├── OtpLoginWindow.xaml          # màn hình nhập OTP khi đăng nhập (nếu dùng)
+│       ├── DashWindow.xaml(.cs)
+│       ├── ContractManagementWindow.xaml(.cs)
+│       ├── TenantManagementWindow.xaml(.cs)
+│       ├── RoomWindow.xaml(.cs)
+│       ├── AddRoomWindow.xaml(.cs)
+│       ├── EditRoomWindow.xaml(.cs)
+│       ├── ViewRoomWindow.xaml(.cs)
+│       ├── AddTenantWindow.xaml(.cs)
+│       ├── AddContractWindow.xaml(.cs)
+│       ├── FinancialWindow.xaml(.cs)
+│       ├── ManualInputView.xaml(.cs)    # popup nhập thủ công chi phí
+│       ├── ScanImageView.xaml(.cs)      # popup kéo-thả ảnh để quét
+│       └── ProfileDropDown.xaml(.cs)
 ├── Converters/
 │   ├── BoolToLoadingTextConverter.cs
 │   ├── InverseBooleanConverter.cs
 │   ├── IntegerValidationRule.cs
-│   └── IntToStringConverter.cs
+│   ├── IntToStringConverter.cs
+│   ├── EmptyToVisibilityConverter .cs
+│   └── StatusToColorConverter.cs
 └── Resources/
-    └── Images/
-        ├── Logo.png
-        ├── email_icon.png
-        └── password_icon.png
+    ├── Images/
+    │   ├── Logo.png
+    │   ├── email_icon.png
+    │   ├── password_icon.png
+    │   ├── avatar.jpg
+    │   └── avatar1.jpg
+    └── Templates/
+        ├── HopDongMau.docx
+        └── HopDongMau1.doc
 ```
 
 **Trách nhiệm**:
