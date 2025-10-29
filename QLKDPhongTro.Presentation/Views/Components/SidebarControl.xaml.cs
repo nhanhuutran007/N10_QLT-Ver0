@@ -86,6 +86,23 @@ namespace QLKDPhongTro.Presentation.Views.Components
 
                 contractWindow.Show();
             }
+            else if (typeof(T) == typeof(PaymentListView))
+            {
+                // Ẩn dashboard
+                currentWindow.Hide();
+
+                var paymentWindow = new PaymentListView();
+                paymentWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // Khi tắt payment list → show lại dashboard
+                paymentWindow.Closed += (s, e) =>
+                {
+                    currentWindow.Show();
+                    currentWindow.Activate();
+                };
+
+                paymentWindow.Show();
+            }
             else
             {
                 // Các cửa sổ khác vẫn đóng dashboard cũ
@@ -140,6 +157,15 @@ namespace QLKDPhongTro.Presentation.Views.Components
                 return;
 
             NavigateToWindow<FinancialWindow>();
+        }
+
+        private void Payment_Checked(object sender, RoutedEventArgs e)
+        {
+            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
+            if (_isInitializing)
+                return;
+
+            NavigateToWindow<PaymentListView>();
         }
     }
 }
