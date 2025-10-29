@@ -1,0 +1,579 @@
+﻿<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.FinancialDashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
+        xmlns:viewModels="clr-namespace:QLKDPhongTro.Presentation.ViewModels"
+        xmlns:views="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        Title="Quản lý tài chính - Quản Lý Phòng Trọ"
+        MinHeight="600"
+        MinWidth="800"
+        Height="700"
+        Width="1200"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="#F5F5F5"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <!-- Converters -->
+        <converters:EmptyToVisibilityConverter x:Key="EmptyToVisibilityConverter"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+        <converters:PercentageConverter x:Key="PercentageConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <converters:PaymentStatusToColorConverter x:Key="PaymentStatusToColorConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        <!-- Built-in converters -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- Style cho các card thống kê -->
+        <Style TargetType="{x:Type Border}" x:Key="StatCardStyle">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#A9A8B6" Opacity="0.1" ShadowDepth="4" BlurRadius="20"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho nút chức năng tài chính -->
+        <Style TargetType="{x:Type Button}" x:Key="FinancialButtonStyle">
+            <Setter Property="Background" Value="#10D096"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border CornerRadius="6" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#0EBE8C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho loading indicator -->
+        <Style TargetType="{x:Type ProgressBar}" x:Key="LoadingProgressStyle">
+            <Setter Property="Height" Value="4"/>
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="#10D096"/>
+            <Setter Property="IsIndeterminate" Value="True"/>
+        </Style>
+
+        <!-- Style cho textbox tìm kiếm -->
+        <Style TargetType="{x:Type TextBox}" x:Key="SearchTextBoxStyle">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <!-- Style cho datepicker -->
+        <Style TargetType="{x:Type DatePicker}" x:Key="DatePickerStyle">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="BorderBrush" Value="#D1D5DB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+
+        <!-- DataTemplate cho danh sách công nợ -->
+        <DataTemplate x:Key="DebtItemTemplate">
+            <Border BorderBrush="#E5E7EB" 
+                    BorderThickness="0,0,0,1" 
+                    Padding="15,10" 
+                    Margin="0,0,0,5"
+                    Background="White"
+                    CornerRadius="6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding TenPhong}" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="16"
+                                   Foreground="#3B4758"/>
+                        <TextBlock Text="{Binding TenKhachHang}" 
+                                   Foreground="#586A84" 
+                                   Margin="0,4,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding ThangNam}" 
+                                       Foreground="#586A84" 
+                                       FontSize="12"/>
+                            <TextBlock Text=" • " 
+                                       Foreground="#586A84" 
+                                       FontSize="12"/>
+                            <!-- SỬA: Xóa SoThangNo vì không có trong DTO -->
+                            <TextBlock Text="Chưa thanh toán" 
+                                       Foreground="#F59E0B" 
+                                       FontSize="12"
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding TongTien, Converter={StaticResource CurrencyConverter}}" 
+                                   Foreground="#FF6B6B" 
+                                   FontWeight="Bold" 
+                                   FontSize="14"
+                                   Margin="0,8,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" 
+                                VerticalAlignment="Center" 
+                                Margin="15,0,15,0">
+                        <TextBlock Text="{Binding SoDienThoai}" 
+                                   Foreground="#586A84" 
+                                   FontSize="12"/>
+                        <!-- SỬA: Xóa DiaChi vì không có trong DTO -->
+                        <TextBlock Text="Cần thanh toán" 
+                                   Foreground="#586A84" 
+                                   FontSize="11"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="150"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="2" 
+                            Content="Thanh toán" 
+                            Style="{StaticResource FinancialButtonStyle}"
+                            Command="{Binding DataContext.PayDebtCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            Width="100"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- DataTemplate cho lịch sử giao dịch -->
+        <DataTemplate x:Key="TransactionItemTemplate">
+            <Border BorderBrush="#E5E7EB" 
+                    BorderThickness="0,0,0,1" 
+                    Padding="15,10" 
+                    Margin="0,0,0,5"
+                    Background="White"
+                    CornerRadius="6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding MoTa}" 
+                                   FontWeight="SemiBold"
+                                   Foreground="#3B4758"/>
+                        <StackPanel Orientation="Horizontal" 
+                                    Margin="0,4,0,0">
+                            <TextBlock Text="{Binding TenPhong}" 
+                                       Foreground="#586A84" 
+                                       FontSize="12"/>
+                            <TextBlock Text=" • " 
+                                       Foreground="#586A84" 
+                                       FontSize="12"/>
+                            <TextBlock Text="{Binding TenKhachHang}" 
+                                       Foreground="#586A84" 
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ThoiGian, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
+                                   Foreground="#586A84" 
+                                   FontSize="11"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" 
+                                Orientation="Horizontal" 
+                                VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SoTien, Converter={StaticResource CurrencyConverter}}" 
+                                   FontWeight="Bold" 
+                                   Foreground="#10D096"
+                                   FontSize="14"/>
+                        <TextBlock Text=" • " 
+                                   Foreground="#586A84"
+                                   Margin="5,0,5,0"/>
+                        <!-- SỬA: Xóa TrangThai vì không có trong DTO -->
+                        <TextBlock Text="Hoàn thành" 
+                                   Foreground="#10D096"
+                                   FontWeight="SemiBold"
+                                   FontSize="12"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <!-- SỬA LẠI: Layout giống ContractManagementWindow -->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <!-- Sidebar cố định -->
+            <ColumnDefinition Width="*"/>
+            <!-- Main content -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar - HIỂN THỊ LUÔN, không ẩn -->
+        <Grid Grid.Column="0" Background="White">
+            <views:SidebarControl x:Name="SidebarControl"
+                          MenuItemClicked="SidebarControl_MenuItemClicked"
+                          LogoutClicked="SidebarControl_LogoutClicked"/>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Column="1" Background="#F5F5F5">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <!-- Topbar -->
+                <RowDefinition Height="*"/>
+                <!-- Content -->
+            </Grid.RowDefinitions>
+
+            <!-- Topbar Control -->
+            <views:TopbarControl Grid.Row="0"
+                         MenuButtonClicked="TopbarControl_MenuButtonClicked"
+                         SearchTextChanged="TopbarControl_SearchTextChanged"
+                         SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
+
+            <!-- Loading Indicator -->
+            <ProgressBar Grid.Row="0"
+                         Style="{StaticResource LoadingProgressStyle}" 
+                         Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                         VerticalAlignment="Top" 
+                         Margin="10,40,10,0"/>
+
+            <!-- Main Content Area -->
+            <ScrollViewer Grid.Row="1" 
+                          VerticalScrollBarVisibility="Auto" 
+                          HorizontalScrollBarVisibility="Disabled"
+                          IsEnabled="{Binding IsNotLoading}">
+                <StackPanel Margin="20">
+
+                    <!-- Header -->
+                    <TextBlock Text="Quản lý tài chính" 
+                               Foreground="#3B4758" 
+                               FontSize="24" 
+                               FontWeight="Bold"
+                               Margin="0,0,0,20"/>
+
+                    <!-- === THỐNG KÊ TỔNG QUAN === -->
+                    <Border Background="#EEF0F4" 
+                            CornerRadius="8" 
+                            Padding="15" 
+                            Margin="0,0,0,20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Tổng thu nhập -->
+                            <Border Style="{StaticResource StatCardStyle}" 
+                                    Grid.Column="0">
+                                <StackPanel>
+                                    <TextBlock Text="📊" 
+                                               FontSize="20" 
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock Text="Tổng thu nhập" 
+                                               Foreground="#586A84" 
+                                               FontSize="12"/>
+                                    <TextBlock Text="{Binding FinancialStats.TongThuNhap, Converter={StaticResource CurrencyConverter}}" 
+                                               Foreground="#3B4758" 
+                                               FontSize="18" 
+                                               FontWeight="Bold" 
+                                               Margin="0,4,0,0"/>
+                                    <!-- SỬA: Xóa TangTruongThuNhap vì không có -->
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Tổng chi phí -->
+                            <Border Style="{StaticResource StatCardStyle}" 
+                                    Grid.Column="1">
+                                <StackPanel>
+                                    <TextBlock Text="💸" 
+                                               FontSize="20" 
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock Text="Tổng chi phí" 
+                                               Foreground="#586A84" 
+                                               FontSize="12"/>
+                                    <TextBlock Text="{Binding FinancialStats.TongChiPhi, Converter={StaticResource CurrencyConverter}}" 
+                                               Foreground="#3B4758" 
+                                               FontSize="18" 
+                                               FontWeight="Bold" 
+                                               Margin="0,4,0,0"/>
+                                    <!-- SỬA: Xóa TangTruongChiPhi vì không có -->
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Lợi nhuận -->
+                            <Border Style="{StaticResource StatCardStyle}" 
+                                    Grid.Column="2">
+                                <StackPanel>
+                                    <TextBlock Text="💰" 
+                                               FontSize="20" 
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock Text="Lợi nhuận" 
+                                               Foreground="#586A84" 
+                                               FontSize="12"/>
+                                    <TextBlock Text="{Binding FinancialStats.LoiNhuan, Converter={StaticResource CurrencyConverter}}" 
+                                               Foreground="#3B4758" 
+                                               FontSize="18" 
+                                               FontWeight="Bold" 
+                                               Margin="0,4,0,0"/>
+                                    <!-- SỬA: Xóa TyLeLoiNhuan vì không có -->
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Công nợ -->
+                            <Border Style="{StaticResource StatCardStyle}" 
+                                    Grid.Column="3">
+                                <StackPanel>
+                                    <TextBlock Text="📋" 
+                                               FontSize="20" 
+                                               Margin="0,0,0,8"/>
+                                    <TextBlock Text="Tổng công nợ" 
+                                               Foreground="#586A84" 
+                                               FontSize="12"/>
+                                    <TextBlock Text="{Binding FinancialStats.TongCongNo, Converter={StaticResource CurrencyConverter}}" 
+                                               Foreground="#3B4758" 
+                                               FontSize="18" 
+                                               FontWeight="Bold" 
+                                               Margin="0,4,0,0"/>
+                                    <TextBlock Text="{Binding FinancialStats.SoPhongNo, StringFormat='{}{0} phòng nợ'}" 
+                                               Foreground="#F59E0B" 
+                                               FontSize="11" 
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- === ACTION BAR CHO CÁC CHỨC NĂNG CHÍNH === -->
+                    <Border Background="#EEF0F4" 
+                            CornerRadius="8" 
+                            Padding="15" 
+                            Margin="0,0,0,20">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="💰 Ghi nhận tiền thuê" 
+                                    Style="{StaticResource FinancialButtonStyle}"
+                                    Command="{Binding ShowPaymentFormCommand}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="⚡ Ghi nhận chi phí" 
+                                    Style="{StaticResource FinancialButtonStyle}"
+                                    Command="{Binding ShowExpenseFormCommand}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="🔄 Tạo công nợ tự động" 
+                                    Style="{StaticResource FinancialButtonStyle}"
+                                    Command="{Binding AutoGenerateDebtsCommand}"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="📄 Xuất báo cáo" 
+                                    Style="{StaticResource FinancialButtonStyle}"
+                                    Command="{Binding ExportReportCommand}"/>
+                            <Button Content="🔄 Làm mới" 
+                                    Style="{StaticResource FinancialButtonStyle}"
+                                    Command="{Binding RefreshCommand}"
+                                    Margin="10,0,0,0"
+                                    Background="#6B7280"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- === CÔNG NỢ === -->
+                    <Border Background="White" 
+                            CornerRadius="8" 
+                            Padding="15" 
+                            Margin="0,0,0,20">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#A9A8B6" Opacity="0.1" ShadowDepth="4" BlurRadius="20"/>
+                        </Border.Effect>
+
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" 
+                                        Margin="0,0,0,15"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Danh sách công nợ" 
+                                           FontSize="18" 
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding TotalDebtsCount, StringFormat='({0} khoản nợ)'}" 
+                                           Foreground="#586A84" 
+                                           FontSize="14"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Search and filter -->
+                            <StackPanel Orientation="Horizontal" 
+                                        Margin="0,0,0,15">
+                                <!-- SỬA: Đổi SearchDebtText thành SearchText -->
+                                <TextBox Width="300" 
+                                         Height="40" 
+                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                         Margin="0,0,10,0"
+                                         ToolTip="Tìm kiếm theo tên phòng, tên khách hàng, số điện thoại..."/>
+                                <Button Content="Xóa tìm kiếm" 
+                                        Style="{StaticResource FinancialButtonStyle}"
+                                        Command="{Binding ClearSearchCommand}"
+                                        Background="#6B7280"
+                                        Margin="0,0,10,0"/>
+                                <!-- SỬA: Thêm nút tìm kiếm -->
+                                <Button Content="🔍 Tìm kiếm" 
+                                        Style="{StaticResource FinancialButtonStyle}"
+                                        Command="{Binding SearchCommand}"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="🔄 Làm mới" 
+                                        Style="{StaticResource FinancialButtonStyle}"
+                                        Command="{Binding RefreshCommand}"/>
+                            </StackPanel>
+
+                            <!-- Debts list -->
+                            <ItemsControl ItemsSource="{Binding Debts}"
+                                          ItemTemplate="{StaticResource DebtItemTemplate}"
+                                          Margin="0,0,0,10">
+                                <ItemsControl.Template>
+                                    <ControlTemplate>
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                            </ItemsControl>
+
+                            <!-- Empty state -->
+                            <Border Background="#F8F9FA" 
+                                    CornerRadius="8" 
+                                    Padding="40" 
+                                    Visibility="{Binding HasDebts, Converter={StaticResource InverseBooleanConverter}}">
+                                <StackPanel HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="✅" 
+                                               FontSize="48" 
+                                               Margin="0,0,0,16" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Không có công nợ" 
+                                               FontSize="18" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="#374151" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Tất cả các khoản thanh toán đã được xử lý" 
+                                               FontSize="14" 
+                                               Foreground="#6b7280" 
+                                               Margin="0,8,0,0" 
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- === LỊCH SỬ GIAO DỊCH === -->
+                    <Border Background="White" 
+                            CornerRadius="8" 
+                            Padding="15">
+                        <Border.Effect>
+                            <DropShadowEffect Color="#A9A8B6" Opacity="0.1" ShadowDepth="4" BlurRadius="20"/>
+                        </Border.Effect>
+
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" 
+                                        Margin="0,0,0,15"
+                                        VerticalAlignment="Center">
+                                <TextBlock Text="Lịch sử giao dịch" 
+                                           FontSize="18" 
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding TotalTransactionsCount, StringFormat='({0} giao dịch)'}" 
+                                           Foreground="#586A84" 
+                                           FontSize="14"
+                                           Margin="10,0,0,0"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Date filter -->
+                            <StackPanel Orientation="Horizontal" 
+                                        Margin="0,0,0,15">
+                                <DatePicker Width="150" 
+                                            Style="{StaticResource DatePickerStyle}"
+                                            SelectedDate="{Binding FromDate}"
+                                            Margin="0,0,10,0"/>
+                                <TextBlock Text="đến" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,0,10,0"
+                                           Foreground="#586A84"/>
+                                <DatePicker Width="150" 
+                                            Style="{StaticResource DatePickerStyle}"
+                                            SelectedDate="{Binding ToDate}"
+                                            Margin="0,0,10,0"/>
+                                <Button Content="Lọc" 
+                                        Style="{StaticResource FinancialButtonStyle}" 
+                                        Margin="0,0,10,0" 
+                                        Command="{Binding FilterTransactionsCommand}"/>
+                                <Button Content="Xóa lọc" 
+                                        Style="{StaticResource FinancialButtonStyle}"
+                                        Command="{Binding ClearDateFilterCommand}"
+                                        Background="#6B7280"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="Làm mới" 
+                                        Style="{StaticResource FinancialButtonStyle}" 
+                                        Command="{Binding RefreshCommand}"/>
+                            </StackPanel>
+
+                            <!-- Transactions list -->
+                            <ItemsControl ItemsSource="{Binding TransactionHistory}"
+                                          ItemTemplate="{StaticResource TransactionItemTemplate}"
+                                          Margin="0,0,0,10">
+                                <ItemsControl.Template>
+                                    <ControlTemplate>
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                            <ItemsPresenter/>
+                                        </ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                            </ItemsControl>
+
+                            <!-- Empty state -->
+                            <Border Background="#F8F9FA" 
+                                    CornerRadius="8" 
+                                    Padding="40" 
+                                    Visibility="{Binding HasTransactions, Converter={StaticResource InverseBooleanConverter}}">
+                                <StackPanel HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="📊" 
+                                               FontSize="48" 
+                                               Margin="0,0,0,16" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Không có giao dịch" 
+                                               FontSize="18" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="#374151" 
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Chưa có giao dịch nào trong khoảng thời gian này" 
+                                               FontSize="14" 
+                                               Foreground="#6b7280" 
+                                               Margin="0,8,0,0" 
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,15 +1,17 @@
-﻿// QLKDPhongTro.DataLayer/Repositories/IHopDongRepository.cs
-using QLKDPhongTro.DataLayer.Models;
+﻿using QLKDPhongTro.DataLayer.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
     public interface IContractRepository
     {
-        List<HopDong> GetAllHopDong();
-        void AddHopDong(HopDong hopDong);
-        void UpdateHopDong(HopDong hopDong);
-        void DeleteHopDong(int maHopDong);
-        List<HopDong> GetExpiringContracts(int days); // Lấy hợp đồng sắp hết hạn
+        Task<List<Contract>> GetAllHopDongAsync();
+        Task AddHopDongAsync(Contract contract);
+        Task UpdateHopDongAsync(Contract contract);
+        Task DeleteHopDongAsync(int maHopDong);
+        Task<List<Contract>> GetExpiringContractsAsync(int days); // Lấy hợp đồng sắp hết hạn
+        Task<Contract?> GetByIdAsync(int maHopDong); // Lấy theo ID
+        Task<List<Contract>> GetActiveContractsAsync(); // Lấy các hợp đồng còn hiệu lực
     }
 }

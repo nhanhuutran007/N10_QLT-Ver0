@@ -26,15 +26,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
-            LoadContracts();
+            _ = LoadContractsAsync();
         }
 
         // 🔹 Load toàn bộ danh sách hợp đồng
-        private void LoadContracts()
+        private async System.Threading.Tasks.Task LoadContractsAsync()
         {
             try
             {
-                var contractList = _contractController.GetAllHopDong();
+                var contractList = await _contractController.GetAllHopDongAsync();
                 Contracts = new ObservableCollection<ContractDto>(contractList);
             }
             catch (Exception ex)
@@ -57,7 +57,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 bool? result = win.ShowDialog();
                 if (result == true)
-                    LoadContracts();
+                    _ = LoadContractsAsync();
             }
             catch (Exception ex)
             {
@@ -87,7 +87,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 bool? result = win.ShowDialog();
                 if (result == true)
-                    LoadContracts(); // reload list after editing
+                    _ = LoadContractsAsync(); // reload list after editing
             }
             catch (Exception ex)
             {
@@ -115,9 +115,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 try
                 {
-                    _contractController.DeleteHopDong(SelectedContract.MaHopDong);
+                    _ = _contractController.DeleteHopDongAsync(SelectedContract.MaHopDong);
                     MessageBox.Show("✅ Hợp đồng đã được xóa thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                    LoadContracts();
+                    _ = LoadContractsAsync();
                 }
                 catch (Exception ex)
                 {

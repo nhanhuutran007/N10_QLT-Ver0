@@ -161,10 +161,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         TienCoc = tienCocValue,
                         FileHopDong = filePath,
                         TrangThai = "Hiệu lực",
-                        
+
                     };
 
-                    await Task.Run(() => _contractController.CreateHopDong(newContract));
+                    await _contractController.CreateHopDongAsync(newContract);
                     MessageBox.Show("✅ Hợp đồng đã được thêm thành công!");
                 }
                 else
@@ -176,8 +176,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     _editingContract.NgayKetThuc = NgayKetThuc.Value;
                     _editingContract.TienCoc = tienCocValue;
 
-
-                    await Task.Run(() => _contractController.UpdateHopDong(_editingContract));
+                    await _contractController.UpdateHopDongAsync(_editingContract);
                     MessageBox.Show("✅ Hợp đồng đã được cập nhật thành công!");
                 }
 

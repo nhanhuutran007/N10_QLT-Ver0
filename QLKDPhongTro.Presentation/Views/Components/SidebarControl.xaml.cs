@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.Views.Windows;
@@ -10,16 +11,16 @@ namespace QLKDPhongTro.Presentation.Views.Components
     {
         public event EventHandler<string> MenuItemClicked;
         public event EventHandler LogoutClicked;
-        
+
         private bool _isInitializing = true;
 
         public SidebarControl()
         {
             InitializeComponent();
             // Đánh dấu đã khởi tạo xong sau một khoảng thời gian ngắn
-            this.Loaded += (s, e) => 
+            this.Loaded += (s, e) =>
             {
-                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ => 
+                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
                 {
                     Dispatcher.Invoke(() => _isInitializing = false);
                 });
@@ -119,7 +120,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<DashWindow>();
         }
 
@@ -128,7 +129,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<RoomWindow>();
         }
 
@@ -137,7 +138,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<TenantManagementWindow>();
         }
 
@@ -146,25 +147,20 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<ContractManagementWindow>();
         }
-
-        private void Finance_Checked(object sender, RoutedEventArgs e)
+        private void Financial_Checked(object sender, RoutedEventArgs e)
         {
-            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-
-            NavigateToWindow<FinancialWindow>();
+            NavigateToWindow<FinancialDashboardWindow>();
         }
 
         private void Payment_Checked(object sender, RoutedEventArgs e)
         {
-            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-
             NavigateToWindow<PaymentListView>();
         }
     }

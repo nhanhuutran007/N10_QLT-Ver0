@@ -9,23 +9,17 @@ namespace QLKDPhongTro.Presentation.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is int count)
+            if (parameter?.ToString() == "inverse")
             {
-                // Nếu có parameter "inverse" thì đảo ngược logic
-                bool isInverse = parameter?.ToString()?.ToLower() == "inverse";
-
-                if (isInverse)
-                {
-                    // Hiển thị khi có phần tử (count > 0)
-                    return count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                }
-                else
-                {
-                    // Hiển thị khi không có phần tử (count == 0)
-                    return count == 0 ? Visibility.Visible : Visibility.Collapsed;
-                }
+                // Đổi tên biến intValue thành intVal để tránh trùng lặp
+                if (value is int intVal && intVal == 0 || value == null)
+                    return Visibility.Collapsed;
+                return Visibility.Visible;
             }
 
+            // Biến khác tên
+            if (value is int intVal2 && intVal2 == 0 || value == null)
+                return Visibility.Visible;
             return Visibility.Collapsed;
         }
 

@@ -16,7 +16,7 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
-        <!-- [Styles remain unchanged, omitted for brevity] -->
+        <!-- Style cho nút đóng -->
         <Style x:Key="CloseButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
@@ -43,6 +43,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho nút chính -->
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="#5B75D4"/>
             <Setter Property="Foreground" Value="White"/>
@@ -68,6 +69,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho nút hủy -->
         <Style x:Key="CancelButtonStyle" TargetType="{x:Type Button}">
             <Setter Property="Background" Value="#6C757D"/>
             <Setter Property="Foreground" Value="White"/>
@@ -93,6 +95,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho TextBox -->
         <Style x:Key="InputTextBoxStyle" TargetType="{x:Type TextBox}">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#333333"/>
@@ -120,6 +123,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho ComboBox -->
         <Style x:Key="InputComboBoxStyle" TargetType="{x:Type ComboBox}">
             <Setter Property="Background" Value="White"/>
             <Setter Property="Foreground" Value="#333333"/>
@@ -178,6 +182,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style cho CheckBox -->
         <Style x:Key="EquipmentCheckBoxStyle" TargetType="{x:Type CheckBox}">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#333333"/>
@@ -217,6 +222,7 @@
             </Setter>
         </Style>
 
+        <!-- Style cho ScrollBar -->
         <Style x:Key="CustomScrollBar" TargetType="{x:Type ScrollBar}">
             <Setter Property="Width" Value="8"/>
             <Setter Property="Background" Value="#F1F1F1"/>
@@ -317,9 +323,8 @@
                             <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
                                        Foreground="#333333" Margin="0,0,0,8"/>
                             <ComboBox Style="{StaticResource InputComboBoxStyle}" 
-                                      ItemsSource="{Binding StatusOptions, RelativeSource={RelativeSource AncestorType=Window, AncestorLevel=1}}"
-                                      SelectedItem="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"
-                                      DisplayMemberPath="Value"/>
+                                      ItemsSource="{Binding StatusOptions}"
+                                      SelectedValue="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
                         <!-- Trang thiết bị -->
