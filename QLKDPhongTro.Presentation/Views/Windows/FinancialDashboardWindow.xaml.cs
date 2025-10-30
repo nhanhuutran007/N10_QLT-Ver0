@@ -51,7 +51,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             _ = _viewModel.LoadDataAsync();
         }
+        public void Button_Click()
+        {
 
+        }
         #region ViewModel Event Handlers
 
         private void OnShowPaymentFormRequested(object sender, EventArgs e) => ShowPaymentForm();

@@ -197,17 +197,17 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                 if (user != null)
                 {
-                    // Sinh OTP
-                    var otp = OtpHelper.GenerateOtp();
+                    //// Sinh OTP
+                    //var otp = OtpHelper.GenerateOtp();
 
-                    // Gửi email
-                    await EmailService.SendEmailAsync(
-                        user.Email,
-                        "Mã OTP đăng nhập",
-                        $"Xin chào {user.TenDangNhap},\n\nMã OTP của bạn là: {otp}\nCó hiệu lực trong 5 phút."
-                    );
+                    //// Gửi email
+                    //await EmailService.SendEmailAsync(
+                    //    user.Email,
+                    //    "Mã OTP đăng nhập",
+                    //    $"Xin chào {user.TenDangNhap},\n\nMã OTP của bạn là: {otp}\nCó hiệu lực trong 5 phút."
+                    //);
 
-                    CurrentUser = user;
+                    //CurrentUser = user;
 
                     return new LoginResult
                     {
