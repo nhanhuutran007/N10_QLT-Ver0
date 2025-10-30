@@ -47,24 +47,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                // ✅ Gọi login có OTP
-                var result = await _authController.LoginWithOtpAsync(Username, Password);
+                // // ✅ Gọi login có OTP (TẠM TẮT)
+                // var result = await _authController.LoginWithOtpAsync(Username, Password);
+
+                // ✅ Đăng nhập THÔNG THƯỜNG: kiểm tra đúng user/password là vào Dashboard
+                var result = await _authController.LoginAsync(Username, Password);
 
                 if (result.IsSuccess)
                 {
-                    // ✅ Hiện thông báo OTP đã được gửi
-                    MessageBox.Show(result.Message, "Thông báo",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    // // ✅ Thông báo OTP đã gửi (TẠM TẮT)
+                    // MessageBox.Show(result.Message, "Thông báo",
+                    //     MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Bỏ thông báo, chuyển thẳng vào Dashboard
                     // Mở Dashboard
                     var dashboardWindow = new DashWindow
                     {
                         DataContext = new DashboardViewModel()
                     };
-                    
+
                     // Đóng cửa sổ đăng nhập hiện tại trước
                     var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
                     loginWindow?.Close();
-                    
+
                     // Đặt Dashboard làm MainWindow và hiển thị
                     Application.Current.MainWindow = dashboardWindow;
                     dashboardWindow.Show();

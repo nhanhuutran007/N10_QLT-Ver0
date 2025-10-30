@@ -1,66 +1,34 @@
 ﻿<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.ContractManagementWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
-        mc:Ignorable="d" 
-        Title="Quản lý hợp đồng"
-        MinHeight="600" MinWidth="800"
+        mc:Ignorable="d"
+        Title="Quản lý Hợp đồng - Quản Lý Phòng Trọ"
+        MinHeight="600" MinWidth="900"
         Height="700" Width="1200"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         Background="#F5F5F5"
-        AllowsTransparency="False"
         FontFamily="Roboto"
         Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
-        <!-- === STYLES === -->
-        <!-- Style cho nút Thêm hợp đồng -->
-        <Style TargetType="{x:Type Button}" x:Key="AddContractButtonStyle">
+        <!-- Style cho nút cơ bản -->
+        <Style TargetType="Button" x:Key="PrimaryButtonStyle">
             <Setter Property="Background" Value="#10D096"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="20,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type Button}">
-                        <Border CornerRadius="6" Background="{TemplateBinding Background}">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <TextBlock Text="{TemplateBinding Content}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Style cho các ô input (TextBox, ComboBox) -->
-        <Style TargetType="{x:Type Control}" x:Key="InputControlStyle">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="10,0"/>
-            <Setter Property="BorderBrush" Value="#586A84"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
-
-        <!-- Style cho nút hành động (icon) -->
-        <Style TargetType="{x:Type Button}" x:Key="ActionIconButton">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="32"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="16,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
+                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -68,166 +36,73 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FEE2E2"/>
+                    <Setter Property="Background" Value="#0DB882"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
 
     <Grid>
+        <!-- ====== Layout chính chia làm 2 cột ====== -->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Grid Grid.Column="0" Background="White">
-            <components:SidebarControl x:Name="SidebarControl" MenuItemClicked="SidebarControl_MenuItemClicked"/>
-        </Grid>
+        <!-- ====== SIDEBAR (trái) ====== -->
+        <components:SidebarControl Grid.Column="0"/>
 
-        <!-- Main Content -->
-        <Grid Grid.Column="1" Background="#F5F5F5">
+        <!-- ====== NỘI DUNG CHÍNH (phải) ====== -->
+        <Grid Grid.Column="1" Margin="15">
             <Grid.RowDefinitions>
-                <RowDefinition Height="77"/>
-                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Topbar -->
-            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" 
-                                MenuButtonClicked="TopbarControl_MenuButtonClicked"
-                                SearchTextChanged="TopbarControl_SearchTextChanged"
-                                SettingsButtonClicked="TopbarControl_SettingsButtonClicked" Margin="21,0,16,0" RenderTransformOrigin="0.5,0.5" Height="75" VerticalAlignment="Top">
-                <components:TopbarControl.RenderTransform>
-                    <TransformGroup>
-                        <ScaleTransform/>
-                        <SkewTransform/>
-                        <RotateTransform Angle="0.033"/>
-                        <TranslateTransform/>
-                    </TransformGroup>
-                </components:TopbarControl.RenderTransform>
-            </components:TopbarControl>
+            <!-- Header -->
+            <DockPanel Grid.Row="0" Margin="0,0,0,15">
+                <TextBlock Text="Danh sách Hợp đồng" 
+                           FontSize="22" FontWeight="Bold"
+                           Foreground="#3B4758" Width="226"/>
 
-            <!-- Content Area -->
-            <Grid Grid.Row="1" Margin="20,20,20,20">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Thêm" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Command="{Binding AddContractCommand}" Width="75"/>
+                    <Button Content="Sửa" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Background="#F6AD55" Command="{Binding EditContractCommand}" Margin="5,0" Width="72"/>
+                    <Button Content="Xóa" 
+                            Style="{StaticResource PrimaryButtonStyle}" 
+                            Background="#EF4444" Command="{Binding DeleteContractCommand}" Margin="5,0" Width="65"/>
+                </StackPanel>
+            </DockPanel>
 
-                <!-- Header -->
-                <TextBlock Grid.Row="0" Text="Danh sách hợp đồng" 
-                           Foreground="#3B4758" FontSize="24" FontWeight="Bold"
-                           Margin="0,0,0,20"/>
+            <!-- DataGrid danh sách hợp đồng -->
+            <DataGrid Grid.Row="1"
+                      ItemsSource="{Binding Contracts}"
+                      SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      RowHeight="35"
+                      AlternatingRowBackground="#f2f2f2"
+                      HeadersVisibility="Column"
+                      SelectionMode="Single"
+                      GridLinesVisibility="Horizontal"
+                      BorderBrush="#E0E0E0"
+                      BorderThickness="1" Margin="-53,0,0,0">
 
-                <!-- Main Content Area -->
-                <Border Grid.Row="1" Background="White" CornerRadius="12">
-                    <Border.Effect>
-                        <DropShadowEffect Color="#A9A8B6" Opacity="0.1" ShadowDepth="4" BlurRadius="20"/>
-                    </Border.Effect>
-
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <!-- Action Bar -->
-                        <Border Grid.Row="0" Background="#EEF0F4" CornerRadius="12,12,0,0" Padding="20">
-                            <Grid>
-                                <Button Content="Thêm hợp đồng" Style="{StaticResource AddContractButtonStyle}" 
-                                HorizontalAlignment="Left" Command="{Binding AddNewContractCommand}" Width="138"/>
-
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <TextBox Width="250" Style="{StaticResource InputControlStyle}" 
-                                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                                    <ComboBox Style="{StaticResource InputControlStyle}" Width="190" Margin="10,0,0,0">
-                                        <ComboBoxItem IsSelected="True">Mới nhất</ComboBoxItem>
-                                        <ComboBoxItem>Cũ nhất</ComboBoxItem>
-                                    </ComboBox>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-
-                        <!-- Contract List -->
-                        <StackPanel Grid.Row="1" x:Name="ContractsView">
-                            <!-- List Header -->
-                            <Grid Margin="24,20,24,10">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="464"/>
-                                    <ColumnDefinition Width="464"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0" Text="HỢP ĐỒNG" FontWeight="Bold" FontSize="12" Foreground="#7D8FA9"/>
-                                <TextBlock Grid.Column="1" Text="NGƯỜI THUÊ" FontWeight="Bold" FontSize="12" Foreground="#7D8FA9"/>
-                                <TextBlock Grid.Column="2" Text="NGÀY KẾT THÚC" FontWeight="Bold" FontSize="12" Foreground="#7D8FA9"/>
-                            </Grid>
-
-                            <!-- ItemsControl to display contracts -->
-                            <ItemsControl ItemsSource="{Binding Contracts}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border BorderBrush="#EEF0F4" BorderThickness="0,1,0,0" Padding="24,20" 
-                                        MouseLeftButtonDown="ContractItem_MouseLeftButtonDown">
-                                            <Grid VerticalAlignment="Center">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="464"/>
-                                                    <ColumnDefinition Width="464"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-
-                                                <!-- Cột 1: Thông tin hợp đồng -->
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal">
-                                                    <!-- PDF Icon -->
-                                                    <Grid Width="40" Height="40">
-                                                        <Path Data="M18 0L30 12V38C30 39.105 29.1046 40 28 40H2C0.89543 40 0 39.105 0 38V2C0 0.89543 0.89543 0 2 0H18Z" Fill="#EEF0F4"/>
-                                                        <Path Data="M30 12H20C18.8954 12 18 11.1046 18 10V0L30 12Z" Fill="#7D8FA9"/>
-                                                        <Border Background="#FF001F" CornerRadius="2" Width="28" Height="12" 
-                                                        VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="0,0,0,4">
-                                                            <TextBlock Text="PDF" Foreground="White" FontSize="9" FontWeight="Medium" 
-                                                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                                                        </Border>
-                                                    </Grid>
-                                                    <!-- Tên và ngày tạo -->
-                                                    <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding ContractName}" FontWeight="Bold" FontSize="14" Foreground="#319DFF" Cursor="Hand"/>
-                                                        <TextBlock Text="{Binding CreatedDate, StringFormat='dd/MM/yyyy'}" FontSize="12" Foreground="#586A84"/>
-                                                    </StackPanel>
-                                                </StackPanel>
-
-                                                <!-- Cột 2: Người thuê -->
-                                                <TextBlock Grid.Column="1" Text="{Binding TenantName}" FontSize="14" Foreground="#3B4758" VerticalAlignment="Center"/>
-
-                                                <!-- Cột 3: Ngày kết thúc -->
-                                                <TextBlock Grid.Column="2" Text="{Binding EndDate, StringFormat='dd/MM/yyyy'}" FontSize="14" Foreground="#3B4758" VerticalAlignment="Center"/>
-
-                                                <!-- Cột 4: Nút xóa -->
-                                                <Button Grid.Column="3" Style="{StaticResource ActionIconButton}" HorizontalAlignment="Right" 
-                                                Command="{Binding DataContext.DeleteContractCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                                CommandParameter="{Binding}">
-                                                    <Path Data="M9.333 22C8.6 22 7.969 21.739 7.447 21.217C6.925 20.695 6.664 20.067 6.667 19.333V4H6.289C5.911 4 5.589 3.872 5.333 3.617C5.078 3.361 4.949 3.044 4.958 2.667C4.967 2.289 5.094 1.972 5.344 1.716C5.594 1.461 5.908 1.333 6.289 1.333H12C12 0.956 12.128 0.639 12.383 0.383C12.639 0.128 12.956 0 13.333 0H18.667C19.044 0 19.361 0.128 19.617 0.383C19.872 0.639 20 0.956 20 1.333H25.711C26.092 1.333 26.406 1.461 26.656 1.716C26.906 1.972 27.033 2.289 27.042 2.667C27.051 3.044 26.922 3.361 26.667 3.617C26.411 3.872 26.089 4 25.711 4V19.333C25.711 20.067 25.45 20.695 24.928 21.217C24.406 21.739 23.778 22 23.042 22H9.333ZM12 17.333C12 17.711 12.128 18.028 12.383 18.283C12.639 18.539 12.956 18.667 13.333 18.667C13.711 18.667 14.028 18.539 14.283 18.283C14.539 18.028 14.667 17.711 14.667 17.333V8C14.667 7.622 14.539 7.305 14.283 7.049C14.028 6.794 13.711 6.667 13.333 6.667C12.956 6.667 12.639 6.794 12.383 7.049C12.128 7.305 12 7.622 12 8V17.333ZM17.333 17.333C17.333 17.711 17.461 18.028 17.717 18.283C17.972 18.539 18.289 18.667 18.667 18.667C19.044 18.667 19.361 18.539 19.617 18.283C19.872 18.028 20 17.711 20 17.333V8C20 7.622 19.872 7.305 19.617 7.049C19.361 6.794 19.044 6.667 18.667 6.667C18.289 6.667 17.972 6.794 17.717 7.049C17.461 7.305 17.333 7.622 17.333 8V17.333Z" 
-                                                  Fill="#EF4444" Width="16" Height="22" Stretch="Uniform"/>
-                                                </Button>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <!-- Pagination Footer -->
-                        <Border Grid.Row="2" Background="#EEF0F4" CornerRadius="0,0,12,12" Padding="20">
-                            <Grid>
-                                <TextBlock Text="Hiển thị 5 trên 43" VerticalAlignment="Center" HorizontalAlignment="Left" Foreground="#3B4758"/>
-                                <!-- TODO: Add Pagination controls here -->
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Border>
-            </Grid>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
+                    <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
+                    <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
+                    <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                    <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                    <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
+                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
         </Grid>
     </Grid>
 </Window>

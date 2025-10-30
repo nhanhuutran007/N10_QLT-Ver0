@@ -11,16 +11,16 @@ namespace QLKDPhongTro.Presentation.Views.Components
     {
         public event EventHandler<string> MenuItemClicked;
         public event EventHandler LogoutClicked;
-        
+
         private bool _isInitializing = true;
 
         public SidebarControl()
         {
             InitializeComponent();
             // Đánh dấu đã khởi tạo xong sau một khoảng thời gian ngắn
-            this.Loaded += (s, e) => 
+            this.Loaded += (s, e) =>
             {
-                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ => 
+                System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
                 {
                     Dispatcher.Invoke(() => _isInitializing = false);
                 });
@@ -59,43 +59,59 @@ namespace QLKDPhongTro.Presentation.Views.Components
         // Centralized navigation helper method
         private void NavigateToWindow<T>() where T : Window, new()
         {
-            // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             var currentWindow = Window.GetWindow(this);
-            
-            // Kiểm tra currentWindow có null không
             if (currentWindow == null)
-            {
-                // Nếu không tìm thấy window hiện tại, chỉ tạo window mới
-                var newWindow = new T();
-                newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                newWindow.Show();
                 return;
-            }
-            
-            // Nếu đã ở window cùng loại thì không cần chuyển
+
+            // Nếu là cùng loại window thì bỏ qua
             if (currentWindow is T)
                 return;
-            
-            // Kiểm tra xem window đã tồn tại chưa
-            var existingWindow = Application.Current.Windows.OfType<T>().FirstOrDefault();
-            
-            if (existingWindow != null)
+
+            if (typeof(T) == typeof(ContractManagementWindow))
             {
-                existingWindow.Activate();
-                existingWindow.WindowState = WindowState.Normal;
+                // Ẩn dashboard
+                currentWindow.Hide();
+
+                var contractWindow = new ContractManagementWindow();
+                contractWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // Khi tắt hợp đồng → show lại dashboard
+                contractWindow.Closed += (s, e) =>
+                {
+                    currentWindow.Show();
+                    currentWindow.Activate();
+                };
+
+                contractWindow.Show();
+            }
+            else if (typeof(T) == typeof(PaymentListView))
+            {
+                // Ẩn dashboard
+                currentWindow.Hide();
+
+                var paymentWindow = new PaymentListView();
+                paymentWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+                // Khi tắt payment list → show lại dashboard
+                paymentWindow.Closed += (s, e) =>
+                {
+                    currentWindow.Show();
+                    currentWindow.Activate();
+                };
+
+                paymentWindow.Show();
             }
             else
             {
+                // Các cửa sổ khác vẫn đóng dashboard cũ
                 var newWindow = new T();
                 newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 newWindow.Show();
+                currentWindow.Close();
             }
-            
-            // Đóng cửa sổ hiện tại (chỉ khi currentWindow không null)
-            currentWindow.Close();
         }
 
         // Handlers với logic navigation tập trung - sử dụng event system để tránh đệ quy
@@ -104,7 +120,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<DashWindow>();
         }
 
@@ -113,7 +129,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<RoomWindow>();
         }
 
@@ -122,7 +138,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<TenantManagementWindow>();
         }
 
@@ -131,7 +147,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Không thực hiện navigation nếu đang trong quá trình khởi tạo
             if (_isInitializing)
                 return;
-                
+
             NavigateToWindow<ContractManagementWindow>();
         }
         private void Financial_Checked(object sender, RoutedEventArgs e)
@@ -139,6 +155,13 @@ namespace QLKDPhongTro.Presentation.Views.Components
             if (_isInitializing)
                 return;
             NavigateToWindow<FinancialDashboardWindow>();
+        }
+
+        private void Payment_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+            NavigateToWindow<PaymentListView>();
         }
     }
 }

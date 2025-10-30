@@ -1,63 +1,21 @@
-﻿using System;
+﻿// Presentation/Views/Windows/AddContractWindow.xaml.cs
 using System.Windows;
+using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class AddContractWindow : Window
     {
-        public AddContractWindow()
+        public AddContractWindow(AddContractViewModel vm)
         {
             InitializeComponent();
-            
-            // Set default values
-            StartDatePicker.SelectedDate = DateTime.Now;
-            EndDatePicker.SelectedDate = DateTime.Now.AddMonths(12);
-        }
+            DataContext = vm;
 
-        private void SaveButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Validate input
-            if (string.IsNullOrWhiteSpace(ContractNameTextBox.Text))
+            vm.RequestClose += (s, e) =>
             {
-                MessageBox.Show("Vui lòng nhập tên hợp đồng!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(TenantNameTextBox.Text))
-            {
-                MessageBox.Show("Vui lòng nhập tên người thuê!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (StartDatePicker.SelectedDate == null)
-            {
-                MessageBox.Show("Vui lòng chọn ngày bắt đầu!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (EndDatePicker.SelectedDate == null)
-            {
-                MessageBox.Show("Vui lòng chọn ngày kết thúc!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (StartDatePicker.SelectedDate >= EndDatePicker.SelectedDate)
-            {
-                MessageBox.Show("Ngày kết thúc phải sau ngày bắt đầu!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // TODO: Save to database
-            MessageBox.Show("Hợp đồng đã được thêm thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-            
-            DialogResult = true;
-            Close();
-        }
-
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
-        {
-            DialogResult = false;
-            Close();
+                this.DialogResult = e; // e = true khi lưu; false khi hủy
+                this.Close();
+            };
         }
     }
 }

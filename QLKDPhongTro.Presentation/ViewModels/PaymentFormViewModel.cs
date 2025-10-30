@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public class PaymentFormViewModel : BaseViewModel
+    public class PaymentFormViewModel : ViewModelBase
     {
         private readonly FinancialController _financialController;
 
@@ -251,7 +251,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         #endregion
     }
 
-    public class ExpenseFormViewModel : BaseViewModel
+    public class ExpenseFormViewModel : ViewModelBase
     {
         private readonly FinancialController _financialController;
 

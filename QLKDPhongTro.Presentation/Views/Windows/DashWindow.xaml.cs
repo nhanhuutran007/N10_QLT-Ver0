@@ -46,5 +46,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Logic navigation đã được chuyển vào SidebarControl.xaml.cs
             // Chỉ xử lý logic riêng của DashWindow nếu cần
         }
+
+
     }
 }

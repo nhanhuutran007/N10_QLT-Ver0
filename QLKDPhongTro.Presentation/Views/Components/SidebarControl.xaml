@@ -8,61 +8,123 @@
 
     <UserControl.Resources>
         <!-- Style cho các nút menu trên menu trái (dùng RadioButton để chỉ chọn được 1) -->
-        <Style x:Key="SideMenuButtonStyle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#586A84"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="16,0"/>
-            <Setter Property="Height" Value="48"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
+        <Style x:Key="SideMenuButtonStyle"
+                TargetType="RadioButton">
+            <Setter Property="Foreground"
+                    Value="#586A84"/>
+            <Setter Property="Background"
+                    Value="Transparent"/>
+            <Setter Property="FontSize"
+                    Value="14"/>
+            <Setter Property="Padding"
+                    Value="16,0"/>
+            <Setter Property="Height"
+                    Value="48"/>
+            <Setter Property="BorderThickness"
+                    Value="0"/>
+            <Setter Property="Cursor"
+                    Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <Path x:Name="IconPath" Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" 
-                                      Fill="{TemplateBinding Foreground}" Width="16" Height="16" Stretch="Uniform"/>
-                                <TextBlock Text="{TemplateBinding Content}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                                <Path x:Name="IconPath"
+                                        Data="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Fill="{TemplateBinding Foreground}"
+                                        Width="16"
+                                        Height="16"
+                                        Stretch="Uniform"/>
+                                <TextBlock Text="{TemplateBinding Content}"
+                                        Margin="10,0,0,0"
+                                        VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                    <Setter Property="Background" Value="#E5F3FF"/>
-                    <Setter Property="Foreground" Value="#3B4758"/>
+                <Trigger Property="IsChecked"
+                        Value="True">
+                    <Setter Property="Background"
+                            Value="#E5F3FF"/>
+                    <Setter Property="Foreground"
+                            Value="#3B4758"/>
                 </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F5F8FC"/>
+                <Trigger Property="IsMouseOver"
+                        Value="True">
+                    <Setter Property="Background"
+                            Value="#F5F8FC"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
 
     <!-- === THANH ĐIỀU HƯỚNG BÊN TRÁI (SIDEBAR) === -->
-    <Border Background="White" CornerRadius="12" Margin="15,15,51,15">
+    <Border Background="White"
+            CornerRadius="12"
+            Margin="15,15,51,15">
         <StackPanel Margin="20">
-            <Image Source="/Resources/Images/Logo.png" Width="120" Height="120" Margin="0,15,0,25" HorizontalAlignment="Center"/>
-            <RadioButton Content="Tổng quan" GroupName="MainMenu" IsChecked="True" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2" Checked="Overview_Checked"
-                         Tag="M55.3,220 C55,220 54.7,219.9 54.4,219.6 L54,218.7 V209.3 C54,209 54.1,208.7 54.4,208.4 C54.7,208.1 55,208 55.3,208 H58 C58.4,208 58.7,208.1 58.9,208.4 L59.3,209.3 V218.7 C59.3,219 59.2,219.3 58.9,219.6 C58.7,219.9 58.4,220 58,220 H55.3 Z M62,212.7 C61.6,212.7 61.3,212.5 61.1,212.3 L60.7,211.3 V209.3 C60.7,209 60.8,208.7 61.1,208.4 C61.3,208.1 61.6,208 62,208 H64.7 C65,208 65.3,208.1 65.6,208.4 L66,209.3 V211.3 C66,211.7 65.9,212 65.6,212.3 C65.3,212.5 65,212.7 64.7,212.7 H62 Z M62,220 C61.6,220 61.3,219.9 61.1,219.6 L60.7,218.7 V215.3 C60.7,215 60.8,214.7 61.1,214.4 C61.3,214.1 61.6,214 62,214 H64.7 C65,214 65.3,214.1 65.6,214.4 L66,215.3 V218.7 C66,219 65.9,219.3 65.6,219.6 C65.3,219.9 65,220 64.7,220 H62 Z" Width="160"/>
-            <RadioButton Content="Quản lý phòng" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2" Checked="Assets_Checked"
+            <Image Source="/Resources/Images/Logo.png"
+                    Width="120"
+                    Height="120"
+                    Margin="0,15,0,25"
+                    HorizontalAlignment="Center"/>
+            <RadioButton Content="Tổng quan"
+                    GroupName="MainMenu"
+                    IsChecked="True"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Overview_Checked"
+                         Tag="M55.3,220 C55,220 54.7,219.9 54.4,219.6 L54,218.7 V209.3 C54,209 54.1,208.7 54.4,208.4 C54.7,208.1 55,208 55.3,208 H58 C58.4,208 58.7,208.1 58.9,208.4 L59.3,209.3 V218.7 C59.3,219 59.2,219.3 58.9,219.6 C58.7,219.9 58.4,220 58,220 H55.3 Z M62,212.7 C61.6,212.7 61.3,212.5 61.1,212.3 L60.7,211.3 V209.3 C60.7,209 60.8,208.7 61.1,208.4 C61.3,208.1 61.6,208 62,208 H64.7 C65,208 65.3,208.1 65.6,208.4 L66,209.3 V211.3 C66,211.7 65.9,212 65.6,212.3 C65.3,212.5 65,212.7 64.7,212.7 H62 Z M62,220 C61.6,220 61.3,219.9 61.1,219.6 L60.7,218.7 V215.3 C60.7,215 60.8,214.7 61.1,214.4 C61.3,214.1 61.6,214 62,214 H64.7 C65,214 65.3,214.1 65.6,214.4 L66,215.3 V218.7 C66,219 65.9,219.3 65.6,219.6 C65.3,219.9 65,220 64.7,220 H62 Z"
+                    Width="160"/>
+            <RadioButton Content="Quản lý phòng"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Assets_Checked"
                          Tag="M55.4,268 C55,268 54.7,267.9 54.4,267.6 L54,266.7 V261.4 C53.8,261.1 53.6,260.8 53.4,260.5 C53.3,260.1 53.3,259.7 53.4,259.3 L54.1,257 C54.2,256.7 54.4,256.5 54.6,256.3 C54.8,256.1 55.1,256 55.4,256 H64.7 C65,256 65.2,256.1 65.4,256.3 L65.9,257 L66.6,259.3 C66.7,259.7 66.7,260.1 66.6,260.5 C66.5,260.8 66.3,261.1 66,261.4 V266.7 C66,267 65.9,267.3 65.6,267.6 C65.4,267.9 65,268 64.7,268 H55.4 Z M61.5,260.7 C61.8,260.7 62,260.6 62.2,260.4 L62.3,259.7 L62,257.3 H60.7 V259.8 C60.7,260 60.8,260.2 60.9,260.4 C61.1,260.6 61.3,260.7 61.5,260.7 Z M58.5,260.7 C58.7,260.7 58.9,260.6 59.1,260.4 L59.3,259.8 V257.3 H58.1 L57.7,259.7 C57.6,259.9 57.7,260.2 57.9,260.4 C58,260.6 58.2,260.7 58.5,260.7 Z M55.5,260.7 C55.7,260.7 55.9,260.6 56,260.5 L56.3,259.9 L56.7,257.3 H55.4 L54.7,259.6 C54.6,259.8 54.7,260 54.8,260.3 C55,260.5 55.2,260.7 55.5,260.7 Z M64.5,260.7 C64.8,260.7 65.1,260.5 65.2,260.3 L65.3,259.6 L64.6,257.3 H63.3 L63.7,259.9 C63.7,260.1 63.8,260.3 64,260.5 C64.1,260.6 64.3,260.7 64.5,260.7 Z"/>
-            <RadioButton Content="Quản lý người thuê" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2" Checked="Tenants_Checked"
+            <RadioButton Content="Quản lý người thuê"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Tenants_Checked"
                          Tag="M60 310.7 C60.6 310.7 61.2 310.4 61.6 310 C62.1 309.5 62.3 309 62.3 308.3 C62.3 307.7 62.1 307.1 61.6 306.7 C61.2 306.2 60.6 306 60 306 C59.4 306 58.8 306.2 58.4 306.7 C57.9 307.1 57.7 307.7 57.7 308.3 C57.7 309 57.9 309.5 58.4 310 C58.8 310.4 59.4 310.7 60 310.7 Z M55.3 316 C55 316 54.7 315.9 54.4 315.6 L54 314.7 V305.3 C54 305 54.1 304.7 54.4 304.4 C54.7 304.1 55 304 55.3 304 H64.7 C65 304 65.3 304.1 65.6 304.4 L66 305.3 V314.7 C66 315 65.9 315.3 65.6 315.6 C65.3 315.9 65 316 64.7 316 H55.3 Z M55.3 314.7 H64.7 V313.9 C64.1 313.3 63.4 312.8 62.6 312.5 C61.8 312.2 60.9 312 60 312 C59.1 312 58.2 312.2 57.4 312.5 C56.6 312.8 55.9 313.3 55.3 313.9 V314.7 Z"/>
-            <RadioButton Content="Quản lý hợp đồng" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2" Checked="Contracts_Checked"
+            <RadioButton Content="Quản lý hợp đồng"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Contracts_Checked"
                          Tag="M54.7,363.3 C54.3,363.3 54,363.2 53.7,362.9 L53.3,362 V354 C53.3,353.6 53.4,353.3 53.7,353.1 C54,352.8 54.3,352.7 54.7,352.7 H58.7 L60,354 H65.3 C65.7,354 66,354.1 66.3,354.4 L66.7,355.3 V362 C66.7,362.4 66.5,362.7 66.3,362.9 C66,363.2 65.7,363.3 65.3,363.3 H54.7 Z"/>
-            <RadioButton Content="Quản lý tài chính" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2" Checked="Financial_Checked"
+            <RadioButton Content="Quản lý tài chính"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Financial_Checked"
                          Tag="M58.7,408.7 H59.3 C59.3,408.9 59.4,409 59.5,409.1 C59.7,409.3 59.8,409.3 60,409.3 C60.2,409.3 60.3,409.3 60.5,409.1 C60.6,409 60.7,408.9 60.7,408.7 H61.3 C61.5,408.7 61.7,408.6 61.8,408.5 C61.9,408.3 62,408.2 62,408 V406 C62,405.8 61.9,405.7 61.8,405.5 C61.7,405.4 61.5,405.3 61.3,405.3 H59.3 V404.7 H61.3 C61.5,404.7 61.7,404.6 61.8,404.5 C61.9,404.3 62,404.2 62,404 C62,403.8 61.9,403.7 61.8,403.5 C61.7,403.4 61.5,403.3 61.3,403.3 H60.7 C60.7,403.1 60.6,403 60.5,402.9 C60.3,402.7 60.2,402.7 60,402.7 C59.8,402.7 59.7,402.7 59.5,402.9 C59.4,403 59.3,403.1 59.3,403.3 H58.7 C58.5,403.3 58.3,403.4 58.2,403.5 C58.1,403.7 58,403.8 58,404 V406 C58,406.2 58.1,406.3 58.2,406.5 C58.3,406.6 58.5,406.7 58.7,406.7 H60.7 V407.3 H58.7 C58.5,407.3 58.3,407.4 58.2,407.5 C58.1,407.7 58,407.8 58,408 C58,408.2 58.1,408.3 58.2,408.5 C58.3,408.6 58.5,408.7 58.7,408.7 Z M54.7,411.3 C54.3,411.3 54,411.2 53.7,410.9 L53.3,410 V402 C53.3,401.6 53.4,401.3 53.7,401.1 C54,400.8 54.3,400.7 54.7,400.7 H65.3 C65.7,400.7 66,400.8 66.3,401.1 L66.7,402 V410 C66.7,410.4 66.5,410.7 66.3,410.9 C66,411.2 65.7,411.3 65.3,411.3 H54.7 Z"/>
-            <RadioButton Content="Quản lý thanh toán" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2"
+            <RadioButton Content="Quản lý thanh toán"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
+                    Checked="Payment_Checked"
                          Tag="M61.3,454.7 C61.9,454.7 62.4,454.5 62.7,454.1 C63.1,453.7 63.3,453.2 63.3,452.7 C63.3,452.1 63.1,451.6 62.7,451.2 C62.4,450.9 61.9,450.7 61.3,450.7 C60.8,450.7 60.3,450.9 59.9,451.2 C59.5,451.6 59.3,452.1 59.3,452.7 C59.3,453.2 59.5,453.7 59.9,454.1 C60.3,454.5 60.8,454.7 61.3,454.7 Z M56.7,456.7 C56.3,456.7 56,456.5 55.7,456.3 L55.3,455.3 V450 C55.3,449.6 55.5,449.3 55.7,449.1 C56,448.8 56.3,448.7 56.7,448.7 H66 C66.4,448.7 66.7,448.8 66.9,449.1 L67.3,450 V455.3 C67.3,455.7 67.2,456 66.9,456.3 C66.7,456.5 66.4,456.7 66,456.7 H56.7 Z M54,459.3 C53.6,459.3 53.3,459.2 53.1,458.9 L52.7,458 V451.3 C52.7,451.1 52.7,451 52.9,450.9 C53,450.7 53.1,450.7 53.3,450.7 C53.5,450.7 53.7,450.7 53.8,450.9 C53.9,451 54,451.1 54,451.3 V458 H64.7 C64.9,458 65,458.1 65.1,458.2 C65.3,458.3 65.3,458.5 65.3,458.7 C65.3,458.9 65.3,459 65.1,459.1 C65,459.3 64.9,459.3 64.7,459.3 H54 Z M56.7,451.3 C57,451.3 57.3,451.2 57.6,450.9 C57.9,450.7 58,450.4 58,450 H56.7 V451.3 Z M66,451.3 V450 H64.7 C64.7,450.4 64.8,450.7 65.1,450.9 C65.3,451.2 65.6,451.3 66,451.3 Z M56.7,455.3 H58 C58,455 57.9,454.7 57.6,454.4 C57.3,454.1 57,454 56.7,454 V455.3 Z M64.7,455.3 H66 V454 C65.6,454 65.3,454.1 65.1,454.4 C64.8,454.7 64.7,455 64.7,455.3 Z"/>
-            <RadioButton Content="Quản lý bảo trì" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2"
+            <RadioButton Content="Quản lý bảo trì"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
                          Tag="M61.2,508.7 H58.7 C58.6,508.7 58.4,508.6 58.3,508.5 C58.2,508.4 58.1,508.2 58.1,508.1 L57.9,506.5 C57.8,506.5 57.6,506.4 57.5,506.3 C57.4,506.3 57.2,506.2 57.1,506.1 L55.7,506.7 C55.5,506.7 55.4,506.7 55.2,506.7 C55,506.7 54.9,506.6 54.8,506.4 L53.6,504.3 C53.5,504.1 53.5,504 53.5,503.8 C53.5,503.6 53.6,503.5 53.8,503.4 L55,502.4 C55,502.4 55,502.3 55,502.2 V501.8 C55,501.7 55,501.6 55,501.5 L53.8,500.6 C53.6,500.5 53.5,500.4 53.5,500.2 C53.5,500 53.5,499.9 53.6,499.7 L54.8,497.6 C54.9,497.4 55,497.3 55.2,497.3 C55.4,497.3 55.5,497.3 55.7,497.3 L57.1,497.9 C57.2,497.8 57.4,497.7 57.5,497.7 C57.6,497.6 57.8,497.5 57.9,497.5 L58.1,495.9 C58.1,495.7 58.2,495.6 58.3,495.5 C58.4,495.4 58.6,495.3 58.7,495.3 H61.2 C61.4,495.3 61.6,495.4 61.7,495.5 C61.8,495.6 61.9,495.7 61.9,495.9 L62.1,497.5 C62.2,497.5 62.4,497.6 62.5,497.7 C62.6,497.7 62.8,497.8 62.9,497.9 L64.3,497.3 C64.5,497.3 64.6,497.3 64.8,497.3 C65,497.3 65.1,497.4 65.2,497.6 L66.4,499.7 C66.5,499.9 66.5,500 66.5,500.2 C66.4,500.4 66.4,500.5 66.2,500.6 L65,501.5 C65,501.6 65,501.7 65,501.8 V502.2 C65,502.3 65,502.4 65,502.4 L66.2,503.4 C66.3,503.5 66.4,503.6 66.5,503.8 C66.5,504 66.5,504.1 66.4,504.3 L65.1,506.4 C65.1,506.5 64.9,506.6 64.8,506.7 C64.6,506.7 64.5,506.7 64.3,506.7 L62.9,506.1 C62.8,506.2 62.6,506.3 62.5,506.3 C62.4,506.4 62.2,506.5 62.1,506.5 L61.9,508.1 C61.9,508.2 61.8,508.4 61.7,508.5 C61.6,508.6 61.4,508.7 61.2,508.7 Z M60,504.3 C60.7,504.3 61.2,504.1 61.7,503.6 C62.1,503.2 62.4,502.6 62.4,502 C62.4,501.4 62.1,500.8 61.7,500.3 C61.2,499.9 60.7,499.7 60,499.7 C59.4,499.7 58.8,499.9 58.4,500.3 C57.9,500.8 57.7,501.4 57.7,502 C57.7,502.6 57.9,503.2 58.4,503.6 C58.8,504.1 59.4,504.3 60,504.3 Z"/>
-            <RadioButton Content="Báo cáo thống kê" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2"
+            <RadioButton Content="Báo cáo thống kê"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
                          Tag="M62,552.7 C62.2,552.7 62.3,552.6 62.5,552.5 C62.6,552.3 62.7,552.2 62.7,552 V551.3 H63.3 C63.5,551.3 63.7,551.3 63.8,551.1 C63.9,551 64,550.9 64,550.7 C64,550.5 63.9,550.3 63.8,550.2 C63.7,550.1 63.5,550 63.3,550 H62.7 V549.3 C62.7,549.1 62.6,549 62.5,548.9 C62.3,548.7 62.2,548.7 62,548.7 C61.8,548.7 61.7,548.7 61.5,548.9 C61.4,549 61.3,549.1 61.3,549.3 V550 H60.7 C60.5,550 60.3,550.1 60.2,550.2 C60.1,550.3 60,550.5 60,550.7 C60,550.9 60.1,551 60.2,551.1 C60.3,551.3 60.5,551.3 60.7,551.3 H61.3 V552 C61.3,552.2 61.4,552.3 61.5,552.5 C61.7,552.6 61.8,552.7 62,552.7 Z M54.7,555.3 C54.3,555.3 54,555.2 53.7,554.9 L53.3,554 V546 C53.3,545.6 53.4,545.3 53.7,545.1 C54,544.8 54.3,544.7 54.7,544.7 H58.1 C58.3,544.7 58.5,544.7 58.6,544.8 C58.8,544.8 58.9,544.9 59.1,545 L60,546 H65.3 C65.7,546 66,546.1 66.3,546.4 L66.7,547.3 V554 C66.7,554.4 66.5,554.7 66.3,554.9 C66,555.2 65.7,555.3 65.3,555.3 H54.7 Z"/>
-            <RadioButton Content="Bảo mật người dùng" GroupName="MainMenu" Style="{StaticResource SideMenuButtonStyle}" Margin="0,0,0,2"
+            <RadioButton Content="Bảo mật người dùng"
+                    GroupName="MainMenu"
+                    Style="{StaticResource SideMenuButtonStyle}"
+                    Margin="0,0,0,2"
                          Tag="M56,604.7 C55.6,604.7 55.3,604.5 55.1,604.3 L54.7,603.3 V596.7 C54.7,596.3 54.8,596 55.1,595.7 C55.3,595.5 55.6,595.3 56,595.3 H56.7 V594 C56.7,593.1 57,592.3 57.6,591.6 C58.3,591 59.1,590.7 60,590.7 C60.9,590.7 61.7,591 62.4,591.6 C63,592.3 63.3,593.1 63.3,594 V595.3 H64 C64.4,595.3 64.7,595.5 64.9,595.7 L65.3,596.7 V603.3 C65.3,603.7 65.2,604 64.9,604.3 C64.7,604.5 64.4,604.7 64,604.7 H56 Z M60,601.3 C60.4,601.3 60.7,601.2 60.9,600.9 C61.2,600.7 61.3,600.4 61.3,600 C61.3,599.6 61.2,599.3 60.9,599.1 C60.7,598.8 60.4,598.7 60,598.7 C59.6,598.7 59.3,598.8 59.1,599.1 C58.8,599.3 58.7,599.6 58.7,600 C58.7,600.4 58.8,600.7 59.1,600.9 C59.3,601.2 59.6,601.3 60,601.3 Z M58,595.3 H62 V594 C62,593.4 61.8,593 61.4,592.6 C61,592.2 60.6,592 60,592 C59.4,592 59,592.2 58.6,592.6 C58.2,593 58,593.4 58,594 V595.3 Z"/>
-            </StackPanel>
+        </StackPanel>
     </Border>
 </UserControl>

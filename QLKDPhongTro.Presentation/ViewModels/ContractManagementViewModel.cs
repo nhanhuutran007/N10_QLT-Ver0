@@ -1,269 +1,129 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using QLKDPhongTro.BusinessLayer.Controllers;
+using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public class CustomRelayCommand : ICommand
+    public partial class ContractManagementViewModel : ViewModelBase
     {
-        private readonly Action _execute;
-        private readonly Func<bool>? _canExecute;
+        private readonly ContractController _contractController;
 
-        public CustomRelayCommand(Action execute, Func<bool>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
+        [ObservableProperty]
+        private ObservableCollection<ContractDto> _contracts;
 
-        public event EventHandler? CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
-
-        public bool CanExecute(object? parameter)
-        {
-            return _canExecute?.Invoke() ?? true;
-        }
-
-        public void Execute(object? parameter)
-        {
-            _execute();
-        }
-    }
-
-    public class CustomRelayCommand<T> : ICommand
-    {
-        private readonly Action<T> _execute;
-        private readonly Func<T, bool>? _canExecute;
-
-        public CustomRelayCommand(Action<T> execute, Func<T, bool>? canExecute = null)
-        {
-            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-            _canExecute = canExecute;
-        }
-
-        public event EventHandler? CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
-
-        public bool CanExecute(object? parameter)
-        {
-            if (parameter is T typedParameter)
-            {
-                return _canExecute?.Invoke(typedParameter) ?? true;
-            }
-            return _canExecute?.Invoke(default(T)!) ?? true;
-        }
-
-        public void Execute(object? parameter)
-        {
-            if (parameter is T typedParameter)
-            {
-                _execute(typedParameter);
-            }
-            else
-            {
-                _execute(default(T)!);
-            }
-        }
-    }
-
-    public class ContractManagementViewModel : INotifyPropertyChanged
-    {
-        private string _searchText = string.Empty;
-        private ObservableCollection<ContractViewModel> _contracts;
-
-        public string SearchText
-        {
-            get => _searchText;
-            set
-            {
-                _searchText = value ?? string.Empty;
-                OnPropertyChanged();
-            }
-        }
-
-        public ObservableCollection<ContractViewModel> Contracts
-        {
-            get => _contracts;
-            set
-            {
-                _contracts = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public ICommand AddNewContractCommand { get; }
-        public ICommand DeleteContractCommand { get; }
-        public ICommand EditContractCommand { get; }
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
+        [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
+        private ContractDto _selectedContract;
 
         public ContractManagementViewModel()
         {
-            Contracts = new ObservableCollection<ContractViewModel>();
-            AddNewContractCommand = new CustomRelayCommand(AddNewContract);
-            DeleteContractCommand = new CustomRelayCommand<ContractViewModel>(DeleteContract);
-            EditContractCommand = new CustomRelayCommand<ContractViewModel>(EditContract);
-
-            LoadContracts();
+            _contractController = new ContractController(new ContractRepository());
+            _ = LoadContractsAsync();
         }
 
-        public void LoadContracts()
+        // 🔹 Load toàn bộ danh sách hợp đồng
+        private async System.Threading.Tasks.Task LoadContractsAsync()
         {
-            // Load sample contract data
-            Contracts.Clear();
-
-            // Sample data
-            Contracts.Add(new ContractViewModel
+            try
             {
-                ContractName = "HD_001_2024.pdf",
-                TenantName = "Nguyễn Văn A",
-                CreatedDate = DateTime.Now.AddDays(-30),
-                EndDate = DateTime.Now.AddMonths(11),
-                ContractId = 1
-            });
-
-            Contracts.Add(new ContractViewModel
-            {
-                ContractName = "HD_002_2024.pdf",
-                TenantName = "Trần Thị B",
-                CreatedDate = DateTime.Now.AddDays(-15),
-                EndDate = DateTime.Now.AddMonths(5),
-                ContractId = 2
-            });
-
-            Contracts.Add(new ContractViewModel
-            {
-                ContractName = "HD_003_2024.pdf",
-                TenantName = "Lê Văn C",
-                CreatedDate = DateTime.Now.AddDays(-5),
-                EndDate = DateTime.Now.AddMonths(8),
-                ContractId = 3
-            });
-        }
-
-        public void FilterContracts()
-        {
-            // Implement search/filter logic here
-            if (string.IsNullOrEmpty(SearchText))
-            {
-                LoadContracts();
+                var contractList = await _contractController.GetAllHopDongAsync();
+                Contracts = new ObservableCollection<ContractDto>(contractList);
             }
-            else
+            catch (Exception ex)
             {
-                // Filter contracts based on search text
-                // This is a simple implementation - you can enhance it
+                MessageBox.Show($"❌ Lỗi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void AddNewContract()
+        // 🔹 Lệnh: Thêm hợp đồng mới
+        [RelayCommand]
+        private void AddContract()
         {
-            // Open add contract dialog
-            var addContractWindow = new AddContractWindow();
-            if (addContractWindow.ShowDialog() == true)
+            try
             {
-                LoadContracts(); // Refresh the list
-            }
-        }
-
-        private void DeleteContract(ContractViewModel contract)
-        {
-            if (contract != null)
-            {
-                Contracts.Remove(contract);
-                // TODO: Delete from database
-            }
-        }
-
-        private void EditContract(ContractViewModel contract)
-        {
-            if (contract != null)
-            {
-                // Open edit contract dialog
-                var editContractWindow = new EditContractWindow(contract);
-                if (editContractWindow.ShowDialog() == true)
+                var vm = new AddContractViewModel(_contractController);
+                var win = new AddContractWindow(vm)
                 {
-                    LoadContracts(); // Refresh the list
+                    Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                bool? result = win.ShowDialog();
+                if (result == true)
+                    _ = LoadContractsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Lỗi khi mở form tạo hợp đồng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private bool CanEditOrDelete() => SelectedContract != null;
+
+        // 🔹 Lệnh: Sửa hợp đồng (mở lại AddContractWindow trong chế độ chỉnh sửa)
+        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
+        private void EditContract()
+        {
+            if (SelectedContract == null)
+            {
+                MessageBox.Show("⚠️ Vui lòng chọn hợp đồng để chỉnh sửa.");
+                return;
+            }
+
+            try
+            {
+                var vm = new AddContractViewModel(_contractController, SelectedContract);
+                var win = new AddContractWindow(vm)
+                {
+                    Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive)
+                };
+
+                bool? result = win.ShowDialog();
+                if (result == true)
+                    _ = LoadContractsAsync(); // reload list after editing
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Lỗi khi mở form sửa hợp đồng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // 🔹 Lệnh: Xóa hợp đồng
+        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
+        private void DeleteContract()
+        {
+            if (SelectedContract == null)
+            {
+                MessageBox.Show("⚠️ Vui lòng chọn hợp đồng để xóa.");
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Bạn có chắc chắn muốn xóa hợp đồng của '{SelectedContract.TenNguoiThue}'?",
+                "Xác nhận xóa",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirm == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    _ = _contractController.DeleteHopDongAsync(SelectedContract.MaHopDong);
+                    MessageBox.Show("✅ Hợp đồng đã được xóa thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    _ = LoadContractsAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"❌ Lỗi khi xóa: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-
-    public class ContractViewModel : INotifyPropertyChanged
-    {
-        private string _contractName = string.Empty;
-        private string _tenantName = string.Empty;
-        private DateTime _createdDate;
-        private DateTime _endDate;
-        private int _contractId;
-
-        public string ContractName
-        {
-            get => _contractName;
-            set
-            {
-                _contractName = value ?? string.Empty;
-                OnPropertyChanged();
-            }
-        }
-
-        public string TenantName
-        {
-            get => _tenantName;
-            set
-            {
-                _tenantName = value ?? string.Empty;
-                OnPropertyChanged();
-            }
-        }
-
-        public DateTime CreatedDate
-        {
-            get => _createdDate;
-            set
-            {
-                _createdDate = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public DateTime EndDate
-        {
-            get => _endDate;
-            set
-            {
-                _endDate = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public int ContractId
-        {
-            get => _contractId;
-            set
-            {
-                _contractId = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
