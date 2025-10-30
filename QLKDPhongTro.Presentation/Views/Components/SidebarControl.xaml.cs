@@ -163,5 +163,12 @@ namespace QLKDPhongTro.Presentation.Views.Components
                 return;
             NavigateToWindow<PaymentListView>();
         }
+
+        private void Maintenance_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+            NavigateToWindow<MaintenanceListView>();
+        }
     }
 }
