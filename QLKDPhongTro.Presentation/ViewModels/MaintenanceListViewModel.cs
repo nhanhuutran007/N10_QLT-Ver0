@@ -96,7 +96,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public string SearchText
         {
             get => _searchText;
-            set { _searchText = value ?? string.Empty; OnPropertyChanged(); ApplySortAndPage(); }
+            set { _searchText = value ?? string.Empty; OnPropertyChanged(); PageIndex = 1; ApplySortAndPage(); }
         }
 
         private string _paginationText = string.Empty;

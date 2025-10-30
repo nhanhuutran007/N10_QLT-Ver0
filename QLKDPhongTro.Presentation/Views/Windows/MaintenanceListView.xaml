@@ -172,10 +172,27 @@
                                     Width="200"/>
                             <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Right">
-                                <TextBox Width="250"
-                                        Height="40"
-                                        VerticalContentAlignment="Center"
-                                        Tag="Tìm kiếm bảo trì..."/>
+                                <Grid Width="250" Height="40">
+                                    <Border Background="#FFFFFF" CornerRadius="4"/>
+                                    <TextBlock Text="Tìm kiếm bảo trì..." Foreground="#7D8FA9" FontSize="14" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=InlineSearchTextBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox x:Name="InlineSearchTextBox"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             VerticalContentAlignment="Center"
+                                             Margin="10,0,10,0"
+                                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
                                 <ComboBox Width="190"
                                         Height="40"
                                         VerticalContentAlignment="Center"
