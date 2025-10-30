@@ -28,6 +28,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 _financialStats = value;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(RevenueDataPoints));
+                OnPropertyChanged(nameof(ExpenseDataPoints));
+                OnPropertyChanged(nameof(ProfitDataPoints));
             }
         }
 
@@ -89,6 +92,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public DebtReportDto? SelectedDebt { get; set; }
 
+        // Dữ liệu cho biểu đồ
+        public ObservableCollection<ChartDataPoint> RevenueDataPoints { get; } = new ObservableCollection<ChartDataPoint>();
+        public ObservableCollection<ChartDataPoint> ExpenseDataPoints { get; } = new ObservableCollection<ChartDataPoint>();
+        public ObservableCollection<ChartDataPoint> ProfitDataPoints { get; } = new ObservableCollection<ChartDataPoint>();
+
         #endregion
 
         #region Commands
@@ -104,6 +112,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand ClearSearchCommand { get; }
         public ICommand ClearDateFilterCommand { get; }
         public ICommand SearchCommand { get; }
+        public ICommand ToggleChartViewCommand { get; }
 
         #endregion
 
@@ -149,6 +158,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             ClearSearchCommand = new RelayCommand(ClearSearch);
             ClearDateFilterCommand = new RelayCommand(ClearDateFilter);
             SearchCommand = new RelayCommand(async () => await SearchDebtsAsync());
+            ToggleChartViewCommand = new RelayCommand(ToggleChartView);
 
             // Load dữ liệu ban đầu
             _ = InitializeAsync();
@@ -361,6 +371,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _ = FilterTransactionsAsync();
         }
 
+        public void ToggleChartView()
+        {
+            // Có thể mở rộng để chuyển đổi giữa các loại biểu đồ
+            ShowMessageRequested?.Invoke(this, "Chuyển đổi chế độ xem biểu đồ");
+        }
+
         #endregion
 
         #region Private Helpers
@@ -409,6 +425,38 @@ namespace QLKDPhongTro.Presentation.ViewModels
             Debts = new ObservableCollection<DebtReportDto>(sampleDebts);
 
             await LoadSampleTransactions();
+            await LoadSampleChartData();
+            await Task.CompletedTask;
+        }
+
+        // Thêm vào class FinancialDashboardViewModel
+        public Func<double, string> CurrencyFormatter => value => $"{value:N0} VNĐ";
+
+        // Cập nhật phương thức LoadSampleChartData để thêm labels
+        private async Task LoadSampleChartData()
+        {
+            // Dữ liệu mẫu cho biểu đồ - 6 tháng gần nhất
+            var months = new[] { "7/2024", "8/2024", "9/2024", "10/2024", "11/2024", "12/2024" };
+            var revenues = new[] { 10000000, 11000000, 12000000, 11500000, 12500000, 13000000 };
+            var expenses = new[] { 3000000, 3200000, 3400000, 3300000, 3500000, 3600000 };
+            var profits = new[] { 7000000, 7800000, 8600000, 8200000, 9000000, 9400000 };
+
+            RevenueDataPoints.Clear();
+            ExpenseDataPoints.Clear();
+            ProfitDataPoints.Clear();
+
+            for (int i = 0; i < months.Length; i++)
+            {
+                RevenueDataPoints.Add(new ChartDataPoint { Label = months[i], Value = revenues[i] });
+                ExpenseDataPoints.Add(new ChartDataPoint { Label = months[i], Value = expenses[i] });
+                ProfitDataPoints.Add(new ChartDataPoint { Label = months[i], Value = profits[i] });
+            }
+
+            // Thông báo cập nhật cho biểu đồ
+            OnPropertyChanged(nameof(RevenueDataPoints));
+            OnPropertyChanged(nameof(ExpenseDataPoints));
+            OnPropertyChanged(nameof(ProfitDataPoints));
+
             await Task.CompletedTask;
         }
 
@@ -443,6 +491,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public decimal TotalTransactionAmount => TransactionHistory.Sum(t => t.SoTien);
 
         #endregion
+    }
+
+    // Lớp hỗ trợ cho dữ liệu biểu đồ
+    public class ChartDataPoint
+    {
+        public string Label { get; set; } = string.Empty;
+        public decimal Value { get; set; }
     }
 }
 

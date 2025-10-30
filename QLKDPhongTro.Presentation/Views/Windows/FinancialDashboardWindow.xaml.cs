@@ -24,9 +24,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             _viewModel.ShowMessageRequested += OnShowMessageRequested;
             _viewModel.DataRefreshed += OnDataRefreshed;
 
-            // Đăng ký sự kiện từ Sidebar
-            SubscribeToSidebarEvents();
-
             // Set window properties
             this.MinHeight = 600;
             this.MinWidth = 800;
@@ -37,24 +34,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             Loaded += OnLoaded;
         }
 
-        private void SubscribeToSidebarEvents()
-        {
-            var sidebar = FindName("SidebarControl") as SidebarControl;
-            if (sidebar != null)
-            {
-                sidebar.MenuItemClicked += SidebarControl_MenuItemClicked;
-                sidebar.LogoutClicked += SidebarControl_LogoutClicked;
-            }
-        }
-
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             _ = _viewModel.LoadDataAsync();
         }
-        public void Button_Click()
-        {
 
-        }
         #region ViewModel Event Handlers
 
         private void OnShowPaymentFormRequested(object sender, EventArgs e) => ShowPaymentForm();
@@ -71,9 +55,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var contractWindow = new ContractManagementWindow();
-                contractWindow.Show();
-                this.Close();
+                // var contractWindow = new ContractManagementWindow();
+                // contractWindow.Show();
+                // this.Close();
+                MessageBox.Show("Chuyển đến Quản lý Hợp đồng", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -86,9 +71,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var roomWindow = new RoomWindow();
-                roomWindow.Show();
-                this.Close();
+                // var roomWindow = new RoomWindow();
+                // roomWindow.Show();
+                // this.Close();
+                MessageBox.Show("Chuyển đến Quản lý Phòng", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -101,9 +87,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var tenantWindow = new TenantManagementWindow();
-                tenantWindow.Show();
-                this.Close();
+                // var tenantWindow = new TenantManagementWindow();
+                // tenantWindow.Show();
+                // this.Close();
+                MessageBox.Show("Chuyển đến Quản lý Người thuê", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -116,9 +103,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var overviewWindow = new DashWindow();
-                overviewWindow.Show();
-                this.Close();
+                // var overviewWindow = new DashWindow();
+                // overviewWindow.Show();
+                // this.Close();
+                MessageBox.Show("Chuyển đến Tổng quan", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -131,16 +119,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var paymentWindow = new PaymentFormWindow();
-        
-                // Đăng ký sự kiện để refresh data sau khi lưu
-                if (paymentWindow.DataContext is PaymentFormViewModel paymentVM)
-                {
-                    paymentVM.PaymentSaved += (s, e) => _ = _viewModel.RefreshDataAsync();
-                }
-        
-                paymentWindow.Owner = this;
-                paymentWindow.ShowDialog(); // ✅ Chỉ đóng dialog, không đóng window chính
+                // var paymentWindow = new PaymentFormWindow();
+                // paymentWindow.Owner = this;
+                // paymentWindow.ShowDialog();
+                MessageBox.Show("Mở form thanh toán", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -153,16 +135,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var expenseWindow = new ExpenseFormWindow();
-        
-                // Đăng ký sự kiện để refresh data sau khi lưu
-                if (expenseWindow.DataContext is ExpenseFormViewModel expenseVM)
-                {
-                    expenseVM.ExpenseSaved += (s, e) => _ = _viewModel.RefreshDataAsync();
-                }
-        
-                expenseWindow.Owner = this;
-                expenseWindow.ShowDialog(); // ✅ Chỉ đóng dialog, không đóng window chính
+                // var expenseWindow = new ExpenseFormWindow();
+                // expenseWindow.Owner = this;
+                // expenseWindow.ShowDialog();
+                MessageBox.Show("Mở form chi phí", "Thông báo");
             }
             catch (Exception ex)
             {
@@ -243,10 +219,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             try
             {
                 // Toggle sidebar visibility
-                var sidebar = FindName("SidebarControl") as System.Windows.Controls.Grid;
-                if (sidebar != null)
+                var sidebarColumn = this.FindName("SidebarControl") as System.Windows.Controls.Grid;
+                if (sidebarColumn != null)
                 {
-                    sidebar.Visibility = sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+                    sidebarColumn.Visibility = sidebarColumn.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
                 }
             }
             catch (Exception ex)
@@ -337,14 +313,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     _viewModel.ShowExpenseFormRequested -= OnShowExpenseFormRequested;
                     _viewModel.ShowMessageRequested -= OnShowMessageRequested;
                     _viewModel.DataRefreshed -= OnDataRefreshed;
-                }
-
-                // Hủy đăng ký sự kiện từ Sidebar
-                var sidebar = FindName("SidebarControl") as SidebarControl;
-                if (sidebar != null)
-                {
-                    sidebar.MenuItemClicked -= SidebarControl_MenuItemClicked;
-                    sidebar.LogoutClicked -= SidebarControl_LogoutClicked;
                 }
             }
             catch (Exception ex)
