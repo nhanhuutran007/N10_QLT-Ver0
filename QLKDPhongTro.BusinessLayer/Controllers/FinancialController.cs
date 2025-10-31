@@ -30,6 +30,19 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
+        /// Tạo controller với các repository mặc định (DataLayer) – tránh để Presentation tầng thao tác trực tiếp repo
+        /// </summary>
+        public static FinancialController CreateDefault()
+        {
+            return new FinancialController(
+                new PaymentRepository(),
+                new ContractRepository(),
+                new RentedRoomRepository(),
+                new TenantRepository()
+            );
+        }
+
+        /// <summary>
         /// Lấy tất cả thanh toán
         /// </summary>
         public async Task<List<PaymentDto>> GetAllPaymentsAsync()
@@ -218,7 +231,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<DebtReportDto>> GetDebtReportAsync(string? thangNam = null)
         {
             var allPayments = await _paymentRepository.GetAllAsync();
-            var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa thanh toán" &&
+            var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả" &&
                 (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam));
 
             // Map từ model sang DTO
@@ -339,7 +352,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var monthlyStat = new MonthlyStatsDto
                 {
                     ThangNam = $"{monthStr}/{currentYear}",
-                    ThuNhap = monthlyPayments.Where(p => p.TrangThaiThanhToan == "Đã thanh toán")
+                    ThuNhap = monthlyPayments.Where(p => p.TrangThaiThanhToan == "Đã trả")
                                             .Sum(p => p.TongTien),
                     ChiPhi = monthlyPayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
                                              (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
@@ -351,6 +364,96 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
 
             return stats;
+        }
+
+        /// <summary>
+        /// Cập nhật trạng thái thanh toán (Đã trả/Chưa trả) và ngày thanh toán theo chuẩn DB
+        /// </summary>
+        public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
+        {
+            var normalized = (trangThaiChuan ?? string.Empty).Trim();
+            if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ValidationResult(false, "Trạng thái không hợp lệ. Chỉ chấp nhận 'Đã trả' hoặc 'Chưa trả'.");
+            }
+
+            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
+            if (payment == null)
+            {
+                return new ValidationResult(false, "Thanh toán không tồn tại");
+            }
+
+            var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
+            payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
+            payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
+
+            var success = await _paymentRepository.UpdateAsync(payment);
+            return new ValidationResult(success,
+                success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại",
+                new PaymentDto
+                {
+                    MaThanhToan = payment.MaThanhToan,
+                    MaHopDong = payment.MaHopDong ?? 0,
+                    ThangNam = payment.ThangNam,
+                    TienThue = payment.TienThue ?? 0,
+                    TienDien = payment.TienDien ?? 0,
+                    TienNuoc = payment.TienNuoc ?? 0,
+                    TienInternet = payment.TienInternet ?? 0,
+                    TienVeSinh = payment.TienVeSinh ?? 0,
+                    TienGiuXe = payment.TienGiuXe ?? 0,
+                    ChiPhiKhac = payment.ChiPhiKhac ?? 0,
+                    TongTien = payment.TongTien,
+                    TrangThaiThanhToan = payment.TrangThaiThanhToan,
+                    NgayThanhToan = payment.NgayThanhToan
+                });
+        }
+
+        /// <summary>
+        /// Xóa thanh toán theo ID
+        /// </summary>
+        public async Task<ValidationResult> DeletePaymentAsync(int maThanhToan)
+        {
+            var success = await _paymentRepository.DeleteAsync(maThanhToan);
+            return new ValidationResult(success,
+                success ? "Xóa thanh toán thành công" : "Xóa thanh toán thất bại");
+        }
+
+        /// <summary>
+        /// Lấy thông tin chi tiết hóa đơn thanh toán theo mã thanh toán
+        /// </summary>
+        public async Task<InvoiceDetailDto?> GetInvoiceDetailAsync(int maThanhToan)
+        {
+            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
+            if (payment == null) return null;
+
+            var contract = payment.MaHopDong.HasValue
+                ? await _contractRepository.GetByIdAsync(payment.MaHopDong.Value)
+                : null;
+
+            var tenant = contract != null
+                ? await _tenantRepository.GetByIdAsync(contract.MaNguoiThue)
+                : null;
+
+            return new InvoiceDetailDto
+            {
+                MaThanhToan = payment.MaThanhToan,
+                ThangNam = payment.ThangNam,
+                NgayThanhToan = payment.NgayThanhToan,
+                TrangThaiThanhToan = payment.TrangThaiThanhToan ?? "Chưa trả",
+                TongTien = payment.TongTien,
+                MaHopDong = payment.MaHopDong ?? 0,
+                HoTen = tenant?.HoTen ?? "Không xác định",
+                CCCD = tenant?.CCCD ?? "Không xác định",
+                SoDienThoai = tenant?.SoDienThoai ?? "Không xác định",
+                TienThue = payment.TienThue ?? 0,
+                TienDien = payment.TienDien ?? 0,
+                TienNuoc = payment.TienNuoc ?? 0,
+                TienInternet = payment.TienInternet ?? 0,
+                TienVeSinh = payment.TienVeSinh ?? 0,
+                TienGiuXe = payment.TienGiuXe ?? 0,
+                ChiPhiKhac = payment.ChiPhiKhac ?? 0
+            };
         }
 
         /// <summary>
