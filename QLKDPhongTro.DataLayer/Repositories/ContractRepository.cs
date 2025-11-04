@@ -134,6 +134,22 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
+        public async Task<List<Contract>> GetActiveContractsByTenantAsync(int maNguoiThue)
+        {
+            var contracts = new List<Contract>();
+            using var connection = new SqlConnection(_connectionString);
+            var command = new SqlCommand("SELECT * FROM HopDong WHERE TrangThai = N'Hiệu lực' AND MaNguoiThue = @MaNguoiThue", connection);
+            command.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContract(reader));
+            }
+            return contracts;
+        }
+
         private static Contract ReadContract(SqlDataReader reader)
         {
             return new Contract

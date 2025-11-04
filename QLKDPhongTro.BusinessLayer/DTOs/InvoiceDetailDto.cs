@@ -30,6 +30,24 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TienVeSinh { get; set; }
         public decimal TienGiuXe { get; set; }
         public decimal ChiPhiKhac { get; set; }
+
+        // Điện nước chi tiết
+        public decimal? DonGiaDien { get; set; }
+        public decimal? DonGiaNuoc { get; set; }
+        public decimal? SoDien { get; set; }
+        public decimal? SoNuoc { get; set; }
+
+        // Các giá trị tính toán (không lấy từ DB)
+        public decimal TamTinhDien => (DonGiaDien ?? 0) * (SoDien ?? 0);
+        public decimal TamTinhNuoc => (DonGiaNuoc ?? 0) * (SoNuoc ?? 0);
+        public decimal TamTinhThue => TienThue;
+        public decimal TamTinhInternet => TienInternet;
+        public decimal TamTinhVeSinh => TienVeSinh;
+        public decimal TamTinhGiuXe => TienGiuXe;
+        public decimal TamTinhKhac => ChiPhiKhac;
+        public decimal TamTinh => TamTinhThue + TamTinhDien + TamTinhNuoc + TamTinhInternet + TamTinhVeSinh + TamTinhGiuXe + TamTinhKhac;
+        public decimal KhauTru { get; set; } = 0;
+        public decimal TongTienTinhToan => TamTinh - KhauTru;
     }
 }
 

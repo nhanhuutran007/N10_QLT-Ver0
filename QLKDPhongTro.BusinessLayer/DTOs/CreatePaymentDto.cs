@@ -21,6 +21,20 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         [Range(0, double.MaxValue, ErrorMessage = "Tiền nước không được âm")]
         public decimal TienNuoc { get; set; }
 
+        // Chỉ số điện nước - mặc định là 0
+        [Range(0, double.MaxValue, ErrorMessage = "Chỉ số điện không được âm")]
+        public decimal SoDien { get; set; } = 0;
+
+        [Range(0, double.MaxValue, ErrorMessage = "Chỉ số nước không được âm")]
+        public decimal SoNuoc { get; set; } = 0;
+
+        // Đơn giá điện nước - mặc định là 0
+        [Range(0, double.MaxValue, ErrorMessage = "Đơn giá điện không được âm")]
+        public decimal DonGiaDien { get; set; } = 0;
+
+        [Range(0, double.MaxValue, ErrorMessage = "Đơn giá nước không được âm")]
+        public decimal DonGiaNuoc { get; set; } = 0;
+
         [Range(0, double.MaxValue, ErrorMessage = "Tiền internet không được âm")]
         public decimal TienInternet { get; set; }
 

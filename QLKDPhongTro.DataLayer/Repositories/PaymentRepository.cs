@@ -29,7 +29,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
                     FROM ThanhToan tt
                     LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -59,7 +60,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
                             SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
                         });
                     }
                 }
@@ -76,7 +81,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
                     FROM ThanhToan tt
                     LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -107,7 +113,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
                             SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
                         };
                     }
                 }
@@ -122,21 +132,27 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new SqlCommand(@"
                     INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienDien, TienNuoc, TienInternet, 
-                                          TienVeSinh, TienGiuXe, ChiPhiKhac, TrangThaiThanhToan, NgayThanhToan)
+                                          TienVeSinh, TienGiuXe, ChiPhiKhac, TrangThaiThanhToan, NgayThanhToan,
+                                          DonGiaDien, DonGiaNuoc, SoDien, SoNuoc)
                     VALUES (@MaHopDong, @ThangNam, @TienThue, @TienDien, @TienNuoc, @TienInternet, 
-                           @TienVeSinh, @TienGiuXe, @ChiPhiKhac, @TrangThaiThanhToan, @NgayThanhToan)", conn);
+                           @TienVeSinh, @TienGiuXe, @ChiPhiKhac, @TrangThaiThanhToan, @NgayThanhToan,
+                           @DonGiaDien, @DonGiaNuoc, @SoDien, @SoNuoc)", conn);
 
                 cmd.Parameters.AddWithValue("@MaHopDong", payment.MaHopDong ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@ThangNam", payment.ThangNam);
-                cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? 0);
+                cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? 0);
+                cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? 0);
+                cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? 0);
+                cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? 0);
+                cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
+                cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
                 cmd.Parameters.AddWithValue("@TrangThaiThanhToan", payment.TrangThaiThanhToan);
                 cmd.Parameters.AddWithValue("@NgayThanhToan", payment.NgayThanhToan ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@DonGiaDien", payment.DonGiaDien ?? 0);
+                cmd.Parameters.AddWithValue("@DonGiaNuoc", payment.DonGiaNuoc ?? 0);
+                cmd.Parameters.AddWithValue("@SoDien", payment.SoDien ?? 0);
+                cmd.Parameters.AddWithValue("@SoNuoc", payment.SoNuoc ?? 0);
 
                 var result = await cmd.ExecuteNonQueryAsync();
                 return result > 0;
@@ -153,21 +169,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SET MaHopDong = @MaHopDong, ThangNam = @ThangNam, TienThue = @TienThue, 
                         TienDien = @TienDien, TienNuoc = @TienNuoc, TienInternet = @TienInternet,
                         TienVeSinh = @TienVeSinh, TienGiuXe = @TienGiuXe, ChiPhiKhac = @ChiPhiKhac,
-                        TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan
+                        TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan,
+                        DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc
                     WHERE MaThanhToan = @MaThanhToan", conn);
 
                 cmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);
                 cmd.Parameters.AddWithValue("@MaHopDong", payment.MaHopDong ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("@ThangNam", payment.ThangNam);
-                cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? 0);
+                cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? 0);
+                cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? 0);
+                cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? 0);
+                cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? 0);
+                cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
+                cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
                 cmd.Parameters.AddWithValue("@TrangThaiThanhToan", payment.TrangThaiThanhToan);
                 cmd.Parameters.AddWithValue("@NgayThanhToan", payment.NgayThanhToan ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@DonGiaDien", payment.DonGiaDien ?? 0);
+                cmd.Parameters.AddWithValue("@DonGiaNuoc", payment.DonGiaNuoc ?? 0);
+                cmd.Parameters.AddWithValue("@SoDien", payment.SoDien ?? 0);
+                cmd.Parameters.AddWithValue("@SoNuoc", payment.SoNuoc ?? 0);
 
                 var result = await cmd.ExecuteNonQueryAsync();
                 return result > 0;
@@ -251,7 +272,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
                     FROM ThanhToan tt
                     LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -294,7 +316,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
                             SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
                         });
                     }
                 }
@@ -312,7 +338,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
                     FROM ThanhToan tt
                     LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -345,7 +372,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
                             SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
                         });
                     }
                 }
@@ -614,7 +645,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
                     FROM ThanhToan tt
                     LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -647,7 +679,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
                             SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
                         });
                     }
                 }
