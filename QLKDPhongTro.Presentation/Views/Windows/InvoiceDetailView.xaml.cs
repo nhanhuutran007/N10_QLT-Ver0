@@ -2,9 +2,12 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Controllers;
+using QLKDPhongTro.Presentation.Services;
 using System;
 using System.IO;
 using System.Windows.Input;
+using Microsoft.Win32;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -24,7 +27,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.MinWidth = 800;
             this.MinHeight = 600;
             this.Width = 1200;
-            this.Height = 850;
+            this.Height = 700;
         }
 
         public InvoiceDetailView(InvoiceDetailDto invoiceData) : this()
@@ -169,6 +172,113 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             var current = InvoiceData;
             InvoiceData = null;
             InvoiceData = current;
+        }
+
+        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (InvoiceData == null)
+            {
+                MessageBox.Show("Không có dữ liệu hóa đơn để tải xuống.", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                // Hiển thị dialog để chọn nơi lưu file
+                var saveDialog = new SaveFileDialog
+                {
+                    Filter = "PDF files (*.pdf)|*.pdf",
+                    FileName = $"HoaDon_{InvoiceData.MaThanhToan}_{InvoiceData.ThangNam.Replace("/", "_")}.pdf",
+                    DefaultExt = "pdf",
+                    Title = "Lưu hóa đơn PDF"
+                };
+
+                if (saveDialog.ShowDialog() == true)
+                {
+                    // Lấy thông tin contract và room
+                    ContractDto? contract = null;
+                    string tenPhong = "N/A";
+                    int soNguoiLuuTru = 1;
+                    string email = "";
+
+                    if (InvoiceData.MaHopDong > 0)
+                    {
+                        var contractController = ContractController.CreateDefault();
+                        contract = await contractController.GetByIdAsync(InvoiceData.MaHopDong);
+                        if (contract != null)
+                        {
+                            // Lấy tên phòng từ database dựa trên MaPhong từ contract
+                            if (contract.MaPhong > 0)
+                            {
+                                var financialController = FinancialController.CreateDefault();
+                                var room = await financialController.GetRoomByIdAsync(contract.MaPhong);
+                                if (room != null)
+                                {
+                                    tenPhong = room.TenPhong ?? "N/A";
+                                }
+                            }
+                            else
+                            {
+                                tenPhong = contract.TenPhong ?? "N/A";
+                            }
+                        }
+                    }
+
+                    // Chuyển đổi sang PlumeriaInvoiceDto
+                    var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(contract, email, tenPhong, soNguoiLuuTru);
+
+                    // Tìm logo path
+                    string logoPath = FindLogoPath();
+
+                    // Tạo file PDF
+                    string filePath = saveDialog.FileName;
+                    PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, filePath, logoPath);
+
+                    MessageBox.Show($"Đã tải hóa đơn thành công!\nĐường dẫn: {filePath}", 
+                        "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // Mở file PDF sau khi tạo (tùy chọn)
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = filePath,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch
+                    {
+                        // Bỏ qua nếu không thể mở file
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tạo file PDF: {ex.Message}", "Lỗi", 
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private string FindLogoPath()
+        {
+            // Tìm logo trong Resources hoặc Output folder
+            var paths = new[]
+            {
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Images", "Logo.png"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Images", "logo.png"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Images", "Logo.jpg"),
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Images", "logo.jpg")
+            };
+
+            foreach (var path in paths)
+            {
+                if (File.Exists(path))
+                    return path;
+            }
+
+            // Nếu không tìm thấy, trả về empty string
+            return string.Empty;
         }
     }
 }

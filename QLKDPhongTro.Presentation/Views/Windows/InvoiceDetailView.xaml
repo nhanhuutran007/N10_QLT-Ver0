@@ -6,7 +6,7 @@
         MinWidth="800"
         MinHeight="600"
         Width="1200"
-        Height="650"
+        Height="700"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -17,7 +17,7 @@
         Loaded="InvoiceDetailView_Loaded">
 
     <Window.Resources>
-        <!-- Style cho các nút Download / Print -->
+        <!-- Style cho nút Download -->
         <Style TargetType="{x:Type Button}"
                 x:Key="ActionButtonStyle">
             <Setter Property="Background"
@@ -176,22 +176,13 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Top">
                     <Button Style="{StaticResource ActionButtonStyle}"
-                            Width="110">
+                            Width="110"
+                            Click="DownloadButton_Click"
+                            x:Name="DownloadButtonHeader">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Download"
                                     VerticalAlignment="Center"/>
                             <TextBlock Text="⬇️"
-                                    Margin="5,0,0,0"
-                                    FontSize="12"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource ActionButtonStyle}"
-                            Width="90"
-                            Margin="10,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Print"
-                                    VerticalAlignment="Center"/>
-                            <TextBlock Text="🖨️"
                                     Margin="5,0,0,0"
                                     FontSize="12"/>
                         </StackPanel>
@@ -821,22 +812,13 @@
                     <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right">
                         <Button Style="{StaticResource ActionButtonStyle}"
-                                Width="110">
+                                Width="110"
+                                Click="DownloadButton_Click"
+                                x:Name="DownloadButtonFooter">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Download"
                                         VerticalAlignment="Center"/>
                                 <TextBlock Text="⬇️"
-                                        Margin="5,0,0,0"
-                                        FontSize="12"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource ActionButtonStyle}"
-                                Width="90"
-                                Margin="10,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Print"
-                                        VerticalAlignment="Center"/>
-                                <TextBlock Text="🖨️"
                                         Margin="5,0,0,0"
                                         FontSize="12"/>
                             </StackPanel>
