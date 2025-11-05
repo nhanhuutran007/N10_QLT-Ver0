@@ -18,13 +18,13 @@
         <!-- Converters -->
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
-        <!-- Common Styles -->
+        <!-- Common Styles - Đồng bộ với PaymentFormWindow -->
         <Style TargetType="{x:Type Button}"
-                x:Key="PrimaryButtonStyle">
-            <Setter Property="Background"
-                    Value="#10D096"/>
-            <Setter Property="Foreground"
-                    Value="White"/>
+                x:Key="FormButtonStyle">
+            <Setter Property="Height"
+                    Value="40"/>
+            <Setter Property="Padding"
+                    Value="20,0"/>
             <Setter Property="FontSize"
                     Value="14"/>
             <Setter Property="FontWeight"
@@ -33,10 +33,6 @@
                     Value="0"/>
             <Setter Property="Cursor"
                     Value="Hand"/>
-            <Setter Property="Height"
-                    Value="40"/>
-            <Setter Property="Padding"
-                    Value="20,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type Button}">
@@ -45,16 +41,26 @@
                             <ContentPresenter HorizontalAlignment="Center"
                                     VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                    Value="True">
+                                <Setter Property="Background"
+                                        Value="#0EBE8C"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver"
-                        Value="True">
-                    <Setter Property="Background"
-                            Value="#0DB882"/>
-                </Trigger>
-            </Style.Triggers>
+        </Style>
+
+        <!-- Alias cho PrimaryButtonStyle để giữ tương thích -->
+        <Style TargetType="{x:Type Button}"
+                x:Key="PrimaryButtonStyle"
+                BasedOn="{StaticResource FormButtonStyle}">
+            <Setter Property="Background"
+                    Value="#10D096"/>
+            <Setter Property="Foreground"
+                    Value="White"/>
         </Style>
 
         <Style TargetType="Button"
@@ -128,6 +134,124 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Style cho ComboBox giống PaymentFormWindow -->
+        <Style TargetType="{x:Type ComboBox}"
+                x:Key="FormComboBoxStyle">
+            <Setter Property="Height"
+                    Value="40"/>
+            <Setter Property="Padding"
+                    Value="10"/>
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+            <Setter Property="BorderBrush"
+                    Value="#D1D5DB"/>
+            <Setter Property="BorderThickness"
+                    Value="1"/>
+            <Setter Property="Background"
+                    Value="White"/>
+            <Setter Property="FontSize"
+                    Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                ClipToBounds="True">
+                            <Grid>
+                                <ToggleButton Name="ToggleButton"
+                                        Focusable="false"
+                                        IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ClickMode="Press"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderThickness="0"
+                                                    CornerRadius="6">
+                                                <ContentPresenter HorizontalAlignment="Left"
+                                                        VerticalAlignment="Center"
+                                                        Margin="10,0,0,0"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                    <Path x:Name="Arrow"
+                                          Fill="#666"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Margin="0,0,10,0"
+                                          Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                </ToggleButton>
+                                <ContentPresenter Name="ContentSite"
+                                        IsHitTestVisible="False"
+                                        Content="{TemplateBinding SelectionBoxItem}"
+                                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                        ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                        Margin="10,0,25,0"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Left"/>
+                                <TextBox x:Name="PART_EditableTextBox"
+                                        Style="{x:Null}"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Margin="10,0,25,0"
+                                        Focusable="True"
+                                        Background="Transparent"
+                                        Visibility="Hidden"
+                                        IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                <Popup Name="Popup"
+                                       Placement="Bottom"
+                                       IsOpen="{TemplateBinding IsDropDownOpen}"
+                                       AllowsTransparency="True"
+                                       Focusable="False"
+                                       PopupAnimation="Slide">
+                                    <Grid Name="DropDown"
+                                          SnapsToDevicePixels="True"
+                                          MinWidth="{TemplateBinding ActualWidth}"
+                                          MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder"
+                                                Background="White"
+                                                BorderThickness="1"
+                                                BorderBrush="#D1D5DB"
+                                                CornerRadius="6"
+                                                Margin="0,4,0,0">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#000000" Opacity="0.1" ShadowDepth="4" BlurRadius="8"/>
+                                            </Border.Effect>
+                                            <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#9CA3AF"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#10D096"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="Arrow" Property="Data" Value="M 0 4 L 4 0 L 8 4 Z"/>
+                            </Trigger>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter Property="IsHitTestVisible" TargetName="PART_EditableTextBox" Value="True"/>
+                                <Setter Property="Visibility" TargetName="PART_EditableTextBox" Value="Visible"/>
+                                <Setter Property="Visibility" TargetName="ContentSite" Value="Hidden"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -194,8 +318,7 @@
                                              Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                                 </Grid>
                                 <ComboBox Width="190"
-                                        Height="40"
-                                        VerticalContentAlignment="Center"
+                                        Style="{StaticResource FormComboBoxStyle}"
                                         Margin="10,0,0,0"
                                         SelectedValue="{Binding SortOrder, Mode=TwoWay}"
                                         SelectedValuePath="Tag">
@@ -213,8 +336,7 @@
                             <!-- Sub Action Bar -->
                             <Grid Margin="20">
                                 <ComboBox Width="180"
-                                        Height="40"
-                                        VerticalContentAlignment="Center"
+                                        Style="{StaticResource FormComboBoxStyle}"
                                         HorizontalAlignment="Left"
                                         SelectedValue="{Binding PageSize, Mode=TwoWay}"
                                         SelectedValuePath="Tag">

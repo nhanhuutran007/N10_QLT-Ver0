@@ -11,5 +11,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task AddAsync(MaintenanceIncident incident);
         Task UpdateAsync(MaintenanceIncident incident);
         Task DeleteAsync(int id);
+        Task MarkAsDeletedFromSyncAsync(int maPhong, string moTaSuCo, DateTime ngayBaoCao);
+        Task<bool> IsDeletedFromSyncAsync(int maPhong, string moTaSuCo, DateTime ngayBaoCao);
     }
 }

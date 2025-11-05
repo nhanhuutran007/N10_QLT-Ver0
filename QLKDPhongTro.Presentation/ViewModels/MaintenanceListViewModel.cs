@@ -1,6 +1,7 @@
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.Commands;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -133,6 +134,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public async Task LoadDataAsync()
         {
+            try
+            {
+                // Đồng bộ dữ liệu từ Google Sheets trước khi load
+                var addedCount = await _controller.SyncFromGoogleSheetsAsync();
+                if (addedCount > 0)
+                {
+                    // Có thể hiển thị thông báo nếu muốn
+                    System.Diagnostics.Debug.WriteLine($"Đã thêm {addedCount} bảo trì mới từ Google Sheets");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nhưng không chặn việc load dữ liệu từ database
+                System.Diagnostics.Debug.WriteLine($"Lỗi đồng bộ Google Sheets: {ex.Message}");
+                // Có thể hiển thị thông báo cho người dùng nếu cần
+                System.Windows.MessageBox.Show(
+                    $"Không thể đồng bộ từ Google Sheets: {ex.Message}\nVui lòng kiểm tra kết nối internet và quyền truy cập sheet.",
+                    "Cảnh báo",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Warning);
+            }
+
+            // Load dữ liệu từ database
             var data = await _controller.GetAllAsync();
             _allMaintenances = new List<MaintenanceIncidentViewModel>();
             foreach (var i in data)
