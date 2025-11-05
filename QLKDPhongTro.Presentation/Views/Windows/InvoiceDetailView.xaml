@@ -1,6 +1,7 @@
 <Window x:Class="QLKDPhongTro.Presentation.Views.Windows.InvoiceDetailView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Hóa đơn thanh toán"
         Width="1140"
         Height="950"
@@ -8,7 +9,8 @@
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterOwner"
-        FontFamily="Roboto">
+        FontFamily="Roboto"
+        Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
         <!-- Style cho các nút Download / Print -->
@@ -148,10 +150,12 @@
 
                 <!-- Thông tin bên trái -->
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="Hóa đơn thanh toán tiền điện nước tháng 9/2025"
-                            FontSize="20"
+                    <TextBlock FontSize="20"
                             FontWeight="Bold"
-                            Foreground="#333"/>
+                            Foreground="#333">
+                        <Run Text="Hóa đơn thanh toán tiền điện nước tháng "/>
+                        <Run Text="{Binding ThangNam}"/>
+                    </TextBlock>
                     <TextBlock Text="19, Nguyễn Hữu Thọ, Tân Hưng, TP.HCM"
                             Foreground="#666"
                             Margin="0,10,0,0"/>
@@ -212,23 +216,20 @@
                                     FontWeight="Bold"
                                     Foreground="#333"
                                     FontSize="16"/>
-                            <TextBlock Text="Nguyễn Văn A"
+                            <TextBlock Text="{Binding HoTen}"
                                     FontWeight="Medium"
                                     Foreground="#333"
                                     Margin="0,15,0,0"/>
-                            <TextBlock Text="404, Lê Văn Lương, Tân Hưng, TP.HCM"
-                                    Foreground="#555"
-                                    Margin="0,2,0,0"/>
                             <TextBlock Foreground="#555"
                                     Margin="0,10,0,0">
-                                <Run Text="Email:"/>
-                                <Run Text="ronaldo@gmail.com"
-                                        Foreground="#319DFF"
-                                        Cursor="Hand"/>
+                                <Run Text="Số căn cước: "/>
+                                <Run Text="{Binding CCCD}"/>
                             </TextBlock>
-                            <TextBlock Text="Phone: 0932868123"
-                                    Foreground="#555"
-                                    Margin="0,2,0,0"/>
+                            <TextBlock Foreground="#555"
+                                    Margin="0,2,0,0">
+                                <Run Text="Số điện thoại: "/>
+                                <Run Text="{Binding SoDienThoai}"/>
+                            </TextBlock>
                         </StackPanel>
 
                         <!-- Thông tin hóa đơn và QR code -->
@@ -241,13 +242,13 @@
 
                             <StackPanel Grid.Column="0"
                                     Margin="0,0,40,0">
-                                <TextBlock Text="Number"
+                                <TextBlock Text="Mã đơn"
                                         Foreground="#666"
                                         Margin="0,0,0,8"/>
-                                <TextBlock Text="Date"
+                                <TextBlock Text="Ngày tạo"
                                         Foreground="#666"
                                         Margin="0,0,0,8"/>
-                                <TextBlock Text="Paid date"
+                                <TextBlock Text="Ngày trả"
                                         Foreground="#666"
                                         Margin="0,0,0,8"/>
                                 <TextBlock Text="Status"
@@ -256,38 +257,38 @@
 
                             <StackPanel Grid.Column="1"
                                     HorizontalAlignment="Right">
-                                <TextBlock Text="#206401"
-                                        FontWeight="Bold"
+                                <TextBlock FontWeight="Bold"
                                         Foreground="#333"
-                                        Margin="0,0,0,8"/>
-                                <TextBlock Text="Nov 2 2025"
-                                        FontWeight="Bold"
+                                        Margin="0,0,0,8">
+                                    <Run Text="#"/>
+                                    <Run Text="{Binding MaThanhToan}"/>
+                                </TextBlock>
+                                <TextBlock FontWeight="Bold"
                                         Foreground="#333"
-                                        Margin="0,0,0,8"/>
-                                <TextBlock Text="Oct 2, 2025"
-                                        FontWeight="Bold"
+                                        Margin="0,0,0,8">
+                                    <Run Text="{Binding ThangNam, StringFormat='{}{0}'}"/>
+                                </TextBlock>
+                                <TextBlock FontWeight="Bold"
                                         Foreground="#333"
-                                        Margin="0,0,0,8"/>
+                                        Margin="0,0,0,8">
+                                    <TextBlock.Text>
+                                        <Binding Path="NgayThanhToan" StringFormat="{}{0:dd/MM/yyyy}" TargetNullValue="--"/>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <Border Style="{StaticResource PaidBadgeStyle}"
                                         HorizontalAlignment="Right">
-                                    <TextBlock Text="paid"
+                                    <TextBlock Text="{Binding TrangThaiThanhToan}"
                                             Style="{StaticResource PaidBadgeTextStyle}"/>
                                 </Border>
                             </StackPanel>
 
-                            <!-- Placeholder cho QR Code -->
-                            <Border Grid.Column="2"
-                                    Width="100"
-                                    Height="100"
-                                    Margin="40,0,0,0"
-                                    BorderBrush="LightGray"
-                                    BorderThickness="1">
-                                <TextBlock Text="QR Code"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Foreground="Gray"/>
-                                <!-- <Image Source="/path/to/your/qr-code.png"/> -->
-                            </Border>
+                            <!-- QR Code -->
+                            <Image Grid.Column="2"
+                                   Source="/Resources/Images/QR.jpg"
+                                   Width="100"
+                                   Height="100"
+                                   Margin="40,0,0,0"
+                                   Stretch="Uniform"/>
                         </Grid>
                     </Grid>
 

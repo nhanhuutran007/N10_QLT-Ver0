@@ -22,7 +22,11 @@ namespace QLKDPhongTro.Presentation.Views.Components
             {
                 System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
                 {
-                    Dispatcher.Invoke(() => _isInitializing = false);
+                    Dispatcher.Invoke(() =>
+                    {
+                        _isInitializing = false;
+                        UpdateMenuSelection();
+                    });
                 });
             };
         }
@@ -51,8 +55,40 @@ namespace QLKDPhongTro.Presentation.Views.Components
 
         private void UpdateMenuSelection()
         {
-            // TODO: Implement logic để highlight menu item được chọn
-            // Có thể thêm logic để thay đổi background của các button
+            var currentWindow = Window.GetWindow(this);
+            if (currentWindow == null) return;
+
+            // Reset
+            OverviewButton.IsChecked = false;
+            AssetsButton.IsChecked = false;
+            TenantsButton.IsChecked = false;
+            ContractsButton.IsChecked = false;
+            FinancialButton.IsChecked = false;
+            PaymentButton.IsChecked = false;
+            MaintenanceButton.IsChecked = false;
+            ReportsButton.IsChecked = false;
+            SecurityButton.IsChecked = false;
+
+            // Match theo kiểu cửa sổ
+            switch (currentWindow)
+            {
+                case DashWindow:
+                    OverviewButton.IsChecked = true; break;
+                case RoomWindow:
+                    AssetsButton.IsChecked = true; break;
+                case TenantManagementWindow:
+                    TenantsButton.IsChecked = true; break;
+                case ContractManagementWindow:
+                    ContractsButton.IsChecked = true; break;
+                case FinancialDashboardWindow:
+                    FinancialButton.IsChecked = true; break;
+                case PaymentListView:
+                    PaymentButton.IsChecked = true; break;
+                case MaintenanceListView:
+                    MaintenanceButton.IsChecked = true; break;
+                default:
+                    OverviewButton.IsChecked = false; break;
+            }
         }
 
 
@@ -66,52 +102,17 @@ namespace QLKDPhongTro.Presentation.Views.Components
             if (currentWindow == null)
                 return;
 
-            // Nếu là cùng loại window thì bỏ qua
             if (currentWindow is T)
                 return;
 
-            if (typeof(T) == typeof(ContractManagementWindow))
-            {
-                // Ẩn dashboard
-                currentWindow.Hide();
+            var newWindow = new T();
+            newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            newWindow.Show();
+            Application.Current.MainWindow = newWindow;
+            currentWindow.Close();
 
-                var contractWindow = new ContractManagementWindow();
-                contractWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-                // Khi tắt hợp đồng → show lại dashboard
-                contractWindow.Closed += (s, e) =>
-                {
-                    currentWindow.Show();
-                    currentWindow.Activate();
-                };
-
-                contractWindow.Show();
-            }
-            else if (typeof(T) == typeof(PaymentListView))
-            {
-                // Ẩn dashboard
-                currentWindow.Hide();
-
-                var paymentWindow = new PaymentListView();
-                paymentWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-                // Khi tắt payment list → show lại dashboard
-                paymentWindow.Closed += (s, e) =>
-                {
-                    currentWindow.Show();
-                    currentWindow.Activate();
-                };
-
-                paymentWindow.Show();
-            }
-            else
-            {
-                // Các cửa sổ khác vẫn đóng dashboard cũ
-                var newWindow = new T();
-                newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                newWindow.Show();
-                currentWindow.Close();
-            }
+            // Cập nhật selection theo window mới
+            UpdateMenuSelection();
         }
 
         // Handlers với logic navigation tập trung - sử dụng event system để tránh đệ quy
@@ -162,6 +163,13 @@ namespace QLKDPhongTro.Presentation.Views.Components
             if (_isInitializing)
                 return;
             NavigateToWindow<PaymentListView>();
+        }
+
+        private void Maintenance_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+            NavigateToWindow<MaintenanceListView>();
         }
     }
 }
