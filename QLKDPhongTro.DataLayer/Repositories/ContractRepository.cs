@@ -9,22 +9,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class ContractRepository : IContractRepository
     {
-        private readonly string _connectionString;
-        
-        public ContractRepository()
-        {
-            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
-            // _connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-            
-            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
-            
-            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string _connectionString => ConnectDB.GetConnectionString();
 
         public async Task<List<Contract>> GetAllHopDongAsync()
         {
@@ -137,11 +123,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Contract>> GetActiveContractsAsync()
         {
             var contracts = new List<Contract>();
-            using var connection = new MySqlConnection(_connectionString);
-            // Sử dụng BINARY để đảm bảo so sánh chính xác với ENUM trong MySQL
-            var command = new MySqlCommand("SELECT * FROM HopDong WHERE BINARY TrangThai = 'Hiệu lực'", connection);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            
+            // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
+            var command = new MySqlCommand("SELECT * FROM HopDong WHERE TrangThai = 'Hiệu lực'", connection);
 
-            await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -153,20 +140,51 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Contract>> GetActiveContractsByTenantAsync(int maNguoiThue)
         {
             var contracts = new List<Contract>();
-            using var connection = new MySqlConnection(_connectionString);
-            // Sử dụng BINARY để đảm bảo so sánh chính xác với ENUM trong MySQL
-            var command = new MySqlCommand("SELECT * FROM HopDong WHERE BINARY TrangThai = 'Hiệu lực' AND MaNguoiThue = @MaNguoiThue", connection);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            
+            // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
+            var command = new MySqlCommand("SELECT * FROM HopDong WHERE TrangThai = 'Hiệu lực' AND MaNguoiThue = @MaNguoiThue", connection);
             command.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
 
-            await connection.OpenAsync();
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            // Đảm bảo reader được đóng hoàn toàn trước khi sử dụng connection cho query khác
+            using (var reader = await command.ExecuteReaderAsync())
             {
-                contracts.Add(ReadContract(reader));
-            }
+                while (await reader.ReadAsync())
+                {
+                    contracts.Add(ReadContract(reader));
+                }
+            } // Reader được dispose ở đây
             
             // Debug logging
             System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: MaNguoiThue={maNguoiThue}, Found {contracts.Count} contracts");
+            if (contracts.Count == 0)
+            {
+                // Debug: Kiểm tra xem có hợp đồng nào với MaNguoiThue này không (không phân biệt trạng thái)
+                // Sử dụng ExecuteScalarAsync vì không cần reader
+                var checkCmd = new MySqlCommand("SELECT COUNT(*) FROM HopDong WHERE MaNguoiThue = @MaNguoiThue", connection);
+                checkCmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+                var totalCount = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
+                System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: Total contracts for MaNguoiThue={maNguoiThue}: {totalCount}");
+                
+                // Kiểm tra trạng thái của các hợp đồng - sử dụng connection riêng để tránh conflict
+                // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+                using (var debugConnection = await ConnectDB.CreateConnectionAsync())
+                {
+                    
+                    var statusCmd = new MySqlCommand("SELECT MaHopDong, TrangThai FROM HopDong WHERE MaNguoiThue = @MaNguoiThue", debugConnection);
+                    statusCmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+                    using (var statusReader = await statusCmd.ExecuteReaderAsync())
+                    {
+                        while (await statusReader.ReadAsync())
+                        {
+                            var maHD = statusReader.GetInt32(0);
+                            var trangThai = statusReader.IsDBNull(1) ? "NULL" : statusReader.GetString(1);
+                            System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: Contract {maHD} has status: '{trangThai}'");
+                        }
+                    }
+                }
+            }
             
             return contracts;
         }

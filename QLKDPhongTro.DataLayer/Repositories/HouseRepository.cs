@@ -8,22 +8,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class HouseRepository : IHouseRepository
     {
-        private readonly string connectionString;
-
-        public HouseRepository()
-        {
-            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
-            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-            
-            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
-            
-            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string connectionString => ConnectDB.GetConnectionString();
 
         public async Task<List<House>> GetAllAsync()
         {

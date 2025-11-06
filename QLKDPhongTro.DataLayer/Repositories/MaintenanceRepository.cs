@@ -9,29 +9,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class MaintenanceRepository : IMaintenanceRepository
     {
-        private readonly string _connectionString;
-        
-        public MaintenanceRepository()
-        {
-            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
-            // _connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-            
-            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
-            
-            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string _connectionString => ConnectDB.GetConnectionString();
 
         public async Task<List<MaintenanceIncident>> GetAllAsync()
         {
             var result = new List<MaintenanceIncident>();
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand("SELECT * FROM BaoTri_SuCo", connection);
-            await connection.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -42,10 +28,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<MaintenanceIncident?> GetByIdAsync(int id)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand("SELECT * FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
             cmd.Parameters.AddWithValue("@id", id);
-            await connection.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync())
                 return ReadIncident(reader);
@@ -54,7 +40,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task AddAsync(MaintenanceIncident incident)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand(
                 "INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, NgayBaoCao, TrangThai, ChiPhi) VALUES (@MaPhong, @MoTaSuCo, @NgayBaoCao, @TrangThai, @ChiPhi)",
                 connection);
@@ -63,13 +50,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
             cmd.Parameters.AddWithValue("@NgayBaoCao", incident.NgayBaoCao);
             cmd.Parameters.AddWithValue("@TrangThai", incident.TrangThai);
             cmd.Parameters.AddWithValue("@ChiPhi", incident.ChiPhi);
-            await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
 
         public async Task UpdateAsync(MaintenanceIncident incident)
         {
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand(
                 "UPDATE BaoTri_SuCo SET MaPhong = @MaPhong, MoTaSuCo = @MoTaSuCo, NgayBaoCao = @NgayBaoCao, TrangThai = @TrangThai, ChiPhi = @ChiPhi WHERE MaSuCo = @MaSuCo",
                 connection);
@@ -79,7 +66,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
             cmd.Parameters.AddWithValue("@NgayBaoCao", incident.NgayBaoCao);
             cmd.Parameters.AddWithValue("@TrangThai", incident.TrangThai);
             cmd.Parameters.AddWithValue("@ChiPhi", incident.ChiPhi);
-            await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -93,10 +79,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await MarkAsDeletedFromSyncAsync(incident.MaPhong, incident.MoTaSuCo, incident.NgayBaoCao);
             }
 
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand("DELETE FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
             cmd.Parameters.AddWithValue("@id", id);
-            await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -108,15 +94,16 @@ namespace QLKDPhongTro.DataLayer.Repositories
             // Tạo bảng nếu chưa tồn tại
             await EnsureDeletedSignaturesTableExistsAsync();
 
-            using var connection = new MySqlConnection(_connectionString);
-            // Kiểm tra xem đã tồn tại chưa
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            
+            // Kiểm tra xem đã tồn tại chưa - sử dụng BINARY để so sánh byte-by-byte, tránh lỗi collation mismatch
             var checkCmd = new MySqlCommand(
-                "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
+                "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND BINARY MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
                 connection);
             checkCmd.Parameters.AddWithValue("@MaPhong", maPhong);
             checkCmd.Parameters.AddWithValue("@MoTaSuCo", moTaSuCo);
             checkCmd.Parameters.AddWithValue("@NgayBaoCao", ngayBaoCao.Date);
-            await connection.OpenAsync();
             var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync()) > 0;
 
             if (!exists)
@@ -139,14 +126,16 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             await EnsureDeletedSignaturesTableExistsAsync();
 
-            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            
+            // Sử dụng BINARY để so sánh byte-by-byte, tránh lỗi collation mismatch
             var cmd = new MySqlCommand(
-                "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
+                "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND BINARY MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
                 connection);
             cmd.Parameters.AddWithValue("@MaPhong", maPhong);
             cmd.Parameters.AddWithValue("@MoTaSuCo", moTaSuCo);
             cmd.Parameters.AddWithValue("@NgayBaoCao", ngayBaoCao.Date);
-            await connection.OpenAsync();
             var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
             return count > 0;
         }
@@ -156,8 +145,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// </summary>
         private async Task EnsureDeletedSignaturesTableExistsAsync()
         {
-            using var connection = new MySqlConnection(_connectionString);
-            await connection.OpenAsync();
+            // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+            using var connection = await ConnectDB.CreateConnectionAsync();
 
             // Kiểm tra xem bảng có tồn tại không
             var checkTableCmd = new MySqlCommand(
@@ -168,16 +157,16 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
             if (!tableExists)
             {
-                // Tạo bảng
+                // Tạo bảng với charset utf8mb4 và collation utf8mb4_unicode_ci
                 var createTableCmd = new MySqlCommand(@"
                     CREATE TABLE IF NOT EXISTS DeletedMaintenanceSignatures(
                         Id INT AUTO_INCREMENT NOT NULL,
                         MaPhong INT NOT NULL,
-                        MoTaSuCo VARCHAR(255) NOT NULL,
+                        MoTaSuCo VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
                         NgayBaoCao DATE NOT NULL,
                         NgayXoa DATETIME NOT NULL DEFAULT NOW(),
                         PRIMARY KEY (Id)
-                    )", connection);
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci", connection);
                 await createTableCmd.ExecuteNonQueryAsync();
             }
         }

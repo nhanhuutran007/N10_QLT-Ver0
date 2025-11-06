@@ -14,28 +14,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
     /// </summary>
     public class UserRepository : IUserRepository
     {
-        private readonly string connectionString;
-
-        public UserRepository()
-        {
-            
-            // TODO: Đọc connection string từ config
-            
-            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
-            // Kết nối tới SQL Server LocalDB hoặc SQL Server Express
-            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-            
-            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
-            // Cấu hình kết nối MySQL
-            string server = "host80.vietnix.vn";           // Máy chủ MySQL
-            string database = "githubio_QLT_Ver1";         // Tên cơ sở dữ liệu
-            string username = "githubio_admin";             // Tài khoản MySQL
-            string password = "nhanhuutran007";            // Mật khẩu MySQL
-            string port = "3306";                          // Cổng MySQL (mặc định 3306)
-            
-            // Chuỗi kết nối MySQL
-            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string connectionString => ConnectDB.GetConnectionString();
 
         /// <summary>
         /// Lấy tất cả users

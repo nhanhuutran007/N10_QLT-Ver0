@@ -43,6 +43,8 @@
     <Resource Include="Resources\Images\Logo.png" />
     <Resource Include="Resources\Images\avatar.jpg" />
     <Resource Include="Resources\Images\avatar1.jpg" />
+    <Resource Include="Resources\Images\Anh1.jpg" />
+    <Resource Include="Resources\Images\Anh2.jpg" />
     <Resource Include="Resources\Images\email_icon.png" />
     <Resource Include="Resources\Images\password_icon.png" />
     <Resource Include="Resources\Images\QR.jpg">

@@ -12,22 +12,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
     /// </summary>
     public class PaymentRepository : IPaymentRepository
     {
-        private readonly string connectionString;
-
-        public PaymentRepository()
-        {
-            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
-            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-            
-            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
-            
-            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string connectionString => ConnectDB.GetConnectionString();
 
         public async Task<List<Payment>> GetAllAsync()
         {
@@ -65,7 +51,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -118,7 +104,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -171,37 +157,146 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> UpdateAsync(Payment payment)
         {
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                await conn.OpenAsync();
-                var cmd = new MySqlCommand(@"
-                    UPDATE ThanhToan 
-                    SET MaHopDong = @MaHopDong, ThangNam = @ThangNam, TienThue = @TienThue, 
-                        TienDien = @TienDien, TienNuoc = @TienNuoc, TienInternet = @TienInternet,
-                        TienVeSinh = @TienVeSinh, TienGiuXe = @TienGiuXe, ChiPhiKhac = @ChiPhiKhac,
-                        TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan,
-                        DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc
-                    WHERE MaThanhToan = @MaThanhToan", conn);
+                // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
+                using (MySqlConnection conn = await ConnectDB.CreateConnectionAsync())
+                {
+                    
+                    // Kiểm tra giá trị ENUM hiện tại trong database
+                    var checkEnumCmd = new MySqlCommand("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ThanhToan' AND COLUMN_NAME = 'TrangThaiThanhToan'", conn);
+                    var enumDefinition = await checkEnumCmd.ExecuteScalarAsync() as string;
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: ENUM definition in DB = '{enumDefinition}'");
+                    
+                    // Debug logging
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: MaThanhToan={payment.MaThanhToan}, TrangThaiThanhToan={payment.TrangThaiThanhToan}");
+                    
+                    // Đảm bảo giá trị ENUM được set trực tiếp với giá trị chính xác
+                    // MySQL ENUM('Chưa trả','Đã trả') - giá trị phải khớp chính xác
+                    var cmd = new MySqlCommand(@"
+                        UPDATE ThanhToan 
+                        SET MaHopDong = @MaHopDong, ThangNam = @ThangNam, TienThue = @TienThue, 
+                            TienDien = @TienDien, TienNuoc = @TienNuoc, TienInternet = @TienInternet,
+                            TienVeSinh = @TienVeSinh, TienGiuXe = @TienGiuXe, ChiPhiKhac = @ChiPhiKhac,
+                            TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan,
+                            DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc
+                        WHERE MaThanhToan = @MaThanhToan", conn);
 
-                cmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);
-                cmd.Parameters.AddWithValue("@MaHopDong", payment.MaHopDong ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@ThangNam", payment.ThangNam);
-                cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? 0);
-                cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? 0);
-                cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? 0);
-                cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? 0);
-                cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? 0);
-                cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
-                cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
-                cmd.Parameters.AddWithValue("@TrangThaiThanhToan", payment.TrangThaiThanhToan);
-                cmd.Parameters.AddWithValue("@NgayThanhToan", payment.NgayThanhToan ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@DonGiaDien", payment.DonGiaDien ?? 0);
-                cmd.Parameters.AddWithValue("@DonGiaNuoc", payment.DonGiaNuoc ?? 0);
-                cmd.Parameters.AddWithValue("@SoDien", payment.SoDien ?? 0);
-                cmd.Parameters.AddWithValue("@SoNuoc", payment.SoNuoc ?? 0);
+                    cmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);
+                    cmd.Parameters.AddWithValue("@MaHopDong", payment.MaHopDong ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@ThangNam", payment.ThangNam);
+                    cmd.Parameters.AddWithValue("@TienThue", payment.TienThue ?? 0);
+                    cmd.Parameters.AddWithValue("@TienDien", payment.TienDien ?? 0);
+                    cmd.Parameters.AddWithValue("@TienNuoc", payment.TienNuoc ?? 0);
+                    cmd.Parameters.AddWithValue("@TienInternet", payment.TienInternet ?? 0);
+                    cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? 0);
+                    cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
+                    cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
+                    
+                    // Đảm bảo giá trị TrangThaiThanhToan khớp với ENUM trong database
+                    // MySQL ENUM('Chưa trả','Đã trả') - giá trị phải khớp chính xác
+                    string trangThai;
+                    if (string.IsNullOrWhiteSpace(payment.TrangThaiThanhToan))
+                    {
+                        trangThai = "Chưa trả";
+                        System.Diagnostics.Debug.WriteLine($"UpdateAsync: TrangThaiThanhToan is null/empty, defaulting to 'Chưa trả'");
+                    }
+                    else
+                    {
+                        trangThai = payment.TrangThaiThanhToan.Trim();
+                        // Chuẩn hóa giá trị để khớp với ENUM trong database - so sánh chính xác
+                        // ENUM values: 'Chưa trả','Đã trả' (theo MySQLSchema.sql)
+                        if (string.Equals(trangThai, "Đã trả", StringComparison.OrdinalIgnoreCase))
+                        {
+                            trangThai = "Đã trả";
+                        }
+                        else if (string.Equals(trangThai, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+                        {
+                            trangThai = "Chưa trả";
+                        }
+                        else
+                        {
+                            // Nếu không khớp, mặc định là "Chưa trả"
+                            System.Diagnostics.Debug.WriteLine($"UpdateAsync: Warning - TrangThaiThanhToan value '{trangThai}' không khớp, defaulting to 'Chưa trả'");
+                            trangThai = "Chưa trả";
+                        }
+                    }
+                    
+                    // Debug logging - kiểm tra byte length và encoding
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(trangThai);
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: Final TrangThaiThanhToan value = '{trangThai}' (Length: {trangThai.Length}, Bytes: {bytes.Length})");
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: Byte array: [{string.Join(", ", bytes)}]");
+                    
+                    // Đảm bảo giá trị không bao giờ là null hoặc empty
+                    if (string.IsNullOrWhiteSpace(trangThai))
+                    {
+                        trangThai = "Chưa trả";
+                        System.Diagnostics.Debug.WriteLine($"UpdateAsync: TrangThai was null/empty, set to 'Chưa trả'");
+                    }
+                    
+                    // Verify giá trị khớp với ENUM definition
+                    // ENUM('Chưa trả','Đã trả') - giá trị phải khớp chính xác
+                    if (trangThai != "Chưa trả" && trangThai != "Đã trả")
+                    {
+                        System.Diagnostics.Debug.WriteLine($"UpdateAsync: ERROR - TrangThai '{trangThai}' không khớp với ENUM values!");
+                        trangThai = "Chưa trả"; // Fallback
+                    }
+                    
+                    // Với MySQL ENUM, cần set giá trị chính xác
+                    // MySQL ENUM sẽ tự động convert string thành ENUM value nếu khớp
+                    // Nếu giá trị không khớp, MySQL sẽ set thành empty string hoặc NULL
+                    // Đảm bảo giá trị khớp chính xác với ENUM definition: 'Chưa trả','Đã trả'
+                    // Sử dụng MySqlParameter với explicit encoding để đảm bảo MySQL nhận diện đúng
+                    var trangThaiParam = new MySqlParameter("@TrangThaiThanhToan", MySqlDbType.VarChar)
+                    {
+                        Value = trangThai,
+                        Size = 20
+                    };
+                    cmd.Parameters.Add(trangThaiParam);
+                    
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: Setting parameter @TrangThaiThanhToan = '{trangThai}' (Type: VarChar, Size: 20)");
+                    
+                    cmd.Parameters.AddWithValue("@NgayThanhToan", payment.NgayThanhToan ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@DonGiaDien", payment.DonGiaDien ?? 0);
+                    cmd.Parameters.AddWithValue("@DonGiaNuoc", payment.DonGiaNuoc ?? 0);
+                    cmd.Parameters.AddWithValue("@SoDien", payment.SoDien ?? 0);
+                    cmd.Parameters.AddWithValue("@SoNuoc", payment.SoNuoc ?? 0);
 
-                var result = await cmd.ExecuteNonQueryAsync();
-                return result > 0;
+                    // Thực thi query và kiểm tra kết quả
+                    var result = await cmd.ExecuteNonQueryAsync();
+                    
+                    // Debug logging
+                    System.Diagnostics.Debug.WriteLine($"UpdateAsync: Result={result}, RowsAffected={result}");
+                    
+                    if (result > 0)
+                    {
+                        // Verify giá trị đã được lưu đúng chưa
+                        var verifyCmd = new MySqlCommand("SELECT TrangThaiThanhToan FROM ThanhToan WHERE MaThanhToan = @MaThanhToan", conn);
+                        verifyCmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);
+                        var verifyResult = await verifyCmd.ExecuteScalarAsync();
+                        var verifyValue = verifyResult?.ToString() ?? "NULL";
+                        System.Diagnostics.Debug.WriteLine($"UpdateAsync: Verified value in DB = '{verifyValue}' (Type: {verifyResult?.GetType().Name ?? "NULL"})");
+                        
+                        // Nếu giá trị trong DB không khớp với giá trị mong muốn, log warning
+                        if (verifyValue != trangThai && verifyValue != "NULL" && !string.IsNullOrWhiteSpace(verifyValue))
+                        {
+                            System.Diagnostics.Debug.WriteLine($"UpdateAsync: WARNING - Value mismatch! Expected: '{trangThai}', Got: '{verifyValue}'");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"UpdateAsync: ERROR - Update failed! Rows affected: {result}");
+                    }
+                    
+                    return result > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi để debug
+                System.Diagnostics.Debug.WriteLine($"UpdateAsync Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                throw;
             }
         }
 
@@ -263,7 +358,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : (string.IsNullOrWhiteSpace(reader.GetString(11)) ? "Chưa trả" : reader.GetString(11).Trim()),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12)
                         };
                     }
@@ -321,7 +416,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -377,7 +472,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -559,7 +654,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -684,7 +779,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -699,6 +794,35 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 }
             }
             return payments;
+        }
+
+        /// <summary>
+        /// Helper method để xử lý giá trị TrangThaiThanhToan từ database
+        /// </summary>
+        private static string GetTrangThaiThanhToan(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "Chưa trả";
+            }
+            
+            var trimmed = value.Trim();
+            // Chuẩn hóa giá trị để khớp với ENUM
+            if (trimmed.Equals("Đã trả", StringComparison.OrdinalIgnoreCase) || 
+                trimmed.Contains("Đã") || trimmed.Contains("đã"))
+            {
+                return "Đã trả";
+            }
+            else if (trimmed.Equals("Chưa trả", StringComparison.OrdinalIgnoreCase) || 
+                     trimmed.Contains("Chưa") || trimmed.Contains("chưa"))
+            {
+                return "Chưa trả";
+            }
+            else
+            {
+                // Mặc định là "Chưa trả" nếu không khớp
+                return "Chưa trả";
+            }
         }
     }
 }
