@@ -1,21 +1,36 @@
 using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class MaintenanceRepository : IMaintenanceRepository
     {
-        private readonly string _connectionString =
-            "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+        private readonly string _connectionString;
+        
+        public MaintenanceRepository()
+        {
+            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
+            // _connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
+            string server = "host80.vietnix.vn";
+            string database = "githubio_QLT_Ver1";
+            string username = "githubio_admin";
+            string password = "nhanhuutran007";
+            string port = "3306";
+            
+            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
+        }
 
         public async Task<List<MaintenanceIncident>> GetAllAsync()
         {
             var result = new List<MaintenanceIncident>();
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand("SELECT * FROM BaoTri_SuCo", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand("SELECT * FROM BaoTri_SuCo", connection);
             await connection.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -27,8 +42,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<MaintenanceIncident?> GetByIdAsync(int id)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand("SELECT * FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand("SELECT * FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
             cmd.Parameters.AddWithValue("@id", id);
             await connection.OpenAsync();
             using var reader = await cmd.ExecuteReaderAsync();
@@ -39,8 +54,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task AddAsync(MaintenanceIncident incident)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand(
                 "INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, NgayBaoCao, TrangThai, ChiPhi) VALUES (@MaPhong, @MoTaSuCo, @NgayBaoCao, @TrangThai, @ChiPhi)",
                 connection);
             cmd.Parameters.AddWithValue("@MaPhong", incident.MaPhong);
@@ -54,8 +69,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task UpdateAsync(MaintenanceIncident incident)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand(
                 "UPDATE BaoTri_SuCo SET MaPhong = @MaPhong, MoTaSuCo = @MoTaSuCo, NgayBaoCao = @NgayBaoCao, TrangThai = @TrangThai, ChiPhi = @ChiPhi WHERE MaSuCo = @MaSuCo",
                 connection);
             cmd.Parameters.AddWithValue("@MaSuCo", incident.MaSuCo);
@@ -78,8 +93,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await MarkAsDeletedFromSyncAsync(incident.MaPhong, incident.MoTaSuCo, incident.NgayBaoCao);
             }
 
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand("DELETE FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand("DELETE FROM BaoTri_SuCo WHERE MaSuCo = @id", connection);
             cmd.Parameters.AddWithValue("@id", id);
             await connection.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
@@ -93,20 +108,20 @@ namespace QLKDPhongTro.DataLayer.Repositories
             // Tạo bảng nếu chưa tồn tại
             await EnsureDeletedSignaturesTableExistsAsync();
 
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new MySqlConnection(_connectionString);
             // Kiểm tra xem đã tồn tại chưa
-            var checkCmd = new SqlCommand(
+            var checkCmd = new MySqlCommand(
                 "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
                 connection);
             checkCmd.Parameters.AddWithValue("@MaPhong", maPhong);
             checkCmd.Parameters.AddWithValue("@MoTaSuCo", moTaSuCo);
             checkCmd.Parameters.AddWithValue("@NgayBaoCao", ngayBaoCao.Date);
             await connection.OpenAsync();
-            var exists = (int)await checkCmd.ExecuteScalarAsync() > 0;
+            var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync()) > 0;
 
             if (!exists)
             {
-                var cmd = new SqlCommand(
+                var cmd = new MySqlCommand(
                     "INSERT INTO DeletedMaintenanceSignatures (MaPhong, MoTaSuCo, NgayBaoCao, NgayXoa) VALUES (@MaPhong, @MoTaSuCo, @NgayBaoCao, @NgayXoa)",
                     connection);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
@@ -124,15 +139,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             await EnsureDeletedSignaturesTableExistsAsync();
 
-            using var connection = new SqlConnection(_connectionString);
-            var cmd = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var cmd = new MySqlCommand(
                 "SELECT COUNT(*) FROM DeletedMaintenanceSignatures WHERE MaPhong = @MaPhong AND MoTaSuCo = @MoTaSuCo AND NgayBaoCao = @NgayBaoCao",
                 connection);
             cmd.Parameters.AddWithValue("@MaPhong", maPhong);
             cmd.Parameters.AddWithValue("@MoTaSuCo", moTaSuCo);
             cmd.Parameters.AddWithValue("@NgayBaoCao", ngayBaoCao.Date);
             await connection.OpenAsync();
-            var count = (int)await cmd.ExecuteScalarAsync();
+            var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
             return count > 0;
         }
 
@@ -141,32 +156,33 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// </summary>
         private async Task EnsureDeletedSignaturesTableExistsAsync()
         {
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new MySqlConnection(_connectionString);
             await connection.OpenAsync();
 
             // Kiểm tra xem bảng có tồn tại không
-            var checkTableCmd = new SqlCommand(
-                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DeletedMaintenanceSignatures'",
+            var checkTableCmd = new MySqlCommand(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'DeletedMaintenanceSignatures'",
                 connection);
-            var tableExists = (int)await checkTableCmd.ExecuteScalarAsync() > 0;
+            var result = await checkTableCmd.ExecuteScalarAsync();
+            var tableExists = result != null && Convert.ToInt64(result) > 0;
 
             if (!tableExists)
             {
                 // Tạo bảng
-                var createTableCmd = new SqlCommand(@"
-                    CREATE TABLE [dbo].[DeletedMaintenanceSignatures](
-                        [Id] [int] IDENTITY(1,1) NOT NULL,
-                        [MaPhong] [int] NOT NULL,
-                        [MoTaSuCo] [nvarchar](255) NOT NULL,
-                        [NgayBaoCao] [date] NOT NULL,
-                        [NgayXoa] [datetime] NOT NULL DEFAULT GETDATE(),
-                        PRIMARY KEY CLUSTERED ([Id] ASC)
+                var createTableCmd = new MySqlCommand(@"
+                    CREATE TABLE IF NOT EXISTS DeletedMaintenanceSignatures(
+                        Id INT AUTO_INCREMENT NOT NULL,
+                        MaPhong INT NOT NULL,
+                        MoTaSuCo VARCHAR(255) NOT NULL,
+                        NgayBaoCao DATE NOT NULL,
+                        NgayXoa DATETIME NOT NULL DEFAULT NOW(),
+                        PRIMARY KEY (Id)
                     )", connection);
                 await createTableCmd.ExecuteNonQueryAsync();
             }
         }
 
-        private static MaintenanceIncident ReadIncident(SqlDataReader reader)
+        private static MaintenanceIncident ReadIncident(DbDataReader reader)
         {
             return new MaintenanceIncident
             {

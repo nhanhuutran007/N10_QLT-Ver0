@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
@@ -16,16 +16,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public PaymentRepository()
         {
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
+            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
+            string server = "host80.vietnix.vn";
+            string database = "githubio_QLT_Ver1";
+            string username = "githubio_admin";
+            string password = "nhanhuutran007";
+            string port = "3306";
+            
+            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
         }
 
         public async Task<List<Payment>> GetAllAsync()
         {
             var payments = new List<Payment>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
@@ -55,7 +65,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -74,10 +84,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<Payment?> GetByIdAsync(int maThanhToan)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
@@ -108,7 +118,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -127,10 +137,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> CreateAsync(Payment payment)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienDien, TienNuoc, TienInternet, 
                                           TienVeSinh, TienGiuXe, ChiPhiKhac, TrangThaiThanhToan, NgayThanhToan,
                                           DonGiaDien, DonGiaNuoc, SoDien, SoNuoc)
@@ -161,10 +171,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> UpdateAsync(Payment payment)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     UPDATE ThanhToan 
                     SET MaHopDong = @MaHopDong, ThangNam = @ThangNam, TienThue = @TienThue, 
                         TienDien = @TienDien, TienNuoc = @TienNuoc, TienInternet = @TienInternet,
@@ -197,10 +207,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> DeleteAsync(int maThanhToan)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("DELETE FROM ThanhToan WHERE MaThanhToan = @MaThanhToan", conn);
+                var cmd = new MySqlCommand("DELETE FROM ThanhToan WHERE MaThanhToan = @MaThanhToan", conn);
                 cmd.Parameters.AddWithValue("@MaThanhToan", maThanhToan);
 
                 var result = await cmd.ExecuteNonQueryAsync();
@@ -210,24 +220,24 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> IsPaymentExistsAsync(int maHopDong, string thangNam)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT COUNT(*) FROM ThanhToan WHERE MaHopDong = @MaHopDong AND ThangNam = @ThangNam", conn);
+                var cmd = new MySqlCommand("SELECT COUNT(*) FROM ThanhToan WHERE MaHopDong = @MaHopDong AND ThangNam = @ThangNam", conn);
                 cmd.Parameters.AddWithValue("@MaHopDong", maHopDong);
                 cmd.Parameters.AddWithValue("@ThangNam", thangNam);
 
-                var count = (int)await cmd.ExecuteScalarAsync();
+                var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 return count > 0;
             }
         }
 
         public async Task<Payment?> GetPaymentByContractAndMonthAsync(int maHopDong, string thangNam)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan
@@ -253,7 +263,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12)
                         };
                     }
@@ -265,7 +275,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Payment>> GetDebtsAsync(string? thangNam = null)
         {
             var debts = new List<Payment>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
                 var sql = @"
@@ -279,7 +289,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                     LEFT JOIN Nha n ON p.MaNha = n.MaNha
-                    WHERE tt.TrangThaiThanhToan = 'Chưa thanh toán'";
+                    WHERE tt.TrangThaiThanhToan = 'Chưa trả'";
 
                 if (!string.IsNullOrEmpty(thangNam))
                 {
@@ -288,7 +298,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
                 sql += " ORDER BY tt.ThangNam, tt.MaThanhToan";
 
-                var cmd = new SqlCommand(sql, conn);
+                var cmd = new MySqlCommand(sql, conn);
                 if (!string.IsNullOrEmpty(thangNam))
                 {
                     cmd.Parameters.AddWithValue("@ThangNam", thangNam);
@@ -311,7 +321,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -331,10 +341,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Payment>> GetPaymentsByStatusAsync(string trangThai)
         {
             var payments = new List<Payment>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
@@ -367,7 +377,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -389,25 +399,25 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var stats = new FinancialStats();
             var currentYear = nam ?? DateTime.Now.Year;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
 
                 // Tổng thu nhập (các thanh toán đã thanh toán)
-                var cmdIncome = new SqlCommand(@"
-                    SELECT ISNULL(SUM(TongTien), 0) 
+                var cmdIncome = new MySqlCommand(@"
+                    SELECT IFNULL(SUM(TongTien), 0) 
                     FROM ThanhToan 
-                    WHERE TrangThaiThanhToan = 'Đã thanh toán' 
+                    WHERE TrangThaiThanhToan = 'Đã trả' 
                     AND YEAR(NgayThanhToan) = @Year", conn);
                 cmdIncome.Parameters.AddWithValue("@Year", currentYear);
                 stats.TongThuNhap = Convert.ToDecimal(await cmdIncome.ExecuteScalarAsync());
 
                 // Tổng chi phí
-                var cmdExpense = new SqlCommand(@"
-                    SELECT ISNULL(SUM(ISNULL(TienDien, 0) + ISNULL(TienNuoc, 0) + ISNULL(TienInternet, 0) + 
-                           ISNULL(TienVeSinh, 0) + ISNULL(TienGiuXe, 0) + ISNULL(ChiPhiKhac, 0)), 0)
+                var cmdExpense = new MySqlCommand(@"
+                    SELECT IFNULL(SUM(IFNULL(TienDien, 0) + IFNULL(TienNuoc, 0) + IFNULL(TienInternet, 0) + 
+                           IFNULL(TienVeSinh, 0) + IFNULL(TienGiuXe, 0) + IFNULL(ChiPhiKhac, 0)), 0)
                     FROM ThanhToan 
-                    WHERE TrangThaiThanhToan = 'Đã thanh toán' 
+                    WHERE TrangThaiThanhToan = 'Đã trả' 
                     AND YEAR(NgayThanhToan) = @Year", conn);
                 cmdExpense.Parameters.AddWithValue("@Year", currentYear);
                 stats.TongChiPhi = Convert.ToDecimal(await cmdExpense.ExecuteScalarAsync());
@@ -415,30 +425,30 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 stats.LoiNhuan = stats.TongThuNhap - stats.TongChiPhi;
 
                 // Tổng công nợ
-                var cmdDebt = new SqlCommand(@"
-                    SELECT ISNULL(SUM(TongTien), 0) 
+                var cmdDebt = new MySqlCommand(@"
+                    SELECT IFNULL(SUM(TongTien), 0) 
                     FROM ThanhToan 
-                    WHERE TrangThaiThanhToan = 'Chưa thanh toán'", conn);
+                    WHERE TrangThaiThanhToan = 'Chưa trả'", conn);
                 stats.TongCongNo = Convert.ToDecimal(await cmdDebt.ExecuteScalarAsync());
 
                 // Số phòng nợ
-                var cmdRooms = new SqlCommand(@"
+                var cmdRooms = new MySqlCommand(@"
                     SELECT COUNT(DISTINCT hd.MaPhong)
                     FROM ThanhToan tt
                     INNER JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
-                    WHERE tt.TrangThaiThanhToan = 'Chưa thanh toán'", conn);
+                    WHERE tt.TrangThaiThanhToan = 'Chưa trả'", conn);
                 stats.SoPhongNo = Convert.ToInt32(await cmdRooms.ExecuteScalarAsync());
 
                 // Thống kê theo tháng
-                var cmdMonthly = new SqlCommand(@"
+                var cmdMonthly = new MySqlCommand(@"
                     SELECT ThangNam, 
                            SUM(TongTien) as ThuNhap,
-                           SUM(ISNULL(TienDien, 0) + ISNULL(TienNuoc, 0) + ISNULL(TienInternet, 0) + 
-                               ISNULL(TienVeSinh, 0) + ISNULL(TienGiuXe, 0) + ISNULL(ChiPhiKhac, 0)) as ChiPhi,
-                           SUM(TongTien) - SUM(ISNULL(TienDien, 0) + ISNULL(TienNuoc, 0) + ISNULL(TienInternet, 0) + 
-                               ISNULL(TienVeSinh, 0) + ISNULL(TienGiuXe, 0) + ISNULL(ChiPhiKhac, 0)) as LoiNhuan
+                           SUM(COALESCE(TienDien, 0) + COALESCE(TienNuoc, 0) + COALESCE(TienInternet, 0) + 
+                               COALESCE(TienVeSinh, 0) + COALESCE(TienGiuXe, 0) + COALESCE(ChiPhiKhac, 0)) as ChiPhi,
+                           SUM(TongTien) - SUM(COALESCE(TienDien, 0) + COALESCE(TienNuoc, 0) + COALESCE(TienInternet, 0) + 
+                               COALESCE(TienVeSinh, 0) + COALESCE(TienGiuXe, 0) + COALESCE(ChiPhiKhac, 0)) as LoiNhuan
                     FROM ThanhToan
-                    WHERE TrangThaiThanhToan = 'Đã thanh toán' 
+                    WHERE TrangThaiThanhToan = 'Đã trả' 
                     AND YEAR(NgayThanhToan) = @Year
                     GROUP BY ThangNam
                     ORDER BY ThangNam", conn);
@@ -459,16 +469,16 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 }
 
                 // Phân loại chi phí
-                var cmdCategories = new SqlCommand(@"
+                var cmdCategories = new MySqlCommand(@"
                     SELECT 
-                        SUM(ISNULL(TienDien, 0)) as TienDien,
-                        SUM(ISNULL(TienNuoc, 0)) as TienNuoc,
-                        SUM(ISNULL(TienInternet, 0)) as TienInternet,
-                        SUM(ISNULL(TienVeSinh, 0)) as TienVeSinh,
-                        SUM(ISNULL(TienGiuXe, 0)) as TienGiuXe,
-                        SUM(ISNULL(ChiPhiKhac, 0)) as ChiPhiKhac
+                        SUM(COALESCE(TienDien, 0)) as TienDien,
+                        SUM(COALESCE(TienNuoc, 0)) as TienNuoc,
+                        SUM(COALESCE(TienInternet, 0)) as TienInternet,
+                        SUM(COALESCE(TienVeSinh, 0)) as TienVeSinh,
+                        SUM(COALESCE(TienGiuXe, 0)) as TienGiuXe,
+                        SUM(COALESCE(ChiPhiKhac, 0)) as ChiPhiKhac
                     FROM ThanhToan
-                    WHERE TrangThaiThanhToan = 'Đã thanh toán'", conn);
+                    WHERE TrangThaiThanhToan = 'Đã trả'", conn);
 
                 using (var reader = await cmdCategories.ExecuteReaderAsync())
                 {
@@ -496,7 +506,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Payment>> GetTransactionHistoryAsync(DateTime? tuNgay = null, DateTime? denNgay = null)
         {
             var transactions = new List<Payment>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
                 var sql = @"
@@ -509,7 +519,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                     LEFT JOIN Nha n ON p.MaNha = n.MaNha
-                    WHERE tt.TrangThaiThanhToan = 'Đã thanh toán'";
+                    WHERE tt.TrangThaiThanhToan = 'Đã trả'";
 
                 if (tuNgay.HasValue)
                 {
@@ -522,7 +532,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
                 sql += " ORDER BY tt.NgayThanhToan DESC";
 
-                var cmd = new SqlCommand(sql, conn);
+                var cmd = new MySqlCommand(sql, conn);
                 if (tuNgay.HasValue)
                 {
                     cmd.Parameters.AddWithValue("@TuNgay", tuNgay.Value);
@@ -549,7 +559,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
@@ -565,17 +575,17 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<int> GenerateMonthlyPaymentsAsync(string thangNam)
         {
             int count = 0;
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
 
                 // Lấy các hợp đồng đang hoạt động
-                var cmdContracts = new SqlCommand(@"
-                    SELECT hd.MaHopDong, p.GiaThue
+                var cmdContracts = new MySqlCommand(@"
+                    SELECT hd.MaHopDong, p.GiaCoBan
                     FROM HopDong hd
                     INNER JOIN Phong p ON hd.MaPhong = p.MaPhong
-                    WHERE hd.TrangThai = 'Đang hoạt động' 
-                    AND hd.NgayKetThuc >= GETDATE()", conn);
+                    WHERE hd.TrangThai = 'Hiệu lực' 
+                    AND hd.NgayKetThuc >= NOW()", conn);
 
                 using (var reader = await cmdContracts.ExecuteReaderAsync())
                 {
@@ -585,23 +595,23 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         var giaThue = reader.GetDecimal(1);
 
                         // Kiểm tra đã có thanh toán cho tháng này chưa
-                        var cmdCheck = new SqlCommand(@"
+                        var cmdCheck = new MySqlCommand(@"
                             SELECT COUNT(*) 
                             FROM ThanhToan 
                             WHERE MaHopDong = @MaHopDong AND ThangNam = @ThangNam", conn);
                         cmdCheck.Parameters.AddWithValue("@MaHopDong", maHopDong);
                         cmdCheck.Parameters.AddWithValue("@ThangNam", thangNam);
 
-                        var exists = (int)await cmdCheck.ExecuteScalarAsync() > 0;
+                        var exists = Convert.ToInt32(await cmdCheck.ExecuteScalarAsync()) > 0;
 
                         if (!exists)
                         {
                             // Tạo thanh toán mới
-                            var cmdInsert = new SqlCommand(@"
+                            var cmdInsert = new MySqlCommand(@"
                                 INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienDien, TienNuoc, 
                                                       TienInternet, TienVeSinh, TienGiuXe, ChiPhiKhac, 
                                                       TrangThaiThanhToan, NgayThanhToan)
-                                VALUES (@MaHopDong, @ThangNam, @TienThue, 0, 0, 0, 0, 0, 0, 'Chưa thanh toán', NULL)", conn);
+                                VALUES (@MaHopDong, @ThangNam, @TienThue, 0, 0, 0, 0, 0, 0, 'Chưa trả', NULL)", conn);
 
                             cmdInsert.Parameters.AddWithValue("@MaHopDong", maHopDong);
                             cmdInsert.Parameters.AddWithValue("@ThangNam", thangNam);
@@ -618,12 +628,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> MarkAsPaidAsync(int maThanhToan, DateTime ngayThanhToan, string phuongThucThanhToan = "Tiền mặt")
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     UPDATE ThanhToan 
-                    SET TrangThaiThanhToan = 'Đã thanh toán', 
+                    SET TrangThaiThanhToan = 'Đã trả', 
                         NgayThanhToan = @NgayThanhToan
                     WHERE MaThanhToan = @MaThanhToan", conn);
 
@@ -638,10 +648,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Payment>> GetPaymentsByRoomAsync(int maPhong)
         {
             var payments = new List<Payment>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand(@"
+                var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
                            tt.TrangThaiThanhToan, tt.NgayThanhToan,
@@ -674,7 +684,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa thanh toán" : reader.GetString(11),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : reader.GetString(11),
                             NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
                             TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
                             TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),

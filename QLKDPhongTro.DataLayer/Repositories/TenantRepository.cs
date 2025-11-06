@@ -1,8 +1,8 @@
 using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
@@ -15,16 +15,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public TenantRepository()
         {
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
+            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
+            string server = "host80.vietnix.vn";
+            string database = "githubio_QLT_Ver1";
+            string username = "githubio_admin";
+            string password = "nhanhuutran007";
+            string port = "3306";
+            
+            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
         }
 
         public async Task<List<Tenant>> GetAllAsync()
         {
             var tenants = new List<Tenant>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue ORDER BY MaNguoiThue DESC", conn);
+                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue ORDER BY MaNguoiThue DESC", conn);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -46,10 +56,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<Tenant?> GetByIdAsync(int maKhachThue)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
+                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
                 cmd.Parameters.AddWithValue("@MaNguoiThue", maKhachThue);
                 
                 using (var reader = await cmd.ExecuteReaderAsync())
@@ -73,10 +83,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> CreateAsync(Tenant tenant)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("INSERT INTO NguoiThue (HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu) VALUES (@HoTen, @CCCD, @SoDienThoai, @NgayBatDau, @TrangThai, @GhiChu)", conn);
+                var cmd = new MySqlCommand("INSERT INTO NguoiThue (HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu) VALUES (@HoTen, @CCCD, @SoDienThoai, @NgayBatDau, @TrangThai, @GhiChu)", conn);
                 
                 cmd.Parameters.AddWithValue("@HoTen", tenant.HoTen);
                 cmd.Parameters.AddWithValue("@CCCD", string.IsNullOrEmpty(tenant.CCCD) ? DBNull.Value : tenant.CCCD);
@@ -92,10 +102,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> UpdateAsync(Tenant tenant)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("UPDATE NguoiThue SET HoTen = @HoTen, CCCD = @CCCD, SoDienThoai = @SoDienThoai, NgayBatDau = @NgayBatDau, GhiChu = @GhiChu WHERE MaNguoiThue = @MaNguoiThue", conn);
+                var cmd = new MySqlCommand("UPDATE NguoiThue SET HoTen = @HoTen, CCCD = @CCCD, SoDienThoai = @SoDienThoai, NgayBatDau = @NgayBatDau, GhiChu = @GhiChu WHERE MaNguoiThue = @MaNguoiThue", conn);
                 
                 cmd.Parameters.AddWithValue("@MaNguoiThue", tenant.MaKhachThue);
                 cmd.Parameters.AddWithValue("@HoTen", tenant.HoTen);
@@ -111,10 +121,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> DeleteAsync(int maKhachThue)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("DELETE FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
+                var cmd = new MySqlCommand("DELETE FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
                 cmd.Parameters.AddWithValue("@MaNguoiThue", maKhachThue);
 
                 var result = await cmd.ExecuteNonQueryAsync();
@@ -125,10 +135,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Tenant>> SearchByNameAsync(string name)
         {
             var tenants = new List<Tenant>();
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue WHERE HoTen LIKE @Name ORDER BY MaNguoiThue DESC", conn);
+                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, CCCD, SoDienThoai, NgayBatDau, TrangThai, GhiChu FROM NguoiThue WHERE HoTen LIKE @Name ORDER BY MaNguoiThue DESC", conn);
                 cmd.Parameters.AddWithValue("@Name", $"%{name}%");
                 
                 using (var reader = await cmd.ExecuteReaderAsync())
@@ -152,14 +162,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> IsCCCDExistsAsync(string cccd, int excludeId = 0)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new SqlCommand("SELECT COUNT(*) FROM NguoiThue WHERE CCCD = @CCCD AND MaNguoiThue != @ExcludeId", conn);
+                var cmd = new MySqlCommand("SELECT COUNT(*) FROM NguoiThue WHERE CCCD = @CCCD AND MaNguoiThue != @ExcludeId", conn);
                 cmd.Parameters.AddWithValue("@CCCD", cccd);
                 cmd.Parameters.AddWithValue("@ExcludeId", excludeId);
 
-                var count = (int)await cmd.ExecuteScalarAsync();
+                var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                 return count > 0;
             }
         }
