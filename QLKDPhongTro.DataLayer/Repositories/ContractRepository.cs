@@ -1,21 +1,36 @@
 ﻿using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class ContractRepository : IContractRepository
     {
-        private readonly string _connectionString =
-            "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+        private readonly string _connectionString;
+        
+        public ContractRepository()
+        {
+            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
+            // _connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
+            string server = "host80.vietnix.vn";
+            string database = "githubio_QLT_Ver1";
+            string username = "githubio_admin";
+            string password = "nhanhuutran007";
+            string port = "3306";
+            
+            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
+        }
 
         public async Task<List<Contract>> GetAllHopDongAsync()
         {
             var contracts = new List<Contract>();
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("SELECT * FROM HopDong", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand("SELECT * FROM HopDong", connection);
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
@@ -28,8 +43,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task AddHopDongAsync(Contract contract)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand(
                 @"INSERT INTO HopDong 
                   (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
                   VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai)",
@@ -49,8 +64,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task UpdateHopDongAsync(Contract contract)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand(
                 @"UPDATE HopDong SET 
                     MaNguoiThue = @MaNguoiThue,
                     MaPhong = @MaPhong,
@@ -76,8 +91,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task DeleteHopDongAsync(int maHopDong)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("DELETE FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand("DELETE FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
             command.Parameters.AddWithValue("@MaHopDong", maHopDong);
 
             await connection.OpenAsync();
@@ -87,11 +102,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Contract>> GetExpiringContractsAsync(int days)
         {
             var contracts = new List<Contract>();
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand(
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand(
                 @"SELECT * FROM HopDong 
-                  WHERE TrangThai = N'Hiệu lực' 
-                  AND DATEDIFF(day, GETDATE(), NgayKetThuc) BETWEEN 0 AND @Days", connection);
+                  WHERE BINARY TrangThai = 'Hiệu lực' 
+                  AND DATEDIFF(NgayKetThuc, NOW()) BETWEEN 0 AND @Days", connection);
 
             command.Parameters.AddWithValue("@Days", days);
             await connection.OpenAsync();
@@ -106,8 +121,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<Contract?> GetByIdAsync(int maHopDong)
         {
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("SELECT * FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand("SELECT * FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
             command.Parameters.AddWithValue("@MaHopDong", maHopDong);
 
             await connection.OpenAsync();
@@ -122,8 +137,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Contract>> GetActiveContractsAsync()
         {
             var contracts = new List<Contract>();
-            using var connection = new SqlConnection(_connectionString);
-            var command = new SqlCommand("SELECT * FROM HopDong WHERE TrangThai = N'Hiệu lực'", connection);
+            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng BINARY để đảm bảo so sánh chính xác với ENUM trong MySQL
+            var command = new MySqlCommand("SELECT * FROM HopDong WHERE BINARY TrangThai = 'Hiệu lực'", connection);
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
@@ -134,7 +150,28 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
-        private static Contract ReadContract(SqlDataReader reader)
+        public async Task<List<Contract>> GetActiveContractsByTenantAsync(int maNguoiThue)
+        {
+            var contracts = new List<Contract>();
+            using var connection = new MySqlConnection(_connectionString);
+            // Sử dụng BINARY để đảm bảo so sánh chính xác với ENUM trong MySQL
+            var command = new MySqlCommand("SELECT * FROM HopDong WHERE BINARY TrangThai = 'Hiệu lực' AND MaNguoiThue = @MaNguoiThue", connection);
+            command.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContract(reader));
+            }
+            
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: MaNguoiThue={maNguoiThue}, Found {contracts.Count} contracts");
+            
+            return contracts;
+        }
+
+        private static Contract ReadContract(DbDataReader reader)
         {
             return new Contract
             {

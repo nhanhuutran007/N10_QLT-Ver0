@@ -17,6 +17,11 @@ namespace QLKDPhongTro.DataLayer.Models
         public decimal? TienVeSinh { get; set; }
         public decimal? TienGiuXe { get; set; }
         public decimal? ChiPhiKhac { get; set; }
+        // Đơn giá và chỉ số điện nước theo tháng (nếu có trong bảng)
+        public decimal? DonGiaDien { get; set; }
+        public decimal? DonGiaNuoc { get; set; }
+        public decimal? SoDien { get; set; }
+        public decimal? SoNuoc { get; set; }
         public decimal TongTien { get; set; }
         public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
         public DateTime? NgayThanhToan { get; set; }

@@ -3,7 +3,7 @@ using System;
 namespace QLKDPhongTro.DataLayer.Models
 {
     /// <summary>
-    /// Model đại diện cho người thuê phòng
+    /// Model đại diện cho người thuê phòng (mapping DB table [NguoiThue])
     /// </summary>
     public class Tenant
     {
@@ -11,12 +11,17 @@ namespace QLKDPhongTro.DataLayer.Models
         public string HoTen { get; set; } = string.Empty;
         public string CCCD { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;
-        public DateTime NgaySinh { get; set; } = DateTime.Now; // Mapping từ NgayBatDau
+
+        public DateTime? NgaySinh { get; set; }  // 🆕
+        public DateTime? NgayCap { get; set; }  // 🆕
+        public string NoiCap { get; set; } = string.Empty;  // 🆕
+        public string DiaChi { get; set; } = string.Empty;  // 🆕
+
         public string GhiChu { get; set; } = string.Empty;
-        
-        // Các trường không có trong database nhưng cần cho UI
+        public string TrangThai { get; set; } = "Đang thuê";
+
+        // Các trường mở rộng phục vụ UI
         public string Email { get; set; } = string.Empty;
-        public string DiaChi { get; set; } = string.Empty;
         public string GioiTinh { get; set; } = string.Empty;
         public string NgheNghiep { get; set; } = string.Empty;
         public DateTime NgayTao { get; set; } = DateTime.Now;

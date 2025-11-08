@@ -130,7 +130,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 IsLoading = true;
 
                 // Lấy danh sách hợp đồng đang hoạt động
-                var activeContracts = await _financialController.GetActiveContractsAsync();
+                var activeContracts = await _financialController.GetActiveContractDtosAsync();
                 Contracts.Clear();
 
                 foreach (var contract in activeContracts)

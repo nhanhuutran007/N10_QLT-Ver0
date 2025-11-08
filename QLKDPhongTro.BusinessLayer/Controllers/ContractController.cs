@@ -21,6 +21,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _repository = repository;
         }
 
+        public static ContractController CreateDefault()
+        {
+            var repository = new QLKDPhongTro.DataLayer.Repositories.ContractRepository();
+            return new ContractController(repository);
+        }
+
         public async Task<List<ContractDto>> GetAllHopDongAsync()
         {
             var entities = await _repository.GetAllHopDongAsync();

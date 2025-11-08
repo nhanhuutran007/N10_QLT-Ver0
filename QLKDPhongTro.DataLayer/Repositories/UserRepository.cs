@@ -1,11 +1,11 @@
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Utils;
 using QLKDPhongTro.Presentation.Utils;
-using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
+// using System.Data.SqlClient; // Để sử dụng SQL Server (đã chuyển sang MySQL)
+using MySql.Data.MySqlClient; // Sử dụng MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories 
 {
@@ -20,7 +20,21 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             
             // TODO: Đọc connection string từ config
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI CŨ: SQL SERVER =====
+            // Kết nối tới SQL Server LocalDB hoặc SQL Server Express
+            // connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
+            
+            // ===== CÁCH KẾT NỐI MỚI: MYSQL =====
+            // Cấu hình kết nối MySQL
+            string server = "host80.vietnix.vn";           // Máy chủ MySQL
+            string database = "githubio_QLT_Ver1";         // Tên cơ sở dữ liệu
+            string username = "githubio_admin";             // Tài khoản MySQL
+            string password = "nhanhuutran007";            // Mật khẩu MySQL
+            string port = "3306";                          // Cổng MySQL (mặc định 3306)
+            
+            // Chuỗi kết nối MySQL
+            connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;";
         }
 
         /// <summary>
@@ -31,11 +45,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var users = new List<User>();
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         using (var reader = await command.ExecuteReaderAsync())
                         {
@@ -67,11 +81,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE MaAdmin = @MaAdmin";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@MaAdmin", Convert.ToInt32(id));
                         using (var reader = await command.ExecuteReaderAsync())
@@ -104,11 +118,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE TenDangNhap = @TenDangNhap";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
                         using (var reader = await command.ExecuteReaderAsync())
@@ -141,12 +155,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = @"INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai) 
                                   VALUES (@TenDangNhap, @MatKhau, @Email, @SoDienThoai)";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
                         command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
@@ -172,7 +186,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = @"UPDATE Admin 
@@ -181,7 +195,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                       Email = @Email,
                                       SoDienThoai = @SoDienThoai
                                   WHERE MaAdmin = @MaAdmin";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@MaAdmin", user.MaAdmin);
                         command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
@@ -208,11 +222,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "DELETE FROM Admin WHERE MaAdmin = @MaAdmin";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@MaAdmin", Convert.ToInt32(id));
                         var result = await command.ExecuteNonQueryAsync();
@@ -234,14 +248,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT COUNT(*) FROM Admin WHERE TenDangNhap = @TenDangNhap";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
-                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
+                        var result = await command.ExecuteScalarAsync();
+                        var count = result != null ? Convert.ToInt32(result) : 0;
                         return count > 0;
                     }
                 }
@@ -260,14 +275,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT COUNT(*) FROM Admin WHERE Email = @Email";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Email", email);
-                        var count = (int)(await command.ExecuteScalarAsync() ?? 0);
+                        var result = await command.ExecuteScalarAsync();
+                        var count = result != null ? Convert.ToInt32(result) : 0;
                         return count > 0;
                     }
                 }
@@ -286,11 +302,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
                     var query = "SELECT MaAdmin, TenDangNhap, MatKhau, Email, SoDienThoai FROM Admin WHERE TenDangNhap = @TenDangNhap";
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
                         using (var reader = await command.ExecuteReaderAsync())

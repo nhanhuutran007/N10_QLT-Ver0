@@ -29,36 +29,35 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                // Đóng tất cả các cửa sổ hiện tại
+                // Lưu tham chiếu MainWindow hiện tại (nếu có)
+                var oldMain = Application.Current.MainWindow;
+
+                // Mở LoginWindow và set làm MainWindow mới
+                var loginWindow = CreateLoginWindow();
+                if (loginWindow != null)
+                {
+                    loginWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    loginWindow.Show();
+                    Application.Current.MainWindow = loginWindow;
+                }
+
+                // Đóng tất cả các cửa sổ khác (trừ loginWindow mới)
                 var windowsToClose = new List<Window>();
                 foreach (Window window in Application.Current.Windows)
                 {
-                    if (window != Application.Current.MainWindow)
-                    {
-                        windowsToClose.Add(window);
-                    }
+                    if (loginWindow != null && window == loginWindow) continue;
+                    windowsToClose.Add(window);
                 }
-
-                // Đóng các cửa sổ
                 foreach (var window in windowsToClose)
                 {
                     window.Close();
                 }
 
-                // Thử mở cửa sổ đăng nhập nếu tồn tại
-                TryOpenLoginWindow();
-
-                // Đóng cửa sổ hiện tại (nếu có)
-                var currentWindow = Window.GetWindow(this);
-                if (currentWindow != null && currentWindow != Application.Current.MainWindow)
+                // Nếu không tạo được LoginWindow, fallback đóng ứng dụng
+                if (loginWindow == null)
                 {
-                    currentWindow.Close();
-                }
-
-                // Đóng main window nếu cần
-                if (Application.Current.MainWindow != null)
-                {
-                    Application.Current.MainWindow.Close();
+                    MessageBox.Show("Đăng xuất thành công. Ứng dụng sẽ đóng.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Application.Current.Shutdown();
                 }
             }
             catch (System.Exception ex)
@@ -69,34 +68,20 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
+        private Window CreateLoginWindow()
+        {
+            // Tạo LoginWindow bằng kiểu rõ ràng nếu sẵn có
+            var loginWindowType = typeof(LoginWindow);
+            if (loginWindowType != null)
+            {
+                return System.Activator.CreateInstance(loginWindowType) as Window;
+            }
+            return null;
+        }
+
         private void TryOpenLoginWindow()
         {
-            try
-            {
-                // Sử dụng reflection để kiểm tra và tạo LoginWindow nếu tồn tại
-                var loginWindowType = System.Type.GetType("QLKDPhongTro.Presentation.Views.Windows.LoginWindow");
-                if (loginWindowType != null)
-                {
-                    var loginWindow = System.Activator.CreateInstance(loginWindowType) as Window;
-                    if (loginWindow != null)
-                    {
-                        loginWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                        loginWindow.Show();
-                    }
-                }
-                else
-                {
-                    // Nếu không tìm thấy LoginWindow, thông báo và đóng ứng dụng
-                    MessageBox.Show("Đăng xuất thành công. Ứng dụng sẽ đóng.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    Application.Current.Shutdown();
-                }
-            }
-            catch
-            {
-                // Fallback: thông báo và đóng ứng dụng
-                MessageBox.Show("Đăng xuất thành công. Ứng dụng sẽ đóng.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                Application.Current.Shutdown();
-            }
+            // Không còn dùng: logic mở login di chuyển sang PerformLogout để đảm bảo thứ tự set MainWindow
         }
     }
 }
