@@ -23,13 +23,13 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.MinWidth = 800;
             this.Height = 700;
             this.Width = 1200;
-            
+
             // Khởi tạo DataContext với ViewModel
             this.DataContext = new TenantViewModel();
-            
+
             // Load dữ liệu từ database
             LoadTenantData();
-            
+
             // Thêm event handler cho việc thay đổi kích thước cửa sổ
             this.SizeChanged += TenantManagementWindow_SizeChanged;
         }
@@ -139,7 +139,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 wrapPanelFactory.SetValue(WrapPanel.OrientationProperty, Orientation.Horizontal);
                 wrapPanelFactory.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Stretch);
                 wrapPanelFactory.SetValue(MarginProperty, new Thickness(0));
-                
+
                 itemsPanelTemplate.VisualTree = wrapPanelFactory;
                 tenantsItemsControl.ItemsPanel = itemsPanelTemplate;
             }

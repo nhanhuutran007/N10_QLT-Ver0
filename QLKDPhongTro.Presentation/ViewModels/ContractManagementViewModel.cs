@@ -8,6 +8,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
+using CommunityToolkit.Mvvm.Input;
+
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -125,5 +127,51 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
             }
         }
+
+        [RelayCommand]
+        private async Task LoadExpiringContractsAsync()
+        {
+            try
+            {
+                int days = 30; // hoặc cho người dùng chọn
+                var expiringContracts = await _contractController.GetExpiringContractsAsync(days);
+
+                if (expiringContracts.Count == 0)
+                {
+                    MessageBox.Show($"Không có hợp đồng nào sắp hết hạn trong {days} ngày tới.",
+                                    "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                Contracts = new ObservableCollection<ContractDto>(expiringContracts);
+
+                MessageBox.Show($"Đã tải {expiringContracts.Count} hợp đồng sắp hết hạn trong {days} ngày tới.",
+                                "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Lỗi khi tải hợp đồng sắp hết hạn: {ex.Message}",
+                                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task SendExpiryWarningEmailsAsync()
+        {
+            var result = await _contractController.SendExpiryWarningEmailsAsync(30);
+
+            if (!result)
+            {
+                MessageBox.Show("✅ Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.",
+                                "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            MessageBox.Show("📧 Đã gửi email cảnh báo thành công!", "Thành công",
+                            MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+
+
+
     }
 }

@@ -7,9 +7,6 @@ using System.Threading.Tasks;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
-    /// <summary>
-    /// Controller xử lý logic nghiệp vụ cho Tenant
-    /// </summary>
     public class TenantController
     {
         private readonly ITenantRepository _tenantRepository;
@@ -19,9 +16,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _tenantRepository = tenantRepository;
         }
 
-        /// <summary>
-        /// Lấy tất cả khách thuê
-        /// </summary>
         public async Task<List<TenantDto>> GetAllTenantsAsync()
         {
             var tenants = await _tenantRepository.GetAllAsync();
@@ -32,54 +26,23 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 CCCD = t.CCCD,
                 SoDienThoai = t.SoDienThoai,
                 Email = t.Email,
-                DiaChi = t.DiaChi,
-                NgaySinh = t.NgaySinh,
                 GioiTinh = t.GioiTinh,
                 NgheNghiep = t.NgheNghiep,
                 GhiChu = t.GhiChu,
+                NgaySinh = t.NgaySinh,
+                NgayCap = t.NgayCap,
+                NoiCap = t.NoiCap,
+                DiaChi = t.DiaChi,
                 NgayTao = t.NgayTao,
                 NgayCapNhat = t.NgayCapNhat
             }).ToList();
         }
 
-        /// <summary>
-        /// Lấy khách thuê theo ID
-        /// </summary>
-        public async Task<TenantDto?> GetTenantByIdAsync(int maKhachThue)
-        {
-            var tenant = await _tenantRepository.GetByIdAsync(maKhachThue);
-            if (tenant == null) return null;
-
-            return new TenantDto
-            {
-                MaKhachThue = tenant.MaKhachThue,
-                HoTen = tenant.HoTen,
-                CCCD = tenant.CCCD,
-                SoDienThoai = tenant.SoDienThoai,
-                Email = tenant.Email,
-                DiaChi = tenant.DiaChi,
-                NgaySinh = tenant.NgaySinh,
-                GioiTinh = tenant.GioiTinh,
-                NgheNghiep = tenant.NgheNghiep,
-                GhiChu = tenant.GhiChu,
-                NgayTao = tenant.NgayTao,
-                NgayCapNhat = tenant.NgayCapNhat
-            };
-        }
-
-        /// <summary>
-        /// Tạo khách thuê mới
-        /// </summary>
         public async Task<ValidationResult> CreateTenantAsync(TenantDto dto)
         {
-            // Kiểm tra CCCD đã tồn tại chưa
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD))
             {
-                return new ValidationResult
-                {
-                    IsValid = false,
-                    Message = "CCCD đã tồn tại trong hệ thống"
-                };
+                return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
             }
 
             var tenant = new Tenant
@@ -88,80 +51,84 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 CCCD = dto.CCCD,
                 SoDienThoai = dto.SoDienThoai,
                 Email = dto.Email,
-                DiaChi = dto.DiaChi,
-                NgaySinh = dto.NgaySinh,
                 GioiTinh = dto.GioiTinh,
                 NgheNghiep = dto.NgheNghiep,
                 GhiChu = dto.GhiChu,
-                NgayTao = DateTime.Now,
-                NgayCapNhat = DateTime.Now
+                NgaySinh = dto.NgaySinh,
+                NgayCap = dto.NgayCap,
+                NoiCap = dto.NoiCap,
+                DiaChi = dto.DiaChi,
+                NgayTao = System.DateTime.Now,
+                NgayCapNhat = System.DateTime.Now
             };
 
             var success = await _tenantRepository.CreateAsync(tenant);
             return new ValidationResult
             {
                 IsValid = success,
-                Message = success ? "Thêm khách thuê thành công" : "Thêm khách thuê thất bại"
+                Message = success ? "✅ Thêm khách thuê thành công!" : "❌ Thêm khách thuê thất bại!"
             };
         }
 
-        /// <summary>
-        /// Cập nhật thông tin khách thuê
-        /// </summary>
+        // ⭐⭐⭐ BẮT ĐẦU SỬA LỖI (Logic Update) ⭐⭐⭐
         public async Task<ValidationResult> UpdateTenantAsync(TenantDto dto)
         {
-            // Kiểm tra CCCD đã tồn tại chưa (trừ chính nó)
+            // 1. Kiểm tra CCCD
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD, dto.MaKhachThue))
             {
-                return new ValidationResult
-                {
-                    IsValid = false,
-                    Message = "CCCD đã tồn tại trong hệ thống"
-                };
+                return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
             }
 
-            var tenant = new Tenant
+            // 2. LẤY đối tượng cũ từ Database (Giả sử Repository có GetByIdAsync)
+            var existingTenant = await _tenantRepository.GetByIdAsync(dto.MaKhachThue);
+            if (existingTenant == null)
             {
-                MaKhachThue = dto.MaKhachThue,
-                HoTen = dto.HoTen,
-                CCCD = dto.CCCD,
-                SoDienThoai = dto.SoDienThoai,
-                Email = dto.Email,
-                DiaChi = dto.DiaChi,
-                NgaySinh = dto.NgaySinh,
-                GioiTinh = dto.GioiTinh,
-                NgheNghiep = dto.NgheNghiep,
-                GhiChu = dto.GhiChu,
-                NgayCapNhat = DateTime.Now
-            };
+                return new ValidationResult { IsValid = false, Message = "❌ Không tìm thấy khách thuê để cập nhật!" };
+            }
 
-            var success = await _tenantRepository.UpdateAsync(tenant);
+            // 3. CẬP NHẬT các trường từ DTO (form) lên đối tượng cũ
+            existingTenant.HoTen = dto.HoTen;
+            existingTenant.CCCD = dto.CCCD;
+            existingTenant.SoDienThoai = dto.SoDienThoai;
+            existingTenant.Email = dto.Email;
+            existingTenant.GioiTinh = dto.GioiTinh;
+            existingTenant.NgheNghiep = dto.NgheNghiep;
+            existingTenant.GhiChu = dto.GhiChu;
+            existingTenant.NgaySinh = dto.NgaySinh;
+            existingTenant.NgayCap = dto.NgayCap;
+            existingTenant.NoiCap = dto.NoiCap;
+            existingTenant.DiaChi = dto.DiaChi;
+            existingTenant.NgayCapNhat = System.DateTime.Now;
+
+            // Lưu ý: existingTenant.NgayTao và các trường khác không có trên form
+            // sẽ được bảo toàn.
+
+            // 4. LƯU LẠI đối tượng đã cập nhật
+            var success = await _tenantRepository.UpdateAsync(existingTenant);
+
             return new ValidationResult
             {
                 IsValid = success,
-                Message = success ? "Cập nhật khách thuê thành công" : "Cập nhật khách thuê thất bại"
+                Message = success ? "✅ Cập nhật khách thuê thành công!" : "❌ Cập nhật thất bại!"
             };
         }
+        // ⭐⭐⭐ KẾT THÚC SỬA LỖI ⭐⭐⭐
 
-        /// <summary>
-        /// Xóa khách thuê
-        /// </summary>
+        // 🗑️ Xóa khách thuê theo mã
         public async Task<ValidationResult> DeleteTenantAsync(int maKhachThue)
         {
             var success = await _tenantRepository.DeleteAsync(maKhachThue);
             return new ValidationResult
             {
                 IsValid = success,
-                Message = success ? "Xóa khách thuê thành công" : "Xóa khách thuê thất bại"
+                Message = success ? "🗑️ Đã xóa khách thuê thành công!" : "❌ Xóa khách thuê thất bại!"
             };
         }
 
-        /// <summary>
-        /// Tìm kiếm khách thuê theo tên
-        /// </summary>
-        public async Task<List<TenantDto>> SearchTenantsByNameAsync(string name)
+        // 🔍 Tìm kiếm khách thuê theo tên
+        public async Task<List<TenantDto>> SearchTenantsByNameAsync(string keyword)
         {
-            var tenants = await _tenantRepository.SearchByNameAsync(name);
+            var tenants = await _tenantRepository.SearchByNameAsync(keyword);
             return tenants.Select(t => new TenantDto
             {
                 MaKhachThue = t.MaKhachThue,
@@ -169,11 +136,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 CCCD = t.CCCD,
                 SoDienThoai = t.SoDienThoai,
                 Email = t.Email,
-                DiaChi = t.DiaChi,
-                NgaySinh = t.NgaySinh,
                 GioiTinh = t.GioiTinh,
                 NgheNghiep = t.NgheNghiep,
                 GhiChu = t.GhiChu,
+                NgaySinh = t.NgaySinh,
+                NgayCap = t.NgayCap,
+                NoiCap = t.NoiCap,
+                DiaChi = t.DiaChi,
                 NgayTao = t.NgayTao,
                 NgayCapNhat = t.NgayCapNhat
             }).ToList();

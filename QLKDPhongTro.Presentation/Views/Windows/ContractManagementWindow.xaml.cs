@@ -9,6 +9,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent(); // <-- đây là hàm auto-generated, không cần tự viết
             this.DataContext = new ContractManagementViewModel();
+
         }
 
 
