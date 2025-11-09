@@ -124,7 +124,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 DienTich = SelectedRoom.DienTich,
                 GiaCoBan = SelectedRoom.GiaCoBan,
                 TrangThai = SelectedRoom.TrangThai,
-                GhiChu = SelectedRoom.GhiChu
+                GhiChu = SelectedRoom.GhiChu,
+                GiaBangChu = SelectedRoom.GiaBangChu,
+                TrangThietBi = SelectedRoom.TrangThietBi
             };
 
             Title = "Sửa thông tin phòng";
@@ -211,7 +213,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                             DienTich = NewRoom.DienTich,
                             GiaCoBan = NewRoom.GiaCoBan,
                             TrangThai = NewRoom.TrangThai,
-                            GhiChu = NewRoom.GhiChu
+                            GhiChu = NewRoom.GhiChu,
+                            GiaBangChu = NewRoom.GiaBangChu,
+                            TrangThietBi = NewRoom.TrangThietBi
                         };
                         Debug.WriteLine($"Room updated in collection: MaPhong={NewRoom.MaPhong}, TrangThai={NewRoom.TrangThai}");
                     }
