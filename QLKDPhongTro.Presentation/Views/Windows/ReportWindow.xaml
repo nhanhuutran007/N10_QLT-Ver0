@@ -86,8 +86,8 @@
                                      SearchTextChanged="TopbarControl_SearchTextChanged"
                                      SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
 
-            <!-- Page Title -->
-            <TextBlock Grid.Row="1" Text="Báo cáo thống kê" Foreground="#3B4758" FontSize="24" FontWeight="Bold" Margin="20,20,20,10"/>
+            <!-- Header: Title -->
+            <TextBlock Grid.Row="1" Text="Báo cáo thống kê" Foreground="#3B4758" FontSize="24" FontWeight="Bold" Margin="20,15,0,20"/>
 
             <!-- Stat Cards -->
             <UniformGrid Grid.Row="2" Columns="3" Margin="10,10,10,20">

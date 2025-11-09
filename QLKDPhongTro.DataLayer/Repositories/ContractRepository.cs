@@ -16,13 +16,20 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             var contracts = new List<Contract>();
             using var connection = new MySqlConnection(_connectionString);
-            var command = new MySqlCommand("SELECT * FROM HopDong", connection);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  ORDER BY hd.MaHopDong DESC", connection);
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                contracts.Add(ReadContract(reader));
+                contracts.Add(ReadContractWithJoin(reader));
             }
             return contracts;
         }
@@ -90,9 +97,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var contracts = new List<Contract>();
             using var connection = new MySqlConnection(_connectionString);
             var command = new MySqlCommand(
-                @"SELECT * FROM HopDong 
-                  WHERE BINARY TrangThai = 'Hiệu lực' 
-                  AND DATEDIFF(NgayKetThuc, NOW()) BETWEEN 0 AND @Days", connection);
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE BINARY hd.TrangThai = 'Hiệu lực' 
+                  AND DATEDIFF(hd.NgayKetThuc, NOW()) BETWEEN 0 AND @Days
+                  ORDER BY hd.NgayKetThuc ASC", connection);
 
             command.Parameters.AddWithValue("@Days", days);
             await connection.OpenAsync();
@@ -100,7 +113,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                contracts.Add(ReadContract(reader));
+                contracts.Add(ReadContractWithJoin(reader));
             }
             return contracts;
         }
@@ -108,14 +121,21 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<Contract?> GetByIdAsync(int maHopDong)
         {
             using var connection = new MySqlConnection(_connectionString);
-            var command = new MySqlCommand("SELECT * FROM HopDong WHERE MaHopDong = @MaHopDong", connection);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE hd.MaHopDong = @MaHopDong", connection);
             command.Parameters.AddWithValue("@MaHopDong", maHopDong);
 
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
             if (await reader.ReadAsync())
             {
-                return ReadContract(reader);
+                return ReadContractWithJoin(reader);
             }
             return null;
         }
@@ -127,12 +147,20 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using var connection = await ConnectDB.CreateConnectionAsync();
             
             // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
-            var command = new MySqlCommand("SELECT * FROM HopDong WHERE TrangThai = 'Hiệu lực'", connection);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE hd.TrangThai = 'Hiệu lực'
+                  ORDER BY hd.MaHopDong DESC", connection);
 
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                contracts.Add(ReadContract(reader));
+                contracts.Add(ReadContractWithJoin(reader));
             }
             return contracts;
         }
@@ -144,7 +172,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using var connection = await ConnectDB.CreateConnectionAsync();
             
             // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
-            var command = new MySqlCommand("SELECT * FROM HopDong WHERE TrangThai = 'Hiệu lực' AND MaNguoiThue = @MaNguoiThue", connection);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE hd.TrangThai = 'Hiệu lực' AND hd.MaNguoiThue = @MaNguoiThue
+                  ORDER BY hd.MaHopDong DESC", connection);
             command.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
 
             // Đảm bảo reader được đóng hoàn toàn trước khi sử dụng connection cho query khác
@@ -152,7 +188,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             {
                 while (await reader.ReadAsync())
                 {
-                    contracts.Add(ReadContract(reader));
+                    contracts.Add(ReadContractWithJoin(reader));
                 }
             } // Reader được dispose ở đây
             
@@ -201,6 +237,23 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 TienCoc = reader.GetDecimal(reader.GetOrdinal("TienCoc")),
                 FileHopDong = reader.IsDBNull(reader.GetOrdinal("FileHopDong")) ? string.Empty : reader.GetString(reader.GetOrdinal("FileHopDong")),
                 TrangThai = reader.GetString(reader.GetOrdinal("TrangThai"))
+            };
+        }
+
+        private static Contract ReadContractWithJoin(DbDataReader reader)
+        {
+            return new Contract
+            {
+                MaHopDong = reader.GetInt32(0),
+                MaNguoiThue = reader.GetInt32(1),
+                MaPhong = reader.GetInt32(2),
+                NgayBatDau = reader.GetDateTime(3),
+                NgayKetThuc = reader.GetDateTime(4),
+                TienCoc = reader.GetDecimal(5),
+                FileHopDong = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                TrangThai = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                TenPhong = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
+                TenNguoiThue = reader.IsDBNull(9) ? string.Empty : reader.GetString(9)
             };
         }
 

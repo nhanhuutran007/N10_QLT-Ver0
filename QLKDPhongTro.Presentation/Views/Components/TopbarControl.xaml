@@ -30,7 +30,7 @@
     </UserControl.Resources>
 
     <!-- Top Bar -->
-    <Border Background="White" CornerRadius="12" Margin="10,0,10,20">
+    <Border Background="White" CornerRadius="12" Margin="10,0,10,0">
         <Border.Effect>
             <DropShadowEffect ShadowDepth="1" Color="#D6D8E0" Opacity="0.3" BlurRadius="10"/>
         </Border.Effect>

@@ -9,9 +9,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
             DataContext = new MaintenanceListViewModel();
-            if (Topbar != null)
+            if (TopbarControl != null)
             {
-                Topbar.SearchTextChanged += Topbar_SearchTextChanged;
+                TopbarControl.SearchTextChanged += Topbar_SearchTextChanged;
             }
         }
 

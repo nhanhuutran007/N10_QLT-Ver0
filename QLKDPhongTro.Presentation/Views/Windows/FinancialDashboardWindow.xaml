@@ -13,7 +13,9 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         Background="#F5F5F5"
-        FontFamily="Segoe UI">
+        AllowsTransparency="False"
+        FontFamily="Roboto"
+        Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
         <!-- Converters -->
@@ -220,35 +222,28 @@
     </Window.Resources>
 
     <Grid>
-        <!-- SỬA LẠI: Layout giống ContractManagementWindow -->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <!-- Sidebar cố định -->
-            <ColumnDefinition Width="*"/>
-            <!-- Main content -->
+            <ColumnDefinition Width="269" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar - HIỂN THỊ LUÔN, không ẩn -->
-        <Grid Grid.Column="0" Background="White">
-            <views:SidebarControl x:Name="SidebarControl"
-                          MenuItemClicked="SidebarControl_MenuItemClicked"
-                          LogoutClicked="SidebarControl_LogoutClicked"/>
-        </Grid>
+        <!-- === SIDEBAR CONTROL === -->
+        <views:SidebarControl Grid.Column="0" x:Name="SidebarControl"
+                              MenuItemClicked="SidebarControl_MenuItemClicked"
+                              LogoutClicked="SidebarControl_LogoutClicked"/>
 
-        <!-- Main Content -->
-        <Grid Grid.Column="1" Background="#F5F5F5">
+        <!-- === KHU VỰC NỘI DUNG CHÍNH === -->
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <!-- Topbar -->
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
-                <!-- Content -->
             </Grid.RowDefinitions>
 
-            <!-- Topbar Control -->
-            <views:TopbarControl Grid.Row="0"
-                         MenuButtonClicked="TopbarControl_MenuButtonClicked"
-                         SearchTextChanged="TopbarControl_SearchTextChanged"
-                         SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
+            <!-- Top Bar Control -->
+            <views:TopbarControl Grid.Row="0" x:Name="TopbarControl"
+                                 MenuButtonClicked="TopbarControl_MenuButtonClicked"
+                                 SearchTextChanged="TopbarControl_SearchTextChanged"
+                                 SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
 
             <!-- Loading Indicator -->
             <ProgressBar Grid.Row="0"
@@ -262,14 +257,14 @@
                           VerticalScrollBarVisibility="Auto" 
                           HorizontalScrollBarVisibility="Disabled"
                           IsEnabled="{Binding IsNotLoading}">
-                <StackPanel Margin="20">
+                <StackPanel Margin="0">
 
-                    <!-- Header -->
+                    <!-- Header: Title -->
                     <TextBlock Text="Quản lý tài chính" 
                                Foreground="#3B4758" 
                                FontSize="24" 
                                FontWeight="Bold"
-                               Margin="0,0,0,20"/>
+                               Margin="20,15,0,20"/>
 
                     <!-- === THỐNG KÊ TỔNG QUAN === -->
                     <Border Background="#EEF0F4" 

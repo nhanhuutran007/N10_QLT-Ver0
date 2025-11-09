@@ -40,9 +40,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                // Bỏ TenNguoiThue và TenPhong vì model Contract không có
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
 
@@ -61,8 +60,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = entity.TenNguoiThue ?? string.Empty,
+                TenPhong = entity.TenPhong ?? string.Empty
             };
         }
 
@@ -79,8 +78,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
 
@@ -133,8 +132,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
         // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn
