@@ -11,11 +11,15 @@
   <ItemGroup>
     <None Remove="Resources\Images\Logo.png" />
     <None Remove="Resources\Images\QR.jpg" />
+    <None Remove="Resources\Templates\HopDongMau.doc" />
     <None Remove="Resources\Templates\HopDongMau.docx" />
     <None Remove="Templates\HopDongMau.docx" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Resources\Templates\HopDongMau.doc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\Templates\HopDongMau.docx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
