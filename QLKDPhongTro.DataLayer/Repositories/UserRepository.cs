@@ -463,7 +463,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                 }
                                 
                                 // Kiểm tra mật khẩu đã hash (cho tài khoản mới)
-                                if (!string.IsNullOrEmpty(storedPassword) && PasswordHelper.VerifyPassword(password, storedPassword))
+                                if (!string.IsNullOrEmpty(storedPassword) && !string.IsNullOrEmpty(password) && PasswordHelper.VerifyPassword(password, storedPassword))
                                 {
                                     Console.WriteLine("Debug Login - Hashed password match!");
                                     return new User

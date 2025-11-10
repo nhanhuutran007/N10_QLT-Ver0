@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
+using MySql.Data.MySqlClient;
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
@@ -12,6 +12,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
         // Sử dụng ConnectDB chung để quản lý connection string
         private string _connectionString => ConnectDB.GetConnectionString();
 
+        /// <summary>
+        /// Lấy tất cả hop dong kèm thông tin phòng và thông tin người thuê (LEFT JOIN)
+        /// </summary>
         public async Task<List<Contract>> GetAllHopDongAsync()
         {
             var contracts = new List<Contract>();
@@ -115,6 +118,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             {
                 contracts.Add(ReadContractWithJoin(reader));
             }
+
             return contracts;
         }
 
@@ -137,6 +141,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             {
                 return ReadContractWithJoin(reader);
             }
+
             return null;
         }
 
@@ -145,7 +150,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var contracts = new List<Contract>();
             // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
             using var connection = await ConnectDB.CreateConnectionAsync();
-            
+
             // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
             var command = new MySqlCommand(
                 @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
@@ -162,6 +167,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             {
                 contracts.Add(ReadContractWithJoin(reader));
             }
+
             return contracts;
         }
 
@@ -170,7 +176,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var contracts = new List<Contract>();
             // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
             using var connection = await ConnectDB.CreateConnectionAsync();
-            
+
             // ENUM('Hiệu lực','Hết hạn','Hủy') - giá trị phải khớp chính xác
             var command = new MySqlCommand(
                 @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
@@ -191,7 +197,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     contracts.Add(ReadContractWithJoin(reader));
                 }
             } // Reader được dispose ở đây
-            
+
             // Debug logging
             System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: MaNguoiThue={maNguoiThue}, Found {contracts.Count} contracts");
             if (contracts.Count == 0)
@@ -202,12 +208,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 checkCmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
                 var totalCount = Convert.ToInt32(await checkCmd.ExecuteScalarAsync());
                 System.Diagnostics.Debug.WriteLine($"GetActiveContractsByTenantAsync: Total contracts for MaNguoiThue={maNguoiThue}: {totalCount}");
-                
+
                 // Kiểm tra trạng thái của các hợp đồng - sử dụng connection riêng để tránh conflict
                 // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
                 using (var debugConnection = await ConnectDB.CreateConnectionAsync())
                 {
-                    
+
                     var statusCmd = new MySqlCommand("SELECT MaHopDong, TrangThai FROM HopDong WHERE MaNguoiThue = @MaNguoiThue", debugConnection);
                     statusCmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
                     using (var statusReader = await statusCmd.ExecuteReaderAsync())
@@ -221,10 +227,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     }
                 }
             }
-            
+
             return contracts;
         }
 
+        /// <summary>
+        /// Đọc một record từ DbDataReader và ánh xạ vào model Contract (bao gồm thông tin phòng và người thuê nếu có)
+        /// </summary>
         private static Contract ReadContract(DbDataReader reader)
         {
             return new Contract
