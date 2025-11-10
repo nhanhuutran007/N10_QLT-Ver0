@@ -84,11 +84,11 @@
                     <!-- Tên và Email -->
                     <StackPanel VerticalAlignment="Center"
                                 Margin="70,0,0,0">
-                        <TextBlock Text="Trần Hữu Nhân"
+                        <TextBlock Text="{Binding UserName}"
                                    Foreground="#3B4758"
                                    FontSize="16"
                                    FontWeight="Bold"/>
-                        <TextBlock Text="admin@gmail.com"
+                        <TextBlock Text="{Binding UserEmail}"
                                    Foreground="#586A84"
                                    FontSize="12"/>
                     </StackPanel>

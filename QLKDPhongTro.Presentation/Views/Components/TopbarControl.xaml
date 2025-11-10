@@ -87,13 +87,15 @@
                     </Ellipse>
                 </ToggleButton>
 
-                <Popup IsOpen="{Binding IsChecked, ElementName=ProfileButton}" 
+                <Popup x:Name="ProfilePopup"
+                       IsOpen="{Binding IsChecked, ElementName=ProfileButton}" 
                        StaysOpen="False" 
                        PlacementTarget="{Binding ElementName=ProfileButton}"
                        Placement="Bottom"
                        AllowsTransparency="True"
-                       PopupAnimation="Fade">
-                    <windows:ProfileDropDown Margin="0,10,0,0"/>
+                       PopupAnimation="Fade"
+                       Opened="ProfilePopup_Opened">
+                    <windows:ProfileDropDown x:Name="ProfileDropDownControl" Margin="0,10,0,0"/>
                 </Popup>
             </StackPanel>
         </Grid>

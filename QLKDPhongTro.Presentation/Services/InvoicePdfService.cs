@@ -64,7 +64,7 @@ namespace QLKDPhongTro.Presentation.Services
             DrawHeader(gfx, invoice, logoPath, "Thông báo phí");
             DrawCustomerInfo(gfx, invoice, 160);
             DrawInvoiceTable(gfx, invoice, 270);
-            DrawBankInfo(gfx, invoice, page.Height - 220);
+            DrawBankInfo(gfx, invoice, page.Height.Point - 220);
             DrawFooter(gfx, invoice, page, 1, 3);
         }
 
@@ -106,7 +106,7 @@ namespace QLKDPhongTro.Presentation.Services
             gfx.DrawString("Thành tiền:", FontBody, XBrushes.Black, labelX, y);
             gfx.DrawString($"{invoice.ThanhTienDien:N0} VNĐ", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
 
-            gfx.DrawString("-Kết thúc-", FontBody, XBrushes.Black, new XRect(0, page.Height - 100, page.Width, 20), XStringFormats.Center);
+            gfx.DrawString("-Kết thúc-", FontBody, XBrushes.Black, new XRect(0, page.Height.Point - 100, page.Width.Point, 20), XStringFormats.Center);
 
             DrawPageNumber(gfx, page, 2, 3);
         }
@@ -149,7 +149,7 @@ namespace QLKDPhongTro.Presentation.Services
             gfx.DrawString("Thành tiền:", FontBody, XBrushes.Black, labelX, y);
             gfx.DrawString($"{invoice.ThanhTienNuoc:N0} VNĐ", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
 
-            gfx.DrawString("-Kết thúc-", FontBody, XBrushes.Black, new XRect(0, page.Height - 100, page.Width, 20), XStringFormats.Center);
+            gfx.DrawString("-Kết thúc-", FontBody, XBrushes.Black, new XRect(0, page.Height.Point - 100, page.Width.Point, 20), XStringFormats.Center);
 
             DrawPageNumber(gfx, page, 3, 3);
         }
@@ -223,14 +223,14 @@ namespace QLKDPhongTro.Presentation.Services
             }
 
             // Thông tin liên hệ
-            gfx.DrawString("[T. +84 0869 089 999] [E. nhanhuutran007@gmail.com]", FontSmall, new XSolidBrush(ColorGrayText), new XRect(0, 30, page.Width - 40, 20), XStringFormats.TopRight);
+            gfx.DrawString("[T. +84 0869 089 999] [E. nhanhuutran007@gmail.com]", FontSmall, new XSolidBrush(ColorGrayText), new XRect(0, 30, page.Width.Point - 40, 20), XStringFormats.TopRight);
 
             // Tiêu đề
-            gfx.DrawString(title, FontTitle, XBrushes.Black, new XRect(0, 70, page.Width, 40), XStringFormats.Center);
-            gfx.DrawString($"Tháng {invoice.ThangNam}", FontSubtitle, XBrushes.Black, new XRect(0, 105, page.Width, 30), XStringFormats.Center);
+            gfx.DrawString(title, FontTitle, XBrushes.Black, new XRect(0, 70, page.Width.Point, 40), XStringFormats.Center);
+            gfx.DrawString($"Tháng {invoice.ThangNam}", FontSubtitle, XBrushes.Black, new XRect(0, 105, page.Width.Point, 30), XStringFormats.Center);
 
             // Thông tin tham chiếu bên phải
-            double rightColX = page.Width - 200;
+            double rightColX = page.Width.Point - 200;
             gfx.DrawString("Ngày:", FontBody, XBrushes.Black, rightColX, 130);
             gfx.DrawString(invoice.NgayPhatHanh.ToString("dd/MM/yyyy"), FontBody, XBrushes.Black, rightColX + 80, 130);
             gfx.DrawString("Số tham chiếu:", FontBody, XBrushes.Black, rightColX, 145);
@@ -339,7 +339,7 @@ namespace QLKDPhongTro.Presentation.Services
             gfx.DrawString(invoice.NgayBatDauHopDong.ToString("dd/MM/yyyy"), FontBodyBold, XBrushes.Black, valueX, y);
 
             // Khối thông tin phòng
-            double rightColX = page.Width - 200;
+            double rightColX = page.Width.Point - 200;
             gfx.DrawString("Phòng:", FontBody, XBrushes.Black, rightColX, yStart + 20);
             gfx.DrawString(invoice.TenPhong, FontBodyBold, XBrushes.Black, rightColX + 80, yStart + 20);
             gfx.DrawString("Số người lưu trú", FontBody, XBrushes.Black, rightColX, yStart + 35);
@@ -350,7 +350,7 @@ namespace QLKDPhongTro.Presentation.Services
         {
             double y = yStart;
             double tableWidth = 500;
-            double x = (gfx.PdfPage.Width - tableWidth) / 2;
+            double x = (gfx.PdfPage.Width.Point - tableWidth) / 2;
 
             // Định nghĩa các cột - căn chỉnh đều với cột "Đơn vị" (làm chuẩn)
             // Điều chỉnh vị trí để cột "Nội dung chi tiết" không bị lệch
@@ -429,10 +429,10 @@ namespace QLKDPhongTro.Presentation.Services
 
         private static void DrawFooter(XGraphics gfx, PlumeriaInvoiceDto invoice, PdfPage page, int currentPage, int totalPages)
         {
-            double y = page.Height - 150;
+            double y = page.Height.Point - 150;
 
             // Thời hạn thanh toán - căn chỉnh hợp lý hơn
-            double rightX = page.Width - 250;
+            double rightX = page.Width.Point - 250;
             double boxWidth = 200;
             
             // Vẽ box đỏ
@@ -448,14 +448,14 @@ namespace QLKDPhongTro.Presentation.Services
             gfx.DrawString("* Có thể thanh toán bằng Tiền mặt.", FontSmall, XBrushes.Black, 50, y + 70);
 
             // Lời cảm ơn
-            gfx.DrawString("Trân trọng cảm ơn Quý khách.", FontBodyBold, XBrushes.Black, new XRect(0, page.Height - 100, page.Width, 20), XStringFormats.Center);
+            gfx.DrawString("Trân trọng cảm ơn Quý khách.", FontBodyBold, XBrushes.Black, new XRect(0, page.Height.Point - 100, page.Width.Point, 20), XStringFormats.Center);
 
             DrawPageNumber(gfx, page, currentPage, totalPages);
         }
 
         private static void DrawPageNumber(XGraphics gfx, PdfPage page, int currentPage, int totalPages)
         {
-            gfx.DrawString($"{currentPage}/{totalPages}", FontBody, XBrushes.Black, new XRect(0, page.Height - 40, page.Width, 20), XStringFormats.Center);
+            gfx.DrawString($"{currentPage}/{totalPages}", FontBody, XBrushes.Black, new XRect(0, page.Height.Point - 40, page.Width.Point, 20), XStringFormats.Center);
         }
 
         private static void DrawRightAlignedText(XGraphics gfx, string text, XFont font, double x, double y)

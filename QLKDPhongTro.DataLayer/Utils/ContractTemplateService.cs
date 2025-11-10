@@ -36,6 +36,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             using (var doc = DocX.Load(TemplatePath))
             {
+                // Sử dụng overload đơn giản với 2 tham số (findText, replaceText)
                 doc.ReplaceText("{TEN_KHACH}", tenKhach ?? "");
                 doc.ReplaceText("{TEN_PHONG}", tenPhong ?? "");
                 doc.ReplaceText("{NGAY_BD}", ngayBD.ToString("dd/MM/yyyy"));

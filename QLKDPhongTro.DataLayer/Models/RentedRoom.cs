@@ -10,5 +10,7 @@ namespace QLKDPhongTro.DataLayer.Models
         public decimal GiaCoBan { get; set; } = 0.0m;
         public string TrangThai { get; set; } = string.Empty;
         public string GhiChu { get; set; } = string.Empty;
+        public string GiaBangChu { get; set; } = string.Empty;
+        public string TrangThietBi { get; set; } = string.Empty;
     }
 }

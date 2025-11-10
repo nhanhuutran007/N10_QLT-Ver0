@@ -1,14 +1,94 @@
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
+using QLKDPhongTro.BusinessLayer.Controllers;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
-    public partial class ProfileDropDown : UserControl
+    public partial class ProfileDropDown : UserControl, INotifyPropertyChanged
     {
+        private string _userName = string.Empty;
+        private string _userEmail = string.Empty;
+
+        public string UserName
+        {
+            get => _userName;
+            set
+            {
+                if (_userName != value)
+                {
+                    _userName = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string UserEmail
+        {
+            get => _userEmail;
+            set
+            {
+                if (_userEmail != value)
+                {
+                    _userEmail = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public ProfileDropDown()
         {
             InitializeComponent();
+            DataContext = this;
+            Loaded += ProfileDropDown_Loaded;
+        }
+
+        private void ProfileDropDown_Loaded(object sender, RoutedEventArgs e)
+        {
+            LoadUserInfo();
+        }
+
+        /// <summary>
+        /// Load thông tin người dùng từ AuthController.CurrentUser
+        /// </summary>
+        public void LoadUserInfo()
+        {
+            try
+            {
+                var currentUser = AuthController.CurrentUser;
+                if (currentUser != null)
+                {
+                    UserName = currentUser.TenDangNhap ?? string.Empty;
+                    UserEmail = currentUser.Email ?? string.Empty;
+                }
+                else
+                {
+                    UserName = "Người dùng";
+                    UserEmail = "N/A";
+                }
+            }
+            catch
+            {
+                UserName = "Người dùng";
+                UserEmail = "N/A";
+            }
+        }
+
+        /// <summary>
+        /// Refresh thông tin người dùng (public method để có thể gọi từ bên ngoài)
+        /// </summary>
+        public void RefreshUserInfo()
+        {
+            LoadUserInfo();
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void Support_Click(object sender, RoutedEventArgs e)

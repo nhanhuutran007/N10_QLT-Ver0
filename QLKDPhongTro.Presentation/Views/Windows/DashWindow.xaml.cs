@@ -10,7 +10,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class DashWindow : Window
     {
-        private DispatcherTimer _carouselTimer;
+        private DispatcherTimer? _carouselTimer;
         private int _currentImageIndex = 0;
         private readonly string[] _imageSources = { "/Resources/Images/Anh1.jpg", "/Resources/Images/Anh2.jpg" };
 

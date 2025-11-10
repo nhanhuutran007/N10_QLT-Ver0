@@ -17,7 +17,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM Phong", conn);
+                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong", conn);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -29,7 +29,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             DienTich = reader.GetDecimal(2),
                             GiaCoBan = reader.GetDecimal(3),
                             TrangThai = reader.GetString(4),
-                            GhiChu = reader.GetString(5)
+                            GhiChu = reader.GetString(5),
+                            GiaBangChu = reader.GetString(6),
+                            TrangThietBi = reader.GetString(7)
                         });
                     }
                 }
@@ -43,7 +45,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu FROM Phong WHERE MaPhong=@MaPhong", conn);
+                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -56,7 +58,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             DienTich = reader.GetDecimal(2),
                             GiaCoBan = reader.GetDecimal(3),
                             TrangThai = reader.GetString(4),
-                            GhiChu = reader.GetString(5)
+                            GhiChu = reader.GetString(5),
+                            GiaBangChu = reader.GetString(6),
+                            TrangThietBi = reader.GetString(7)
                         };
                     }
                 }
@@ -81,12 +85,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("INSERT INTO Phong(TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu) VALUES(@TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu)", conn);
+                var cmd = new MySqlCommand("INSERT INTO Phong(TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi) VALUES(@TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu,  @GiaBangChu, @TrangThietBi)", conn);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
                 cmd.Parameters.AddWithValue("@GiaCoBan", room.GiaCoBan);
                 cmd.Parameters.AddWithValue("@TrangThai", room.TrangThai);
                 cmd.Parameters.AddWithValue("@GhiChu", room.GhiChu);
+                cmd.Parameters.AddWithValue("@GiaBangChu", room.GiaBangChu);
+                cmd.Parameters.AddWithValue("@TrangThietBi", room.TrangThietBi);
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
         }
@@ -96,13 +102,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("UPDATE Phong SET TenPhong=@TenPhong, DienTich=@DienTich, GiaCoBan=@GiaCoBan, TrangThai=@TrangThai, GhiChu=@GhiChu WHERE MaPhong=@MaPhong", conn);
+                var cmd = new MySqlCommand("UPDATE Phong SET TenPhong=@TenPhong, DienTich=@DienTich, GiaCoBan=@GiaCoBan, TrangThai=@TrangThai, GhiChu=@GhiChu, GiaBangChu=@GiaBangChu, TrangThietBi=@TrangThietBi WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
                 cmd.Parameters.AddWithValue("@GiaCoBan", room.GiaCoBan);
                 cmd.Parameters.AddWithValue("@TrangThai", room.TrangThai);
                 cmd.Parameters.AddWithValue("@GhiChu", room.GhiChu);
                 cmd.Parameters.AddWithValue("@MaPhong", room.MaPhong);
+                cmd.Parameters.AddWithValue("@GiaBangChu", room.GiaBangChu);
+                cmd.Parameters.AddWithValue("@TrangThietBi", room.TrangThietBi);
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
         }

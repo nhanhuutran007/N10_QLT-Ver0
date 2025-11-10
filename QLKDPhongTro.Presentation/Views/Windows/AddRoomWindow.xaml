@@ -318,6 +318,15 @@
                                      Tag="Nhập giá thuê (không âm)"/>
                         </StackPanel>
 
+                        <!-- GiaBangChu -->
+                        <StackPanel Margin="0,0,0,24">
+                            <TextBlock Text="Giá bằng chữ *" FontSize="14" FontWeight="SemiBold" 
+                 Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+               Text="{Binding NewRoom.GiaBangChu, UpdateSourceTrigger=PropertyChanged}"
+               Tag="Nhập tên phòng"/>
+                        </StackPanel>
+
                         <!-- Trạng thái -->
                         <StackPanel Margin="0,0,0,24">
                             <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
@@ -327,41 +336,7 @@
                                       SelectedValue="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
 
-                        <!-- Trang thiết bị -->
-                        <Border Background="#F8F9FA" CornerRadius="8" Padding="15" Margin="0,0,0,24">
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Border Background="#F0F4FF" CornerRadius="8" Padding="8" Margin="0,0,8,0">
-                                        <TextBlock Text="🏠" FontSize="14" Foreground="#5B75D4"/>
-                                    </Border>
-                                    <TextBlock Text="Trang thiết bị" FontSize="14" FontWeight="SemiBold" 
-                                               Foreground="#333333"/>
-                                </StackPanel>
-                                <TextBlock Text="Chọn các trang thiết bị có trong phòng (không lưu vào database)" 
-                                           FontSize="12" Foreground="#6C757D" Margin="0,0,0,10"/>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0">
-                                        <CheckBox Content="🛏️ Giường đôi" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="❄️ Điều hòa" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="📺 TV" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="🚿 Nhà tắm riêng" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1">
-                                        <CheckBox Content="🍳 Bếp mini" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="📶 WiFi miễn phí" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="🚗 Chỗ đỗ xe" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                        <CheckBox Content="🌳 Ban công" Style="{StaticResource EquipmentCheckBoxStyle}"/>
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
+                        
 
                         <!-- Ghi chú -->
                         <StackPanel Margin="0,0,0,24">
@@ -371,6 +346,15 @@
                                      Height="96" TextWrapping="Wrap" AcceptsReturn="True"
                                      Text="{Binding NewRoom.GhiChu, UpdateSourceTrigger=PropertyChanged}"
                                      Tag="Nhập ghi chú (tùy chọn)"/>
+                        </StackPanel>
+
+                        <!-- TrangThiêtBi -->
+                        <StackPanel Margin="0,0,0,24">
+                            <TextBlock Text="Trang thiết bị *" FontSize="14" FontWeight="SemiBold" 
+                 Foreground="#333333" Margin="0,0,0,8"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
+               Text="{Binding NewRoom.TrangThietBi, UpdateSourceTrigger=PropertyChanged}"
+               Tag="Nhập tên phòng"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

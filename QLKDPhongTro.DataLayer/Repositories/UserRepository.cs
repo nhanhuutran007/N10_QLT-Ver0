@@ -35,12 +35,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             while (await reader.ReadAsync())
                             {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
                                 users.Add(new User
                                 {
                                     MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
-                                    TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty,
-                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader["TenDangNhap"].ToString() ?? string.Empty,
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
                                 });
                             }
                         }
@@ -72,12 +74,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             if (await reader.ReadAsync())
                             {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
                                 return new User
                                 {
                                     MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
-                                    TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty,
-                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader.GetString(reader.GetOrdinal("TenDangNhap")),
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
                                 };
                             }
                         }
@@ -87,6 +91,45 @@ namespace QLKDPhongTro.DataLayer.Repositories
             catch (Exception ex)
             {
                 Console.WriteLine($"Error getting user by id: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Lấy user theo MaAdmin (int)
+        /// </summary>
+        public async Task<User?> GetByMaAdminAsync(int maAdmin)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE MaAdmin = @MaAdmin";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
+                                return new User
+                                {
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader.GetString(reader.GetOrdinal("TenDangNhap")),
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting user by MaAdmin: {ex.Message}");
             }
             return null;
         }
@@ -109,12 +152,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             if (await reader.ReadAsync())
                             {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
                                 return new User
                                 {
                                     MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
-                                    TenDangNhap = reader["TenDangNhap"].ToString() ?? string.Empty,
-                                    Email = reader["Email"].ToString() ?? string.Empty,
-                                    SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader.GetString(reader.GetOrdinal("TenDangNhap")),
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
                                 };
                             }
                         }
@@ -191,6 +236,104 @@ namespace QLKDPhongTro.DataLayer.Repositories
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating user: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật thông tin profile (không bao gồm mật khẩu)
+        /// </summary>
+        public async Task<bool> UpdateProfileAsync(int maAdmin, string tenDangNhap, string email, string soDienThoai)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = @"UPDATE Admin 
+                                  SET TenDangNhap = @TenDangNhap, 
+                                      Email = @Email,
+                                      SoDienThoai = @SoDienThoai
+                                  WHERE MaAdmin = @MaAdmin";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        command.Parameters.AddWithValue("@TenDangNhap", tenDangNhap);
+                        command.Parameters.AddWithValue("@Email", email ?? string.Empty);
+                        command.Parameters.AddWithValue("@SoDienThoai", soDienThoai ?? string.Empty);
+                        
+                        var result = await command.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating profile: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật mật khẩu
+        /// </summary>
+        public async Task<bool> UpdatePasswordAsync(int maAdmin, string oldPassword, string newPassword)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    
+                    // Kiểm tra mật khẩu cũ
+                    var checkQuery = "SELECT MatKhau FROM Admin WHERE MaAdmin = @MaAdmin";
+                    string? storedPassword = null;
+                    using (var checkCommand = new MySqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        var result = await checkCommand.ExecuteScalarAsync();
+                        storedPassword = result?.ToString();
+                    }
+
+                    if (string.IsNullOrEmpty(storedPassword))
+                    {
+                        return false;
+                    }
+
+                    // Kiểm tra mật khẩu cũ (plain text hoặc hashed)
+                    bool passwordMatch = false;
+                    if (storedPassword.Trim() == oldPassword.Trim())
+                    {
+                        passwordMatch = true;
+                    }
+                    else if (PasswordHelper.VerifyPassword(oldPassword, storedPassword))
+                    {
+                        passwordMatch = true;
+                    }
+
+                    if (!passwordMatch)
+                    {
+                        return false;
+                    }
+
+                    // Cập nhật mật khẩu mới (hash)
+                    var updateQuery = @"UPDATE Admin 
+                                       SET MatKhau = @MatKhau
+                                       WHERE MaAdmin = @MaAdmin";
+                    using (var updateCommand = new MySqlCommand(updateQuery, connection))
+                    {
+                        var hashedPassword = PasswordHelper.HashPassword(newPassword);
+                        updateCommand.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        updateCommand.Parameters.AddWithValue("@MatKhau", hashedPassword);
+                        
+                        var result = await updateCommand.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating password: {ex.Message}");
                 return false;
             }
         }
@@ -303,6 +446,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                 Console.WriteLine($"Debug Login - Password length: {password?.Length}, Stored length: {storedPassword?.Length}");
                                 Console.WriteLine($"Debug Login - Password equals: {storedPassword == password}");
                                 
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
+                                
                                 // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ)
                                 if (storedPassword?.Trim() == password?.Trim())
                                 {
@@ -311,8 +457,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                     {
                                         MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
-                                        Email = reader["Email"].ToString() ?? string.Empty,
-                                        SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
+                                        Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
                                     };
                                 }
                                 
@@ -324,8 +470,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                     {
                                         MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
-                                        Email = reader["Email"].ToString() ?? string.Empty,
-                                        SoDienThoai = reader["SoDienThoai"].ToString() ?? string.Empty
+                                        Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
                                     };
                                 }
                                 

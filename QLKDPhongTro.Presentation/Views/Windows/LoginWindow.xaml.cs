@@ -12,7 +12,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
     public partial class LoginWindow : Window
     {
         private bool _isPasswordVisible = false; // Theo dõi trạng thái hiển thị mật khẩu
-        private TextBox _currentPasswordTextBox = null; // Lưu trữ TextBox hiện tại
+        private TextBox? _currentPasswordTextBox = null; // Lưu trữ TextBox hiện tại
         
         public LoginWindow()
         {
@@ -322,20 +322,20 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         }
 
         // Helper methods để tìm control một cách đáng tin cậy
-        private PasswordBox FindPasswordBox()
+        private PasswordBox? FindPasswordBox()
         {
             // Tìm PasswordBox trong toàn bộ visual tree
             return FindVisualChild<PasswordBox>(this);
         }
 
-        private TextBox FindPasswordTextBox()
+        private TextBox? FindPasswordTextBox()
         {
             // Tìm TextBox có tên "PasswordTextBox" trong toàn bộ visual tree
             return FindVisualChild<TextBox>(this, tb => tb.Name == "PasswordTextBox");
         }
 
         // Generic method để tìm visual child
-        private T FindVisualChild<T>(DependencyObject parent, Func<T, bool> predicate = null) where T : DependencyObject
+        private T? FindVisualChild<T>(DependencyObject parent, Func<T, bool>? predicate = null) where T : DependencyObject
         {
             for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {

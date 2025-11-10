@@ -88,6 +88,8 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     MaintenanceButton.IsChecked = true; break;
                 case ReportWindow:
                     ReportsButton.IsChecked = true; break;
+                case UserSecurityWindow:
+                    SecurityButton.IsChecked = true; break;
                 default:
                     OverviewButton.IsChecked = false; break;
             }
@@ -179,6 +181,13 @@ namespace QLKDPhongTro.Presentation.Views.Components
             if (_isInitializing)
                 return;
             NavigateToWindow<ReportWindow>();
+        }
+
+        private void Security_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+            NavigateToWindow<UserSecurityWindow>();
         }
     }
 }
