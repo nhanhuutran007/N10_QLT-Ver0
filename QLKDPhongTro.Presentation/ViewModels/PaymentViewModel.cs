@@ -153,6 +153,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     || x.TotalAmount.ToString("N0").ToLowerInvariant().Contains(keyword)
                     // Trạng thái (Đã thanh toán/Chưa thanh toán)
                     || (!string.IsNullOrEmpty(x.Status) && x.Status.ToLowerInvariant().Contains(keyword))
+                    // Tên phòng
+                    || (!string.IsNullOrEmpty(x.RoomName) && x.RoomName.ToLowerInvariant().Contains(keyword))
                 );
             }
 
@@ -230,6 +232,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 Date = dto.NgayThanhToan ?? ParseThangNamToDate(dto.ThangNam),
                 TotalAmount = dto.TongTien,
                 Status = MapStatus(dto.TrangThaiThanhToan),
+                RoomName = dto.TenPhong ?? string.Empty,
                 PaymentMethod = string.Empty
             };
         }
@@ -411,6 +414,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _editableStatus = string.Empty;
         private string _paymentMethod = string.Empty;
         private bool _isEditing;
+        private string _roomName = string.Empty;
 
         public string Id 
         { 
@@ -471,6 +475,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 _paymentMethod = value; 
                 OnPropertyChanged(nameof(PaymentMethod)); 
             } 
+        }
+
+        public string RoomName
+        {
+            get => _roomName;
+            set
+            {
+                _roomName = value;
+                OnPropertyChanged(nameof(RoomName));
+            }
         }
 
         public bool IsEditing 

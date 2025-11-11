@@ -1,19 +1,23 @@
 <Window x:Class="QLKDPhongTro.Presentation.Views.Windows.InvoiceDetailView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         Title="Hóa đơn thanh toán"
-        Width="1140"
-        Height="950"
+        MinWidth="800"
+        MinHeight="600"
+        Width="1200"
+        Height="700"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
         WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
         FontFamily="Roboto"
-        Icon="/Resources/Images/Logo.png">
+        Icon="/Resources/Images/Logo.png"
+        Loaded="InvoiceDetailView_Loaded">
 
     <Window.Resources>
-        <!-- Style cho các nút Download / Print -->
+        <!-- Style cho nút Download -->
         <Style TargetType="{x:Type Button}"
                 x:Key="ActionButtonStyle">
             <Setter Property="Background"
@@ -172,22 +176,13 @@
                         Orientation="Horizontal"
                         VerticalAlignment="Top">
                     <Button Style="{StaticResource ActionButtonStyle}"
-                            Width="110">
+                            Width="110"
+                            Click="DownloadButton_Click"
+                            x:Name="DownloadButtonHeader">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Download"
                                     VerticalAlignment="Center"/>
                             <TextBlock Text="⬇️"
-                                    Margin="5,0,0,0"
-                                    FontSize="12"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Style="{StaticResource ActionButtonStyle}"
-                            Width="90"
-                            Margin="10,0,0,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Print"
-                                    VerticalAlignment="Center"/>
-                            <TextBlock Text="🖨️"
                                     Margin="5,0,0,0"
                                     FontSize="12"/>
                         </StackPanel>
@@ -280,11 +275,15 @@
                                     <TextBlock Text="{Binding TrangThaiThanhToan}"
                                             Style="{StaticResource PaidBadgeTextStyle}"/>
                                 </Border>
+
+                                
                             </StackPanel>
 
                             <!-- QR Code -->
                             <Image Grid.Column="2"
-                                   Source="/Resources/Images/QR.jpg"
+                                   x:Name="QrImage"
+                                   Source="/QLKDPhongTro.Presentation;component/Resources/Images/QR.jpg"
+                                   ImageFailed="QrImage_ImageFailed"
                                    Width="100"
                                    Height="100"
                                    Margin="40,0,0,0"
@@ -341,9 +340,19 @@
                                             Margin="0,0,20,0"/>
                                 </Grid>
 
-                                <!-- Hàng dữ liệu 1 -->
+                                <!-- Hàng dữ liệu 1: Tiền thuê -->
                                 <Border BorderBrush="#EEE"
                                         BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TienThue}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Grid Height="48">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="60"/>
@@ -358,22 +367,28 @@
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Center"/>
                                         <TextBlock Grid.Column="1"
-                                                Text="Điện tiêu dùng"
+                                                Text="Tiền thuê"
                                                 FontWeight="Medium"
                                                 Foreground="#333"
                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2"
-                                                Text="$30.00"
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtTienThue"
+                                                Text="{Binding TienThue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                 Foreground="#555"
-                                                VerticalAlignment="Center"
-                                                HorizontalAlignment="Right"/>
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
                                         <TextBlock Grid.Column="3"
-                                                Text="1"
+                                                Text=""
                                                 Foreground="#555"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"/>
                                         <TextBlock Grid.Column="4"
-                                                Text="$30.00"
+                                                Text="{Binding TamTinhThue, StringFormat='{}{0:N0} đ'}"
                                                 Foreground="#555"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"
@@ -384,6 +399,16 @@
                                 <!-- Hàng dữ liệu 2 -->
                                 <Border BorderBrush="#EEE"
                                         BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SoDien}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <Grid Height="48">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="60"/>
@@ -398,22 +423,308 @@
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Center"/>
                                         <TextBlock Grid.Column="1"
-                                                Text="Nước sinh hoạt"
+                                                Text="Điện tiêu dùng"
                                                 FontWeight="Medium"
                                                 Foreground="#333"
                                                 VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="2"
-                                                Text="$24.50"
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtDonGiaDien"
+                                                Text="{Binding DonGiaDien, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', FallbackValue=''}"
                                                 Foreground="#555"
-                                                VerticalAlignment="Center"
-                                                HorizontalAlignment="Right"/>
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
                                         <TextBlock Grid.Column="3"
-                                                Text="2"
+                                                Text="{Binding SoDien, StringFormat='{}{0:N0}', TargetNullValue=''}"
                                                 Foreground="#555"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"/>
                                         <TextBlock Grid.Column="4"
-                                                Text="$49.00"
+                                                Text="{Binding TamTinhDien, StringFormat='{}{0:N0} đ'}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Hàng dữ liệu 3 -->
+                                <Border BorderBrush="#EEE"
+                                        BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SoNuoc}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                Text="3"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                Text="Nước sinh hoạt"
+                                                FontWeight="Medium"
+                                                Foreground="#333"
+                                                VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtDonGiaNuoc"
+                                                Text="{Binding DonGiaNuoc, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, TargetNullValue='', FallbackValue=''}"
+                                                Foreground="#555"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                        <TextBlock Grid.Column="3"
+                                                Text="{Binding SoNuoc, StringFormat='{}{0:N0}', TargetNullValue=''}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                Text="{Binding TamTinhNuoc, StringFormat='{}{0:N0} đ'}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Hàng dữ liệu 4: Internet -->
+                                <Border BorderBrush="#EEE"
+                                        BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TienInternet}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                Text="4"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                Text="Internet"
+                                                FontWeight="Medium"
+                                                Foreground="#333"
+                                                VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtInternet"
+                                                Text="{Binding TienInternet, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Foreground="#555"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                        <TextBlock Grid.Column="3"
+                                                Text=""
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                Text="{Binding TamTinhInternet, StringFormat='{}{0:N0} đ'}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Hàng dữ liệu 5: Vệ sinh -->
+                                <Border BorderBrush="#EEE"
+                                        BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TienVeSinh}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                Text="5"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                Text="Vệ sinh"
+                                                FontWeight="Medium"
+                                                Foreground="#333"
+                                                VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtVeSinh"
+                                                Text="{Binding TienVeSinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Foreground="#555"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                        <TextBlock Grid.Column="3"
+                                                Text=""
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                Text="{Binding TamTinhVeSinh, StringFormat='{}{0:N0} đ'}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Hàng dữ liệu 6: Giữ xe -->
+                                <Border BorderBrush="#EEE"
+                                        BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding TienGiuXe}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                Text="6"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                Text="Giữ xe"
+                                                FontWeight="Medium"
+                                                Foreground="#333"
+                                                VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtGiuXe"
+                                                Text="{Binding TienGiuXe, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Foreground="#555"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                        <TextBlock Grid.Column="3"
+                                                Text=""
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                Text="{Binding TamTinhGiuXe, StringFormat='{}{0:N0} đ'}"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Margin="0,0,20,0"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Hàng dữ liệu 7: Chi phí khác -->
+                                <Border BorderBrush="#EEE"
+                                        BorderThickness="0,1,0,0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ChiPhiKhac}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid Height="48">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="60"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                Text="7"
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1"
+                                                Text="Chi phí khác"
+                                                FontWeight="Medium"
+                                                Foreground="#333"
+                                                VerticalAlignment="Center"/>
+                                        <TextBox Grid.Column="2"
+                                                x:Name="TxtKhac"
+                                                Text="{Binding ChiPhiKhac, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                Foreground="#555"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                HorizontalContentAlignment="Right"
+                                                VerticalContentAlignment="Center"
+                                                IsReadOnly="True"
+                                                MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
+                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                        <TextBlock Grid.Column="3"
+                                                Text=""
+                                                Foreground="#555"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                Text="{Binding TamTinhKhac, StringFormat='{}{0:N0} đ'}"
                                                 Foreground="#555"
                                                 VerticalAlignment="Center"
                                                 HorizontalAlignment="Right"
@@ -446,7 +757,7 @@
                                 Margin="0,5"/>
                         <TextBlock Grid.Row="0"
                                 Grid.Column="1"
-                                Text="$79.00"
+                                Text="{Binding TamTinh, StringFormat='{}{0:N0} đ'}"
                                 Foreground="#333"
                                 Margin="0,5"
                                 HorizontalAlignment="Right"/>
@@ -458,7 +769,7 @@
                                 Margin="0,5"/>
                         <TextBlock Grid.Row="1"
                                 Grid.Column="1"
-                                Text="$0.00"
+                                Text="{Binding KhauTru, StringFormat='{}{0:N0} đ'}"
                                 Foreground="#333"
                                 Margin="0,5"
                                 HorizontalAlignment="Right"/>
@@ -476,7 +787,7 @@
                                 Margin="0,10,0,0"/>
                         <TextBlock Grid.Row="3"
                                 Grid.Column="1"
-                                Text="$79.00"
+                                Text="{Binding TongTienTinhToan, StringFormat='{}{0:N0} đ'}"
                                 FontWeight="Bold"
                                 Foreground="#333"
                                 FontSize="16"
@@ -501,22 +812,13 @@
                     <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right">
                         <Button Style="{StaticResource ActionButtonStyle}"
-                                Width="110">
+                                Width="110"
+                                Click="DownloadButton_Click"
+                                x:Name="DownloadButtonFooter">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Download"
                                         VerticalAlignment="Center"/>
                                 <TextBlock Text="⬇️"
-                                        Margin="5,0,0,0"
-                                        FontSize="12"/>
-                            </StackPanel>
-                        </Button>
-                        <Button Style="{StaticResource ActionButtonStyle}"
-                                Width="90"
-                                Margin="10,0,0,0">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Print"
-                                        VerticalAlignment="Center"/>
-                                <TextBlock Text="🖨️"
                                         Margin="5,0,0,0"
                                         FontSize="12"/>
                             </StackPanel>
