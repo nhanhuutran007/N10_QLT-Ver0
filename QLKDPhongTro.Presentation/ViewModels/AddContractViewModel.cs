@@ -64,7 +64,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _formTitle = "Thêm hợp đồng mới";
 
         // ---- CONSTRUCTOR ----
-        public AddContractViewModel(ContractController contractController, ContractDto editingContract = null)
+        public AddContractViewModel(ContractController contractController, ContractDto? editingContract = null)
         {
             _contractController = contractController;
             _tenantRepo = new TenantRepository();
@@ -142,36 +142,78 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             try
             {
+                // === Lấy thông tin người thuê & phòng ===
+                var tenant = await _tenantRepo.GetByIdAsync(SelectedNguoiThue.MaNguoiThue);
+                var room = await _roomRepo.GetByIdAsync(SelectedPhong.MaPhong);
+
+                if (tenant == null || room == null)
+                {
+                    MessageBox.Show("❌ Không tìm thấy thông tin người thuê hoặc phòng.");
+                    return;
+                }
+
+                // === Giả định thông tin bên A (chủ nhà) ===
+                string tenA = "Nguyễn Văn A";
+                string cccdA = "012345678901";
+                string noiCapA = "CA TP.HCM";
+                DateTime ngaySinhA = new DateTime(1980, 1, 1);
+                DateTime ngayCapA = new DateTime(2020, 1, 1);
+                string diaChiA = "123 Đường ABC, Quận 1, TP.HCM";
+                string dienThoaiA = "0909123456";
+
+                // === Bên B (lấy từ người thuê) ===
+                string tenB = tenant.HoTen;
+                DateTime ngaySinhB = tenant.NgaySinh ?? DateTime.Now;
+                string cccdB = tenant.CCCD;
+                DateTime ngayCapB = tenant.NgayCap ?? DateTime.Now;
+                string noiCapB = tenant.NoiCap ?? "";
+                string diaChiB = tenant.DiaChi ?? "";
+                string dienThoaiB = tenant.SoDienThoai ?? "";
+
+                // === Thông tin phòng ===
+                string tenPhong = room.TenPhong;
+                string diaChiPhong = diaChiA ?? "";
+                decimal dienTich = room.DienTich;
+                string trangThietBi = room.TrangThietBi ?? "";
+
+                // === Giá thuê & thời hạn ===
+                decimal giaThue = room.GiaCoBan;
+                string giaBangChu = NumberToVietnameseText((long)giaThue);
+                string ngayTraTien = "Ngày 05 hàng tháng";
+                int thoiHanNam = Math.Max(1, NgayKetThuc.Value.Year - NgayBatDau.Value.Year);
+                DateTime ngayGiaoNha = NgayBatDau.Value;
+
+                // === Tạo file hợp đồng DOCX ===
+                string filePath = ContractTemplateService.CreateContractFile(
+                    "TP.HCM", DateTime.Now,       // Nơi tạo + Ngày tạo
+                    tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
+                    tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
+                    tenPhong, diaChiPhong, dienTich, trangThietBi,
+                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha
+                );
+
                 if (!IsEditMode)
                 {
-                    // --- THÊM MỚI ---
-                    string filePath = ContractTemplateService.CreateContractFile(
-                        SelectedNguoiThue.HoTen,
-                        SelectedPhong.TenPhong,
-                        NgayBatDau.Value,
-                        NgayKetThuc.Value,
-                        tienCocValue);
-
+                    // --- Thêm mới ---
                     var newContract = new ContractDto
                     {
-                        MaNguoiThue = SelectedNguoiThue.MaNguoiThue,
-                        MaPhong = SelectedPhong.MaPhong,
+                        MaNguoiThue = tenant.MaKhachThue,
+                        MaPhong = room.MaPhong,
                         NgayBatDau = NgayBatDau.Value,
                         NgayKetThuc = NgayKetThuc.Value,
                         TienCoc = tienCocValue,
                         FileHopDong = filePath,
-                        TrangThai = "Hiệu lực",
-
+                        TrangThai = "Hiệu lực"
                     };
 
                     await _contractController.CreateHopDongAsync(newContract);
-                    MessageBox.Show("✅ Hợp đồng đã được thêm thành công!");
+                    MessageBox.Show("✅ Hợp đồng đã được thêm và tạo file thành công!");
                 }
                 else
                 {
-                    // --- CẬP NHẬT ---
-                    _editingContract.MaNguoiThue = SelectedNguoiThue.MaNguoiThue;
-                    _editingContract.MaPhong = SelectedPhong.MaPhong;
+                    // --- Cập nhật ---
+                    _editingContract.MaNguoiThue = tenant.MaKhachThue;
+                    _editingContract.MaPhong = room.MaPhong;
                     _editingContract.NgayBatDau = NgayBatDau.Value;
                     _editingContract.NgayKetThuc = NgayKetThuc.Value;
                     _editingContract.TienCoc = tienCocValue;
@@ -186,6 +228,70 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 MessageBox.Show($"❌ Lỗi khi lưu hợp đồng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // ======= HÀM PHỤ: Chuyển số thành chữ tiếng Việt =======
+        private static string NumberToVietnameseText(long number)
+        {
+            if (number == 0) return "Không đồng";
+
+            string[] dv = { "", "nghìn", "triệu", "tỷ" };
+            string[] cs = { "không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín" };
+
+            string result = "";
+            int i = 0;
+
+            while (number > 0)
+            {
+                int threeDigits = (int)(number % 1000);
+                number /= 1000;
+
+                string block = DocBaChuSo(threeDigits, cs);
+                if (block != "")
+                {
+                    result = $"{block} {dv[i]} {result}".Trim();
+                }
+                i++;
+            }
+
+            result = char.ToUpper(result[0]) + result.Substring(1) + " đồng";
+            return result;
+        }
+
+        private static string DocBaChuSo(int number, string[] cs)
+        {
+            int tram = number / 100;
+            int chuc = (number % 100) / 10;
+            int donvi = number % 10;
+            string result = "";
+
+            if (tram > 0)
+            {
+                result += $"{cs[tram]} trăm ";
+                if (chuc == 0 && donvi > 0)
+                    result += "lẻ ";
+            }
+
+            if (chuc > 1)
+            {
+                result += $"{cs[chuc]} mươi ";
+                if (donvi == 1) result += "mốt ";
+                else if (donvi == 5) result += "lăm ";
+                else if (donvi > 0) result += $"{cs[donvi]} ";
+            }
+            else if (chuc == 1)
+            {
+                result += "mười ";
+                if (donvi == 1) result += "một ";
+                else if (donvi == 5) result += "lăm ";
+                else if (donvi > 0) result += $"{cs[donvi]} ";
+            }
+            else if (chuc == 0 && donvi > 0)
+            {
+                result += $"{cs[donvi]} ";
+            }
+
+            return result.Trim();
         }
     }
 }

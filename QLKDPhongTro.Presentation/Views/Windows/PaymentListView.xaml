@@ -305,32 +305,33 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"
-                    MinWidth="220"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="269" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <components:SidebarControl Grid.Column="0"/>
+        <!-- === SIDEBAR CONTROL === -->
+        <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
-        <Grid Grid.Column="1"
-                Margin="15">
+        <!-- === KHU VỰC NỘI DUNG CHÍNH === -->
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <components:TopbarControl Grid.Row="0"
-                    Margin="0,0,0,10"/>
+            <!-- Top Bar Control -->
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl"/>
 
             <ScrollViewer Grid.Row="1"
                     VerticalScrollBarVisibility="Auto"
                     HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
+                    <!-- Header: Title -->
                     <TextBlock Text="Danh sách thanh toán"
                             Foreground="#3B4758"
                             FontSize="24"
                             FontWeight="Bold"
-                            Margin="0,0,0,20"/>
+                            Margin="20,15,0,20"/>
 
                     <!-- THANH HÀNH ĐỘNG TRÊN CÙNG -->
                     <Border Background="#FFFFFF"

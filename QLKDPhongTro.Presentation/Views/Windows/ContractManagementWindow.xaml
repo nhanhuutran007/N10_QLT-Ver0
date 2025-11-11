@@ -6,8 +6,10 @@
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         mc:Ignorable="d"
         Title="Quản lý Hợp đồng - Quản Lý Phòng Trọ"
-        MinHeight="600" MinWidth="900"
-        Height="700" Width="1200"
+        MinHeight="600"
+        MinWidth="800"
+        Height="700"
+        Width="1200"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
         Background="#F5F5F5"
@@ -17,19 +19,24 @@
     <Window.Resources>
         <!-- Style cho nút cơ bản -->
         <Style TargetType="Button" x:Key="PrimaryButtonStyle">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="Background" Value="#10D096"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="20,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border x:Name="ButtonBorder"
+                                CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
@@ -40,69 +47,327 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
+
+        <!-- Style cho IconButton (nút phân trang) -->
+        <Style TargetType="Button" x:Key="IconButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="30"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#586A84"/>
+        </Style>
+
+        <!-- Style cho ComboBox -->
+        <Style TargetType="{x:Type ComboBox}" x:Key="ComboBoxStyle">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#586A84"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton"
+                                        Grid.Column="2"
+                                        Focusable="False"
+                                        IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                        ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="6">
+                                            <Grid>
+                                                <Path x:Name="Arrow"
+                                                      Grid.Column="1"
+                                                      HorizontalAlignment="Right"
+                                                      VerticalAlignment="Center"
+                                                      Margin="0,0,8,0"
+                                                      Fill="#586A84"
+                                                      Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Name="ContentSite"
+                                            IsHitTestVisible="False"
+                                            Content="{TemplateBinding SelectionBoxItem}"
+                                            ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                            ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                            Margin="10,0,25,0"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Left"/>
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="White"
+                                            BorderThickness="1"
+                                            BorderBrush="#E8E8E8"
+                                            CornerRadius="6"
+                                            Margin="0,2,0,0">
+                                        <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho ComboBoxItem -->
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border Name="Border"
+                                Padding="10,8"
+                                Background="Transparent">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
-        <!-- ====== Layout chính chia làm 2 cột ====== -->
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="269" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- ====== SIDEBAR (trái) ====== -->
-        <components:SidebarControl Grid.Column="0"/>
+        <!-- === SIDEBAR CONTROL === -->
+        <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
-        <!-- ====== NỘI DUNG CHÍNH (phải) ====== -->
-        <Grid Grid.Column="1" Margin="15">
+        <!-- === KHU VỰC NỘI DUNG CHÍNH === -->
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <DockPanel Grid.Row="0" Margin="0,0,0,15">
-                <TextBlock Text="Danh sách Hợp đồng" 
-                           FontSize="22" FontWeight="Bold"
-                           Foreground="#3B4758" Width="226"/>
+            <!-- Top Bar Control -->
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl"/>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Thêm" 
-                            Style="{StaticResource PrimaryButtonStyle}" 
-                            Command="{Binding AddContractCommand}" Width="75"/>
-                    <Button Content="Sửa" 
-                            Style="{StaticResource PrimaryButtonStyle}" 
-                            Background="#F6AD55" Command="{Binding EditContractCommand}" Margin="5,0" Width="72"/>
-                    <Button Content="Xóa" 
-                            Style="{StaticResource PrimaryButtonStyle}" 
-                            Background="#EF4444" Command="{Binding DeleteContractCommand}" Margin="5,0" Width="65"/>
+            <!-- Main Content Area -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                    <!-- Header: Title -->
+                    <TextBlock Text="Danh sách Hợp đồng" 
+                               FontSize="24" FontWeight="Bold"
+                               Foreground="#3B4758"
+                               Margin="20,15,0,20"/>
+
+                    <!-- THANH HÀNH ĐỘNG TRÊN CÙNG -->
+                    <Border Background="#FFFFFF"
+                            CornerRadius="8"
+                            Padding="15"
+                            Margin="0,0,0,20">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Left">
+                                <Button Content="Thêm" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Command="{Binding AddContractCommand}" 
+                                        Width="100"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="Sửa" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Background="#F6AD55" 
+                                        Command="{Binding EditContractCommand}" 
+                                        Width="100"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="Xóa" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Background="#EF4444" 
+                                        Command="{Binding DeleteContractCommand}" 
+                                        Width="100"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="⚠️ Hợp đồng sắp hết hạn" 
+                                        Style="{StaticResource PrimaryButtonStyle}" 
+                                        Background="#8FBC8F" 
+                                        Command="{Binding LoadExpiringContractsCommand}" 
+                                        Width="200"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="📧 Gửi cảnh báo hết hạn"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding SendExpiryWarningEmailsAsyncCommand}"
+                                        Background="#4CAF50"
+                                        Foreground="White"
+                                        Width="200"
+                                        Margin="0,0,10,0"/>
+                                <ComboBox Width="132"
+                                        Style="{StaticResource ComboBoxStyle}"
+                                        SelectedValue="{Binding SortOrder, Mode=TwoWay}"
+                                        SelectedValuePath="Tag">
+                                    <ComboBoxItem Tag="newest" IsSelected="True">Mới nhất</ComboBoxItem>
+                                    <ComboBoxItem Tag="oldest">Cũ nhất</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- DataGrid danh sách hợp đồng -->
+                    <Border Background="White"
+                            CornerRadius="12">
+                        <StackPanel>
+                            <DataGrid
+                          ItemsSource="{Binding Contracts}"
+                          SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          IsReadOnly="True"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#EEEEEE"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          RowBackground="White"
+                          AlternatingRowBackground="#F8F9FA"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
+                          EnableRowVirtualization="False"
+                          CanUserResizeRows="False"
+                          CanUserReorderColumns="False"
+                          CanUserSortColumns="True">
+                        <DataGrid.Resources>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                <Setter Property="BorderBrush" Value="#EEEEEE"/>
+                                <Setter Property="Padding" Value="10,12"/>
+                                <Setter Property="FontWeight" Value="Medium"/>
+                                <Setter Property="Foreground" Value="#7D8FA9"/>
+                            </Style>
+                            <!-- Style cho DataGridRow -->
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="MinHeight" Value="50"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                                <Setter Property="Margin" Value="0,2"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridRow">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderThickness="0"
+                                                    CornerRadius="0"
+                                                    Padding="0">
+                                                <SelectiveScrollingGrid>
+                                                    <SelectiveScrollingGrid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </SelectiveScrollingGrid.ColumnDefinitions>
+                                                    <SelectiveScrollingGrid.RowDefinitions>
+                                                        <RowDefinition Height="*"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </SelectiveScrollingGrid.RowDefinitions>
+                                                    <DataGridCellsPresenter Grid.Column="1"
+                                                                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                                    <DataGridDetailsPresenter Grid.Column="1"
+                                                                                Grid.Row="1"
+                                                                                Visibility="{TemplateBinding DetailsVisibility}"/>
+                                                    <DataGridRowHeader Grid.RowSpan="2"
+                                                                        Visibility="{Binding HeadersVisibility, Converter={x:Static DataGrid.HeadersVisibilityConverter}, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
+                                                </SelectiveScrollingGrid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                            
+                            <!-- Style cho DataGridCell -->
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Padding" Value="10,12"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#3B4758"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="DataGridCell">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    CornerRadius="0"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.Resources>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
+                            <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
+                            <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
+                            <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                            <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                            <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
+                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <!-- PHÂN TRANG -->
+                            <Border BorderBrush="#EEEEEE"
+                                    BorderThickness="0,1,0,0"
+                                    Padding="20">
+                                <Grid>
+                                    <TextBlock Text="{Binding PaginationText}"
+                                            Foreground="#3B4758"
+                                            VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="Trang:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#3B4758"/>
+                                        <Button Content="◀" Style="{StaticResource IconButton}" Command="{Binding PrevPageCommand}"/>
+                                        <TextBlock Text="{Binding PageIndex}" Margin="8,0,8,0" VerticalAlignment="Center" Foreground="#3B4758"/>
+                                        <TextBlock Text="/" VerticalAlignment="Center" Foreground="#3B4758"/>
+                                        <TextBlock Text="{Binding TotalPages}" Margin="8,0,8,0" VerticalAlignment="Center" Foreground="#3B4758"/>
+                                        <Button Content="▶" Style="{StaticResource IconButton}" Command="{Binding NextPageCommand}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </DockPanel>
-
-            <!-- DataGrid danh sách hợp đồng -->
-            <DataGrid Grid.Row="1"
-                      ItemsSource="{Binding Contracts}"
-                      SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      IsReadOnly="True"
-                      RowHeight="35"
-                      AlternatingRowBackground="#f2f2f2"
-                      HeadersVisibility="Column"
-                      SelectionMode="Single"
-                      GridLinesVisibility="Horizontal"
-                      BorderBrush="#E0E0E0"
-                      BorderThickness="1" Margin="-53,0,0,0">
-
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
-                    <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
-                    <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
-                    <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                    <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                    <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
-                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
+            </ScrollViewer>
         </Grid>
     </Grid>
 </Window>

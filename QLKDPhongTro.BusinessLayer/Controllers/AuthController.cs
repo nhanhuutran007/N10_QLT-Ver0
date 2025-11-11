@@ -44,7 +44,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                 if (user != null)
                 {
+                    // Set CurrentUser với đầy đủ thông tin từ database
                     CurrentUser = user;
+                    
+                    // Debug log để kiểm tra
+                    System.Diagnostics.Debug.WriteLine($"=== Login Success ===");
+                    System.Diagnostics.Debug.WriteLine($"CurrentUser set - MaAdmin: {user.MaAdmin}, TenDangNhap: '{user.TenDangNhap}', Email: '{user.Email}', SoDienThoai: '{user.SoDienThoai}'");
+                    
                     return new LoginResult
                     {
                         IsSuccess = true,

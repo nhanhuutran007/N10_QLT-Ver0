@@ -18,5 +18,8 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public string TrangThai { get; set; } = string.Empty;
 
         public string GhiChu { get; set; } = string.Empty;
+
+        public string GiaBangChu { get; set; } = string.Empty;
+        public string TrangThietBi { get; set; } = string.Empty;
     }
 }

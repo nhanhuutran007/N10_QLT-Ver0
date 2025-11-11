@@ -58,8 +58,14 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 var maKhachThue = (int)CustomerComboBox.SelectedValue;
                 _selectedCustomerId = maKhachThue;
 
+                // Debug logging
+                System.Diagnostics.Debug.WriteLine($"CustomerComboBox_SelectionChanged: MaKhachThue={maKhachThue}");
+
                 // Lấy hợp đồng của khách hàng được chọn
                 var contracts = await _financialController.GetActiveContractsByTenantAsync(maKhachThue);
+
+                // Debug logging
+                System.Diagnostics.Debug.WriteLine($"CustomerComboBox_SelectionChanged: Found {contracts?.Count ?? 0} contracts for MaKhachThue={maKhachThue}");
 
                 if (contracts == null || contracts.Count == 0)
                 {

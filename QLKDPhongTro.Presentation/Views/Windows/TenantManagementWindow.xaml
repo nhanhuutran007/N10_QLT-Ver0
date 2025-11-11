@@ -58,14 +58,137 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Style cho ComboBox sắp xếp -->
-        <Style TargetType="{x:Type ComboBox}" x:Key="FilterComboBoxStyle">
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="10,0"/>
-            <Setter Property="BorderBrush" Value="#586A84"/>
+        <!-- Style cho ComboBox với bo góc giống button -->
+        <Style TargetType="{x:Type ComboBox}" x:Key="ComboBoxStyle">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background" Value="#FFFFFF"/>
+            <Setter Property="Foreground" Value="#586A84"/>
+            <Setter Property="BorderBrush" Value="#E8E8E8"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Background" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Height" Value="40"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                ClipToBounds="True">
+                            <Grid>
+                                <ToggleButton Name="ToggleButton" 
+                                        Focusable="false" 
+                                        IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" 
+                                        ClickMode="Press"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent"
+                                                    BorderThickness="0">
+                                                <Path Name="Arrow" 
+                                                        Fill="#586A84" 
+                                                        HorizontalAlignment="Right" 
+                                                        Margin="0,0,10,0" 
+                                                        VerticalAlignment="Center" 
+                                                        Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter Name="ContentSite" 
+                                        IsHitTestVisible="False" 
+                                        Content="{TemplateBinding SelectionBoxItem}" 
+                                        ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" 
+                                        ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" 
+                                        Margin="10,0,30,0" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Left"/>
+                                <TextBox x:Name="PART_EditableTextBox" 
+                                        IsReadOnly="{TemplateBinding IsReadOnly}" 
+                                        Background="{TemplateBinding Background}" 
+                                        BorderThickness="0" 
+                                        Margin="10,0,30,0" 
+                                        Padding="0" 
+                                        VerticalAlignment="Center" 
+                                        HorizontalAlignment="Left" 
+                                        Focusable="True" 
+                                        Visibility="Hidden"/>
+                                <Popup Name="Popup" 
+                                        Placement="Bottom" 
+                                        IsOpen="{TemplateBinding IsDropDownOpen}" 
+                                        AllowsTransparency="True" 
+                                        Focusable="False" 
+                                        PopupAnimation="Slide">
+                                    <Grid Name="DropDown" 
+                                            SnapsToDevicePixels="True" 
+                                            MinWidth="{TemplateBinding ActualWidth}" 
+                                            MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder" 
+                                                Background="White" 
+                                                BorderThickness="1" 
+                                                BorderBrush="#E8E8E8" 
+                                                CornerRadius="6"
+                                                Padding="4">
+                                            <ScrollViewer Margin="0,2" 
+                                                    SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" 
+                                                        KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FAFAFA"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter Property="Background" Value="#FAFAFA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho ComboBoxItem với bo góc và màu sắc đẹp -->
+        <Style TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#586A84"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}" 
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" 
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F0F4F8"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F0F4F8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Style cho các nút chức năng chính -->
@@ -180,22 +303,22 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" MinWidth="220"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="269" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
         <!-- === SIDEBAR CONTROL === -->
         <components:SidebarControl Grid.Column="0" x:Name="SidebarControl" />
 
         <!-- === KHU VỰC NỘI DUNG CHÍNH === -->
-        <Grid Grid.Column="1" Margin="15">
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <!-- Top Bar Control -->
-            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" Margin="0,0,0,10"/>
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl"/>
 
             <!-- Main Content Area -->
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -203,26 +326,45 @@
                     <!-- Header: Title -->
                     <TextBlock Text="Quản lý khách thuê" 
                                Foreground="#3B4758" FontSize="24" FontWeight="Bold"
-                               Margin="0,0,0,20"/>
+                               Margin="20,15,0,20"/>
 
-                    <!-- Action Bar -->
-                    <Border Background="#EEF0F4" CornerRadius="8" Padding="15" Margin="0,0,0,20">
+                    <!-- THANH HÀNH ĐỘNG TRÊN CÙNG -->
+                    <Border Background="#FFFFFF"
+                            CornerRadius="8"
+                            Padding="15"
+                            Margin="0,0,0,20">
                         <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Nút Thêm khách thuê -->
-                            <Button Grid.Column="0" Content="Thêm khách thuê" Style="{StaticResource PrimaryButtonStyle}" 
-                                    Command="{Binding ShowAddTenantPanelCommand}" Width="200"/>
-
-                            <!-- Ô tìm kiếm và bộ lọc -->
-                            <StackPanel Grid.Column="2" Orientation="Horizontal">
-                                <TextBox Width="250" Height="40" VerticalContentAlignment="Center"
-                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                                <ComboBox Style="{StaticResource FilterComboBoxStyle}" VerticalContentAlignment="Center" Width="190" Margin="10,0,0,0">
+                            <Button Content="Thêm khách thuê"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HorizontalAlignment="Left"
+                                    Width="200"
+                                    Command="{Binding ShowAddTenantPanelCommand}"/>
+                            <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Right">
+                                <Grid Width="250" Height="40">
+                                    <Border Background="#FFFFFF" CornerRadius="4"/>
+                                    <TextBlock Text="Tìm kiếm khách thuê..." Foreground="#7D8FA9" FontSize="14" IsHitTestVisible="False" VerticalAlignment="Center" Margin="10,0,0,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Text, ElementName=TenantSearchTextBox}" Value="">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBox x:Name="TenantSearchTextBox"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             VerticalContentAlignment="Center"
+                                             Margin="10,0,10,0"
+                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                                </Grid>
+                                <ComboBox Width="190"
+                                        Style="{StaticResource ComboBoxStyle}"
+                                        Margin="10,0,0,0">
                                     <ComboBoxItem IsSelected="True">Mới nhất</ComboBoxItem>
                                     <ComboBoxItem>Cũ nhất</ComboBoxItem>
                                 </ComboBox>
@@ -296,21 +438,32 @@
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
 
-                                                <Button Grid.Column="0" Style="{StaticResource PrimaryButtonStyle}" 
-                                                        Margin="0,0,6,0" Command="{Binding DataContext.ShowEditTenantPanelCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                <!-- Nút Edit -->
+                                                <Button Grid.Column="0" 
+        Style="{StaticResource PrimaryButtonStyle}" 
+        Margin="0,0,6,0"
+        Command="{Binding DataContext.ShowEditTenantPanelCommand, 
+                          RelativeSource={RelativeSource AncestorType=Window}}"
+        CommandParameter="{Binding}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="✏️" FontSize="12" Margin="0,0,4,0"/>
                                                         <TextBlock Text="Edit" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Button>
 
-                                                <Button Grid.Column="1" Style="{StaticResource PrimaryButtonStyle}" 
-                                                        Margin="6,0,0,0" Command="{Binding DataContext.DeleteTenantCommand, RelativeSource={RelativeSource AncestorType=Window}}">
+                                                <!-- Nút Delete -->
+                                                <Button Grid.Column="1" 
+        Style="{StaticResource PrimaryButtonStyle}" 
+        Margin="6,0,0,0"
+        Command="{Binding DataContext.DeleteTenantCommand, 
+                          RelativeSource={RelativeSource AncestorType=Window}}"
+        CommandParameter="{Binding}">
                                                     <StackPanel Orientation="Horizontal">
                                                         <TextBlock Text="🗑️" FontSize="12" Margin="0,0,4,0"/>
                                                         <TextBlock Text="Delete" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Button>
+
                                             </Grid>
                                         </Border>
                                     </Grid>

@@ -62,5 +62,14 @@ namespace QLKDPhongTro.Presentation.Views.Components
             // Vẫn fire event để các window có thể xử lý logic riêng nếu cần
             SettingsButtonClicked?.Invoke(this, EventArgs.Empty);
         }
+
+        private void ProfilePopup_Opened(object sender, EventArgs e)
+        {
+            // Refresh thông tin user mỗi khi popup mở để đảm bảo hiển thị thông tin mới nhất
+            if (ProfileDropDownControl != null)
+            {
+                ProfileDropDownControl.RefreshUserInfo();
+            }
+        }
     }
 }

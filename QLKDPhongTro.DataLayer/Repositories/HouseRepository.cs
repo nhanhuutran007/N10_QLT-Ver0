@@ -1,27 +1,23 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
 using QLKDPhongTro.DataLayer.Models;
+using MySql.Data.MySqlClient; // Đã chuyển sang MySQL
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
     public class HouseRepository : IHouseRepository
     {
-        private readonly string connectionString;
-
-        public HouseRepository()
-        {
-            connectionString = "Data Source=.;Initial Catalog=QLThueNhaV1;Integrated Security=True;TrustServerCertificate=True;Encrypt=False";
-        }
+        // Sử dụng ConnectDB chung để quản lý connection string
+        private string connectionString => ConnectDB.GetConnectionString();
 
         public async Task<List<House>> GetAllAsync()
         {
             var houses = new List<House>();
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Houses", connection);
+                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Nha", connection);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -42,10 +38,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<House?> GetByIdAsync(int maNha)
         {
             House? house = null;
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new SqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Houses WHERE MaNha=@MaNha", connection);
+                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Nha WHERE MaNha=@MaNha", connection);
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -66,10 +62,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> CreateAsync(House house)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new SqlCommand("INSERT INTO Houses(DiaChi, TongSoPhong, GhiChu) VALUES(@DiaChi, @TongSoPhong, @GhiChu)", connection);
+                var cmd = new MySqlCommand("INSERT INTO Nha(DiaChi, TongSoPhong, GhiChu) VALUES(@DiaChi, @TongSoPhong, @GhiChu)", connection);
                 cmd.Parameters.AddWithValue("@DiaChi", house.DiaChi);
                 cmd.Parameters.AddWithValue("@TongSoPhong", house.TongSoPhong);
                 cmd.Parameters.AddWithValue("@GhiChu", house.GhiChu);
@@ -79,10 +75,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> UpdateAsync(House house)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new SqlCommand("UPDATE Houses SET DiaChi=@DiaChi, TongSoPhong=@TongSoPhong, GhiChu=@GhiChu WHERE MaNha=@MaNha", connection);
+                var cmd = new MySqlCommand("UPDATE Nha SET DiaChi=@DiaChi, TongSoPhong=@TongSoPhong, GhiChu=@GhiChu WHERE MaNha=@MaNha", connection);
                 cmd.Parameters.AddWithValue("@DiaChi", house.DiaChi);
                 cmd.Parameters.AddWithValue("@TongSoPhong", house.TongSoPhong);
                 cmd.Parameters.AddWithValue("@GhiChu", house.GhiChu);
@@ -93,10 +89,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         public async Task<bool> DeleteAsync(int maNha)
         {
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new SqlCommand("DELETE FROM Houses WHERE MaNha=@MaNha", connection);
+                var cmd = new MySqlCommand("DELETE FROM Nha WHERE MaNha=@MaNha", connection);
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }

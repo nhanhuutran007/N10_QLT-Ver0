@@ -171,15 +171,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
             var skip = (PageIndex - 1) * PageSize;
             var pageItems = query.Skip(skip).Take(PageSize).ToList();
 
-            // Hủy đăng ký cũ để tránh trùng lặp khi phân trang/tìm kiếm
-            foreach (var old in Payments)
-            {
-                old.PropertyChanged -= OnPaymentItemPropertyChanged;
-            }
+            // Clear và thêm items mới
+            // KHÔNG đăng ký event handler cho EditableStatus để tránh auto-update
+            // Chỉ update khi người dùng nhấn nút Save
             Payments.Clear();
             foreach (var item in pageItems)
             {
-                item.PropertyChanged += OnPaymentItemPropertyChanged;
                 Payments.Add(item);
             }
 
@@ -189,40 +186,42 @@ namespace QLKDPhongTro.Presentation.ViewModels
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
-        private async void OnPaymentItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
-            if (sender is PaymentItem item && e.PropertyName == nameof(PaymentItem.EditableStatus))
-            {
-                await UpdatePaymentStatusAsync(item);
-            }
-        }
+        // Đã tắt auto-update khi thay đổi ComboBox để tránh mất trạng thái
+        // Chỉ update khi người dùng nhấn nút Save
+        // private async void OnPaymentItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        // {
+        //     if (sender is PaymentItem item && e.PropertyName == nameof(PaymentItem.EditableStatus))
+        //     {
+        //         await UpdatePaymentStatusAsync(item);
+        //     }
+        // }
 
-        private async Task UpdatePaymentStatusAsync(PaymentItem item)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(item.EditableStatus)) return;
+        // private async Task UpdatePaymentStatusAsync(PaymentItem item)
+        // {
+        //     try
+        //     {
+        //         if (string.IsNullOrWhiteSpace(item.EditableStatus)) return;
 
-                var id = int.Parse(item.Id);
-                var result = await _financialController.UpdatePaymentStatusAsync(id, item.EditableStatus);
-                if (!result.IsValid)
-                {
-                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                    return;
-                }
+        //         var id = int.Parse(item.Id);
+        //         var result = await _financialController.UpdatePaymentStatusAsync(id, item.EditableStatus);
+        //         if (!result.IsValid)
+        //         {
+        //             MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        //             return;
+        //         }
 
-                // Đồng bộ lại hiển thị theo DTO trả về
-                if (result.Data is QLKDPhongTro.BusinessLayer.DTOs.PaymentDto updated)
-                {
-                    item.Status = updated.TrangThaiThanhToan;
-                    item.Date = updated.NgayThanhToan ?? item.Date;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi cập nhật trạng thái: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
+        //         // Đồng bộ lại hiển thị theo DTO trả về
+        //         if (result.Data is QLKDPhongTro.BusinessLayer.DTOs.PaymentDto updated)
+        //         {
+        //             item.Status = updated.TrangThaiThanhToan;
+        //             item.Date = updated.NgayThanhToan ?? item.Date;
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         MessageBox.Show($"Lỗi khi cập nhật trạng thái: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        //     }
+        // }
 
         private static PaymentItem MapToItem(PaymentDto dto)
         {
@@ -293,20 +292,24 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (payment != null)
             {
                 _editingItem = payment;
+                
+                // Khởi tạo giá trị cho ComboBox chỉnh sửa theo trạng thái hiển thị từ DB (Đã trả/Chưa trả)
+                var initialStatus = string.Equals(payment.Status, "Đã trả", StringComparison.OrdinalIgnoreCase)
+                    ? "Đã trả" : "Chưa trả";
+                
                 _originalItem = new PaymentItem
                 {
                     Id = payment.Id,
                     Date = payment.Date,
                     TotalAmount = payment.TotalAmount,
                     Status = payment.Status,
-                    PaymentMethod = payment.PaymentMethod
+                    PaymentMethod = payment.PaymentMethod,
+                    EditableStatus = initialStatus // Lưu giá trị ban đầu để có thể khôi phục
                 };
                 
                 // Set editing mode
                 payment.IsEditing = true;
-                // Khởi tạo giá trị cho ComboBox chỉnh sửa theo trạng thái hiển thị từ DB (Đã trả/Chưa trả)
-                payment.EditableStatus = string.Equals(payment.Status, "Đã trả", StringComparison.OrdinalIgnoreCase)
-                    ? "Đã trả" : "Chưa trả";
+                payment.EditableStatus = initialStatus;
                 OnPropertyChanged(nameof(Payments));
             }
         }
@@ -318,7 +321,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 // Validate data
                 if (string.IsNullOrWhiteSpace(payment.EditableStatus))
                 {
-                    MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show("Vui lòng chọn trạng thái thanh toán!", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -326,23 +329,47 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     // Cập nhật trực tiếp bản ghi Payment trong DB theo thông tin đã chỉnh sửa
                     var id = int.Parse(payment.Id);
-                    var desired = string.IsNullOrWhiteSpace(payment.EditableStatus) ? payment.Status : payment.EditableStatus;
+                    // Đảm bảo giá trị EditableStatus không null hoặc empty
+                    var desired = payment.EditableStatus?.Trim() ?? payment.Status;
+                    
+                    // Validate giá trị hợp lệ
+                    if (desired != "Đã trả" && desired != "Chưa trả")
+                    {
+                        MessageBox.Show("Trạng thái không hợp lệ. Vui lòng chọn 'Đã trả' hoặc 'Chưa trả'.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    
                     var result = await _financialController.UpdatePaymentStatusAsync(id, desired);
                     if (!result.IsValid)
                     {
                         MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        // Khôi phục giá trị cũ nếu update thất bại
+                        if (_originalItem != null)
+                        {
+                            payment.EditableStatus = _originalItem.Status;
+                        }
                         return;
                     }
 
+                    // Sau khi update thành công, reload dữ liệu từ database để đảm bảo đồng bộ
+                    // Điều này đảm bảo rằng giá trị trong UI khớp với giá trị trong database
                     payment.IsEditing = false;
                     _editingItem = null;
                     _originalItem = null;
+                    
+                    // Reload dữ liệu từ database để đảm bảo đồng bộ
                     await LoadDataAsync();
+                    
                     MessageBox.Show($"Đã lưu thành công thanh toán: {payment.Id}", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Lỗi khi lưu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Khôi phục giá trị cũ nếu có lỗi
+                    if (_originalItem != null)
+                    {
+                        payment.EditableStatus = _originalItem.Status;
+                    }
                 }
             }
         }
@@ -357,6 +384,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 payment.TotalAmount = _originalItem.TotalAmount;
                 payment.Status = _originalItem.Status;
                 payment.PaymentMethod = _originalItem.PaymentMethod;
+                // Khôi phục EditableStatus về giá trị ban đầu
+                payment.EditableStatus = _originalItem.Status;
                 payment.IsEditing = false;
                 
                 _editingItem = null;

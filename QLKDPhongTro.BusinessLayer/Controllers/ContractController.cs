@@ -5,12 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using QLKDPhongTro.Presentation.Utils;
+using System.Windows;
+
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
     public class ContractController
     {
         private readonly IContractRepository _repository;
+
 
         public ContractController(IContractRepository repository)
         {
@@ -36,9 +40,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                // Bỏ TenNguoiThue và TenPhong vì model Contract không có
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
 
@@ -57,8 +60,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = entity.TenNguoiThue ?? string.Empty,
+                TenPhong = entity.TenPhong ?? string.Empty
             };
         }
 
@@ -75,8 +78,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
 
@@ -129,9 +132,44 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue ?? string.Empty,
+                TenPhong = e.TenPhong ?? string.Empty
             }).ToList();
         }
+        // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn
+
+        public async Task<bool> SendExpiryWarningEmailsAsync(int days)
+        {
+            var expiringContracts = await GetExpiringContractsAsync(days);
+
+            if (expiringContracts == null || expiringContracts.Count == 0)
+                return false;
+
+            int success = 0, failed = 0;
+
+            foreach (var contract in expiringContracts)
+            {
+                try
+                {
+                    await EmailService.SendEmailAsync(
+                        "ngochai1521@gmail.com",
+                        "Thông báo sắp hết hạn hợp đồng",
+                        $"Hợp đồng của bạn sẽ hết hạn trong {days} ngày tới. Vui lòng liên hệ để gia hạn."
+                    );
+                    success++;
+                }
+                catch
+                {
+                    failed++;
+                }
+            }
+
+            return true;
+        }
+
+
+
+
+
     }
 }

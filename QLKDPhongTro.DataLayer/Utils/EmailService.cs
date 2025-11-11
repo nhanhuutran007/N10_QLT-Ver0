@@ -13,7 +13,7 @@ namespace QLKDPhongTro.Presentation.Utils
         {
             using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
             {
-                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "lskcvezrfmoaqiwb"); // ⚠️ Không nên hard-code
+                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
                 client.EnableSsl = true;
 
                 var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)

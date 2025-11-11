@@ -13,8 +13,10 @@
         Width="1800"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize"
-        Background="White"
-        FontFamily="Segoe UI">
+        Background="#F5F5F5"
+        AllowsTransparency="False"
+        FontFamily="Roboto"
+        Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
         <!-- Converters -->
@@ -254,54 +256,43 @@
         </Style>
     </Window.Resources>
 
-    <Grid Background="{StaticResource BackgroundGradient}">
+    <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="300"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="269" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{StaticResource RevenueGradient}" Effect="{StaticResource FloatShadow}">
-            <views:SidebarControl x:Name="SidebarControl"
-                                  MenuItemClicked="SidebarControl_MenuItemClicked"
-                                  LogoutClicked="SidebarControl_LogoutClicked"/>
-        </Border>
+        <!-- === SIDEBAR CONTROL === -->
+        <views:SidebarControl Grid.Column="0" x:Name="SidebarControl"
+                              MenuItemClicked="SidebarControl_MenuItemClicked"
+                              LogoutClicked="SidebarControl_LogoutClicked"/>
 
-        <!-- Main Content Area -->
-        <Grid Grid.Column="1">
+        <!-- === KHU VỰC NỘI DUNG CHÍNH === -->
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- Topbar -->
-            <Border Grid.Row="0" Background="White" Effect="{StaticResource CardShadow}">
-                <views:TopbarControl x:Name="TopbarControl"
-                             MenuButtonClicked="TopbarControl_MenuButtonClicked"
-                             SearchTextChanged="TopbarControl_SearchTextChanged"
-                             SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
-            </Border>
+            <!-- Top Bar Control -->
+            <views:TopbarControl Grid.Row="0" x:Name="TopbarControl"
+                                 MenuButtonClicked="TopbarControl_MenuButtonClicked"
+                                 SearchTextChanged="TopbarControl_SearchTextChanged"
+                                 SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
 
             <!-- Main Content -->
             <ScrollViewer Grid.Row="1"
                           VerticalScrollBarVisibility="Auto"
                           HorizontalScrollBarVisibility="Disabled"
-                          IsEnabled="{Binding IsNotLoading}"
-                          Padding="0">
-                <StackPanel Margin="32">
+                          IsEnabled="{Binding IsNotLoading}">
+                <StackPanel Margin="0">
 
-                    <!-- Header Section -->
-                    <StackPanel Margin="0,0,0,40">
-                        <TextBlock Text="📊 Báo Cáo Tài Chính Năm 2024"
-                                   Foreground="#1E293B"
-                                   FontSize="36"
-                                   FontWeight="Bold"
-                                   Effect="{StaticResource GlowEffect}"/>
-                        <TextBlock Text="Phân tích toàn diện hiệu suất tài chính trong 12 tháng"
-                                   Foreground="#64748B"
-                                   FontSize="18"
-                                   Margin="0,12,0,0"/>
-                    </StackPanel>
+                    <!-- Header: Title -->
+                    <TextBlock Text="Quản lý tài chính" 
+                               Foreground="#3B4758" 
+                               FontSize="24" 
+                               FontWeight="Bold"
+                               Margin="20,15,0,20"/>
 
                     <!-- === BIỂU ĐỒ PHÂN TÍCH NĂM === -->
                     <Border Style="{StaticResource ModernCardStyle}" Margin="0,0,0,40">

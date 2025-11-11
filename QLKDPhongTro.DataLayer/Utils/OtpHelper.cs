@@ -17,9 +17,8 @@ namespace QLKDPhongTro.Presentation.Utils
         {
             lock (_lock)
             {
-                using var rng = new RNGCryptoServiceProvider();
                 byte[] randomNumber = new byte[4];
-                rng.GetBytes(randomNumber);
+                RandomNumberGenerator.Fill(randomNumber);
                 int value = Math.Abs(BitConverter.ToInt32(randomNumber, 0) % 1000000);
                 _currentOtp = value.ToString("D6");
                 _expiryTime = DateTime.Now.AddMinutes(5);

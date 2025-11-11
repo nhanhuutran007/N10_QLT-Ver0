@@ -26,7 +26,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DienTich = (double)r.DienTich,
                 GiaCoBan = r.GiaCoBan,
                 TrangThai = r.TrangThai,
-                GhiChu = r.GhiChu
+                GhiChu = r.GhiChu, 
+                GiaBangChu = r.GiaBangChu,
+                TrangThietBi = r.TrangThietBi,
             }).ToList();
         }
 
@@ -40,7 +42,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DienTich = (decimal)dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = dto.GhiChu
+                GhiChu = dto.GhiChu,
+                GiaBangChu = dto.GiaBangChu,
+                TrangThietBi = dto.TrangThietBi
             };
 
             var result = await _rentedRoomRepository.CreateAsync(room);
@@ -56,7 +60,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DienTich = (decimal)dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
                 TrangThai = dto.TrangThai,
-                GhiChu = dto.GhiChu
+                GhiChu = dto.GhiChu,
+                GiaBangChu = dto.GiaBangChu,
+                TrangThietBi = dto.TrangThietBi
             };
             return await _rentedRoomRepository.UpdateAsync(room);
         }

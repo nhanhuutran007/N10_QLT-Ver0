@@ -408,6 +408,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
         {
             var normalized = (trangThaiChuan ?? string.Empty).Trim();
+            
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: MaThanhToan={maThanhToan}, Input trangThaiChuan='{trangThaiChuan}', Normalized='{normalized}'");
+            
             if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
             {
@@ -420,11 +424,20 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Before update - TrangThaiThanhToan='{payment.TrangThaiThanhToan}'");
+
             var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
             payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
             payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
 
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: After set - TrangThaiThanhToan='{payment.TrangThaiThanhToan}', NgayThanhToan={payment.NgayThanhToan}");
+
             var success = await _paymentRepository.UpdateAsync(payment);
+            
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Update result = {success}");
             return new ValidationResult(success,
                 success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại",
                 new PaymentDto

@@ -21,6 +21,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public TenantViewModel()
         {
+            // !! Lưu ý: Đảm bảo bạn có file TenantRepository.cs
+            // và TenantController.cs trong các thư mục tương ứng
             var repo = new TenantRepository();
             _tenantController = new TenantController(repo);
 
@@ -94,7 +96,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             NewTenant = new TenantDto
             {
                 GioiTinh = "Nam",
-                NgaySinh = DateTime.Today
+                NgaySinh = DateTime.Today,
+                NgayCap = DateTime.Today // Khởi tạo giá trị ngày cấp
             };
 
             Title = "Thêm khách thuê mới";
@@ -109,27 +112,34 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void ShowEditTenantPanel()
+        private void ShowEditTenantPanel(TenantDto tenant)
         {
-            if (SelectedTenant == null)
+            if (tenant == null)
             {
-                MessageBox.Show("Vui lòng chọn khách thuê cần chỉnh sửa", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Không tìm thấy thông tin khách thuê để chỉnh sửa.",
+                                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
+            // ⭐⭐⭐ BẮT ĐẦU SỬA LỖI ⭐⭐⭐
             NewTenant = new TenantDto
             {
-                MaKhachThue = SelectedTenant.MaKhachThue,
-                HoTen = SelectedTenant.HoTen,
-                CCCD = SelectedTenant.CCCD,
-                SoDienThoai = SelectedTenant.SoDienThoai,
-                Email = SelectedTenant.Email,
-                DiaChi = SelectedTenant.DiaChi,
-                NgaySinh = SelectedTenant.NgaySinh,
-                GioiTinh = SelectedTenant.GioiTinh,
-                NgheNghiep = SelectedTenant.NgheNghiep,
-                GhiChu = SelectedTenant.GhiChu
+                MaKhachThue = tenant.MaKhachThue,
+                HoTen = tenant.HoTen,
+                CCCD = tenant.CCCD,
+                SoDienThoai = tenant.SoDienThoai,
+                Email = tenant.Email,
+                DiaChi = tenant.DiaChi,
+                NgaySinh = tenant.NgaySinh,
+                GioiTinh = tenant.GioiTinh,
+                NgheNghiep = tenant.NgheNghiep,
+                GhiChu = tenant.GhiChu,
+
+                // ✅ ĐÃ BỔ SUNG 2 DÒNG CÒN THIẾU
+                NoiCap = tenant.NoiCap,
+                NgayCap = tenant.NgayCap
             };
+            // ⭐⭐⭐ KẾT THÚC SỬA LỖI ⭐⭐⭐
 
             Title = "Chỉnh sửa khách thuê";
             ButtonContent = "Cập nhật";
@@ -137,10 +147,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             var window = new AddTenantWindow(this)
             {
-                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
+                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive)
+                         ?? Application.Current.MainWindow
             };
             window.ShowDialog();
         }
+
 
         [RelayCommand]
         private async Task SaveTenant()
@@ -149,13 +161,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 var result = await _tenantController.CreateTenantAsync(NewTenant);
-                
+
                 if (result.IsValid)
                 {
                     StatusMessage = result.Message;
                     await LoadTenants();
-                    
-                    // Đóng cửa sổ thêm/sửa
+
                     var addWindow = Application.Current.Windows.OfType<AddTenantWindow>().FirstOrDefault();
                     addWindow?.Close();
                 }
@@ -183,13 +194,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 var result = await _tenantController.UpdateTenantAsync(NewTenant);
-                
+
                 if (result.IsValid)
                 {
                     StatusMessage = result.Message;
                     await LoadTenants();
-                    
-                    // Đóng cửa sổ thêm/sửa
+
                     var addWindow = Application.Current.Windows.OfType<AddTenantWindow>().FirstOrDefault();
                     addWindow?.Close();
                 }
@@ -211,46 +221,43 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
-        private async Task DeleteTenant()
+        private async Task DeleteTenant(TenantDto tenant)
         {
-            if (SelectedTenant == null)
+            if (tenant == null)
             {
-                MessageBox.Show("Vui lòng chọn khách thuê cần xóa", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Không tìm thấy khách thuê để xóa.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var result = MessageBox.Show($"Bạn có chắc chắn muốn xóa khách thuê '{SelectedTenant.HoTen}'?", 
-                "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            var confirm = MessageBox.Show($"Bạn có chắc muốn xóa khách thuê '{tenant.HoTen}' không?",
+                                          "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (confirm != MessageBoxResult.Yes) return;
 
-            if (result == MessageBoxResult.Yes)
+            try
             {
-                try
+                IsLoading = true;
+                var result = await _tenantController.DeleteTenantAsync(tenant.MaKhachThue);
+
+                if (result.IsValid)
                 {
-                    IsLoading = true;
-                    var deleteResult = await _tenantController.DeleteTenantAsync(SelectedTenant.MaKhachThue);
-                    
-                    if (deleteResult.IsValid)
-                    {
-                        StatusMessage = deleteResult.Message;
-                        await LoadTenants();
-                    }
-                    else
-                    {
-                        StatusMessage = deleteResult.Message;
-                        MessageBox.Show(deleteResult.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    StatusMessage = result.Message;
+                    await LoadTenants();
                 }
-                catch (Exception ex)
+                else
                 {
-                    StatusMessage = $"Lỗi khi xóa khách thuê: {ex.Message}";
-                    MessageBox.Show(StatusMessage, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-                finally
-                {
-                    IsLoading = false;
+                    MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi xóa khách thuê: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
+
 
         [RelayCommand]
         private async Task SearchTenants()
@@ -262,7 +269,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    // Hiển thị tất cả nếu không có từ khóa tìm kiếm
                     foreach (var tenant in _allTenants)
                     {
                         Tenants.Add(tenant);
@@ -270,7 +276,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
                 else
                 {
-                    // Tìm kiếm theo tên
                     var searchResults = await _tenantController.SearchTenantsByNameAsync(SearchText);
                     foreach (var tenant in searchResults)
                     {
@@ -298,8 +303,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            // TODO: Tạo cửa sổ chi tiết khách thuê
-            MessageBox.Show($"Chi tiết khách thuê: {SelectedTenant.HoTen}\nCCCD: {SelectedTenant.CCCD}\nSĐT: {SelectedTenant.SoDienThoai}", 
+            MessageBox.Show($"Chi tiết khách thuê: {SelectedTenant.HoTen}\nCCCD: {SelectedTenant.CCCD}\nSĐT: {SelectedTenant.SoDienThoai}",
                 "Chi tiết khách thuê", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
