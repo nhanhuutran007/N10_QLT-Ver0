@@ -39,6 +39,31 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 _monthlyStats = value;
                 OnPropertyChanged();
+                // Không dùng cho biểu đồ thực tế theo ngày thanh toán
+            }
+        }
+
+        // Dữ liệu biểu đồ dựa trên tháng thanh toán (ThoiGian) của năm hiện tại
+        private ObservableCollection<MonthlyStatsDto> _paidMonthlyStats = new();
+        public ObservableCollection<MonthlyStatsDto> PaidMonthlyStats
+        {
+            get => _paidMonthlyStats;
+            private set
+            {
+                _paidMonthlyStats = value;
+                OnPropertyChanged();
+                MaxMonthlyRevenue = _paidMonthlyStats != null && _paidMonthlyStats.Any() ? _paidMonthlyStats.Max(m => m.ThuNhap) : 0;
+            }
+        }
+
+        private decimal _maxMonthlyRevenue;
+        public decimal MaxMonthlyRevenue
+        {
+            get => _maxMonthlyRevenue;
+            private set
+            {
+                _maxMonthlyRevenue = value;
+                OnPropertyChanged();
             }
         }
         
@@ -82,6 +107,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        private RecentTenantInfoDto? _recentTenant;
+        public RecentTenantInfoDto? RecentTenant
+        {
+            get => _recentTenant;
+            set
+            {
+                _recentTenant = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private ObservableCollection<RecentTenantInfoDto> _recentTenants = new();
+        public ObservableCollection<RecentTenantInfoDto> RecentTenants
+        {
+            get => _recentTenants;
+            set
+            {
+                _recentTenants = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _isLoading;
         public bool IsLoading
         {
@@ -100,6 +147,63 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public DateTime? ToDate { get; set; }
 
         public DebtReportDto? SelectedDebt { get; set; }
+
+        private decimal _revenueGrowthPercent;
+        public decimal RevenueGrowthPercent
+        {
+            get => _revenueGrowthPercent;
+            set
+            {
+                _revenueGrowthPercent = value;
+                OnPropertyChanged();
+                RevenueGrowthText = FormatGrowthText(_revenueGrowthPercent);
+                RevenueGrowthColor = _revenueGrowthPercent > 0 ? "#0A7D5A" : _revenueGrowthPercent < 0 ? "#FF316A" : "#586A84";
+            }
+        }
+
+        private string _revenueGrowthText = string.Empty;
+        public string RevenueGrowthText
+        {
+            get => _revenueGrowthText;
+            private set
+            {
+                _revenueGrowthText = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _revenueGrowthColor = "#586A84";
+        public string RevenueGrowthColor
+        {
+            get => _revenueGrowthColor;
+            private set
+            {
+                _revenueGrowthColor = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _latestPaidMonthRevenue;
+        public decimal LatestPaidMonthRevenue
+        {
+            get => _latestPaidMonthRevenue;
+            private set
+            {
+                _latestPaidMonthRevenue = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _latestPaidMonthLabel = DateTime.Now.Month.ToString().PadLeft(2, '0');
+        public string LatestPaidMonthLabel
+        {
+            get => _latestPaidMonthLabel;
+            private set
+            {
+                _latestPaidMonthLabel = value;
+                OnPropertyChanged();
+            }
+        }
 
         #endregion
 
@@ -415,8 +519,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var transactions = await _financialController.GetTransactionHistoryAsync(null, null);
                 TransactionHistory = new ObservableCollection<TransactionHistoryDto>(transactions);
 
+                await CalculateRevenueGrowthPercentByPaidDateAsync();
+
+                RecentTenant = await _financialController.GetMostRecentTenantInfoAsync();
+                var top3 = await _financialController.GetMostRecentTenantsInfoAsync(3);
+                RecentTenants = new ObservableCollection<RecentTenantInfoDto>(top3);
+
                 if (showMessage)
-                    ShowMessageRequested?.Invoke(this, "Dữ liệu đã được tải thành công!");
+                {
+                    // Suppress success popup
+                }
             }
             catch (Exception ex)
             {
@@ -451,6 +563,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             Debts = new ObservableCollection<DebtReportDto>(sampleDebts);
 
             await LoadSampleTransactions();
+            RecentTenant = new RecentTenantInfoDto { MaNguoiThue = 1, HoTen = "Nguyễn Văn A", TienCoc = 1000000m, TrangThai = "Đang ở" };
+            RecentTenants = new ObservableCollection<RecentTenantInfoDto>(new List<RecentTenantInfoDto>
+            {
+                new() { MaNguoiThue = 1, HoTen = "Nguyễn Văn A", TienCoc = 1000000m, TrangThai = "Đang ở" },
+                new() { MaNguoiThue = 2, HoTen = "Trần Thị B", TienCoc = 1500000m, TrangThai = "Đang ở" },
+                new() { MaNguoiThue = 3, HoTen = "Lê Văn C", TienCoc = 1200000m, TrangThai = "Đang ở" }
+            });
+            RevenueGrowthPercent = 0;
             await Task.CompletedTask;
         }
 
@@ -471,6 +591,85 @@ namespace QLKDPhongTro.Presentation.ViewModels
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private async Task CalculateRevenueGrowthPercentByPaidDateAsync()
+        {
+            try
+            {
+                // Đảm bảo đã có danh sách giao dịch
+                if ((TransactionHistory == null || TransactionHistory.Count == 0) && _financialController != null)
+                {
+                    var transactions = await _financialController.GetTransactionHistoryAsync(null, null);
+                    TransactionHistory = new ObservableCollection<TransactionHistoryDto>(transactions);
+                }
+
+                // Controller đã lọc chỉ những giao dịch "Đã trả" và có NgayThanhToan
+                // DTO cung cấp trường thời gian thanh toán là ThoiGian (non-nullable)
+                var lastTwoMonths = TransactionHistory
+                    .GroupBy(t => new { y = t.ThoiGian.Year, m = t.ThoiGian.Month })
+                    .Select(g => new { g.Key.y, g.Key.m, Sum = g.Sum(x => x.SoTien) })
+                    .OrderByDescending(x => x.y).ThenByDescending(x => x.m)
+                    .Take(2)
+                    .ToList();
+
+                // Xây dữ liệu 12 tháng của năm hiện tại theo tháng thanh toán
+                var year = DateTime.Now.Year;
+                var paidByMonth = TransactionHistory
+                    .Where(t => t.ThoiGian.Year == year)
+                    .GroupBy(t => t.ThoiGian.Month)
+                    .ToDictionary(g => g.Key, g => g.Sum(x => x.SoTien));
+
+                var list = new List<MonthlyStatsDto>();
+                for (int m = 1; m <= 12; m++)
+                {
+                    paidByMonth.TryGetValue(m, out var sum);
+                    list.Add(new MonthlyStatsDto
+                    {
+                        ThangNam = $"{m.ToString().PadLeft(2, '0')}/{year}",
+                        ThuNhap = sum,
+                        ChiPhi = 0,
+                        LoiNhuan = sum
+                    });
+                }
+                PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
+
+                // Cập nhật doanh thu và nhãn tháng đã trả gần nhất
+                if (lastTwoMonths.Count >= 1)
+                {
+                    LatestPaidMonthRevenue = lastTwoMonths[0].Sum;
+                    LatestPaidMonthLabel = lastTwoMonths[0].m.ToString().PadLeft(2, '0');
+                }
+                else
+                {
+                    LatestPaidMonthRevenue = 0;
+                    LatestPaidMonthLabel = DateTime.Now.Month.ToString().PadLeft(2, '0');
+                }
+
+                if (lastTwoMonths.Count < 2)
+                {
+                    RevenueGrowthPercent = 0;
+                    return;
+                }
+
+                var current = lastTwoMonths[0].Sum;
+                var previous = lastTwoMonths[1].Sum;
+
+                RevenueGrowthPercent = previous == 0 ? 0 : ((current - previous) / previous) * 100m;
+            }
+            catch
+            {
+                RevenueGrowthPercent = 0;
+            }
+        }
+
+        private static string FormatGrowthText(decimal percent)
+        {
+            if (percent > 0)
+                return $"{percent:0.##}% tăng so với tháng trước";
+            if (percent < 0)
+                return $"{Math.Abs(percent):0.##}% giảm so với tháng trước";
+            return "0% so với tháng trước";
         }
 
         #endregion

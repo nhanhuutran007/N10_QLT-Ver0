@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -264,6 +264,102 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 TenPhong = reader.IsDBNull(8) ? string.Empty : reader.GetString(8),
                 TenNguoiThue = reader.IsDBNull(9) ? string.Empty : reader.GetString(9)
             };
+        }
+
+        public async Task<(int MaNguoiThue, string HoTen, decimal TienCoc, string TrangThai)?> GetMostRecentTenantWithDepositAsync()
+        {
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            var cmd = new MySqlCommand(@"
+                SELECT hd.MaNguoiThue, nt.HoTen, hd.TienCoc, nt.TrangThai
+                FROM HopDong hd
+                INNER JOIN NguoiThue nt ON nt.MaNguoiThue = hd.MaNguoiThue
+                WHERE hd.TrangThai = 'Hiệu lực' AND nt.TrangThai = 'Đang ở'
+                ORDER BY hd.NgayBatDau DESC, hd.MaHopDong DESC
+                LIMIT 1;", connection);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                var maNguoiThue = reader.GetInt32(0);
+                var hoTen = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                var tienCoc = reader.IsDBNull(2) ? 0m : reader.GetDecimal(2);
+                var trangThai = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+                return (maNguoiThue, hoTen, tienCoc, trangThai);
+            }
+            return null;
+        }
+
+        public async Task<List<(int MaNguoiThue, string HoTen, decimal TienCoc, string TrangThai)>> GetMostRecentTenantsWithDepositAsync(int count)
+        {
+            var list = new List<(int, string, decimal, string)>();
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            var limit = Math.Max(1, Math.Min(10, count));
+
+            // 1) Ưu tiên: NT 'Đang ở' + HĐ 'Hiệu lực'
+            var sqlPrimary = $@"
+                SELECT x.MaNguoiThue, nt.HoTen, x.TienCoc, nt.TrangThai
+                FROM (
+                    SELECT hd.MaNguoiThue,
+                           MAX(hd.NgayBatDau) AS NgayBatDauMoiNhat,
+                           MAX(hd.MaHopDong) AS MaHDMoiNhat,
+                           SUBSTRING_INDEX(GROUP_CONCAT(hd.TienCoc ORDER BY hd.NgayBatDau DESC, hd.MaHopDong DESC), ',', 1) AS TienCoc
+                    FROM HopDong hd
+                    WHERE hd.TrangThai = 'Hiệu lực'
+                    GROUP BY hd.MaNguoiThue
+                ) x
+                INNER JOIN NguoiThue nt ON nt.MaNguoiThue = x.MaNguoiThue AND nt.TrangThai = 'Đang ở'
+                ORDER BY x.NgayBatDauMoiNhat DESC, x.MaHDMoiNhat DESC
+                LIMIT {limit};";
+            using (var cmdPrimary = new MySqlCommand(sqlPrimary, connection))
+            using (var reader = await cmdPrimary.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    var maNguoiThue = reader.GetInt32(0);
+                    var hoTen = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
+                    var tienCoc = reader.IsDBNull(2) ? 0m : reader.GetDecimal(2);
+                    var trangThai = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
+                    list.Add((maNguoiThue, hoTen, tienCoc, trangThai));
+                }
+            }
+
+            if (list.Count >= limit)
+                return list;
+
+            // 2) Bổ sung: lấy khách gần nhất theo mọi trạng thái (cả HĐ và NT)
+            var remain = limit - list.Count;
+            var excludeIds = list.Select(x => x.Item1).ToList();
+            var notInClause = excludeIds.Count > 0 ? $"WHERE nt.MaNguoiThue NOT IN ({string.Join(",", excludeIds)})" : string.Empty;
+
+            var sqlFallback = $@"
+                SELECT nt.MaNguoiThue, nt.HoTen, x.TienCoc, nt.TrangThai
+                FROM (
+                    SELECT hd.MaNguoiThue,
+                           MAX(hd.NgayBatDau) AS NgayBatDauMoiNhat,
+                           MAX(hd.MaHopDong) AS MaHDMoiNhat,
+                           SUBSTRING_INDEX(GROUP_CONCAT(hd.TienCoc ORDER BY hd.NgayBatDau DESC, hd.MaHopDong DESC), ',', 1) AS TienCoc
+                    FROM HopDong hd
+                    GROUP BY hd.MaNguoiThue
+                ) x
+                INNER JOIN NguoiThue nt ON nt.MaNguoiThue = x.MaNguoiThue
+                {notInClause}
+                ORDER BY x.NgayBatDauMoiNhat DESC, x.MaHDMoiNhat DESC
+                LIMIT {remain};";
+
+            using (var cmdFallback = new MySqlCommand(sqlFallback, connection))
+            using (var reader2 = await cmdFallback.ExecuteReaderAsync())
+            {
+                while (await reader2.ReadAsync())
+                {
+                    var maNguoiThue = reader2.GetInt32(0);
+                    var hoTen = reader2.IsDBNull(1) ? string.Empty : reader2.GetString(1);
+                    var tienCoc = reader2.IsDBNull(2) ? 0m : reader2.GetDecimal(2);
+                    var trangThai = reader2.IsDBNull(3) ? string.Empty : reader2.GetString(3);
+                    list.Add((maNguoiThue, hoTen, tienCoc, trangThai));
+                }
+            }
+
+            return list;
         }
 
     }

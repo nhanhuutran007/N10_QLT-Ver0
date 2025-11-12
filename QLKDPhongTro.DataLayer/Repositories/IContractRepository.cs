@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -14,5 +14,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<Contract?> GetByIdAsync(int maHopDong); // Lấy theo ID
         Task<List<Contract>> GetActiveContractsAsync(); // Lấy các hợp đồng còn hiệu lực
         Task<List<Contract>> GetActiveContractsByTenantAsync(int maNguoiThue); // Lấy hợp đồng còn hiệu lực theo khách hàng
+        Task<(int MaNguoiThue, string HoTen, decimal TienCoc, string TrangThai)?> GetMostRecentTenantWithDepositAsync();
+        Task<List<(int MaNguoiThue, string HoTen, decimal TienCoc, string TrangThai)>> GetMostRecentTenantsWithDepositAsync(int count);
     }
 }

@@ -73,6 +73,31 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             );
         }
 
+        public async Task<RecentTenantInfoDto?> GetMostRecentTenantInfoAsync()
+        {
+            var result = await _contractRepository.GetMostRecentTenantWithDepositAsync();
+            if (result == null) return null;
+            return new RecentTenantInfoDto
+            {
+                MaNguoiThue = result.Value.MaNguoiThue,
+                HoTen = result.Value.HoTen,
+                TienCoc = result.Value.TienCoc,
+                TrangThai = result.Value.TrangThai
+            };
+        }
+
+        public async Task<List<RecentTenantInfoDto>> GetMostRecentTenantsInfoAsync(int count)
+        {
+            var list = await _contractRepository.GetMostRecentTenantsWithDepositAsync(count);
+            return list.Select(x => new RecentTenantInfoDto
+            {
+                MaNguoiThue = x.MaNguoiThue,
+                HoTen = x.HoTen,
+                TienCoc = x.TienCoc,
+                TrangThai = x.TrangThai
+            }).ToList();
+        }
+
         /// <summary>
         /// Lấy tất cả thanh toán
         /// </summary>

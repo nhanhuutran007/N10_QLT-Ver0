@@ -31,6 +31,8 @@
 
         <!-- Converters -->
         <conv:MonthlyRevenueToPolylineConverter x:Key="MonthlyRevenueToPolylineConverter"/>
+        <conv:MonthFromThangNamConverter x:Key="MonthFromThangNamConverter"/>
+        <conv:BarHeightConverter x:Key="BarHeightConverter"/>
 
         <!-- Style cho các nút trên menu trái (dùng RadioButton để chỉ chọn được 1) -->
         <Style x:Key="SideMenuButtonStyle" TargetType="RadioButton">
@@ -99,12 +101,9 @@
                 <Border Style="{StaticResource CardBorderStyle}" Margin="10">
                     <Grid>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Doanh thu" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
-                            <TextBlock Text="{Binding FinancialStats.TongThuNhap, StringFormat={}{0:N0} VNĐ}" Foreground="#3B4758" FontSize="24" FontWeight="Bold"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <TextBlock Text="+6.50%" Foreground="#0A7D5A" FontSize="12" FontWeight="Medium"/>
-                                <TextBlock Text="tăng trưởng so với tháng trước" Foreground="#586A84" FontSize="12" Margin="5,0,0,0"/>
-                            </StackPanel>
+                            <TextBlock Text="{Binding LatestPaidMonthLabel, StringFormat=Doanh thu tháng {0}}" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
+                            <TextBlock Text="{Binding LatestPaidMonthRevenue, StringFormat={}{0:N0} VNĐ}" Foreground="#3B4758" FontSize="24" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding RevenueGrowthText}" Foreground="{Binding RevenueGrowthColor}" FontSize="12" Margin="0,10,0,0"/>
                         </StackPanel>
                         <Border Width="36" Height="36" Background="#36DA78" CornerRadius="6" HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Path Data="M736 233H737C737 233.283 737.096 233.521 737.288 233.712C737.479 233.904 737.717 234 738 234C738.283 234 738.521 233.904 738.713 233.712C738.904 233.521 739 233.283 739 233H740C740.283 233 740.521 232.904 740.713 232.712C740.904 232.521 741 232.283 741 232V229C741 228.717 740.904 228.479 740.713 228.287C740.521 228.096 740.283 228 740 228H737V227H740C740.283 227 740.521 226.904 740.713 226.712C740.904 226.521 741 226.283 741 226C741 225.717 740.904 225.479 740.713 225.287C740.521 225.096 740.283 225 740 225H739C739 224.717 738.904 224.479 738.713 224.287C738.521 224.096 738.283 224 738 224C737.717 224 737.479 224.096 737.288 224.287C737.096 224.479 737 224.717 737 225H736C735.717 225 735.479 225.096 735.288 225.287C735.096 225.479 735 225.717 735 226V229C735 229.283 735.096 229.521 735.288 229.712C735.479 229.904 735.717 230 736 230H739V231H736C735.717 231 735.479 231.096 735.288 231.287C735.096 231.479 735 231.717 735 232C735 232.283 735.096 232.521 735.288 232.712C735.479 232.904 735.717 233 736 233ZM730 237C729.45 237 728.979 236.804 728.588 236.413C728.196 236.021 728 235.55 728 235V223C728 222.45 728.196 221.979 728.588 221.588C728.979 221.196 729.45 221 730 221H746C746.55 221 747.021 221.196 747.413 221.588C747.804 221.979 748 222.45 748 223V235C748 235.55 747.804 236.021 747.413 236.413C747.021 236.804 746.55 237 746 237H730ZM730 235H746V223H730V235Z" 
@@ -116,12 +115,8 @@
                 <Border Style="{StaticResource CardBorderStyle}" Margin="10">
                     <Grid>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Khách hàng" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
+                            <TextBlock Text="Khách hàng đang ở" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
                             <TextBlock Text="{Binding FinancialStats.SoKhachDangThue}" Foreground="#3B4758" FontSize="24" FontWeight="Bold"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <TextBlock Text="-2.86%" Foreground="#FF316A" FontSize="12" FontWeight="Medium"/>
-                                <TextBlock Text="giảm so với tháng trước" Foreground="#586A84" FontSize="12" Margin="5,0,0,0"/>
-                            </StackPanel>
                         </StackPanel>
                         <Border Width="36" Height="36" Background="#FF59EE" CornerRadius="6" HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Path Data="M1288 237C1287.72 237 1287.48 236.904 1287.29 236.712C1287.1 236.521 1287 236.283 1287 236V234.2C1287 233.633 1287.15 233.112 1287.44 232.637C1287.73 232.162 1288.12 231.8 1288.6 231.55C1289.63 231.033 1290.68 230.646 1291.75 230.387C1292.82 230.129 1293.9 230 1295 230C1296.1 230 1297.18 230.129 1298.25 230.387C1299.32 230.646 1300.37 231.033 1301.4 231.55C1301.88 231.8 1302.27 232.162 1302.56 232.637C1302.85 233.112 1303 233.633 1303 234.2V236C1303 236.283 1302.9 236.521 1302.71 236.712C1302.52 236.904 1302.28 237 1302 237H1288ZM1304.52 237C1304.67 236.883 1304.79 236.737 1304.88 236.562C1304.96 236.387 1305 236.192 1305 235.975V234C1305 233.267 1304.8 232.562 1304.39 231.887C1303.98 231.212 1303.4 230.633 1302.65 230.15C1303.5 230.25 1304.3 230.421 1305.05 230.662C1305.8 230.904 1306.5 231.2 1307.15 231.55C1307.75 231.883 1308.21 232.254 1308.52 232.662C1308.84 233.071 1309 233.517 1309 234V236C1309 236.283 1308.9 236.521 1308.71 236.712C1308.52 236.904 1308.28 237 1308 237H1304.52ZM1295 229C1293.9 229 1292.96 228.608 1292.18 227.825C1291.39 227.042 1291 226.1 1291 225C1291 223.9 1291.39 222.958 1292.18 222.175C1292.96 221.392 1293.9 221 1295 221C1296.1 221 1297.04 221.392 1297.82 222.175C1298.61 222.958 1299 223.9 1299 225C1299 226.1 1298.61 227.042 1297.82 227.825C1297.04 228.608 1296.1 229 1295 229ZM1305 225C1305 226.1 1304.61 227.042 1303.83 227.825C1303.04 228.608 1302.1 229 1301 229C1300.82 229 1300.58 228.979 1300.3 228.938C1300.02 228.896 1299.78 228.85 1299.6 228.8C1300.05 228.267 1300.4 227.675 1300.64 227.025C1300.88 226.375 1301 225.7 1301 225C1301 224.3 1300.88 223.625 1300.64 222.975C1300.4 222.325 1300.05 221.733 1299.6 221.2C1299.83 221.117 1300.07 221.062 1300.3 221.037C1300.53 221.012 1300.77 221 1301 221C1302.1 221 1303.04 221.392 1303.83 222.175C1304.61 222.958 1305 223.9 1305 225ZM1289 235H1301V234.2C1301 234.017 1300.95 233.85 1300.86 233.7C1300.77 233.55 1300.65 233.433 1300.5 233.35C1299.6 232.9 1298.69 232.562 1297.77 232.337C1296.86 232.112 1295.93 232 1295 232C1294.07 232 1293.14 232.112 1292.22 232.337C1291.31 232.562 1290.4 232.9 1289.5 233.35C1289.35 233.433 1289.23 233.55 1289.14 233.7C1289.05 233.85 1289 234.017 1289 234.2V235ZM1295 227C1295.55 227 1296.02 226.804 1296.41 226.412C1296.8 226.021 1297 225.55 1297 225C1297 224.45 1296.8 223.979 1296.41 223.588C1296.02 223.196 1295.55 223 1295 223C1294.45 223 1293.98 223.196 1293.59 223.588C1293.2 223.979 1293 224.45 1293 225C1293 225.55 1293.2 226.021 1293.59 226.412C1293.98 226.804 1294.45 227 1295 227Z"
@@ -133,12 +128,8 @@
                 <Border Style="{StaticResource CardBorderStyle}" Margin="10">
                     <Grid>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Phòng thuê" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
+                            <TextBlock Text="Phòng đang thuê" Foreground="#586A84" FontSize="14" Margin="0,0,0,10"/>
                             <TextBlock Text="{Binding FinancialStats.SoPhongDangThue}" Foreground="#3B4758" FontSize="24" FontWeight="Bold"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <TextBlock Text="+1.70%" Foreground="#0A7D5A" FontSize="12" FontWeight="Medium"/>
-                                <TextBlock Text="tăng so với tháng trước" Foreground="#586A84" FontSize="12" Margin="5,0,0,0"/>
-                            </StackPanel>
                         </StackPanel>
                         <Border Width="36" Height="36" Background="#489DEC" CornerRadius="6" HorizontalAlignment="Right" VerticalAlignment="Top">
                             <Path Data="M1851 238C1850.45 238 1849.98 237.804 1849.59 237.413C1849.2 237.021 1849 236.55 1849 236V228.05C1848.62 227.7 1848.32 227.25 1848.11 226.7C1847.9 226.15 1847.9 225.55 1848.1 224.9L1849.15 221.5C1849.28 221.067 1849.52 220.708 1849.86 220.425C1850.2 220.142 1850.6 220 1851.05 220H1864.95C1865.4 220 1865.79 220.137 1866.12 220.412C1866.46 220.687 1866.7 221.05 1866.85 221.5L1867.9 224.9C1868.1 225.55 1868.1 226.142 1867.89 226.675C1867.68 227.208 1867.38 227.667 1867 228.05V236C1867 236.55 1866.8 237.021 1866.41 237.413C1866.02 237.804 1865.55 238 1865 238H1851ZM1860.2 227C1860.65 227 1860.99 226.846 1861.22 226.537C1861.46 226.229 1861.55 225.883 1861.5 225.5L1860.95 222H1859V225.7C1859 226.05 1859.12 226.354 1859.35 226.613C1859.58 226.871 1859.87 227 1860.2 227ZM1855.7 227C1856.08 227 1856.4 226.871 1856.64 226.613C1856.88 226.354 1857 226.05 1857 225.7V222H1855.05L1854.5 225.5C1854.43 225.9 1854.52 226.25 1854.76 226.55C1855 226.85 1855.32 227 1855.7 227ZM1851.25 227C1851.55 227 1851.81 226.892 1852.04 226.675C1852.26 226.458 1852.4 226.183 1852.45 225.85L1853 222H1851.05L1850.05 225.35C1849.95 225.683 1850 226.042 1850.21 226.425C1850.42 226.808 1850.77 227 1851.25 227ZM1864.75 227C1865.23 227 1865.58 226.808 1865.8 226.425C1866.02 226.042 1866.07 225.683 1865.95 225.35L1864.9 222H1863L1863.55 225.85C1863.6 226.183 1863.74 226.458 1863.96 226.675C1864.19 226.892 1864.45 227 1864.75 227ZM1851 236H1865V228.95C1864.92 228.983 1864.86 229 1864.84 229H1864.75C1864.3 229 1863.9 228.925 1863.56 228.775C1863.22 228.625 1862.88 228.383 1862.55 228.05C1862.25 228.35 1861.91 228.583 1861.52 228.75C1861.14 228.917 1860.73 229 1860.3 229C1859.85 229 1859.43 228.917 1859.04 228.75C1858.65 228.583 1858.3 228.35 1858 228.05C1857.72 228.35 1857.39 228.583 1857.01 228.75C1856.64 228.917 1856.23 229 1855.8 229C1855.32 229 1854.88 228.917 1854.49 228.75C1854.1 228.583 1853.75 228.35 1853.45 228.05C1853.1 228.4 1852.75 228.646 1852.41 228.787C1852.07 228.929 1851.68 229 1851.25 229H1851.14C1851.1 229 1851.05 228.983 1851 228.95V236Z"
@@ -160,33 +151,41 @@
                     <StackPanel>
                         <TextBlock Text="Khách hàng gần nhất" Foreground="#3B4758" FontSize="16" FontWeight="Bold"/>
                         <Grid Margin="0,20,0,10">
-                            <TextBlock Text="Từ" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium" HorizontalAlignment="Left"/>
-                            <TextBlock Text="Tiền cọc" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Trạng thái" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium" HorizontalAlignment="Right"/>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Từ" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium"/>
+                            <TextBlock Grid.Column="1" Text="Tiền cọc" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium" Margin="16,0"/>
+                            <TextBlock Grid.Column="2" Text="Trạng thái" Foreground="#7D8FA9" FontSize="12" FontWeight="Medium"/>
                         </Grid>
-                        <!-- Đây là nơi dùng ItemsControl/ListView để hiển thị danh sách -->
-                        <ItemsControl>
-                            <!-- Item 1 -->
-                            <Border BorderBrush="#EEF0F4" BorderThickness="0,1,0,0" Padding="0,10" Width="318">
-                                <Grid>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <Ellipse Width="40" Height="40">
-                                            <Ellipse.Fill>
-                                                <ImageBrush ImageSource="/Resources/Images/Logo.png"/>
-                                            </Ellipse.Fill>
-                                        </Ellipse>
-                                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                                            <TextBlock Text="Maxima Smalls" Foreground="#3B4758" FontWeight="Bold"/>
-                                            <TextBlock Text="4 minutes ago" Foreground="#586A84" FontSize="10"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <TextBlock Text="$35.22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    <Border Background="#FFF2DA" CornerRadius="9" Padding="12,3" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <TextBlock Text="Chờ xác nhận" Foreground="#FFAA04" FontSize="12"/>
+                        <!-- Danh sách 3 khách hàng gần nhất -->
+                        <ItemsControl ItemsSource="{Binding RecentTenants}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#EEF0F4" BorderThickness="0,1,0,0" Padding="0,10" Width="318">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Tên khách hàng -->
+                                            <TextBlock Grid.Column="0" Text="{Binding HoTen}" Foreground="#3B4758" FontWeight="Bold" VerticalAlignment="Center"/>
+
+                                            <!-- Tiền cọc -->
+                                            <TextBlock Grid.Column="1" Text="{Binding TienCoc, StringFormat={}{0:N0} VNĐ}" FontWeight="Bold" VerticalAlignment="Center" Margin="16,0"/>
+
+                                            <!-- Trạng thái -->
+                                            <Border Grid.Column="2" Background="#EAF7FF" CornerRadius="9" Padding="12,3" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding TrangThai}" Foreground="#1982F8" FontSize="12"/>
+                                            </Border>
+                                        </Grid>
                                     </Border>
-                                </Grid>
-                            </Border>
-                            <!-- Thêm các Item khác tương tự -->
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </Border>
@@ -208,18 +207,48 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Khu vực biểu đồ: Viewbox + Canvas + Polyline -->
-                        <Grid Grid.Row="1" Margin="0,10,0,10">
-                            <Viewbox Stretch="Fill">
-                                <Canvas Width="600" Height="240" Background="Transparent">
-                                    <Polyline Stroke="#9E13F3" StrokeThickness="2"
-                                              Points="{Binding MonthlyStats, Converter={StaticResource MonthlyRevenueToPolylineConverter}}"/>
-                                </Canvas>
-                            </Viewbox>
+                        <!-- Khu vực biểu đồ cột -->
+                        <Grid Grid.Row="1" Margin="0,10,0,10" Height="240">
+                            <Border Background="#FFFFFF"/>
+                            <ItemsControl ItemsSource="{Binding PaidMonthlyStats}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="12"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="VerticalAlignment" Value="Bottom"/>
+                                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Width="24" Background="#9E13F3" CornerRadius="4" VerticalAlignment="Bottom" ToolTipService.ShowDuration="60000">
+                                            <Border.Height>
+                                                <MultiBinding Converter="{StaticResource BarHeightConverter}" ConverterParameter="180">
+                                                    <Binding Path="ThuNhap"/>
+                                                    <Binding Path="DataContext.MaxMonthlyRevenue" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                </MultiBinding>
+                                            </Border.Height>
+                                            <Border.ToolTip>
+                                                <TextBlock>
+                                                    <TextBlock.Text>
+                                                        <MultiBinding StringFormat="Tháng {0}: {1:N0} VNĐ">
+                                                            <Binding Path="ThangNam" Converter="{StaticResource MonthFromThangNamConverter}"/>
+                                                            <Binding Path="ThuNhap"/>
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Border.ToolTip>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Grid>
 
-                        <!-- Nhãn tháng đơn giản -->
-                        <ItemsControl Grid.Row="2" ItemsSource="{Binding MonthlyStats}" Margin="0,5,0,0">
+                        <!-- Nhãn tháng (tháng/năm hiện tại -> chỉ hiện tháng) -->
+                        <ItemsControl Grid.Row="2" ItemsSource="{Binding PaidMonthlyStats}" Margin="0,5,0,0">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <UniformGrid Columns="12"/>
@@ -227,7 +256,7 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding ThangNam}" Foreground="#586A84" FontSize="12" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ThangNam, Converter={StaticResource MonthFromThangNamConverter}}" Foreground="#586A84" FontSize="12" HorizontalAlignment="Center"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
