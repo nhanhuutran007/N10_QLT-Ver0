@@ -48,6 +48,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TamTinh => TamTinhThue + TamTinhDien + TamTinhNuoc + TamTinhInternet + TamTinhVeSinh + TamTinhGiuXe + TamTinhKhac;
         public decimal KhauTru { get; set; } = 0;
         public decimal TongTienTinhToan => TamTinh - KhauTru;
+        public decimal? SoDienThangTruoc { get; set; } // Thêm trường này
     }
 }
 

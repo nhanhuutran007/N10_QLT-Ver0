@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace QLKDPhongTro.DataLayer.Models
 {
@@ -17,14 +18,20 @@ namespace QLKDPhongTro.DataLayer.Models
         public decimal? TienVeSinh { get; set; }
         public decimal? TienGiuXe { get; set; }
         public decimal? ChiPhiKhac { get; set; }
-        // Đơn giá và chỉ số điện nước theo tháng (nếu có trong bảng)
+
+        // Đơn giá và chỉ số điện nước theo tháng
         public decimal? DonGiaDien { get; set; }
         public decimal? DonGiaNuoc { get; set; }
         public decimal? SoDien { get; set; }
+        public decimal? ChiSoDienCu { get; set; } // Chỉ số điện tháng trước
+        public decimal? ChiSoDienMoi { get; set; } // Chỉ số điện tháng này
         public decimal? SoNuoc { get; set; }
+
         public decimal TongTien { get; set; }
         public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
         public DateTime? NgayThanhToan { get; set; }
+        public DateTime? NgayTao { get; set; } = DateTime.Now;
+        public string? GhiChu { get; set; }
 
         // Các trường không có trong database nhưng cần cho UI
         public string TenKhachHang { get; set; } = string.Empty;
@@ -32,6 +39,7 @@ namespace QLKDPhongTro.DataLayer.Models
         public string SoDienThoai { get; set; } = string.Empty;
         public string DiaChi { get; set; } = string.Empty;
     }
+
     /// <summary>
     /// Model cho thống kê tài chính
     /// </summary>

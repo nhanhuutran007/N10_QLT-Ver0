@@ -46,5 +46,8 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 
         [Range(0, double.MaxValue, ErrorMessage = "Chi phí khác không được âm")]
         public decimal ChiPhiKhac { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Chỉ số điện tháng trước không được âm")]
+        public decimal SoDienThangTruoc { get; set; } = 0; // Thêm trường này
     }
 }

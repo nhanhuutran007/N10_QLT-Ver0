@@ -110,6 +110,17 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Style riêng cho nút Xử lý công nợ từ Google Form -->
+        <Style TargetType="{x:Type Button}" x:Key="GoogleFormButtonStyle" BasedOn="{StaticResource ModernPrimaryButton}">
+            <Setter Property="Background" Value="{StaticResource AccentColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#7C3AED"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <!-- Style cho nút Segment hiện đại -->
         <Style TargetType="{x:Type Button}" x:Key="ModernSegmentButton">
             <Setter Property="Background" Value="Transparent"/>
@@ -411,6 +422,15 @@
                                             Click="ViewReports_Click"/>
                                 </StackPanel>
                             </Border>
+
+                            <!-- Nút Xử lý công nợ từ Google Form -->
+                            <Button Content="📊 Xử lý công nợ từ Google Form"
+                                    Style="{StaticResource GoogleFormButtonStyle}"
+                                    Command="{Binding ProcessDebtsFromGoogleFormCommand}"
+                                    Margin="24,0,0,0"
+                                    Height="38"
+                                    Padding="20,0"
+                                    ToolTip="Tự động xử lý công nợ từ dữ liệu Google Form"/>
                         </StackPanel>
 
                         <!-- Row 2: Search, Filter và Actions -->

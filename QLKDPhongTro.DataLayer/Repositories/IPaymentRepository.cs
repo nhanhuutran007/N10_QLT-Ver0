@@ -46,6 +46,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<Payment?> GetPaymentByContractAndMonthAsync(int maHopDong, string thangNam);
 
         /// <summary>
+        /// Lấy thanh toán gần nhất theo hợp đồng
+        /// </summary>
+        Task<Payment?> GetLastPaymentByContractIdAsync(int maHopDong);
+
+        /// <summary>
         /// Lấy danh sách công nợ
         /// </summary>
         Task<List<Payment>> GetDebtsAsync(string? thangNam = null);
@@ -70,9 +75,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// </summary>
         Task<int> GenerateMonthlyPaymentsAsync(string thangNam);
 
-    }
+        /// <summary>
+        /// Đánh dấu thanh toán đã trả
+        /// </summary>
+        Task<bool> MarkAsPaidAsync(int maThanhToan, DateTime ngayThanhToan, string phuongThucThanhToan = "Tiền mặt");
 
-    /// <summary>
-    /// Model cho thống kê tài chính
-    /// </summary>
+        /// <summary>
+        /// Lấy thanh toán theo phòng
+        /// </summary>
+        Task<List<Payment>> GetPaymentsByRoomAsync(int maPhong);
+    }
 }

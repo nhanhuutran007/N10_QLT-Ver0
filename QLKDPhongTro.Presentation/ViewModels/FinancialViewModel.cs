@@ -2,11 +2,13 @@ using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Commands;
+using QLKDPhongTro.Presentation.Services;
 using QLKDPhongTro.Presentation.Views.Windows;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -19,21 +21,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
     public class FinancialViewModel : INotifyPropertyChanged
     {
         private readonly FinancialController? _financialController;
+        private readonly DebtProcessingService _debtProcessingService;
         private ObservableCollection<FinancialRecordDto> _financialRecords = new();
-        private ObservableCollection<FinancialRecordDto> _allRecords = new(); // Lưu tất cả records để filter
+        private ObservableCollection<FinancialRecordDto> _allRecords = new();
         private string _searchText = string.Empty;
         private string _selectedSortOption = "Mới nhất";
         private string _selectedFilterType = "Tất cả";
         private string _selectedFilterStatus = "Tất cả";
         private int _currentPage = 1;
         private const int _itemsPerPage = 9;
-        private string _currentView = "AllRecords"; // AllRecords, Debts, Reports
-        private ObservableCollection<BusinessLayer.DTOs.DebtReportDto> _debts = new();
-        private BusinessLayer.DTOs.FinancialStatsDto? _financialStats;
+        private string _currentView = "AllRecords";
+        private ObservableCollection<DebtReportDto> _debts = new();
+        private FinancialStatsDto? _financialStats;
         private bool _isLoading = false;
-        private bool _isFiltering = false; // Flag để tránh infinite loop khi filter
-        private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1); // Đảm bảo chỉ load một lần
-        private readonly SemaphoreSlim _filterSemaphore = new SemaphoreSlim(1, 1); // Đảm bảo chỉ filter một lần
+        private bool _isFiltering = false;
+        private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _filterSemaphore = new SemaphoreSlim(1, 1);
 
         #region Properties
 
@@ -55,14 +58,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 if (_searchText == value) return;
                 _searchText = value;
                 OnPropertyChanged();
-                _currentPage = 1; // Reset về trang đầu khi search
-                // Debounce filter để tránh filter quá nhiều lần
+                _currentPage = 1;
                 _ = Task.Run(async () =>
                 {
                     try
                     {
-                        await Task.Delay(300).ConfigureAwait(false); // Debounce 300ms
-                        if (_searchText == value) // Kiểm tra lại sau debounce
+                        await Task.Delay(300).ConfigureAwait(false);
+                        if (_searchText == value)
                         {
                             await FilterRecordsAsync().ConfigureAwait(false);
                         }
@@ -83,7 +85,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 if (_selectedSortOption == value) return;
                 _selectedSortOption = value;
                 OnPropertyChanged();
-                // Filter trên background thread để không block UI
                 _ = Task.Run(async () =>
                 {
                     try
@@ -107,7 +108,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 _selectedFilterType = value;
                 OnPropertyChanged();
                 _currentPage = 1;
-                // Filter trên background thread để không block UI
                 _ = Task.Run(async () =>
                 {
                     try
@@ -131,7 +131,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 _selectedFilterStatus = value;
                 OnPropertyChanged();
                 _currentPage = 1;
-                // Filter trên background thread để không block UI
                 _ = Task.Run(async () =>
                 {
                     try
@@ -169,7 +168,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand PreviousPageCommand { get; }
         public ICommand NextPageCommand { get; }
 
-        // Thống kê tổng quan
         public decimal TotalRevenue { get; private set; }
         public decimal TotalExpense { get; private set; }
         public decimal TotalProfit { get; private set; }
@@ -181,11 +179,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 var pages = new List<int>();
                 if (TotalPages == 0) return pages;
-                
-                var maxPages = Math.Min(TotalPages, 5); // Hiển thị tối đa 5 trang
+
+                var maxPages = Math.Min(TotalPages, 5);
                 var startPage = Math.Max(1, _currentPage - 2);
                 var endPage = Math.Min(TotalPages, startPage + maxPages - 1);
-                
+
                 for (int i = startPage; i <= endPage; i++)
                 {
                     pages.Add(i);
@@ -206,7 +204,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     OnPropertyChanged(nameof(IsAllRecordsView));
                     OnPropertyChanged(nameof(IsDebtsView));
                     OnPropertyChanged(nameof(IsReportsView));
-                    // Load view data trên background thread để không block UI
                     _ = Task.Run(async () =>
                     {
                         try
@@ -226,7 +223,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public bool IsDebtsView => _currentView == "Debts";
         public bool IsReportsView => _currentView == "Reports";
 
-        public ObservableCollection<BusinessLayer.DTOs.DebtReportDto> Debts
+        public ObservableCollection<DebtReportDto> Debts
         {
             get => _debts;
             set
@@ -236,7 +233,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        public BusinessLayer.DTOs.FinancialStatsDto? FinancialStats
+        public FinancialStatsDto? FinancialStats
         {
             get => _financialStats;
             set
@@ -269,6 +266,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand EditCommand { get; }
         public ICommand RefreshCommand { get; }
         public ICommand ExportCommand { get; }
+        public ICommand ProcessDebtsFromGoogleFormCommand { get; }
 
         #endregion
 
@@ -299,58 +297,48 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 ShowMessageRequested?.Invoke(this, $"Không thể kết nối database: {ex.Message}. Đang sử dụng dữ liệu mẫu.");
             }
 
-            // Khởi tạo commands
-            ManualInputRentCommand = new RelayCommand(() => 
-            {
-                // Command sẽ được xử lý bởi Click event handler trong FinancialWindow
-            });
-            ScanImageCommand = new RelayCommand(() => 
-            {
-                // Command sẽ được xử lý bởi Click event handler trong FinancialWindow
-            });
+            _debtProcessingService = new DebtProcessingService();
+
+            ManualInputRentCommand = new RelayCommand(() => { });
+            ScanImageCommand = new RelayCommand(() => { });
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             ViewDetailCommand = new RelayCommand<FinancialRecordDto>(async (record) => await ViewDetailAsync(record));
             MarkAsPaidCommand = new RelayCommand<FinancialRecordDto>(async (record) => await MarkAsPaidAsync(record));
             DeleteCommand = new RelayCommand<FinancialRecordDto>(async (record) => await DeleteAsync(record));
             EditCommand = new RelayCommand<FinancialRecordDto>(async (record) => await EditAsync(record));
             RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
-            ExportCommand = new RelayCommand(() => { /* TODO: Export to PDF/Excel */ });
+            ExportCommand = new RelayCommand(() => { });
+            ProcessDebtsFromGoogleFormCommand = new RelayCommand(async () => await ProcessDebtsFromGoogleFormAsync());
             PreviousPageCommand = new RelayCommand(() => { if (CanGoToPreviousPage) CurrentPage--; }, () => CanGoToPreviousPage);
             NextPageCommand = new RelayCommand(() => { if (CanGoToNextPage) CurrentPage++; }, () => CanGoToNextPage);
-
-            // KHÔNG load data trong constructor - sẽ load sau khi window loaded
-            // Điều này tránh blocking UI thread và deadlock
         }
 
         #region Public Methods
 
         public async Task LoadDataAsync()
         {
-            // Sử dụng semaphore để đảm bảo chỉ load một lần đồng thời
             if (!await _loadSemaphore.WaitAsync(0).ConfigureAwait(false))
             {
-                // Đang load, bỏ qua
                 return;
             }
-                
+
             try
             {
                 IsLoading = true;
-                
+
                 if (_financialController == null)
                 {
                     await LoadSampleData().ConfigureAwait(false);
                     return;
                 }
 
-                // Sử dụng timeout ngắn hơn (15 giây) và cancellation token
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
-                
+
                 try
                 {
                     var payments = await _financialController.GetAllPaymentsAsync().ConfigureAwait(false);
                     cts.Token.ThrowIfCancellationRequested();
-                    
+
                     var records = new ObservableCollection<FinancialRecordDto>();
 
                     foreach (var payment in payments)
@@ -360,8 +348,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         records.Add(record);
                     }
 
-                    // Update _allRecords trên UI thread để tránh cross-thread exception
-                    var updateDispatcher = System.Windows.Application.Current?.Dispatcher;
+                    var updateDispatcher = Application.Current?.Dispatcher;
                     if (updateDispatcher != null && !updateDispatcher.CheckAccess())
                     {
                         await updateDispatcher.InvokeAsync(() =>
@@ -373,7 +360,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     {
                         _allRecords = records;
                     }
-                    
+
                     await CalculateStatisticsAsync().ConfigureAwait(false);
                     await ApplySortAndFilterAsync().ConfigureAwait(false);
                 }
@@ -384,7 +371,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
             catch (TimeoutException ex)
             {
-                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                var dispatcher = Application.Current?.Dispatcher;
                 if (dispatcher != null && !dispatcher.CheckAccess())
                 {
                     await dispatcher.InvokeAsync(() =>
@@ -400,7 +387,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
             catch (Exception ex)
             {
-                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                var dispatcher = Application.Current?.Dispatcher;
                 if (dispatcher != null && !dispatcher.CheckAccess())
                 {
                     await dispatcher.InvokeAsync(() =>
@@ -421,6 +408,54 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        private async Task ProcessDebtsFromGoogleFormAsync()
+        {
+            try
+            {
+                IsLoading = true;
+                ShowMessageRequested?.Invoke(this, "Đang xử lý dữ liệu từ Google Form...");
+
+                var results = await _debtProcessingService.ProcessDebtsAsync();
+
+                var successCount = results.Count(r => r.IsProcessed);
+                var totalCount = results.Count;
+
+                var message = $"Đã xử lý {successCount}/{totalCount} công nợ từ Google Form:\n\n";
+
+                foreach (var result in results)
+                {
+                    if (result.IsProcessed)
+                    {
+                        message += $"- Phòng {result.RoomName}: {result.TotalDebt:N0} VNĐ (Điện: {result.ElectricityCost:N0} + Nước: {result.WaterCost:N0})\n";
+                    }
+                    else
+                    {
+                        message += $"- Phòng {result.RoomName}: LỖI - {result.ErrorMessage}\n";
+                    }
+                }
+
+                ShowMessageRequested?.Invoke(this, message);
+
+                if (successCount > 0)
+                {
+                    var createdCount = await _debtProcessingService.CreatePaymentRecordsFromDebtsAsync(results);
+                    if (createdCount > 0)
+                    {
+                        ShowMessageRequested?.Invoke(this, $"Đã tạo {createdCount} bản ghi thanh toán từ công nợ");
+                        await LoadDataAsync();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi xử lý công nợ từ Google Form: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
         private Task FilterRecordsAsync()
         {
             return ApplySortAndFilterAsync();
@@ -428,41 +463,35 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task ApplySortAndFilterAsync()
         {
-            // Sử dụng semaphore để đảm bảo chỉ filter một lần đồng thời
             if (!await _filterSemaphore.WaitAsync(0).ConfigureAwait(false))
             {
-                // Đang filter, bỏ qua
                 return;
             }
-                
+
             try
             {
                 _isFiltering = true;
                 var filtered = _allRecords.AsEnumerable();
 
-                // Filter theo search text
                 if (!string.IsNullOrWhiteSpace(SearchText))
                 {
-                    filtered = filtered.Where(r => 
+                    filtered = filtered.Where(r =>
                         r.TenPhong.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                         r.LoaiGiaoDich.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                         r.ChiTietGiaoDich.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                         r.ThangNam.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
                 }
 
-                // Filter theo loại giao dịch
                 if (_selectedFilterType != "Tất cả")
                 {
                     filtered = filtered.Where(r => r.LoaiGiaoDich == _selectedFilterType);
                 }
 
-                // Filter theo trạng thái
                 if (_selectedFilterStatus != "Tất cả")
                 {
                     filtered = filtered.Where(r => r.TrangThaiText == _selectedFilterStatus);
                 }
 
-                // Sort
                 filtered = _selectedSortOption switch
                 {
                     "Mới nhất" => filtered.OrderByDescending(r => r.KyHan),
@@ -474,19 +503,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 var filteredList = filtered.ToList();
 
-                // Đảm bảo update ObservableCollection trên UI thread
-                // Sử dụng Dispatcher để update UI từ background thread
-                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                var dispatcher = Application.Current?.Dispatcher;
                 if (dispatcher != null && !dispatcher.CheckAccess())
                 {
-                    // Update trên UI thread với priority thấp để không block UI
                     await dispatcher.InvokeAsync(() =>
                     {
                         try
                         {
                             _allRecords = new ObservableCollection<FinancialRecordDto>(filteredList);
 
-                            // Phân trang
                             var pagedRecords = filteredList
                                 .Skip((_currentPage - 1) * _itemsPerPage)
                                 .Take(_itemsPerPage)
@@ -508,12 +533,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
                 else
                 {
-                    // Nếu đã ở UI thread hoặc không có dispatcher, update trực tiếp
                     try
                     {
                         _allRecords = new ObservableCollection<FinancialRecordDto>(filteredList);
 
-                        // Phân trang
                         var pagedRecords = filteredList
                             .Skip((_currentPage - 1) * _itemsPerPage)
                             .Take(_itemsPerPage)
@@ -559,23 +582,23 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     var invoiceData = await _financialController.GetInvoiceDetailAsync(record.MaThanhToan).ConfigureAwait(false);
                     if (invoiceData != null)
                     {
-                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                        var dispatcher = Application.Current?.Dispatcher;
                         if (dispatcher != null && !dispatcher.CheckAccess())
                         {
                             await dispatcher.InvokeAsync(() =>
                             {
-                                var invoiceWindow = new Views.Windows.InvoiceDetailView(invoiceData)
+                                var invoiceWindow = new InvoiceDetailView(invoiceData)
                                 {
-                                    Owner = System.Windows.Application.Current?.MainWindow
+                                    Owner = Application.Current?.MainWindow
                                 };
                                 invoiceWindow.ShowDialog();
                             });
                         }
                         else
                         {
-                            var invoiceWindow = new Views.Windows.InvoiceDetailView(invoiceData)
+                            var invoiceWindow = new InvoiceDetailView(invoiceData)
                             {
-                                Owner = System.Windows.Application.Current?.MainWindow
+                                Owner = Application.Current?.MainWindow
                             };
                             invoiceWindow.ShowDialog();
                         }
@@ -610,27 +633,27 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            var dispatcher = System.Windows.Application.Current?.Dispatcher;
-            System.Windows.MessageBoxResult result;
-            
+            var dispatcher = Application.Current?.Dispatcher;
+            MessageBoxResult result;
+
             if (dispatcher != null && !dispatcher.CheckAccess())
             {
-                result = await dispatcher.InvokeAsync(() => System.Windows.MessageBox.Show(
+                result = await dispatcher.InvokeAsync(() => MessageBox.Show(
                     $"Bạn có chắc chắn muốn đánh dấu thanh toán này là 'Đã trả'?\n\nPhòng: {record.TenPhong}\nSố tiền: {record.TongTien:N0} VNĐ",
                     "Xác nhận",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Question));
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question));
             }
             else
             {
-                result = System.Windows.MessageBox.Show(
+                result = MessageBox.Show(
                     $"Bạn có chắc chắn muốn đánh dấu thanh toán này là 'Đã trả'?\n\nPhòng: {record.TenPhong}\nSố tiền: {record.TongTien:N0} VNĐ",
                     "Xác nhận",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Question);
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
             }
 
-            if (result == System.Windows.MessageBoxResult.Yes)
+            if (result == MessageBoxResult.Yes)
             {
                 try
                 {
@@ -666,27 +689,27 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            var dispatcher = System.Windows.Application.Current?.Dispatcher;
-            System.Windows.MessageBoxResult result;
-            
+            var dispatcher = Application.Current?.Dispatcher;
+            MessageBoxResult result;
+
             if (dispatcher != null && !dispatcher.CheckAccess())
             {
-                result = await dispatcher.InvokeAsync(() => System.Windows.MessageBox.Show(
+                result = await dispatcher.InvokeAsync(() => MessageBox.Show(
                     $"Bạn có chắc chắn muốn xóa thanh toán này?\n\nPhòng: {record.TenPhong}\nSố tiền: {record.TongTien:N0} VNĐ\n\nHành động này không thể hoàn tác!",
                     "Xác nhận xóa",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Warning));
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning));
             }
             else
             {
-                result = System.Windows.MessageBox.Show(
+                result = MessageBox.Show(
                     $"Bạn có chắc chắn muốn xóa thanh toán này?\n\nPhòng: {record.TenPhong}\nSố tiền: {record.TongTien:N0} VNĐ\n\nHành động này không thể hoàn tác!",
                     "Xác nhận xóa",
-                    System.Windows.MessageBoxButton.YesNo,
-                    System.Windows.MessageBoxImage.Warning);
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
             }
 
-            if (result == System.Windows.MessageBoxResult.Yes)
+            if (result == MessageBoxResult.Yes)
             {
                 try
                 {
@@ -727,28 +750,25 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var payment = await _financialController.GetPaymentByIdAsync(record.MaThanhToan).ConfigureAwait(false);
                 if (payment != null)
                 {
-                    var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                    var dispatcher = Application.Current?.Dispatcher;
                     bool? dialogResult = false;
-                    
+
                     if (dispatcher != null && !dispatcher.CheckAccess())
                     {
                         dialogResult = await dispatcher.InvokeAsync(() =>
                         {
-                            // Mở dialog chỉnh sửa (có thể tái sử dụng ManualInputView hoặc tạo EditPaymentView mới)
                             var editDialog = new ManualInputView();
-                            // TODO: Load data vào editDialog để chỉnh sửa
-                            editDialog.Owner = System.Windows.Application.Current?.MainWindow;
+                            editDialog.Owner = Application.Current?.MainWindow;
                             return editDialog.ShowDialog();
                         });
                     }
                     else
                     {
                         var editDialog = new ManualInputView();
-                        // TODO: Load data vào editDialog để chỉnh sửa
-                        editDialog.Owner = System.Windows.Application.Current?.MainWindow;
+                        editDialog.Owner = Application.Current?.MainWindow;
                         dialogResult = editDialog.ShowDialog();
                     }
-                    
+
                     if (dialogResult == true)
                     {
                         await LoadDataAsync().ConfigureAwait(false);
@@ -770,11 +790,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 decimal revenue = 0, expense = 0, debt = 0, profit = 0;
-                BusinessLayer.DTOs.FinancialStatsDto? stats = null;
+                FinancialStatsDto? stats = null;
 
                 if (_financialController == null)
                 {
-                    // Tính từ sample data
                     revenue = _allRecords.Where(r => r.TrangThaiThanhToan == "Đã trả").Sum(r => r.TongTien);
                     expense = _allRecords.Sum(r => r.TongTien) - revenue;
                     debt = _allRecords.Where(r => r.TrangThaiThanhToan == "Chưa trả").Sum(r => r.TongTien);
@@ -789,8 +808,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     profit = stats.LoiNhuan;
                 }
 
-                // Update trên UI thread
-                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                var dispatcher = Application.Current?.Dispatcher;
                 if (dispatcher != null && !dispatcher.CheckAccess())
                 {
                     await dispatcher.InvokeAsync(() =>
@@ -812,7 +830,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
                 else
                 {
-                    // Nếu đã ở UI thread hoặc không có dispatcher, update trực tiếp
                     TotalRevenue = revenue;
                     TotalExpense = expense;
                     TotalDebt = debt;
@@ -843,33 +860,32 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     if (_financialController != null)
                     {
                         var debts = await _financialController.GetDebtReportAsync().ConfigureAwait(false);
-                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                        var dispatcher = Application.Current?.Dispatcher;
                         if (dispatcher != null && !dispatcher.CheckAccess())
                         {
                             await dispatcher.InvokeAsync(() =>
                             {
-                                Debts = new ObservableCollection<BusinessLayer.DTOs.DebtReportDto>(debts);
+                                Debts = new ObservableCollection<DebtReportDto>(debts);
                             });
                         }
                         else
                         {
-                            Debts = new ObservableCollection<BusinessLayer.DTOs.DebtReportDto>(debts);
+                            Debts = new ObservableCollection<DebtReportDto>(debts);
                         }
                     }
                     else
                     {
-                        // Sample data cho Debts
-                        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                        var dispatcher = Application.Current?.Dispatcher;
                         if (dispatcher != null && !dispatcher.CheckAccess())
                         {
                             await dispatcher.InvokeAsync(() =>
                             {
-                                Debts = new ObservableCollection<BusinessLayer.DTOs.DebtReportDto>();
+                                Debts = new ObservableCollection<DebtReportDto>();
                             });
                         }
                         else
                         {
-                            Debts = new ObservableCollection<BusinessLayer.DTOs.DebtReportDto>();
+                            Debts = new ObservableCollection<DebtReportDto>();
                         }
                     }
                 }
@@ -890,10 +906,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private FinancialRecordDto MapPaymentToFinancialRecord(PaymentDto payment)
         {
-            // Xác định loại giao dịch
             string loaiGiaoDich = "Tiền Thuê";
-            string chiTiet = "";
-            
+            string chiTiet = $"Tiền thuê: {payment.TienThue:N0} VNĐ";
+
             if (payment.TienDien > 0 || payment.TienNuoc > 0)
             {
                 loaiGiaoDich = "Chỉ Số Điện/Nước";
@@ -902,19 +917,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             else if (payment.ChiPhiKhac > 0 || payment.TienInternet > 0 || payment.TienVeSinh > 0 || payment.TienGiuXe > 0)
             {
                 loaiGiaoDich = "Chi Phí";
-                var chiPhiList = new System.Collections.Generic.List<string>();
+                var chiPhiList = new List<string>();
                 if (payment.TienInternet > 0) chiPhiList.Add($"Internet: {payment.TienInternet:N0}");
                 if (payment.TienVeSinh > 0) chiPhiList.Add($"Vệ sinh: {payment.TienVeSinh:N0}");
                 if (payment.TienGiuXe > 0) chiPhiList.Add($"Giữ xe: {payment.TienGiuXe:N0}");
                 if (payment.ChiPhiKhac > 0) chiPhiList.Add($"Khác: {payment.ChiPhiKhac:N0}");
                 chiTiet = string.Join(", ", chiPhiList);
             }
-            else
-            {
-                chiTiet = $"Tiền thuê: {payment.TienThue:N0} VNĐ";
-            }
 
-            // Xác định trạng thái
             string trangThai = "BinhThuong";
             string trangThaiText = "Bình thường";
             string trangThaiColor = "#7D8FA9";
@@ -929,7 +939,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
             else if (payment.TrangThaiThanhToan == "Chưa trả")
             {
-                // Kiểm tra quá hạn
                 if (!string.IsNullOrEmpty(payment.ThangNam))
                 {
                     if (TryParseThangNam(payment.ThangNam, out DateTime kyHan))
@@ -957,17 +966,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
             }
 
-            // Parse ThangNam thành DateTime cho KyHan
             DateTime kyHanDate = DateTime.Now;
             if (!string.IsNullOrEmpty(payment.ThangNam))
             {
-                TryParseThangNam(payment.ThangNam, out kyHanDate);
+                if (!TryParseThangNam(payment.ThangNam, out kyHanDate))
+                {
+                    kyHanDate = DateTime.Now;
+                }
             }
 
             return new FinancialRecordDto
             {
                 MaThanhToan = payment.MaThanhToan,
-                MaHopDong = payment.MaHopDong,
+                MaHopDong = payment.MaHopDong ?? 0,
                 TenPhong = payment.TenPhong ?? "Không xác định",
                 KyHan = kyHanDate,
                 LoaiGiaoDich = loaiGiaoDich,
@@ -983,7 +994,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             };
         }
 
-        private bool TryParseThangNam(string thangNam, out DateTime result)
+        private static bool TryParseThangNam(string thangNam, out DateTime result)
         {
             result = DateTime.Now;
             if (string.IsNullOrEmpty(thangNam) || thangNam.Length != 7)
@@ -1007,9 +1018,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task LoadSampleData()
         {
-            // Đảm bảo update trên UI thread
-            var dispatcher = System.Windows.Application.Current?.Dispatcher;
-            
+            var dispatcher = Application.Current?.Dispatcher;
+
             var sampleRecords = new ObservableCollection<FinancialRecordDto>
             {
                 new()
@@ -1059,7 +1069,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
             };
 
-            // Update trên UI thread
             if (dispatcher != null && !dispatcher.CheckAccess())
             {
                 await dispatcher.InvokeAsync(() =>
@@ -1071,7 +1080,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 _allRecords = sampleRecords;
             }
-            
+
             await ApplySortAndFilterAsync().ConfigureAwait(false);
         }
 
@@ -1083,4 +1092,3 @@ namespace QLKDPhongTro.Presentation.ViewModels
         #endregion
     }
 }
-
