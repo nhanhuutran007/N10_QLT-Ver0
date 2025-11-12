@@ -18,10 +18,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 return _connectionString;
 
             // ===== CẤU HÌNH KẾT NỐI MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
+            string server = "localhost";
+            string database = "database_v2";
+            string username = "root";
+            string password = "";
             string port = "3306";
             
             // Thêm charset=utf8mb4 để đảm bảo MySQL nhận diện đúng ký tự tiếng Việt trong ENUM
