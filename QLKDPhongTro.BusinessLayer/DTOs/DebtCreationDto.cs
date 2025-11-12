@@ -27,50 +27,32 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 
         // Các trường tính toán tự động
         public decimal ElectricityUsage => CurrentElectricValue > OldElectricValue ? CurrentElectricValue - OldElectricValue : 0;
-
         public decimal ElectricityCost => ElectricityUsage * 3500; // 3.500 VND/kWh
-
         public decimal WaterCost => 100000; // 100.000 VND/tháng cố định
-
         public decimal TotalDebt => ElectricityCost + WaterCost;
-
         public bool HasManualValues => OldElectricValue > 0 && CurrentElectricValue > 0;
 
         // Thông tin hợp đồng (sẽ được điền tự động)
         public int? ContractId { get; set; }
-
         public string? CustomerName { get; set; }
-
         public string? PhoneNumber { get; set; }
 
         // Trạng thái xử lý
         public bool IsProcessed { get; set; }
-
         public string? ProcessingStatus { get; set; }
-
         public string? ErrorMessage { get; set; }
-    }
 
-    /// <summary>
-    /// DTO cho kết quả xử lý công nợ
-    /// </summary>
-    public class DebtProcessingResultDto
-    {
-        public string RoomName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Timestamp { get; set; } = string.Empty;
-        public decimal OldElectricValue { get; set; }
-        public decimal CurrentElectricValue { get; set; }
-        public decimal ElectricityUsage { get; set; }
-        public decimal ElectricityCost { get; set; }
-        public decimal WaterCost { get; set; }
-        public decimal TotalDebt { get; set; }
-        public string ProcessingStatus { get; set; } = string.Empty;
-        public string ElectricImageUrl { get; set; } = string.Empty;
-        public int? ContractId { get; set; }
-        public bool IsProcessed { get; set; }
-        public string? ErrorMessage { get; set; }
-        public int? CreatedPaymentId { get; set; }
+        // === THÊM CÁC PROPERTY BỊ THIẾU ===
+        public bool IsValid => !string.IsNullOrEmpty(RoomName) &&
+                              !string.IsNullOrEmpty(Email) &&
+                              CurrentElectricValue >= OldElectricValue;
+
+        // Alias properties để tương thích với FinancialController
+        public string TenPhong => RoomName;
+        public double ChiSoDienMoi => (double)CurrentElectricValue;
+        public string ThangNam => DateTime.Now.ToString("MM/yyyy");
+        public string GhiChu => $"Tạo từ Google Form - Email: {Email}";
+        public double Confidence => 1.0;
     }
 
     /// <summary>

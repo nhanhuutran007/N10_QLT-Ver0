@@ -1,7 +1,7 @@
 ﻿using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
-using QLKDPhongTro.Presentation.Services;
+using QLKDPhongTro.BusinessLayer.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,8 +102,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         var contract = await FindContractByRoomNameAsync(debt.TenPhong);
                         if (contract == null)
                         {
+                            // Sửa lỗi: Tạo DebtCreationDto mới thay vì sử dụng debt hiện tại
                             errors.Add(new DebtCreationDto
                             {
+                                RoomName = debt.RoomName,
                                 ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {debt.TenPhong}"
                             });
                             continue;
@@ -114,7 +116,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         var chiSoDienCu = previousPayment?.ChiSoDienMoi ?? 0;
 
                         // Tính toán tiền điện theo logic mới
-                        var tienDien = CalculateElectricityCost(chiSoDienCu, debt.ChiSoDienMoi);
+                        var tienDien = CalculateElectricityCost((double)chiSoDienCu, debt.ChiSoDienMoi);
 
                         // Tạo payment mới
                         var payment = new Payment
@@ -122,7 +124,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             MaHopDong = contract.MaHopDong,
                             ThangNam = debt.ThangNam,
                             ChiSoDienCu = chiSoDienCu,
-                            ChiSoDienMoi = debt.ChiSoDienMoi,
+                            ChiSoDienMoi = (decimal)debt.ChiSoDienMoi,
                             TienDien = tienDien,
                             TienNuoc = DON_GIA_NUOC, // Nước cố định 100k
                             TienThue = contract.GiaThue,
@@ -145,6 +147,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         {
                             errors.Add(new DebtCreationDto
                             {
+                                RoomName = debt.RoomName,
                                 ErrorMessage = $"Lỗi khi lưu công nợ cho phòng {debt.TenPhong}"
                             });
                         }
@@ -153,6 +156,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     {
                         errors.Add(new DebtCreationDto
                         {
+                            RoomName = debt.RoomName,
                             ErrorMessage = $"Lỗi xử lý công nợ {debt.TenPhong}: {ex.Message}"
                         });
                     }

@@ -140,38 +140,38 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
             if (InvoiceData == null) return;
 
-            // Chuẩn hóa giá trị rỗng
-            decimal? ParseNullable(string s)
+            try
             {
-                if (decimal.TryParse(s, out var v)) return v;
-                return null;
+                // Sử dụng property đúng từ InvoiceDetailDto
+                var success = await _financialController.UpdateInvoiceUnitPricesAsync(
+                    InvoiceData.MaThanhToan,
+                    InvoiceData.SoDienThangTruoc,    // soDienThangTruoc - SỬA TỪ ChiSoDienCu THÀNH SoDienThangTruoc
+                    InvoiceData.SoDien,              // soDienThangNay  
+                    InvoiceData.TienThue,
+                    InvoiceData.TienInternet,
+                    InvoiceData.TienVeSinh,
+                    InvoiceData.TienGiuXe,
+                    InvoiceData.ChiPhiKhac,
+                    InvoiceData.KhauTru
+                );
+
+                if (!success)
+                {
+                    MessageBox.Show("Không thể lưu đơn giá. Vui lòng thử lại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Làm mới binding các giá trị tính toán bằng cách set lại DataContext
+                var current = InvoiceData;
+                InvoiceData = null;
+                InvoiceData = current;
+
+                MessageBox.Show("Cập nhật đơn giá thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-
-            // Trường đã bind TwoWay nên InvoiceData đã có giá trị mới
-            var success = await _financialController.UpdateInvoiceUnitPricesAsync(
-                InvoiceData.MaThanhToan,
-                InvoiceData.DonGiaDien,
-                InvoiceData.SoDien,
-                InvoiceData.DonGiaNuoc,
-                InvoiceData.SoNuoc,
-                InvoiceData.TienThue,
-                InvoiceData.TienInternet,
-                InvoiceData.TienVeSinh,
-                InvoiceData.TienGiuXe,
-                InvoiceData.ChiPhiKhac,
-                InvoiceData.KhauTru
-            );
-
-            if (!success)
+            catch (Exception ex)
             {
-                MessageBox.Show("Không thể lưu đơn giá. Vui lòng thử lại.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                MessageBox.Show($"Lỗi khi cập nhật: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
-
-            // Làm mới binding các giá trị tính toán bằng cách set lại DataContext
-            var current = InvoiceData;
-            InvoiceData = null;
-            InvoiceData = current;
         }
 
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)

@@ -1,9 +1,8 @@
 using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using PdfSharp.Fonts;
+using PdfSharp.Pdf;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Windows;
