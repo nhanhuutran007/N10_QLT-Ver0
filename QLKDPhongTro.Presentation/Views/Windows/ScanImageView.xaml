@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Thêm ảnh để quét"
-        Height="370"
-        Width="650"
+        Height="700"
+        Width="900"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -99,10 +99,14 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <!-- Hàng cho tiêu đề -->
+                <RowDefinition Height="Auto"/>
+                <!-- Hàng cho chọn loại chỉ số -->
                 <RowDefinition Height="*"/>
                 <!-- Hàng cho nội dung chính -->
                 <RowDefinition Height="Auto"/>
-                <!-- Hàng cho nút Gửi -->
+                <!-- Hàng cho kết quả -->
+                <RowDefinition Height="Auto"/>
+                <!-- Hàng cho nút -->
             </Grid.RowDefinitions>
 
             <!-- === TIÊU ĐỀ === -->
@@ -123,8 +127,25 @@
                         Click="CloseButton_Click"/>
             </Grid>
 
+            <!-- === CHỌN LOẠI CHỈ SỐ === -->
+            <StackPanel Grid.Row="1" Margin="24,0,24,16" Orientation="Horizontal">
+                <TextBlock Text="Loại chỉ số:" 
+                           Foreground="#3B4758"
+                           FontSize="14"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+                <RadioButton Content="Chỉ số điện" 
+                             IsChecked="True"
+                             GroupName="MeterType"
+                             Checked="ElectricityRadio_Checked"
+                             Margin="0,0,20,0"/>
+                <RadioButton Content="Chỉ số nước"
+                             GroupName="MeterType"
+                             Checked="WaterRadio_Checked"/>
+            </StackPanel>
+
             <!-- === NỘI DUNG CHÍNH (VÙNG KÉO-THẢ) === -->
-            <StackPanel Grid.Row="1"
+            <StackPanel Grid.Row="2"
                     Margin="24,0">
                 <TextBlock Text="Đọc số từ ảnh để tính toán chi phí"
                            Foreground="#3B4758"
@@ -171,13 +192,148 @@
                 </Grid>
             </StackPanel>
 
-            <!-- === NÚT GỬI === -->
-            <Button Grid.Row="2"
-                    Content="Gửi"
-                    Style="{StaticResource SubmitButtonStyle}"
-                    HorizontalAlignment="Center"
-                    Margin="0,20,0,20"
-                    Command="{Binding SubmitCommand}"/>
+            <!-- === KẾT QUẢ QUÉT === -->
+            <ScrollViewer Grid.Row="3" 
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="300"
+                          Margin="24,0,24,16"
+                          Visibility="Visible">
+                <ItemsControl ItemsSource="{Binding ScanResults}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="#F7F8FA"
+                                    CornerRadius="6"
+                                    Padding="12"
+                                    Margin="0,0,0,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Preview ảnh -->
+                                    <Border Grid.Column="0"
+                                            Background="White"
+                                            BorderBrush="#E8E8E8"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Margin="0,0,12,0"
+                                            Cursor="Hand"
+                                            MouseLeftButtonDown="ImagePreview_MouseLeftButtonDown">
+                                        <Image Source="{Binding ImagePreview}"
+                                               Stretch="Uniform"
+                                               MaxHeight="100"
+                                               MaxWidth="100"/>
+                                    </Border>
+                                    
+                                    <!-- Thông tin kết quả -->
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding ImageName}"
+                                                   FontWeight="Bold"
+                                                   Foreground="#3B4758"
+                                                   Margin="0,0,0,4"/>
+                                        
+                                        <!-- Giá trị đã đọc được -->
+                                        <TextBlock Text="{Binding Result.Value, StringFormat='Giá trị: {0:N2}'}"
+                                                   Foreground="#586A84"
+                                                   Margin="0,2,0,0"
+                                                   FontWeight="Medium">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Result.IsValid}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <!-- Thông báo lỗi -->
+                                        <TextBlock Text="{Binding Result.ErrorMessage}"
+                                                   Foreground="#FF316A"
+                                                   Margin="0,2,0,0"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="12">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Result.IsValid}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        
+                                        <!-- YOLO Detection Info để debug (luôn hiển thị) -->
+                                        <Expander Header="Xem thông tin detection (Debug)"
+                                                  Margin="0,8,0,0"
+                                                  FontSize="11">
+                                            <TextBlock Text="{Binding RawOcrText}"
+                                                       Foreground="#7D8FA9"
+                                                       FontSize="10"
+                                                       TextWrapping="Wrap"
+                                                       MaxHeight="100"
+                                                       Margin="0,4,0,0"/>
+                                        </Expander>
+                                    </StackPanel>
+                                    
+                                    <!-- Trạng thái -->
+                                    <StackPanel Grid.Column="2"
+                                                VerticalAlignment="Center"
+                                                Margin="12,0,0,0">
+                                        <TextBlock Text="{Binding Status}"
+                                                   Foreground="{Binding StatusColor}"
+                                                   FontWeight="Medium"
+                                                   HorizontalAlignment="Right"/>
+                                        <TextBlock Foreground="#7D8FA9"
+                                                   FontSize="10"
+                                                   Margin="0,4,0,0"
+                                                   HorizontalAlignment="Right">
+                                            <TextBlock.Text>
+                                                <Binding Path="Result.Confidence" StringFormat="Độ tin cậy: {0:P0}">
+                                                    <Binding.TargetNullValue>--</Binding.TargetNullValue>
+                                                </Binding>
+                                            </TextBlock.Text>
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Result}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- === NÚT XỬ LÝ === -->
+            <StackPanel Grid.Row="4"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,20,0,20">
+                <Button Content="Quét ảnh"
+                        Style="{StaticResource SubmitButtonStyle}"
+                        Command="{Binding ProcessImagesCommand}"
+                        IsEnabled="{Binding IsNotProcessing}"
+                        Margin="0,0,10,0"/>
+                <Button Content="Đóng"
+                        Style="{StaticResource SubmitButtonStyle}"
+                        Background="#7D8FA9"
+                        Click="CloseButton_Click"
+                        Margin="10,0,0,0"/>
+            </StackPanel>
         </Grid>
     </Border>
 </Window>

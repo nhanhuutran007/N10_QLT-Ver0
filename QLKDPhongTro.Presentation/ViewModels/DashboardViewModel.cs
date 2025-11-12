@@ -97,8 +97,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToFinances()
         {
-            var financialDashboardWindow = new FinancialDashboardWindow();
-            financialDashboardWindow.Show();
+            var financialWindow = new FinancialWindow();
+            financialWindow.Show();
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
         [RelayCommand]

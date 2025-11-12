@@ -18,52 +18,74 @@ namespace QLKDPhongTro.DataLayer.Repositories
         public async Task<List<Payment>> GetAllAsync()
         {
             var payments = new List<Payment>();
-            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            try
             {
-                await conn.OpenAsync();
-                var cmd = new MySqlCommand(@"
-                    SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan,
-                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
-                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
-                    FROM ThanhToan tt
-                    LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
-                    LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
-                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
-                    LEFT JOIN Nha n ON p.MaNha = n.MaNha
-                    ORDER BY tt.ThangNam DESC, tt.MaThanhToan DESC", conn);
-
-                using (var reader = await cmd.ExecuteReaderAsync())
+                using (MySqlConnection conn = await ConnectDB.CreateConnectionAsync())
                 {
-                    while (await reader.ReadAsync())
+                    // Thêm timeout cho command để tránh đơ
+                    var cmd = new MySqlCommand(@"
+                        SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
+                               tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
+                               tt.TrangThaiThanhToan, tt.NgayThanhToan,
+                               nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                               tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
+                        FROM ThanhToan tt
+                        LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
+                        LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                        LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                        LEFT JOIN Nha n ON p.MaNha = n.MaNha
+                        ORDER BY tt.ThangNam DESC, tt.MaThanhToan DESC
+                        LIMIT 1000", conn); // Giới hạn số lượng records để tránh load quá nhiều
+                    
+                    cmd.CommandTimeout = 15; // Timeout 15 giây
+
+                    using (var reader = await cmd.ExecuteReaderAsync())
                     {
-                        payments.Add(new Payment
+                        while (await reader.ReadAsync())
                         {
-                            MaThanhToan = reader.GetInt32(0),
-                            MaHopDong = reader.IsDBNull(1) ? null : reader.GetInt32(1),
-                            ThangNam = reader.GetString(2),
-                            TienThue = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
-                            TienDien = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
-                            TienNuoc = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
-                            TienInternet = reader.IsDBNull(6) ? null : reader.GetDecimal(6),
-                            TienVeSinh = reader.IsDBNull(7) ? null : reader.GetDecimal(7),
-                            TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
-                            ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
-                            TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
-                            NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
-                            TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
-                            TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
-                            SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
-                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
-                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
-                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
-                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
-                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
-                        });
+                            payments.Add(new Payment
+                            {
+                                MaThanhToan = reader.GetInt32(0),
+                                MaHopDong = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                                ThangNam = reader.GetString(2),
+                                TienThue = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
+                                TienDien = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+                                TienNuoc = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
+                                TienInternet = reader.IsDBNull(6) ? null : reader.GetDecimal(6),
+                                TienVeSinh = reader.IsDBNull(7) ? null : reader.GetDecimal(7),
+                                TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                                ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                                TongTien = reader.GetDecimal(10),
+                                TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
+                                NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
+                                TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+                                TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                                SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
+                                DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                                DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                                DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                                SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                                SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
+                            });
+                        }
                     }
                 }
+            }
+            catch (MySqlException sqlEx)
+            {
+                // Log SQL errors
+                System.Diagnostics.Debug.WriteLine($"PaymentRepository.GetAllAsync SQL Error: {sqlEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error Number: {sqlEx.Number}");
+                // Trả về empty list thay vì throw exception
+                return new List<Payment>();
+            }
+            catch (Exception ex)
+            {
+                // Log error nhưng không crash app
+                System.Diagnostics.Debug.WriteLine($"PaymentRepository.GetAllAsync Error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack Trace: {ex.StackTrace}");
+                // Trả về empty list thay vì throw exception
+                return new List<Payment>();
             }
             return payments;
         }
@@ -499,20 +521,24 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
 
                 // Tổng thu nhập (các thanh toán đã thanh toán)
+                // Filter NULL NgayThanhToan để tránh lỗi YEAR(NULL)
                 var cmdIncome = new MySqlCommand(@"
                     SELECT IFNULL(SUM(TongTien), 0) 
                     FROM ThanhToan 
                     WHERE TrangThaiThanhToan = 'Đã trả' 
+                    AND NgayThanhToan IS NOT NULL
                     AND YEAR(NgayThanhToan) = @Year", conn);
                 cmdIncome.Parameters.AddWithValue("@Year", currentYear);
                 stats.TongThuNhap = Convert.ToDecimal(await cmdIncome.ExecuteScalarAsync());
 
                 // Tổng chi phí
+                // Filter NULL NgayThanhToan để tránh lỗi YEAR(NULL)
                 var cmdExpense = new MySqlCommand(@"
                     SELECT IFNULL(SUM(IFNULL(TienDien, 0) + IFNULL(TienNuoc, 0) + IFNULL(TienInternet, 0) + 
                            IFNULL(TienVeSinh, 0) + IFNULL(TienGiuXe, 0) + IFNULL(ChiPhiKhac, 0)), 0)
                     FROM ThanhToan 
                     WHERE TrangThaiThanhToan = 'Đã trả' 
+                    AND NgayThanhToan IS NOT NULL
                     AND YEAR(NgayThanhToan) = @Year", conn);
                 cmdExpense.Parameters.AddWithValue("@Year", currentYear);
                 stats.TongChiPhi = Convert.ToDecimal(await cmdExpense.ExecuteScalarAsync());
@@ -535,6 +561,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 stats.SoPhongNo = Convert.ToInt32(await cmdRooms.ExecuteScalarAsync());
 
                 // Thống kê theo tháng
+                // Filter NULL NgayThanhToan để tránh lỗi YEAR(NULL)
                 var cmdMonthly = new MySqlCommand(@"
                     SELECT ThangNam, 
                            SUM(TongTien) as ThuNhap,
@@ -544,6 +571,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                COALESCE(TienVeSinh, 0) + COALESCE(TienGiuXe, 0) + COALESCE(ChiPhiKhac, 0)) as LoiNhuan
                     FROM ThanhToan
                     WHERE TrangThaiThanhToan = 'Đã trả' 
+                    AND NgayThanhToan IS NOT NULL
                     AND YEAR(NgayThanhToan) = @Year
                     GROUP BY ThangNam
                     ORDER BY ThangNam", conn);

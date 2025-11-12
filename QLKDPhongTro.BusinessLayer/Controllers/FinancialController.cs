@@ -579,11 +579,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             foreach (var transaction in transactions)
             {
                 var contract = await _contractRepository.GetByIdAsync(transaction.MaHopDong ?? 0);
+                if (contract == null) continue; // Bỏ qua nếu không có hợp đồng
+                
                 var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
                 result.Add(new TransactionHistoryDto
                 {
                     MaThanhToan = transaction.MaThanhToan,
-                    TenPhong = contract?.MaPhong.ToString() ?? "Không xác định",
+                    TenPhong = contract.MaPhong.ToString(),
                     TenKhachHang = tenant?.HoTen ?? "Không xác định",
                     MoTa = $"Thanh toán tháng {transaction.ThangNam}",
                     SoTien = transaction.TongTien,

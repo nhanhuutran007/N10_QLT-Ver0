@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         xmlns:local="clr-namespace:QLKDPhongTro.Presentation.Views.Windows"
+        xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
         Title="Quản lý tài chính - Quản Lý Phòng Trọ"
         MinHeight="600"
         MinWidth="800"
@@ -15,6 +16,10 @@
         Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
+        <!-- Converters -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:PageNumberEqualsConverter x:Key="PageNumberEqualsConverter"/>
+        
         <!-- === STYLES CHO TRANG QUẢN LÝ TÀI CHÍNH === -->
 
         <!-- Style cho nút hành động chính (Ghi nhận/Quét ảnh) -->
@@ -359,6 +364,41 @@
                 <!-- Top Bar Control -->
                 <components:TopbarControl x:Name="TopbarControl" Height="50"/>
 
+                <!-- Thống kê tổng quan -->
+                <Border Background="#FFFFFF"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Tổng thu nhập" Foreground="#7D8FA9" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalRevenue, StringFormat='{}{0:N0} VNĐ'}" 
+                                       Foreground="#10D096" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Tổng chi phí" Foreground="#7D8FA9" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalExpense, StringFormat='{}{0:N0} VNĐ'}" 
+                                       Foreground="#FF316A" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Lợi nhuận" Foreground="#7D8FA9" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalProfit, StringFormat='{}{0:N0} VNĐ'}" 
+                                       Foreground="#319DFF" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Tổng công nợ" Foreground="#7D8FA9" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalDebt, StringFormat='{}{0:N0} VNĐ'}" 
+                                       Foreground="#FA8C16" FontSize="20" FontWeight="Bold" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
                 <!-- Header: Title -->
                 <TextBlock Text="Quản lý tài chính"
                            Foreground="#3B4758"
@@ -376,9 +416,17 @@
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
                             <TextBlock Text="Xem theo:" Foreground="#586A84" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Medium"/>
                             <!-- Đã dùng ActiveSecondarySegmentStyle để chỉ trạng thái đang chọn -->
-                            <Button Content="Tất cả bản ghi" Style="{StaticResource ActiveSecondarySegmentStyle}"/>
-                            <Button Content="Quản lý Công nợ" Style="{StaticResource SecondarySegmentStyle}" Margin="10,0,0,0"/>
-                            <Button Content="Báo cáo Thu chi" Style="{StaticResource SecondarySegmentStyle}" Margin="10,0,0,0"/>
+                            <Button Content="Tất cả bản ghi" 
+                                    Style="{StaticResource ActiveSecondarySegmentStyle}"
+                                    Click="ViewAllRecords_Click"/>
+                            <Button Content="Quản lý Công nợ" 
+                                    Style="{StaticResource SecondarySegmentStyle}" 
+                                    Margin="10,0,0,0"
+                                    Click="ViewDebts_Click"/>
+                            <Button Content="Báo cáo Thu chi" 
+                                    Style="{StaticResource SecondarySegmentStyle}" 
+                                    Margin="10,0,0,0"
+                                    Click="ViewReports_Click"/>
                         </StackPanel>
 
                         <!-- Row 2: Search, Sort, and Primary Actions (Ghi nhận) -->
@@ -417,11 +465,34 @@
                             <ComboBox Grid.Column="1"
                                       Style="{StaticResource ComboBoxStyle}"
                                       Margin="10,0,0,0"
-                                      SelectedIndex="0">
+                                      SelectedItem="{Binding SelectedSortOption}">
                                 <ComboBoxItem>Mới nhất</ComboBoxItem>
                                 <ComboBoxItem>Cũ nhất</ComboBoxItem>
                                 <ComboBoxItem>Theo Số tiền (Cao - Thấp)</ComboBoxItem>
+                                <ComboBoxItem>Theo Số tiền (Thấp - Cao)</ComboBoxItem>
                             </ComboBox>
+
+                            <!-- Filter ComboBoxes (Col 2) -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="10,0,0,0">
+                                <ComboBox Style="{StaticResource ComboBoxStyle}"
+                                          Width="150"
+                                          SelectedItem="{Binding SelectedFilterType}">
+                                    <ComboBoxItem>Tất cả</ComboBoxItem>
+                                    <ComboBoxItem>Tiền Thuê</ComboBoxItem>
+                                    <ComboBoxItem>Chi Phí</ComboBoxItem>
+                                    <ComboBoxItem>Chỉ Số Điện/Nước</ComboBoxItem>
+                                </ComboBox>
+                                <ComboBox Style="{StaticResource ComboBoxStyle}"
+                                          Width="150"
+                                          Margin="10,0,0,0"
+                                          SelectedItem="{Binding SelectedFilterStatus}">
+                                    <ComboBoxItem>Tất cả</ComboBoxItem>
+                                    <ComboBoxItem>Hoàn thành</ComboBoxItem>
+                                    <ComboBoxItem>Bình thường</ComboBoxItem>
+                                    <ComboBoxItem>Cảnh báo</ComboBoxItem>
+                                    <ComboBoxItem>Quá hạn</ComboBoxItem>
+                                </ComboBox>
+                            </StackPanel>
 
                             <!-- Primary Actions (Col 3) - Phân chia rõ ràng theo nghiệp vụ -->
                             <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -454,12 +525,33 @@
             </StackPanel>
 
             <!-- Main Content Area (Records List / Reports) - Grid Row 1 -->
-            <ScrollViewer Grid.Row="1"
-                          VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Disabled">
-                <StackPanel>
-                    <!-- === DANH SÁCH BẢN GHI TÀI CHÍNH (List View) === -->
-                    <ItemsControl ItemsSource="{Binding FinancialRecords}">
+            <Grid Grid.Row="1">
+                <!-- Loading Indicator -->
+                <Border Background="#F5F5F5" 
+                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Margin="20">
+                        <ProgressBar IsIndeterminate="True" 
+                                     Width="50" 
+                                     Height="50" 
+                                     Margin="0,0,15,0"/>
+                        <TextBlock Text="Đang tải dữ liệu..." 
+                                   FontSize="16" 
+                                   Foreground="#586A84" 
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Main Content -->
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                    <StackPanel>
+                    <!-- === VIEW: TẤT CẢ BẢN GHI === -->
+                    <StackPanel Visibility="{Binding IsAllRecordsView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <!-- === DANH SÁCH BẢN GHI TÀI CHÍNH (List View) === -->
+                        <ItemsControl ItemsSource="{Binding FinancialRecords}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <!-- WrapPanel giúp các card tự động sắp xếp thành lưới -->
@@ -471,7 +563,28 @@
                                 <!-- Mỗi card là một Border -->
                                 <Border Style="{StaticResource FinanceCardStyle}"
                                         Width="540"
-                                        Margin="10">
+                                        Margin="10"
+                                        MouseEnter="Card_MouseEnter"
+                                        MouseLeave="Card_MouseLeave"
+                                        Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Xem chi tiết" 
+                                                      Command="{Binding PlacementTarget.Tag.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Đánh dấu đã trả" 
+                                                      Command="{Binding PlacementTarget.Tag.MarkAsPaidCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <Separator/>
+                                            <MenuItem Header="Chỉnh sửa" 
+                                                      Command="{Binding PlacementTarget.Tag.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                            <MenuItem Header="Xóa" 
+                                                      Command="{Binding PlacementTarget.Tag.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                                      Foreground="#FF316A"/>
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <StackPanel>
                                         <!-- Card Header: Tên Phòng, Kỳ hạn -->
                                         <Border Background="#FAFAFB"
@@ -572,37 +685,139 @@
                                                        Foreground="#319DFF"
                                                        FontSize="13"
                                                        HorizontalAlignment="Right"
-                                                       Cursor="Hand"/>
+                                                       Cursor="Hand"
+                                                       MouseLeftButtonDown="ViewDetail_MouseLeftButtonDown"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <!-- === END DANH SÁCH === -->
+                        </ItemsControl>
+                        <!-- === END DANH SÁCH === -->
 
-                    <!-- Pagination -->
-                    <Border Background="#EEF0F4"
-                            CornerRadius="8"
-                            Padding="15,10"
-                            Margin="10,10,10,20"
-                            HorizontalAlignment="Stretch">
-                        <Grid>
-                            <TextBlock Text="Hiển thị 1 đến 9 trong 111"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Left"
-                                       Foreground="#3B4758"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="&lt; Trước" Style="{StaticResource SecondarySegmentStyle}" Margin="0,0,5,0" Height="30" Padding="10,0"/>
-                                <!-- Đã dùng ActiveSecondarySegmentStyle để chỉ trạng thái đang chọn -->
-                                <Button Content="1" Style="{StaticResource ActiveSecondarySegmentStyle}" Height="30" Width="30" Padding="0"/>
-                                <Button Content="2" Style="{StaticResource SecondarySegmentStyle}" Margin="5,0,0,0" Height="30" Width="30" Padding="0"/>
-                                <Button Content="Sau &gt;" Style="{StaticResource SecondarySegmentStyle}" Margin="5,0,0,0" Height="30" Padding="10,0"/>
+                        <!-- Pagination (chỉ hiển thị khi ở view AllRecords) -->
+                        <Border Background="#EEF0F4"
+                                CornerRadius="8"
+                                Padding="15,10"
+                                Margin="10,10,10,20"
+                                HorizontalAlignment="Stretch">
+                            <Grid>
+                                <TextBlock Text="{Binding PageInfo}"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Left"
+                                           Foreground="#3B4758"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Content="&lt; Trước" 
+                                            Style="{StaticResource SecondarySegmentStyle}" 
+                                            Margin="0,0,5,0" 
+                                            Height="30" 
+                                            Padding="10,0"
+                                            Command="{Binding PreviousPageCommand}"
+                                            IsEnabled="{Binding CanGoToPreviousPage}"/>
+                                    <!-- Hiển thị số trang động -->
+                                    <StackPanel Orientation="Horizontal">
+                                        <ItemsControl ItemsSource="{Binding PageNumbers}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="{Binding}" 
+                                                            Margin="5,0,0,0" 
+                                                            Height="30" 
+                                                            Width="30" 
+                                                            Padding="0"
+                                                            Click="PageNumber_Click"
+                                                            CommandParameter="{Binding}">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button" BasedOn="{StaticResource SecondarySegmentStyle}">
+                                                                <Style.Triggers>
+                                                                    <!-- Sử dụng MultiBinding để so sánh CurrentPage với page number -->
+                                                                    <DataTrigger>
+                                                                        <DataTrigger.Binding>
+                                                                            <MultiBinding Converter="{StaticResource PageNumberEqualsConverter}">
+                                                                                <Binding Path="DataContext.CurrentPage" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                                                                <Binding/>
+                                                                            </MultiBinding>
+                                                                        </DataTrigger.Binding>
+                                                                        <DataTrigger.Value>
+                                                                            <sys:Boolean xmlns:sys="clr-namespace:System;assembly=mscorlib">True</sys:Boolean>
+                                                                        </DataTrigger.Value>
+                                                                        <Setter Property="Background" Value="#3B4758"/>
+                                                                        <Setter Property="Foreground" Value="White"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    <Button Content="Sau &gt;" 
+                                            Style="{StaticResource SecondarySegmentStyle}" 
+                                            Margin="5,0,0,0" 
+                                            Height="30" 
+                                            Padding="10,0"
+                                            Command="{Binding NextPageCommand}"
+                                            IsEnabled="{Binding CanGoToNextPage}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- === VIEW: QUẢN LÝ CÔNG NỢ === -->
+                    <StackPanel Visibility="{Binding IsDebtsView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Danh sách công nợ" 
+                                   FontSize="20" 
+                                   FontWeight="Bold" 
+                                   Foreground="#3B4758" 
+                                   Margin="10,10,10,20"/>
+                        <DataGrid ItemsSource="{Binding Debts}"
+                                  AutoGenerateColumns="False"
+                                  CanUserAddRows="False"
+                                  Background="White"
+                                  BorderThickness="0"
+                                  GridLinesVisibility="None"
+                                  HeadersVisibility="Column"
+                                  RowHeight="50">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="100"/>
+                                <DataGridTextColumn Header="Khách hàng" Binding="{Binding TenKhachHang}" Width="*"/>
+                                <DataGridTextColumn Header="Tháng/Năm" Binding="{Binding ThangNam}" Width="100"/>
+                                <DataGridTextColumn Header="Số tiền" Binding="{Binding TongTien, StringFormat='{}{0:N0} VNĐ'}" Width="150"/>
+                                <DataGridTextColumn Header="Số tháng nợ" Binding="{Binding SoThangNo}" Width="100"/>
+                                <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThaiThanhToan}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+
+                    <!-- === VIEW: BÁO CÁO THU CHI === -->
+                    <StackPanel Visibility="{Binding IsReportsView, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Báo cáo tài chính" 
+                                   FontSize="20" 
+                                   FontWeight="Bold" 
+                                   Foreground="#3B4758" 
+                                   Margin="10,10,10,20"/>
+                        <Border Background="White" CornerRadius="8" Padding="20" Margin="10">
+                            <StackPanel>
+                                <TextBlock Text="Thống kê theo tháng" 
+                                           FontSize="16" 
+                                           FontWeight="Bold" 
+                                           Foreground="#3B4758" 
+                                           Margin="0,0,0,15"/>
+                                <!-- TODO: Thêm chart hoặc table hiển thị thống kê theo tháng -->
+                                <TextBlock Text="Dữ liệu thống kê sẽ được hiển thị tại đây" 
+                                           Foreground="#7D8FA9" 
+                                           FontSize="14"/>
                             </StackPanel>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
         </Grid>
     </Grid>
 </Window>

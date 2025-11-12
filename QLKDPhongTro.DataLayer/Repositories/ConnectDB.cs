@@ -25,7 +25,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             string port = "3306";
             
             // Thêm charset=utf8mb4 để đảm bảo MySQL nhận diện đúng ký tự tiếng Việt trong ENUM
-            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;";
+            // Thêm ConnectionTimeout=10 và CommandTimeout=30 để tránh đơ khi database không phản hồi
+            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;ConnectionTimeout=10;DefaultCommandTimeout=30;";
             
             return _connectionString;
         }

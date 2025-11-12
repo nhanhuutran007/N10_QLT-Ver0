@@ -216,13 +216,14 @@
                                         Command="{Binding LoadExpiringContractsCommand}" 
                                         Width="200"
                                         Margin="0,0,10,0"/>
-                                <Button Content="📧 Gửi cảnh báo hết hạn"
+                                <!-- Button này tạm thời bị comment vì command chưa được implement -->
+                                <!-- <Button Content="📧 Gửi cảnh báo hết hạn"
                                         Style="{StaticResource PrimaryButtonStyle}"
                                         Command="{Binding SendExpiryWarningEmailsAsyncCommand}"
                                         Background="#4CAF50"
                                         Foreground="White"
                                         Width="200"
-                                        Margin="0,0,10,0"/>
+                                        Margin="0,0,10,0"/> -->
                                 <ComboBox Width="132"
                                         Style="{StaticResource ComboBoxStyle}"
                                         SelectedValue="{Binding SortOrder, Mode=TwoWay}"

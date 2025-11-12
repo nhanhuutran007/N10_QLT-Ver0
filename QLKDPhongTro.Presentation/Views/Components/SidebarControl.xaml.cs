@@ -80,7 +80,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     TenantsButton.IsChecked = true; break;
                 case ContractManagementWindow:
                     ContractsButton.IsChecked = true; break;
-                case FinancialDashboardWindow:
+                case FinancialWindow:
                     FinancialButton.IsChecked = true; break;
                 case PaymentListView:
                     PaymentButton.IsChecked = true; break;
@@ -159,7 +159,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
         {
             if (_isInitializing)
                 return;
-            NavigateToWindow<FinancialDashboardWindow>();
+            NavigateToWindow<FinancialWindow>();
         }
 
         private void Payment_Checked(object sender, RoutedEventArgs e)
