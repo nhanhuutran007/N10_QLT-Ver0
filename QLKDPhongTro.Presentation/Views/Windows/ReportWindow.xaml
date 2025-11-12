@@ -14,7 +14,7 @@
             Background="#F5F5F5"
             AllowsTransparency="False"
             FontFamily="Roboto"
-            Icon="/Resources/Images/Logo.png">
+            Icon="pack://application:,,,/QLKDPhongTro.Presentation;component/Resources/Images/Logo.png">
 
     <Window.Resources>
         <!-- Style chung cho các thẻ panel -->

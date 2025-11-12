@@ -24,5 +24,15 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 vm.SearchText = e ?? string.Empty;
             }
         }
+
+        private void AddMaintenance_Click(object sender, RoutedEventArgs e)
+        {
+            var popup = new QrPopupWindow
+            {
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            popup.ShowDialog();
+        }
     }
 }

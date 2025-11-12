@@ -308,7 +308,8 @@
                             <Button Content="Thêm thiết bị bảo trì"
                                     Style="{StaticResource PrimaryButtonStyle}"
                                     HorizontalAlignment="Left"
-                                    Width="200"/>
+                                    Width="200"
+                                    Click="AddMaintenance_Click"/>
                             <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Right">
                                 <Grid Width="250" Height="40">

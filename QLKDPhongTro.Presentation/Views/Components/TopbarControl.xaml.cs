@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using QLKDPhongTro.Presentation.Views.Windows;
 
 namespace QLKDPhongTro.Presentation.Views.Components
 {
@@ -55,8 +56,11 @@ namespace QLKDPhongTro.Presentation.Views.Components
             var currentWindow = Window.GetWindow(this);
             if (currentWindow != null)
             {
-                // TODO: Implement settings window logic
-                System.Diagnostics.Debug.WriteLine("Settings button clicked - Open settings");
+                var chat = new ChatWindow
+                {
+                    Owner = currentWindow
+                };
+                chat.Show();
             }
             
             // Vẫn fire event để các window có thể xử lý logic riêng nếu cần

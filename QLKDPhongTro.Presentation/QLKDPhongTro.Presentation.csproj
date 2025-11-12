@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Images\QR_Baotri.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\QLKDPhongTro.BusinessLayer\QLKDPhongTro.BusinessLayer.csproj" />
   </ItemGroup>
 
@@ -31,6 +35,7 @@
     <Resource Include="Resources\Images\email_icon.png" />
     <Resource Include="Resources\Images\password_icon.png" />
     <Resource Include="Resources\Images\QR.jpg" />
+    <Resource Include="Resources\Images\QR_Baotri.png" />
   </ItemGroup>
 
   <ItemGroup>
