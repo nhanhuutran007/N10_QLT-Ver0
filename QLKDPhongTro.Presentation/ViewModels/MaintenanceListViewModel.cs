@@ -122,7 +122,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public MaintenanceListViewModel()
         {
-            _controller = new MaintenanceController(new MaintenanceRepository());
+            var maintenanceRepo = new MaintenanceRepository();
+            var roomRepo = new RentedRoomRepository();
+            _controller = new MaintenanceController(maintenanceRepo, null, roomRepo);
             EditCommand = new RelayCommand<MaintenanceIncidentViewModel>(EditRow);
             SaveCommand = new RelayCommand<MaintenanceIncidentViewModel>(async item => await SaveRow(item));
             CancelCommand = new RelayCommand<MaintenanceIncidentViewModel>(CancelRow);

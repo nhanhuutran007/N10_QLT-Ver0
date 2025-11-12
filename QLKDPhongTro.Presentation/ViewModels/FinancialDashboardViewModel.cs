@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.BusinessLayer.Controllers;
+using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
@@ -31,7 +31,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        private ObservableCollection<DebtReportDto> _debts = [];
+        private ObservableCollection<MonthlyStatsDto> _monthlyStats = new();
+        public ObservableCollection<MonthlyStatsDto> MonthlyStats
+        {
+            get => _monthlyStats;
+            set
+            {
+                _monthlyStats = value;
+                OnPropertyChanged();
+            }
+        }
+        
+
+        private ObservableCollection<DebtReportDto> _debts = new();
         public ObservableCollection<DebtReportDto> Debts
         {
             get => _debts;
@@ -45,7 +57,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        private ObservableCollection<TransactionHistoryDto> _transactionHistory = [];
+        private ObservableCollection<TransactionHistoryDto> _transactionHistory = new();
         public ObservableCollection<TransactionHistoryDto> TransactionHistory
         {
             get => _transactionHistory;
@@ -135,6 +147,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             catch (Exception ex)
             {
                 ShowMessageRequested?.Invoke(this, $"Không thể kết nối database: {ex.Message}. Đang sử dụng dữ liệu mẫu.");
+                _useSampleData = true;
             }
 
             // Khởi tạo commands
@@ -184,7 +197,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
 
-                // Filter trên dữ liệu hiện tại (tạm thời)
+                // Filter trên dữ liệu hiện tại (tạm thởi)
                 var filtered = _debts
                     .Where(d => (d.TenPhong?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true)
                              || (d.TenKhachHang?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true)
@@ -223,18 +236,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 if (result == MessageBoxResult.Yes)
                 {
                     IsLoading = true;
-
-                    var paymentRepository = new PaymentRepository();
-                    var success = await paymentRepository.MarkAsPaidAsync(debt.MaThanhToan, DateTime.Now);
-
-                    if (success)
+                    if (_financialController == null)
                     {
-                        ShowMessageRequested?.Invoke(this, "Thanh toán thành công!");
+                        ShowMessageRequested?.Invoke(this, "Không có kết nối Controller. Đang ở chế độ dữ liệu mẫu.");
+                        return;
+                    }
+
+                    var vr = await _financialController.UpdatePaymentStatusAsync(debt.MaThanhToan, "Đã trả");
+                    if (vr.IsValid)
+                    {
+                        ShowMessageRequested?.Invoke(this, vr.Message);
                         await RefreshDataAsync();
                     }
                     else
                     {
-                        ShowMessageRequested?.Invoke(this, "Lỗi khi thanh toán!");
+                        ShowMessageRequested?.Invoke(this, vr.Message);
                     }
                 }
             }
@@ -253,10 +269,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
-
-                // Tạm thời sử dụng dữ liệu mẫu
-                await LoadSampleTransactions();
-                ShowMessageRequested?.Invoke(this, $"Đã lọc {TransactionHistory.Count} giao dịch");
+                if (_useSampleData || _financialController == null)
+                {
+                    await LoadSampleTransactions();
+                    ShowMessageRequested?.Invoke(this, $"Đã lọc {TransactionHistory.Count} giao dịch (dữ liệu mẫu)");
+                }
+                else
+                {
+                    var list = await _financialController.GetTransactionHistoryAsync(FromDate, ToDate);
+                    TransactionHistory = new ObservableCollection<TransactionHistoryDto>(list);
+                    ShowMessageRequested?.Invoke(this, $"Đã lọc {TransactionHistory.Count} giao dịch");
+                }
             }
             catch (Exception ex)
             {
@@ -370,9 +393,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
+                if (_useSampleData || _financialController == null)
+                {
+                    await LoadSampleData();
+                    if (showMessage)
+                        ShowMessageRequested?.Invoke(this, "Đang sử dụng dữ liệu mẫu.");
+                    return;
+                }
 
-                // Luôn sử dụng dữ liệu mẫu cho demo
-                await LoadSampleData();
+                // Tải dữ liệu thực từ Controller (toàn thời gian)
+                var stats = await _financialController.GetFinancialStatsAsync(null);
+                FinancialStats = stats;
+
+                // Lấy thống kê theo tháng cho năm hiện tại để vẽ biểu đồ
+                var yearStats = await _financialController.GetFinancialStatsAsync(DateTime.Now.Year);
+                MonthlyStats = new ObservableCollection<MonthlyStatsDto>(yearStats.ThongKeTheoThang ?? new List<MonthlyStatsDto>());
+
+                var debts = await _financialController.GetDebtReportAsync(null);
+                Debts = new ObservableCollection<DebtReportDto>(debts);
+
+                var transactions = await _financialController.GetTransactionHistoryAsync(null, null);
+                TransactionHistory = new ObservableCollection<TransactionHistoryDto>(transactions);
+
                 if (showMessage)
                     ShowMessageRequested?.Invoke(this, "Dữ liệu đã được tải thành công!");
             }

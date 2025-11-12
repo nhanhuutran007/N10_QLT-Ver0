@@ -11,11 +11,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
     {
         private readonly IMaintenanceRepository _repo;
         private readonly GoogleSheetsService _googleSheetsService;
+        private readonly IRentedRoomRepository? _roomRepository;
 
-        public MaintenanceController(IMaintenanceRepository repo, GoogleSheetsService? googleSheetsService = null)
+        public MaintenanceController(IMaintenanceRepository repo, GoogleSheetsService? googleSheetsService = null, IRentedRoomRepository? roomRepository = null)
         {
             _repo = repo;
             _googleSheetsService = googleSheetsService ?? new GoogleSheetsService(new System.Net.Http.HttpClient());
+            _roomRepository = roomRepository;
         }
 
         public Task<List<MaintenanceIncident>> GetAllAsync() => _repo.GetAllAsync();
@@ -42,6 +44,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var existingData = await _repo.GetAllAsync();
 
                 int addedCount = 0;
+                var skippedRooms = new System.Collections.Generic.List<int>();
 
                 // Duyệt qua từng dòng từ Google Sheets
                 foreach (var row in sheetData)
@@ -61,6 +64,22 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     if (isDeleted)
                         continue; // Đã bị xóa trước đó, không sync lại
 
+                    // Kiểm tra xem MaPhong có tồn tại trong bảng Phong không (tránh lỗi foreign key constraint)
+                    if (_roomRepository != null)
+                    {
+                        var roomExists = await _roomRepository.IsRoomExistsAsync(row.MaPhong);
+                        if (!roomExists)
+                        {
+                            // Log cảnh báo và bỏ qua dòng này
+                            if (!skippedRooms.Contains(row.MaPhong))
+                            {
+                                skippedRooms.Add(row.MaPhong);
+                            }
+                            System.Diagnostics.Debug.WriteLine($"Cảnh báo: Mã phòng {row.MaPhong} không tồn tại trong database. Bỏ qua bảo trì: {row.MoTaSuCo}");
+                            continue;
+                        }
+                    }
+
                     // Tạo MaintenanceIncident mới
                     var newIncident = new MaintenanceIncident
                     {
@@ -76,13 +95,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     addedCount++;
                 }
 
+                // Nếu có mã phòng không hợp lệ, thêm thông tin vào log
+                if (skippedRooms.Count > 0)
+                {
+                    var skippedRoomsStr = string.Join(", ", skippedRooms);
+                    System.Diagnostics.Debug.WriteLine($"Đã bỏ qua {skippedRooms.Count} mã phòng không tồn tại: {skippedRoomsStr}");
+                }
+
                 return addedCount;
             }
             catch (System.Exception ex)
             {
-                // Log lỗi và ném lại exception
-                System.Diagnostics.Debug.WriteLine($"Lỗi đồng bộ từ Google Sheets: {ex.Message}");
-                throw;
+                // Log lỗi và ném lại exception với thông tin chi tiết hơn
+                var errorMsg = $"Lỗi đồng bộ từ Google Sheets: {ex.Message}";
+                if (ex.Message.Contains("foreign key constraint"))
+                {
+                    errorMsg += "\n\nNguyên nhân: Mã phòng trong Google Sheets không tồn tại trong database. Vui lòng kiểm tra lại dữ liệu trong Google Sheets.";
+                }
+                System.Diagnostics.Debug.WriteLine(errorMsg);
+                throw new System.Exception(errorMsg, ex);
             }
         }
     }

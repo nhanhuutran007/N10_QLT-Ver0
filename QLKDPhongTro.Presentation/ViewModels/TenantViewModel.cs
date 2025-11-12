@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using System.Collections.Generic;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -18,6 +19,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private readonly TenantController _tenantController;
         private readonly DispatcherTimer _statusTimer;
         private ObservableCollection<TenantDto> _allTenants = new();
+        private List<TenantDto> _filteredTenants = new();
 
         public TenantViewModel()
         {
@@ -61,6 +63,45 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public string[] GenderOptions { get; } = new[] { "Nam", "Nữ", "Khác" };
 
+        // === Pagination & Sorting ===
+        [ObservableProperty] private string _sortOrder = "newest"; // newest | oldest
+        [ObservableProperty] private string _pageSize = "5"; // bind từ ComboBox Tag (string)
+        [ObservableProperty] private int _pageIndex = 1;
+        [ObservableProperty] private int _totalPages = 1;
+        [ObservableProperty] private string _paginationText = string.Empty;
+
+        partial void OnSortOrderChanged(string value)
+        {
+            ApplySort();
+            UpdatePagination(resetPageIndex: true);
+        }
+
+        partial void OnPageSizeChanged(string value)
+        {
+            UpdatePagination(resetPageIndex: true);
+        }
+        
+        // Điều hướng trang
+        [RelayCommand]
+        private void NextPage()
+        {
+            if (PageIndex < TotalPages)
+            {
+                PageIndex++;
+                UpdatePagination(resetPageIndex: false);
+            }
+        }
+
+        [RelayCommand]
+        private void PrevPage()
+        {
+            if (PageIndex > 1)
+            {
+                PageIndex--;
+                UpdatePagination(resetPageIndex: false);
+            }
+        }
+
         [RelayCommand]
         private async Task LoadTenants()
         {
@@ -75,9 +116,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     foreach (var tenant in tenants)
                     {
                         _allTenants.Add(tenant);
-                        Tenants.Add(tenant);
                     }
                 }
+
+                // Đồng bộ filtered + áp dụng sắp xếp & phân trang
+                _filteredTenants = _allTenants.ToList();
+                ApplySort();
+                PageIndex = 1;
+                UpdatePagination(resetPageIndex: false);
             }
             catch (Exception ex)
             {
@@ -152,7 +198,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             };
             window.ShowDialog();
         }
-
 
         [RelayCommand]
         private async Task SaveTenant()
@@ -258,30 +303,25 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-
         [RelayCommand]
         private async Task SearchTenants()
         {
             try
             {
                 IsLoading = true;
-                Tenants.Clear();
-
                 if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    foreach (var tenant in _allTenants)
-                    {
-                        Tenants.Add(tenant);
-                    }
+                    _filteredTenants = _allTenants.ToList();
                 }
                 else
                 {
                     var searchResults = await _tenantController.SearchTenantsByNameAsync(SearchText);
-                    foreach (var tenant in searchResults)
-                    {
-                        Tenants.Add(tenant);
-                    }
+                    _filteredTenants = searchResults.ToList();
                 }
+
+                ApplySort();
+                PageIndex = 1;
+                UpdatePagination(resetPageIndex: false);
             }
             catch (Exception ex)
             {
@@ -305,6 +345,72 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             MessageBox.Show($"Chi tiết khách thuê: {SelectedTenant.HoTen}\nCCCD: {SelectedTenant.CCCD}\nSĐT: {SelectedTenant.SoDienThoai}",
                 "Chi tiết khách thuê", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // === Row-level Commands khớp với XAML ===
+        [RelayCommand]
+        private void ViewTenantRow(TenantDto tenant)
+        {
+            if (tenant == null) return;
+            SelectedTenant = tenant;
+            ShowTenantDetailsWindow();
+        }
+
+        [RelayCommand]
+        private void EditTenantRow(TenantDto tenant)
+        {
+            if (tenant == null) return;
+            ShowEditTenantPanel(tenant);
+        }
+
+        [RelayCommand]
+        private async Task DeleteTenantRow(TenantDto tenant)
+        {
+            if (tenant == null) return;
+            await DeleteTenant(tenant);
+        }
+
+        // === Helpers: sort + paginate ===
+        private void ApplySort()
+        {
+            IEnumerable<TenantDto> src = _filteredTenants;
+            if (string.Equals(SortOrder, "oldest", StringComparison.OrdinalIgnoreCase))
+            {
+                src = src.OrderBy(t => t.NgayTao);
+            }
+            else
+            {
+                src = src.OrderByDescending(t => t.NgayTao);
+            }
+            _filteredTenants = src.ToList();
+        }
+
+        private void UpdatePagination(bool resetPageIndex)
+        {
+            int size = 5;
+            if (!int.TryParse(PageSize, out size) || size <= 0) size = 5;
+
+            TotalPages = Math.Max(1, (int)Math.Ceiling((_filteredTenants.Count) / (double)size));
+            if (resetPageIndex) PageIndex = 1;
+            if (PageIndex > TotalPages) PageIndex = TotalPages;
+            if (PageIndex < 1) PageIndex = 1;
+
+            Tenants.Clear();
+            if (_filteredTenants.Count > 0)
+            {
+                int start = (PageIndex - 1) * size;
+                var pageItems = _filteredTenants.Skip(start).Take(size);
+                foreach (var item in pageItems)
+                {
+                    Tenants.Add(item);
+                }
+                int end = Math.Min(start + size, _filteredTenants.Count);
+                PaginationText = $"Hiển thị {start + 1}-{end} của {_filteredTenants.Count}";
+            }
+            else
+            {
+                PaginationText = "Không có dữ liệu";
+            }
         }
     }
 }
