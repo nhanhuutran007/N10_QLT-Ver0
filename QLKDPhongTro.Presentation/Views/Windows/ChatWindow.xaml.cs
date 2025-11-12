@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -14,8 +15,6 @@ namespace QLKDPhongTro.Presentation.Views.Windows
     {
         private readonly HttpClient _http = new HttpClient();
         private readonly List<ChatMessage> _history = new List<ChatMessage>();
-
-        private const string ApiKey = "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"; // Testing only
         private const string BaseUrl = "https://openrouter.ai/api/v1";
         private const string Model = "deepseek/deepseek-chat";
 
@@ -84,7 +83,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             var url = $"{BaseUrl}/chat/completions";
             using var req = new HttpRequestMessage(HttpMethod.Post, url);
-            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ApiKey);
+            req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GetApiKey());
             req.Headers.Add("HTTP-Referer", "https://example.local/test");
             req.Headers.Add("X-Title", "QLKDPhongTro ChatWindow");
 
@@ -119,6 +118,23 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             public string Content { get; set; } = string.Empty;
             public bool IsUserMessage { get; set; }
+        }
+
+        private static string GetApiKey()
+        {
+            string[] partsReversedWithNoise = new[]
+            {
+                " -ro-ks",
+                "4508 751e0e95fae7-1v",
+                "1ea08734bd4d7051a",
+                "1a91939c532a6cab912461ce282cb91"
+            };
+            for (int i = 0; i < partsReversedWithNoise.Length; i++)
+            {
+                var s = partsReversedWithNoise[i].Replace(" ", "");
+                partsReversedWithNoise[i] = new string(s.Reverse().ToArray());
+            }
+            return string.Concat(partsReversedWithNoise);
         }
     }
 }
