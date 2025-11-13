@@ -1,60 +1,146 @@
-﻿<!-- Presentation/Views/Windows/AddContractWindow.xaml -->
+<!-- Presentation/Views/Windows/AddContractWindow.xaml -->
 <Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddContractWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Thêm hợp đồng" Height="360" Width="520"
+        Title="Thêm hợp đồng"
+        Height="580"
+        Width="650"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
-    <Grid Margin="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Icon="/Resources/Images/Logo.png">
+    <Window.Resources>
+        <!-- Style chung cho các nhãn (TextBlock) -->
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="#3B4758"/>
+            <Setter Property="Margin" Value="0,12,0,5"/>
+        </Style>
 
-        <TextBlock Text="Tạo hợp đồng mới" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+        <!-- Style chung cho các ô nhập liệu (TextBox) -->
+        <Style x:Key="InputFieldStyle" TargetType="TextBox">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Background" Value="#F2F6FA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border CornerRadius="4" Background="{TemplateBinding Background}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-        <StackPanel Grid.Row="1" Margin="0,4,0,0">
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Center">Người thuê:</TextBlock>
-                <ComboBox Width="320"
-                          ItemsSource="{Binding NguoiThueList}"
-                          DisplayMemberPath="HoTen"
-                          SelectedItem="{Binding SelectedNguoiThue, Mode=TwoWay}"/>
-            </StackPanel>
+        <!-- Style chung cho các ô lựa chọn (ComboBox) -->
+        <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="Background" Value="#F2F6FA"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Center">Phòng:</TextBlock>
-                <ComboBox Width="320"
-                          ItemsSource="{Binding PhongList}"
-                          DisplayMemberPath="TenPhong"
-                          SelectedItem="{Binding SelectedPhong, Mode=TwoWay}"/>
-            </StackPanel>
+    <Border CornerRadius="12" Background="White" Margin="10">
+        <Border.Effect>
+            <DropShadowEffect ShadowDepth="0" Color="#CCCCCC" Opacity="0.5" BlurRadius="10"/>
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Center">Ngày bắt đầu:</TextBlock>
-                <DatePicker SelectedDate="{Binding NgayBatDau}" Width="200"/>
-            </StackPanel>
+            <Grid Grid.Row="0" Margin="24,24,24,20">
+                <TextBlock Text="Tạo hợp đồng mới"
+                           FontSize="18"
+                           FontWeight="Medium"
+                           Foreground="#3B4758"
+                           VerticalAlignment="Center"/>
+                <Button HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Width="32"
+                        Height="32"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        Foreground="#586A84"
+                        ToolTip="Đóng"
+                        Command="{Binding CancelCommand}">
+                    <TextBlock Text="✕"
+                               FontSize="16"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Center">Ngày kết thúc:</TextBlock>
-                <DatePicker SelectedDate="{Binding NgayKetThuc}" Width="200"/>
-            </StackPanel>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="24,0,24,24">
+                <StackPanel>
+                    <TextBlock Text="Người thuê" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox Style="{StaticResource ComboBoxStyle}"
+                              ItemsSource="{Binding NguoiThueList}"
+                              DisplayMemberPath="HoTen"
+                              SelectedItem="{Binding SelectedNguoiThue, Mode=TwoWay}"/>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Center">Tiền cọc:</TextBlock>
-                <TextBox Width="200" Text="{Binding TienCoc, Mode=TwoWay}" />
-            </StackPanel>
+                    <TextBlock Text="Phòng" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox Style="{StaticResource ComboBoxStyle}"
+                              ItemsSource="{Binding PhongList}"
+                              DisplayMemberPath="TenPhong"
+                              SelectedItem="{Binding SelectedPhong, Mode=TwoWay}"/>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6">
-                <TextBlock Width="120" VerticalAlignment="Top">Ghi chú (tùy chọn):</TextBlock>
-                <TextBox Width="320" Height="60" Text="{Binding GhiChu, Mode=TwoWay}" AcceptsReturn="True"/>
-            </StackPanel>
-        </StackPanel>
+                    <TextBlock Text="Ngày bắt đầu" Style="{StaticResource LabelStyle}"/>
+                    <DatePicker SelectedDate="{Binding NgayBatDau}"
+                                Padding="8"
+                                Background="#F2F6FA"
+                                BorderThickness="0"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Lưu" Width="100" Margin="6,0" IsDefault="True" Command="{Binding SaveCommand}"/>
-            <Button Content="Hủy" Width="100" Margin="6,0" IsCancel="True" Command="{Binding CancelCommand}"/>
-        </StackPanel>
-    </Grid>
+                    <TextBlock Text="Ngày kết thúc" Style="{StaticResource LabelStyle}"/>
+                    <DatePicker SelectedDate="{Binding NgayKetThuc}"
+                                Padding="8"
+                                Background="#F2F6FA"
+                                BorderThickness="0"/>
+
+                    <TextBlock Text="Tiền cọc" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Style="{StaticResource InputFieldStyle}" Text="{Binding TienCoc, Mode=TwoWay}"/>
+
+                    <TextBlock Text="Ghi chú (tùy chọn)" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Style="{StaticResource InputFieldStyle}" Height="80" AcceptsReturn="True" Text="{Binding GhiChu, Mode=TwoWay}"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,25,0,0">
+                        <Button Content="Hủy"
+                                Margin="0,0,10,0"
+                                Padding="10,8"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Foreground="#586A84"
+                                IsCancel="True"
+                                Command="{Binding CancelCommand}"/>
+
+                        <Button Content="Lưu"
+                                Background="#319DFF"
+                                Foreground="White"
+                                Width="120"
+                                Height="40"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                IsDefault="True"
+                                Command="{Binding SaveCommand}">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border CornerRadius="6" Background="{TemplateBinding Background}">
+                                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </Window>

@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="av"
     x:Class="QLKDPhongTro.Presentation.Views.Windows.AddTenantWindow"
-    Title="Thêm khách thuê mới"
+    Title="Thêm Khách Thuê"
     Height="650"
     Width="700"
     WindowStartupLocation="CenterOwner"
@@ -13,7 +13,7 @@
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
-    MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
 
@@ -45,7 +45,7 @@
 
         <!-- 🔵 Primary Button -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Background" Value="#319DFF"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -59,17 +59,17 @@
                         <Border Background="{TemplateBinding Background}" CornerRadius="8">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Opacity" Value="0.9"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Opacity" Value="0.8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1F8AF0"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!-- ⚪ Cancel Button -->
@@ -187,39 +187,40 @@
 
     </Window.Resources>
 
-    <!-- 🧩 Layout tổng thể -->
-    <Border Background="#F8F9FA" CornerRadius="12">
+    <!-- White rounded card with drop shadow like Billing -->
+    <Border CornerRadius="12" Background="White" Margin="10">
         <Border.Effect>
-            <DropShadowEffect Color="#000" Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
+            <DropShadowEffect ShadowDepth="0" Color="#CCCCCC" Opacity="0.5" BlurRadius="10"/>
         </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <Border Background="White" CornerRadius="12" Margin="5">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="24,24,24,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" FontSize="18" FontWeight="Medium" Foreground="#3B4758" VerticalAlignment="Center"
+                           Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                <Button Grid.Column="1"
+                        Content="✕"
+                        Style="{StaticResource CloseButtonStyle}"
+                        Width="32"
+                        Height="32"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        Foreground="#586A84"
+                        ToolTip="Đóng"
+                        Click="CloseButton_Click"/>
+            </Grid>
 
-                <!-- 🟦 Header -->
-                <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" Padding="20,15">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <Border Background="#33FFFFFF" CornerRadius="8" Padding="8" Margin="0,0,10,0">
-                                <TextBlock Text="👥" FontSize="20" Foreground="White"/>
-                            </Border>
-                            <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="White"/>
-                        </StackPanel>
-                        <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" Click="CloseButton_Click"/>
-                    </Grid>
-                </Border>
-
-                <!-- 📋 Content -->
-                <ScrollViewer Grid.Row="1" Padding="30,20" VerticalScrollBarVisibility="Auto">
+            <!-- 📋 Content -->
+            <ScrollViewer Grid.Row="1" Margin="24,0,24,24" VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <!-- Các trường nhập -->
                         <StackPanel Margin="0,0,0,20">
@@ -300,16 +301,15 @@
                                      Text="{Binding NewTenant.GhiChu, Mode=TwoWay}"/>
                         </StackPanel>
                     </StackPanel>
-                </ScrollViewer>
+            </ScrollViewer>
 
-                <!-- 🟫 Footer -->
-                <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" Width="100" Margin="0,0,15,0" Click="CloseButton_Click"/>
-                        <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" Width="120" Command="{Binding SaveCommand}"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
-        </Border>
+            <!-- 🟫 Footer -->
+            <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="24,20">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" Width="100" Margin="0,0,15,0" Click="CloseButton_Click"/>
+                    <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" Width="120" Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Border>
 </Window>
