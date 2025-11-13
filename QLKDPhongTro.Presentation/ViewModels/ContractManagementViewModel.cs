@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
@@ -25,6 +25,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
         private ContractDto _selectedContract;
 
+        // Sắp xếp: newest | oldest (bind từ ComboBox SelectedValue Tag)
+        [ObservableProperty]
+        private string _sortOrder = "newest";
+
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
@@ -37,12 +41,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 var contractList = await _contractController.GetAllHopDongAsync();
-                Contracts = new ObservableCollection<ContractDto>(contractList);
+                Contracts = new ObservableCollection<ContractDto>(ApplySorting(contractList));
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"❌ Lỗi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // Áp dụng sắp xếp theo SortOrder
+        private IEnumerable<ContractDto> ApplySorting(IEnumerable<ContractDto> items)
+        {
+            if (items == null) return Enumerable.Empty<ContractDto>();
+            return SortOrder == "oldest"
+                ? items.OrderBy(x => x.NgayBatDau)
+                : items.OrderByDescending(x => x.NgayBatDau);
+        }
+
+        partial void OnSortOrderChanged(string value)
+        {
+            if (Contracts == null) return;
+            var sorted = ApplySorting(Contracts.ToList());
+            Contracts = new ObservableCollection<ContractDto>(sorted);
         }
 
         // 🔹 Lệnh: Thêm hợp đồng mới

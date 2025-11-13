@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
@@ -40,9 +40,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                // Bỏ TenNguoiThue và TenPhong vì model Contract không có
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                // Lấy từ JOIN trong repository
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
             }).ToList();
         }
 
@@ -61,8 +61,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = entity.TenNguoiThue,
+                TenPhong = entity.TenPhong
             };
         }
 
@@ -79,8 +79,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
             }).ToList();
         }
 
@@ -133,8 +133,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
-                TenNguoiThue = "", // Cần lấy từ repository khác
-                TenPhong = "" // Cần lấy từ repository khác
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
             }).ToList();
         }
         // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn
