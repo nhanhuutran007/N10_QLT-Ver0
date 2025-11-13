@@ -49,14 +49,42 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             using (var doc = DocX.Load(TemplatePath))
             {
-                // Sử dụng overload đơn giản với 2 tham số (findText, replaceText)
-                doc.ReplaceText("{TEN_KHACH}", TenB ?? "");
-                doc.ReplaceText("{TEN_PHONG}", TenPhong ?? "");
-                // TODO: Thêm các tham số NgayBatDau, NgayKetThuc, TienCoc vào method signature
-                // doc.ReplaceText("{NGAY_BD}", NgayBatDau.ToString("dd/MM/yyyy"));
-                // doc.ReplaceText("{NGAY_KT}", NgayKetThuc.ToString("dd/MM/yyyy"));
-                // doc.ReplaceText("{TIEN_COC}", TienCoc.ToString("N0"));
-                // thêm các placeholder khác nếu cần
+                // ====== Thông tin chung ======
+                doc.ReplaceText("{NoiTaoHD}", NoiTaoHD ?? "");
+                doc.ReplaceText("{Ngay}", NgayTaoHD.Day.ToString());
+                doc.ReplaceText("{Thang}", NgayTaoHD.Month.ToString());
+                doc.ReplaceText("{Nam}", NgayTaoHD.Year.ToString());
+
+                // ====== Bên A ======
+                doc.ReplaceText("{TenA}", TenA ?? "");
+                doc.ReplaceText("{NgaySinhA}", NgaySinhA.ToString("dd/MM/yyyy"));
+                doc.ReplaceText("{CCCDA}", CCCDA ?? "");
+                doc.ReplaceText("{NgayCapA}", NgayCapA.ToString("dd/MM/yyyy"));
+                doc.ReplaceText("{NoiCapA}", NoiCapA ?? "");
+                doc.ReplaceText("{DiaChiA}", DiaChiA ?? "");
+                doc.ReplaceText("{DienThoaiA}", DienThoaiA ?? "");
+
+                // ====== Bên B ======
+                doc.ReplaceText("{TenB}", TenB ?? "");
+                doc.ReplaceText("{NgaySinhB}", NgaySinhB.ToString("dd/MM/yyyy"));
+                doc.ReplaceText("{CCCDB}", CCCDB ?? "");
+                doc.ReplaceText("{NgayCapB}", NgayCapB.ToString("dd/MM/yyyy"));
+                doc.ReplaceText("{NoiCapB}", NoiCapB ?? "");
+                doc.ReplaceText("{DiaChiB}", DiaChiB ?? "");
+                doc.ReplaceText("{DienThoaiB}", DienThoaiB ?? "");
+
+                // ====== Thông tin phòng ======
+                doc.ReplaceText("{TENPHONG}", TenPhong ?? "");
+                doc.ReplaceText("{DIACHIPHONG}", DiaChiPhong ?? "");
+                doc.ReplaceText("{DIENTICH}", DienTich.ToString("N2"));
+                doc.ReplaceText("{TRANGTHIETBI}", TrangThietBi ?? "");
+
+                // ====== Giá và điều khoản ======
+                doc.ReplaceText("{GIATHUE}", GiaThue.ToString("N0"));
+                doc.ReplaceText("{GIABANGCHU}", GiaBangChu ?? "");
+                doc.ReplaceText("{NGAYTRATIEN}", NgayTraTien ?? "");
+                doc.ReplaceText("{THOIHAN}", ThoiHanNam.ToString());
+                doc.ReplaceText("{NGAYGIAONHA}", NgayGiaoNha.ToString("dd/MM/yyyy"));
 
                 doc.SaveAs(outputDocx);
             }

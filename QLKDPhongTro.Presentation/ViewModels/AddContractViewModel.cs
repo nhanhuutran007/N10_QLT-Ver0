@@ -64,7 +64,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _formTitle = "Thêm hợp đồng mới";
 
         // ---- CONSTRUCTOR ----
-        public AddContractViewModel(ContractController contractController, ContractDto? editingContract = null)
+        public AddContractViewModel(ContractController contractController, ContractDto editingContract = null)
         {
             _contractController = contractController;
             _tenantRepo = new TenantRepository();
