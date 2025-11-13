@@ -77,7 +77,7 @@
                              Margin="20,0,0,0">
                         <Ellipse.Fill>
                             <!-- Thay thế bằng đường dẫn đến ảnh avatar của bạn -->
-                            <ImageBrush ImageSource="/Resources/Images/avatar.jpg"/>
+                            <ImageBrush ImageSource="pack://application:,,,/QLKDPhongTro.Presentation;component/Resources/Images/avatar.jpg"/>
                         </Ellipse.Fill>
                     </Ellipse>
 

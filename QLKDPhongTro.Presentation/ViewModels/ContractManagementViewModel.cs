@@ -12,78 +12,140 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
-
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class ContractManagementViewModel : ViewModelBase
+    // Kế thừa ObservableObject để sử dụng SetProperty
+    public partial class ContractManagementViewModel : ObservableObject
     {
         private readonly ContractController _contractController;
         private List<ContractDto> _allContracts = new List<ContractDto>();
 
-        [ObservableProperty]
+        // 1. KHAI BÁO TƯỜNG MINH PROPERTY "Contracts" (Sửa lỗi 'Contracts' does not exist)
         private ObservableCollection<ContractDto> _contracts;
+        public ObservableCollection<ContractDto> Contracts
+        {
+            get => _contracts;
+            set => SetProperty(ref _contracts, value);
+        }
 
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
-        [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
-        private ContractDto _selectedContract;
+        // 2. KHAI BÁO TƯỜNG MINH PROPERTY "SelectedContract" (Sửa lỗi 'SelectedContract' does not exist)
+        private ContractDto? _selectedContract;
+        public ContractDto? SelectedContract
+        {
+            get => _selectedContract;
+            set
+            {
+                if (SetProperty(ref _selectedContract, value))
+                {
+                    // Khi chọn dòng khác, cập nhật trạng thái nút Sửa/Xóa
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
 
         // Phân trang
         private int _pageSize = 10;
         public int PageSize
         {
             get => _pageSize;
-            set { _pageSize = value <= 0 ? 10 : value; OnPropertyChanged(nameof(PageSize)); ApplySortAndPage(); }
+            set
+            {
+                int newValue = value <= 0 ? 10 : value;
+                if (SetProperty(ref _pageSize, newValue))
+                {
+                    ApplySortAndPage();
+                }
+            }
         }
-        private int _pageIndex = 1; // 1-based
+
+        private int _pageIndex = 1;
         public int PageIndex
         {
             get => _pageIndex;
-            set { _pageIndex = value < 1 ? 1 : value; OnPropertyChanged(nameof(PageIndex)); ApplySortAndPage(); }
+            set
+            {
+                int newValue = value < 1 ? 1 : value;
+                if (SetProperty(ref _pageIndex, newValue))
+                {
+                    ApplySortAndPage();
+                }
+            }
         }
+
         private int _totalPages = 1;
         public int TotalPages
         {
             get => _totalPages;
-            set { _totalPages = value < 1 ? 1 : value; OnPropertyChanged(nameof(TotalPages)); }
+            set => SetProperty(ref _totalPages, value < 1 ? 1 : value);
         }
 
         // Sắp xếp
-        private string _sortOrder = "newest"; // newest | oldest
+        private string _sortOrder = "newest";
         public string SortOrder
         {
             get => _sortOrder;
-            set { _sortOrder = value; OnPropertyChanged(nameof(SortOrder)); ApplySortAndPage(); }
+            set
+            {
+                if (SetProperty(ref _sortOrder, value))
+                {
+                    ApplySortAndPage();
+                }
+            }
         }
 
         private string _paginationText = string.Empty;
         public string PaginationText
         {
             get => _paginationText;
-            set { _paginationText = value; OnPropertyChanged(nameof(PaginationText)); }
+            set => SetProperty(ref _paginationText, value);
         }
 
-        // Commands phân trang
+        // Commands
         public ICommand PrevPageCommand { get; }
         public ICommand NextPageCommand { get; }
+
+        // Sử dụng ICommand thay vì RelayCommand cụ thể để tránh xung đột
+        public ICommand AddContractCommand { get; }
+        public ICommand EditContractCommand { get; }
+        public ICommand DeleteContractCommand { get; }
+        public ICommand LoadExpiringContractsCommand { get; }
+        public ICommand ReloadAllContractsCommand { get; }
+        public ICommand SendExpiryWarningEmailsCommand { get; }
 
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
             Contracts = new ObservableCollection<ContractDto>();
 
-            // Initialize phân trang commands
-            PrevPageCommand = new RelayCommand(
+            // Khởi tạo Commands thủ công để đảm bảo tương thích
+            // Lưu ý: Dùng CommunityToolkit.Mvvm.Input.RelayCommand rõ ràng nếu cần, 
+            // nhưng ở đây ta dùng constructor chuẩn.
+
+            PrevPageCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                 () => { if (PageIndex > 1) PageIndex--; },
                 () => PageIndex > 1);
-            NextPageCommand = new RelayCommand(
+
+            NextPageCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                 () => { if (PageIndex < TotalPages) PageIndex++; },
                 () => PageIndex < TotalPages);
+
+            AddContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(AddContract);
+
+            EditContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
+                EditContract,
+                () => SelectedContract != null); // Điều kiện check null
+
+            DeleteContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
+                async () => await DeleteContract(),
+                () => SelectedContract != null);
+
+            LoadExpiringContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(LoadExpiringContractsAsync);
+            ReloadAllContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(ReloadAllContractsAsync);
+            SendExpiryWarningEmailsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(SendExpiryWarningEmailsAsync);
 
             _ = LoadContractsAsync();
         }
 
-        // 🔹 Load toàn bộ danh sách hợp đồng
         private async Task LoadContractsAsync()
         {
             try
@@ -99,26 +161,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        // 🔹 Áp dụng sắp xếp và phân trang
         private void ApplySortAndPage()
         {
             if (Contracts == null) return;
 
             IEnumerable<ContractDto> query = _allContracts;
 
-            // Sắp xếp theo NgayBatDau
             if (SortOrder == "newest")
                 query = query.OrderByDescending(x => x.NgayBatDau);
             else
                 query = query.OrderBy(x => x.NgayBatDau);
 
-            // Tính tổng số trang
             var total = query.Count();
             TotalPages = (int)Math.Ceiling(total / (double)PageSize);
             if (TotalPages == 0) TotalPages = 1;
             if (PageIndex > TotalPages) PageIndex = TotalPages;
 
-            // Lấy trang hiện tại
             var skip = (PageIndex - 1) * PageSize;
             var pageItems = query.Skip(skip).Take(PageSize).ToList();
 
@@ -129,10 +187,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
 
             UpdatePagination(total, skip, pageItems.Count);
-            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
+
+            // 3. SỬA LỖI NOTIFY COMMAND: Dùng CommandManager để refresh tất cả nút bấm UI
+            CommandManager.InvalidateRequerySuggested();
         }
 
-        // 🔹 Cập nhật text phân trang
         private void UpdatePagination(int total, int skip, int pageCount)
         {
             var from = total == 0 ? 0 : skip + 1;
@@ -140,8 +199,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             PaginationText = $"Hiển thị {from} đến {to} trong {total}";
         }
 
-        // 🔹 Lệnh: Thêm hợp đồng mới
-        [RelayCommand]
         private void AddContract()
         {
             try
@@ -162,10 +219,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        private bool CanEditOrDelete() => SelectedContract != null;
-
-        // 🔹 Lệnh: Sửa hợp đồng (mở lại AddContractWindow trong chế độ chỉnh sửa)
-        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
         private void EditContract()
         {
             if (SelectedContract == null)
@@ -184,7 +237,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 bool? result = win.ShowDialog();
                 if (result == true)
-                    _ = LoadContractsAsync(); // reload list after editing
+                    _ = LoadContractsAsync();
             }
             catch (Exception ex)
             {
@@ -192,15 +245,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        // 🔹 Lệnh: Xóa hợp đồng
-        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
         private async Task DeleteContract()
         {
-            if (SelectedContract == null)
-            {
-                MessageBox.Show("⚠️ Vui lòng chọn hợp đồng để xóa.");
-                return;
-            }
+            if (SelectedContract == null) return;
 
             var confirm = MessageBox.Show(
                 $"Bạn có chắc chắn muốn xóa hợp đồng của '{SelectedContract.TenNguoiThue}'?",
@@ -223,19 +270,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        [RelayCommand]
         private async Task LoadExpiringContractsAsync()
         {
             try
             {
-                int days = 30; // hoặc cho người dùng chọn
+                int days = 30;
                 var expiringContracts = await _contractController.GetExpiringContractsAsync(days);
 
                 if (expiringContracts.Count == 0)
                 {
                     MessageBox.Show($"Không có hợp đồng nào sắp hết hạn trong {days} ngày tới.",
                                     "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                    // Nếu không có hợp đồng sắp hết hạn, vẫn reload toàn bộ
                     await LoadContractsAsync();
                     return;
                 }
@@ -254,14 +299,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        // 🔹 Lệnh: Tải lại toàn bộ hợp đồng
-        [RelayCommand]
         private async Task ReloadAllContractsAsync()
         {
             await LoadContractsAsync();
         }
 
-        [RelayCommand]
         private async Task SendExpiryWarningEmailsAsync()
         {
             try
@@ -283,9 +325,5 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"❌ Lỗi khi gửi email cảnh báo: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-
-
-
     }
 }

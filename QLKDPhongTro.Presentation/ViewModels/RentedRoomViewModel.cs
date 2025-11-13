@@ -5,10 +5,12 @@ using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using System.Diagnostics; // Added for logging
 
@@ -18,7 +20,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
     {
         private readonly RentedRoomController _rentedRoomController;
         private readonly DispatcherTimer _statusTimer;
-        private ObservableCollection<RentedRoomDto> _allRooms = new();
+        private List<RentedRoomDto> _allRooms = new();
 
         public RentedRoomViewModel()
         {
@@ -39,6 +41,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _buttonContent = "Thêm phòng";
             _saveCommand = SaveRoomCommand;
 
+            // Initialize pagination commands
+            PrevPageCommand = new RelayCommand(
+                () => { if (PageIndex > 1) PageIndex--; },
+                () => PageIndex > 1);
+            NextPageCommand = new RelayCommand(
+                () => { if (PageIndex < TotalPages) PageIndex++; },
+                () => PageIndex < TotalPages);
+
+            // Initialize row action commands
+            EditRoomRowCommand = new RelayCommand<RentedRoomDto>(EditRoomFromRow);
+            DeleteRoomRowCommand = new RelayCommand<RentedRoomDto>(async room => await DeleteRoomFromRow(room));
+            ViewRoomRowCommand = new RelayCommand<RentedRoomDto>(ViewRoomFromRow);
+
             LoadRoomsCommand.Execute(null);
         }
 
@@ -47,12 +62,58 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private string _statusMessage = string.Empty;
         [ObservableProperty] private RentedRoomDto _newRoom = new();
-        [ObservableProperty] private string _searchText = string.Empty;
 
-        partial void OnSearchTextChanged(string value)
+        // Phân trang
+        private int _pageSize = 5;
+        public int PageSize
         {
-            SearchRoomsCommand.Execute(null);
+            get => _pageSize;
+            set { _pageSize = value <= 0 ? 5 : value; OnPropertyChanged(nameof(PageSize)); ApplySortAndPage(); }
         }
+        private int _pageIndex = 1; // 1-based
+        public int PageIndex
+        {
+            get => _pageIndex;
+            set { _pageIndex = value < 1 ? 1 : value; OnPropertyChanged(nameof(PageIndex)); ApplySortAndPage(); }
+        }
+        private int _totalPages = 1;
+        public int TotalPages
+        {
+            get => _totalPages;
+            set { _totalPages = value < 1 ? 1 : value; OnPropertyChanged(nameof(TotalPages)); }
+        }
+
+        // Sắp xếp
+        private string _sortOrder = "newest"; // newest | oldest
+        public string SortOrder
+        {
+            get => _sortOrder;
+            set { _sortOrder = value; OnPropertyChanged(nameof(SortOrder)); ApplySortAndPage(); }
+        }
+
+        // Tìm kiếm
+        private string _searchText = string.Empty;
+        public string SearchText
+        {
+            get => _searchText;
+            set { _searchText = value ?? string.Empty; OnPropertyChanged(nameof(SearchText)); PageIndex = 1; ApplySortAndPage(); }
+        }
+
+        private string _paginationText = string.Empty;
+        public string PaginationText
+        {
+            get => _paginationText;
+            set { _paginationText = value; OnPropertyChanged(nameof(PaginationText)); }
+        }
+
+        // Lệnh phân trang
+        public ICommand PrevPageCommand { get; }
+        public ICommand NextPageCommand { get; }
+
+        // Commands cho DataGrid row actions
+        public ICommand EditRoomRowCommand { get; }
+        public ICommand DeleteRoomRowCommand { get; }
+        public ICommand ViewRoomRowCommand { get; }
 
         [ObservableProperty] private string _title = "Thêm phòng mới";
         [ObservableProperty] private string _buttonContent = "Thêm phòng";
@@ -67,16 +128,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 var rooms = await _rentedRoomController.GetAllRoomsAsync();
-                _allRooms.Clear();
-                Rooms.Clear();
-                if (rooms != null)
-                {
-                    foreach (var room in rooms)
-                    {
-                        _allRooms.Add(room);
-                        Rooms.Add(room);
-                    }
-                }
+                _allRooms = rooms?.ToList() ?? new List<RentedRoomDto>();
+                PageIndex = 1;
+                ApplySortAndPage();
             }
             catch (Exception ex)
             {
@@ -87,6 +141,72 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        // Method để refresh dữ liệu mà không reset PageIndex
+        private async Task RefreshRoomsData()
+        {
+            try
+            {
+                IsLoading = true;
+                var rooms = await _rentedRoomController.GetAllRoomsAsync();
+                _allRooms = rooms?.ToList() ?? new List<RentedRoomDto>();
+                // Không reset PageIndex ở đây, để giữ nguyên trang hiện tại
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Lỗi khi tải lại danh sách phòng: {ex.Message}";
+                MessageBox.Show(StatusMessage, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private void ApplySortAndPage()
+        {
+            IEnumerable<RentedRoomDto> query = _allRooms;
+            
+            // Tìm kiếm
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var keyword = SearchText.Trim().ToLowerInvariant();
+                query = query.Where(r =>
+                    r.TenPhong.ToLowerInvariant().Contains(keyword) ||
+                    r.MaPhong.ToString().ToLowerInvariant().Contains(keyword) ||
+                    r.TrangThai.ToLowerInvariant().Contains(keyword) ||
+                    (!string.IsNullOrEmpty(r.GhiChu) && r.GhiChu.ToLowerInvariant().Contains(keyword)) ||
+                    r.DienTich.ToString().ToLowerInvariant().Contains(keyword) ||
+                    r.GiaCoBan.ToString().ToLowerInvariant().Contains(keyword) ||
+                    r.GiaCoBan.ToString("N0").ToLowerInvariant().Contains(keyword)
+                );
+            }
+
+            // Sắp xếp theo MaPhong
+            if (SortOrder == "newest")
+                query = query.OrderByDescending(r => r.MaPhong);
+            else
+                query = query.OrderBy(r => r.MaPhong);
+
+            var total = query.Count();
+            TotalPages = (int)Math.Ceiling(total / (double)PageSize);
+            if (TotalPages == 0) TotalPages = 1;
+            if (PageIndex > TotalPages) PageIndex = TotalPages;
+
+            var skip = (PageIndex - 1) * PageSize;
+            var pageItems = query.Skip(skip).Take(PageSize).ToList();
+
+            Rooms.Clear();
+            foreach (var item in pageItems)
+            {
+                Rooms.Add(item);
+            }
+
+            var from = total == 0 ? 0 : skip + 1;
+            var to = skip + pageItems.Count;
+            PaginationText = $"Hiển thị {from} đến {to} trong {total}";
+            System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
         [RelayCommand]
@@ -198,34 +318,66 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
                 Debug.WriteLine($"Updating room: MaPhong={NewRoom.MaPhong}, TrangThai={NewRoom.TrangThai}");
+                
+                // Lưu lại PageIndex hiện tại để giữ nguyên trang sau khi refresh
+                var currentPageIndex = PageIndex;
+                var currentMaPhong = NewRoom.MaPhong;
+                
                 var ok = await _rentedRoomController.UpdateRoomAsync(NewRoom);
                 if (ok)
                 {
-                    // Update the existing room in the Rooms collection
-                    var room = Rooms.FirstOrDefault(r => r.MaPhong == NewRoom.MaPhong);
-                    if (room != null)
+                    // Reload data to ensure consistency with pagination
+                    await RefreshRoomsData();
+                    
+                    // Khôi phục lại PageIndex và tìm lại phòng đã cập nhật
+                    PageIndex = currentPageIndex;
+                    ApplySortAndPage();
+                    
+                    // Tìm và chọn lại phòng đã cập nhật
+                    var updatedRoom = Rooms.FirstOrDefault(r => r.MaPhong == currentMaPhong);
+                    if (updatedRoom == null)
                     {
-                        int index = Rooms.IndexOf(room);
-                        Rooms[index] = new RentedRoomDto
+                        // Nếu không tìm thấy trong trang hiện tại, tìm trong toàn bộ danh sách và chuyển đến trang đó
+                        var allRoomsQuery = _allRooms.AsEnumerable();
+                        
+                        // Áp dụng filter tương tự như trong ApplySortAndPage
+                        if (!string.IsNullOrWhiteSpace(SearchText))
                         {
-                            MaPhong = NewRoom.MaPhong,
-                            TenPhong = NewRoom.TenPhong,
-                            DienTich = NewRoom.DienTich,
-                            GiaCoBan = NewRoom.GiaCoBan,
-                            TrangThai = NewRoom.TrangThai,
-                            GhiChu = NewRoom.GhiChu,
-                            GiaBangChu = NewRoom.GiaBangChu,
-                            TrangThietBi = NewRoom.TrangThietBi
-                        };
-                        Debug.WriteLine($"Room updated in collection: MaPhong={NewRoom.MaPhong}, TrangThai={NewRoom.TrangThai}");
+                            var keyword = SearchText.Trim().ToLowerInvariant();
+                            allRoomsQuery = allRoomsQuery.Where(r =>
+                                r.TenPhong.ToLowerInvariant().Contains(keyword) ||
+                                r.MaPhong.ToString().ToLowerInvariant().Contains(keyword) ||
+                                r.TrangThai.ToLowerInvariant().Contains(keyword) ||
+                                (!string.IsNullOrEmpty(r.GhiChu) && r.GhiChu.ToLowerInvariant().Contains(keyword)) ||
+                                r.DienTich.ToString().ToLowerInvariant().Contains(keyword) ||
+                                r.GiaCoBan.ToString().ToLowerInvariant().Contains(keyword) ||
+                                r.GiaCoBan.ToString("N0").ToLowerInvariant().Contains(keyword)
+                            );
+                        }
+                        
+                        // Áp dụng sort tương tự
+                        if (SortOrder == "newest")
+                            allRoomsQuery = allRoomsQuery.OrderByDescending(r => r.MaPhong);
+                        else
+                            allRoomsQuery = allRoomsQuery.OrderBy(r => r.MaPhong);
+                        
+                        var allRoomsList = allRoomsQuery.ToList();
+                        var roomIndex = allRoomsList.FindIndex(r => r.MaPhong == currentMaPhong);
+                        if (roomIndex >= 0)
+                        {
+                            // Tính toán trang chứa phòng này
+                            var targetPage = (roomIndex / PageSize) + 1;
+                            PageIndex = targetPage;
+                            ApplySortAndPage();
+                            updatedRoom = Rooms.FirstOrDefault(r => r.MaPhong == currentMaPhong);
+                        }
                     }
-                    else
+                    
+                    if (updatedRoom != null)
                     {
-                        // If the room is not found, reload the entire list
-                        Debug.WriteLine("Room not found in collection, reloading rooms.");
-                        await LoadRooms();
+                        SelectedRoom = updatedRoom;
                     }
-
+                    
                     StatusMessage = "Cập nhật phòng thành công.";
                     MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                     CloseAddRoomWindows();
@@ -281,7 +433,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var ok = await _rentedRoomController.DeleteRoomAsync(SelectedRoom.MaPhong);
                 if (ok)
                 {
-                    Rooms.Remove(SelectedRoom);
+                    // Reload data to ensure consistency with pagination
+                    await LoadRooms();
                     SelectedRoom = null; // Clear selection after deletion
                     StatusMessage = "Đã xóa phòng thành công.";
                     MessageBox.Show(StatusMessage, "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -331,32 +484,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
             viewRoomWindow.ShowDialog();
         }
 
-        [RelayCommand]
-        private void SearchRooms()
+        // Commands for DataGrid row actions
+        private void EditRoomFromRow(RentedRoomDto? room)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(SearchText))
-                {
-                    Rooms = new ObservableCollection<RentedRoomDto>(_allRooms);
-                }
-                else
-                {
-                    var filteredList = _allRooms.Where(r =>
-                        r.TenPhong.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                        r.MaPhong.ToString().Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                        r.TrangThai.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                        (r.GhiChu != null && r.GhiChu.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
-
-                    Rooms = new ObservableCollection<RentedRoomDto>(filteredList);
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Lỗi khi tìm kiếm phòng: {ex.Message}";
-                MessageBox.Show(StatusMessage, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            if (room == null) return;
+            SelectedRoom = room;
+            ShowEditRoomPanel();
         }
+
+        private async Task DeleteRoomFromRow(RentedRoomDto? room)
+        {
+            if (room == null) return;
+            SelectedRoom = room;
+            await DeleteRoom();
+        }
+
+        private void ViewRoomFromRow(RentedRoomDto? room)
+        {
+            if (room == null) return;
+            SelectedRoom = room;
+            ShowRoomDetailsWindow();
+        }
+
 
         [RelayCommand]
         private void MinimizeWindow()

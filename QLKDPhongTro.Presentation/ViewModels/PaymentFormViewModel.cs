@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using QLKDPhongTro.Presentation.ViewModels.Base; 
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -242,10 +243,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        // Sửa lại: Bỏ qua title và icon, chỉ gửi message
         private void ShowMessage(string message, string title, MessageBoxImage icon)
         {
             ShowMessageRequested?.Invoke(this, message);
-            MessageBox.Show(message, title, MessageBoxButton.OK, icon);
+            // MessageBox.Show(message, title, MessageBoxButton.OK, icon); // View sẽ xử lý việc hiển thị MessageBox
         }
 
         #endregion
@@ -496,10 +498,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        // Sửa lại: Bỏ qua title và icon, chỉ gửi message
         private void ShowMessage(string message, string title, MessageBoxImage icon)
         {
             ShowMessageRequested?.Invoke(this, message);
-            MessageBox.Show(message, title, MessageBoxButton.OK, icon);
+            // MessageBox.Show(message, title, MessageBoxButton.OK, icon); // View sẽ xử lý việc hiển thị MessageBox
         }
 
         #endregion

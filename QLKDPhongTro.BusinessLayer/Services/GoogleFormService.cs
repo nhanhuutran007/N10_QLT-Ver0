@@ -15,6 +15,12 @@ namespace QLKDPhongTro.BusinessLayer.Services
     {
         private readonly SheetsService _sheetsService;
 
+        // LƯU Ý: Bạn cần thay thế ID này bằng ID thực tế lấy từ URL của Google Sheet
+        // Ví dụ URL: docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+        // Thì ID là: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+        private const string SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE";
+        private const string SHEET_RANGE = "Form Responses 1!A:F"; // Đảm bảo tên Sheet (Form Responses 1) đúng với file của bạn
+
         public GoogleFormService()
         {
             var credential = GetCredential();
@@ -47,7 +53,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
         }
 
         /// <summary>
-        /// Read debt data from Google Sheet - phương thức bị thiếu
+        /// Đọc dữ liệu thô từ Google Sheet và map sang DTO trung gian
         /// </summary>
         public async Task<List<DebtCreationDto>> ReadDebtDataFromGoogleSheetAsync(string spreadsheetId, string range = "A:E")
         {
@@ -107,9 +113,11 @@ namespace QLKDPhongTro.BusinessLayer.Services
                     debtDto.IsProcessed = false;
                     debtDto.ProcessingStatus = "Lỗi";
                 }
-                else if (debtDto.CurrentElectricValue <= 0)
+                else if (debtDto.CurrentElectricValue <= 0 && string.IsNullOrEmpty(debtDto.ElectricImageUrl))
                 {
-                    debtDto.ErrorMessage = "Chỉ số điện không hợp lệ";
+                    // Nếu không có chỉ số điện VÀ không có ảnh thì mới lỗi
+                    // Nếu có ảnh thì có thể dùng OCR sau này
+                    debtDto.ErrorMessage = "Thiếu dữ liệu điện (số hoặc ảnh)";
                     debtDto.IsProcessed = false;
                     debtDto.ProcessingStatus = "Lỗi";
                 }
@@ -145,12 +153,34 @@ namespace QLKDPhongTro.BusinessLayer.Services
             return decimal.TryParse(value, out decimal result) ? result : 0;
         }
 
-        // Original method kept for backward compatibility
+        /// <summary>
+        /// Lấy dữ liệu từ Google Form và chuyển đổi sang định dạng DebtFormData để xử lý
+        /// </summary>
         public async Task<List<DebtFormData>> GetFormDataAsync()
         {
-            var formDataList = new List<DebtFormData>();
-            // Implementation giả lập
-            return await Task.FromResult(formDataList);
+            try
+            {
+                // 1. Gọi hàm đọc dữ liệu raw từ Sheet sử dụng ID và Range đã định nghĩa
+                var rawData = await ReadDebtDataFromGoogleSheetAsync(SPREADSHEET_ID, SHEET_RANGE);
+
+                // 2. Map từ DebtCreationDto sang DebtFormData
+                var result = rawData.Select(item => new DebtFormData
+                {
+                    Timestamp = item.Timestamp,
+                    Email = item.Email,
+                    RoomName = item.RoomName,
+                    ElectricImageUrl = item.ElectricImageUrl,
+                    OldElectricValue = item.OldElectricValue,
+                    CurrentElectricValue = item.CurrentElectricValue
+                }).ToList();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Ném lỗi ra để ViewModel hoặc Service gọi nó xử lý hiển thị
+                throw new Exception($"Lỗi kết nối Google Sheet: {ex.Message}");
+            }
         }
     }
 
@@ -162,6 +192,8 @@ namespace QLKDPhongTro.BusinessLayer.Services
         public string ElectricImageUrl { get; set; } = string.Empty;
         public decimal OldElectricValue { get; set; }
         public decimal CurrentElectricValue { get; set; }
+
+        // Kiểm tra xem có nhập tay đủ số liệu không
         public bool HasManualValues => OldElectricValue > 0 && CurrentElectricValue > 0;
     }
 }

@@ -1,254 +1,166 @@
--- Create and use the database
-IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'database_v2')
-BEGIN
-    CREATE DATABASE database_v2;
-END;
-GO
-
-USE database_v2;
-GO
+USE githubio_QLT_Ver1;
 
 -- ===================== Bảng Admin =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Admin]') AND type in (N'U'))
 CREATE TABLE Admin (
-  MaAdmin INT IDENTITY(1,1) PRIMARY KEY,
+  MaAdmin INT AUTO_INCREMENT PRIMARY KEY,
   TenDangNhap VARCHAR(50) NOT NULL UNIQUE,
   MatKhau VARCHAR(255) NOT NULL,
   Email VARCHAR(100),
   SoDienThoai VARCHAR(15)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM Admin WHERE TenDangNhap = 'admin')
 INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai)
 VALUES ('admin', 'admin123', 'admin@example.com', '0901000001');
-GO
 
 -- ===================== Bảng Nha =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Nha]') AND type in (N'U'))
 CREATE TABLE Nha (
-  MaNha INT IDENTITY(1,1) PRIMARY KEY,
+  MaNha INT AUTO_INCREMENT PRIMARY KEY,
   DiaChi VARCHAR(255) NOT NULL,
-  TongSoPhong INT CHECK (TongSoPhong BETWEEN 1 AND 10), -- Thêm CHECK từ MySQL
+  TongSoPhong INT CHECK (TongSoPhong BETWEEN 1 AND 10),
   GhiChu VARCHAR(255)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM Nha WHERE DiaChi = N'123 Đường A, Quận 1, TP.HCM')
 INSERT INTO Nha (DiaChi, TongSoPhong, GhiChu)
 VALUES
-(N'123 Đường A, Quận 1, TP.HCM', 5, N'Nhà trung tâm'),
-(N'456 Đường B, Quận 7, TP.HCM', 6, N'Gần khu công nghệ'),
-(N'789 Đường C, Bình Thạnh', 4, N'Khu yên tĩnh'),
-(N'12 Nguyễn Văn Linh, Quận 7', 8, N'Gần siêu thị'),
-(N'99 Lý Thường Kiệt, Quận 10', 10, N'Gần trường học');
-GO
+('123 Đường A, Quận 1, TP.HCM', 5, 'Nhà trung tâm'),
+('456 Đường B, Quận 7, TP.HCM', 6, 'Gần khu công nghệ'),
+('789 Đường C, Bình Thạnh', 4, 'Khu yên tĩnh'),
+('12 Nguyễn Văn Linh, Quận 7', 8, 'Gần siêu thị'),
+('99 Lý Thường Kiệt, Quận 10', 10, 'Gần trường học');
 
 -- ===================== Bảng Phong =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Phong]') AND type in (N'U'))
 CREATE TABLE Phong (
-  MaPhong INT IDENTITY(1,1) PRIMARY KEY,
+  MaPhong INT AUTO_INCREMENT PRIMARY KEY,
   MaNha INT,
   TenPhong VARCHAR(50) NOT NULL,
-  DienTich DECIMAL(5,2) CHECK (DienTich > 0), -- Thêm CHECK từ MySQL
-  GiaCoBan DECIMAL(18,0) DEFAULT 0 CHECK (GiaCoBan >= 0), -- Thêm CHECK từ MySQL
-  TrangThai VARCHAR(20) DEFAULT N'Trống' CHECK (TrangThai IN (N'Đang thuê', N'Trống')),
+  DienTich DECIMAL(5,2) CHECK (DienTich > 0),
+  GiaCoBan DECIMAL(18,0) DEFAULT 0 CHECK (GiaCoBan >= 0),
+  TrangThai ENUM('Đang thuê','Trống') DEFAULT 'Trống',
   GhiChu VARCHAR(255),
   FOREIGN KEY (MaNha) REFERENCES Nha(MaNha) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM Phong WHERE MaNha = 1 AND TenPhong = 'P101')
 INSERT INTO Phong (MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu)
 VALUES
-(1, N'P101', 18.5, 3000000, N'Trống', N'Có cửa sổ'),
-(1, N'P102', 20.0, 3500000, N'Trống', N'Gần cầu thang'),
-(2, N'P201', 22.0, 3800000, N'Trống', N'Ban công nhỏ'),
-(3, N'P301', 25.0, 4000000, N'Trống', N'Có ban công lớn'),
-(4, N'P401', 28.0, 4500000, N'Trống', N'Phòng mới xây');
-GO
+(1, 'P101', 18.5, 3000000, 'Trống', 'Có cửa sổ'),
+(1, 'P102', 20.0, 3500000, 'Trống', 'Gần cầu thang'),
+(2, 'P201', 22.0, 3800000, 'Trống', 'Ban công nhỏ'),
+(3, 'P301', 25.0, 4000000, 'Trống', 'Có ban công lớn'),
+(4, 'P401', 28.0, 4500000, 'Trống', 'Phòng mới xây');
 
 -- ===================== Bảng NguoiThue =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[NguoiThue]') AND type in (N'U'))
 CREATE TABLE NguoiThue (
-  MaNguoiThue INT IDENTITY(1,1) PRIMARY KEY,
+  MaNguoiThue INT AUTO_INCREMENT PRIMARY KEY,
   HoTen VARCHAR(100) NOT NULL,
   SoDienThoai VARCHAR(15) NOT NULL,
   CCCD VARCHAR(20) UNIQUE,
   NgayBatDau DATE,
-  TrangThai VARCHAR(20) CHECK (TrangThai IN (N'Đang ở', N'Đã trả phòng')),
+  TrangThai ENUM('Đang ở','Đã trả phòng'),
   GhiChu VARCHAR(255)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM NguoiThue WHERE CCCD = '079123456001')
 INSERT INTO NguoiThue (HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu)
 VALUES
-(N'Nguyễn Văn A', '0911000001', '079123456001', CONVERT(date, GETDATE()), N'Đang ở', ''),
-(N'Trần Thị B', '0911000002', '079123456002', CONVERT(date, GETDATE()), N'Đang ở', ''),
-(N'Lê Văn C', '0911000003', '079123456003', CONVERT(date, GETDATE()), N'Đang ở', ''),
-(N'Phạm Thị D', '0911000004', '079123456004', CONVERT(date, GETDATE()), N'Đã trả phòng', N'Chuyển đi'),
-(N'Huỳnh Văn E', '0911000005', '079123456005', CONVERT(date, GETDATE()), N'Đang ở', '');
-GO
+('Nguyễn Văn A', '0911000001', '079123456001', CURRENT_DATE, 'Đang ở', ''),
+('Trần Thị B', '0911000002', '079123456002', CURRENT_DATE, 'Đang ở', ''),
+('Lê Văn C', '0911000003', '079123456003', CURRENT_DATE, 'Đang ở', ''),
+('Phạm Thị D', '0911000004', '079123456004', CURRENT_DATE, 'Đã trả phòng', 'Chuyển đi'),
+('Huỳnh Văn E', '0911000005', '079123456005', CURRENT_DATE, 'Đang ở', '');
 
 -- ===================== Bảng HopDong =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[HopDong]') AND type in (N'U'))
 CREATE TABLE HopDong (
-  MaHopDong INT IDENTITY(1,1) PRIMARY KEY,
+  MaHopDong INT AUTO_INCREMENT PRIMARY KEY,
   MaNguoiThue INT,
   MaPhong INT,
   NgayBatDau DATE NOT NULL,
   NgayKetThuc DATE NOT NULL,
-  TienCoc DECIMAL(18,0) DEFAULT 0 CHECK (TienCoc >= 0), -- Thêm CHECK từ MySQL
+  TienCoc DECIMAL(18,0) DEFAULT 0 CHECK (TienCoc >= 0),
   FileHopDong VARCHAR(255),
-  TrangThai VARCHAR(20) CHECK (TrangThai IN (N'Hiệu lực', N'Hết hạn', N'Hủy')),
+  TrangThai ENUM('Hiệu lực','Hết hạn','Hủy'),
   FOREIGN KEY (MaNguoiThue) REFERENCES NguoiThue(MaNguoiThue) ON DELETE CASCADE,
   FOREIGN KEY (MaPhong) REFERENCES Phong(MaPhong) ON DELETE CASCADE,
-  CONSTRAINT CK_NgayKetThucHopLe CHECK (NgayKetThuc > NgayBatDau) -- Thêm CHECK từ MySQL
-);
+  CHECK (NgayKetThuc > NgayBatDau)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM HopDong WHERE MaNguoiThue = 1 AND MaPhong = 1)
 INSERT INTO HopDong (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai)
 VALUES
-(1, 1, '2025-01-01', '2025-07-01', 1000000, 'HD_A.pdf', N'Hiệu lực'),
-(2, 2, '2025-02-01', '2025-08-01', 1500000, 'HD_B.pdf', N'Hiệu lực'),
-(3, 3, '2025-03-01', '2025-09-01', 1200000, 'HD_C.pdf', N'Hiệu lực'),
-(4, 4, '2025-04-01', '2025-10-01', 1000000, 'HD_D.pdf', N'Hủy'),
-(5, 5, '2025-05-01', '2025-11-01', 1000000, 'HD_E.pdf', N'Hết hạn');
-GO
+(1, 1, '2025-01-01', '2025-07-01', 1000000, 'HD_A.pdf', 'Hiệu lực'),
+(2, 2, '2025-02-01', '2025-08-01', 1500000, 'HD_B.pdf', 'Hiệu lực'),
+(3, 3, '2025-03-01', '2025-09-01', 1200000, 'HD_C.pdf', 'Hiệu lực'),
+(4, 4, '2025-04-01', '2025-10-01', 1000000, 'HD_D.pdf', 'Hủy'),
+(5, 5, '2025-05-01', '2025-11-01', 1000000, 'HD_E.pdf', 'Hết hạn');
 
 -- ===================== Bảng TaiSanNguoiThue =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[TaiSanNguoiThue]') AND type in (N'U'))
 CREATE TABLE TaiSanNguoiThue (
-  MaTaiSan INT IDENTITY(1,1) PRIMARY KEY,
+  MaTaiSan INT AUTO_INCREMENT PRIMARY KEY,
   MaNguoiThue INT,
-  LoaiTaiSan VARCHAR(20) CHECK (LoaiTaiSan IN (N'Xe', N'Thú cưng')),
+  LoaiTaiSan ENUM('Xe','Thú cưng'),
   MoTa VARCHAR(255),
   PhiPhuThu DECIMAL(18,0) DEFAULT 0,
   FOREIGN KEY (MaNguoiThue) REFERENCES NguoiThue(MaNguoiThue) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM TaiSanNguoiThue WHERE MaNguoiThue = 1 AND LoaiTaiSan = N'Xe')
 INSERT INTO TaiSanNguoiThue (MaNguoiThue, LoaiTaiSan, MoTa, PhiPhuThu)
 VALUES
-(1, N'Xe', N'Xe máy Vision', 100000),
-(2, N'Thú cưng', N'Mèo Anh lông ngắn', 200000),
-(3, N'Xe', N'Xe máy Sirius', 100000),
-(4, N'Thú cưng', N'Chó Poodle', 150000),
-(5, N'Xe', N'Xe SH Mode', 200000);
-GO
+(1, 'Xe', 'Xe máy Vision', 100000),
+(2, 'Thú cưng', 'Mèo Anh lông ngắn', 200000),
+(3, 'Xe', 'Xe máy Sirius', 100000),
+(4, 'Thú cưng', 'Chó Poodle', 150000),
+(5, 'Xe', 'Xe SH Mode', 200000);
 
 -- ===================== Bảng BaoTri_SuCo =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BaoTri_SuCo]') AND type in (N'U'))
 CREATE TABLE BaoTri_SuCo (
-  MaSuCo INT IDENTITY(1,1) PRIMARY KEY,
+  MaSuCo INT AUTO_INCREMENT PRIMARY KEY,
   MaPhong INT,
   MoTaSuCo VARCHAR(255) NOT NULL,
-  NgayBaoCao DATE DEFAULT (CONVERT(date, GETDATE())),
-  TrangThai VARCHAR(20) DEFAULT N'Chưa xử lý' CHECK (TrangThai IN (N'Chưa xử lý', N'Đang xử lý', N'Hoàn tất')),
+  NgayBaoCao DATE DEFAULT (CURRENT_DATE),
+  TrangThai ENUM('Chưa xử lý','Đang xử lý','Hoàn tất') DEFAULT 'Chưa xử lý',
   ChiPhi DECIMAL(18,0) DEFAULT 0,
   FOREIGN KEY (MaPhong) REFERENCES Phong(MaPhong) ON DELETE CASCADE
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-IF NOT EXISTS (SELECT 1 FROM BaoTri_SuCo WHERE MaPhong = 1 AND MoTaSuCo = N'Hư vòi nước')
 INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, TrangThai, ChiPhi)
 VALUES
-(1, N'Hư vòi nước', N'Chưa xử lý', 0),
-(2, N'Rò rỉ điện', N'Đang xử lý', 0),
-(3, N'Máy lạnh hỏng', N'Hoàn tất', 300000),
-(4, N'Cửa bị kẹt', N'Chưa xử lý', 0),
-(5, N'Nước yếu', N'Đang xử lý', 0);
-GO
+(1, 'Hư vòi nước', 'Chưa xử lý', 0),
+(2, 'Rò rỉ điện', 'Đang xử lý', 0),
+(3, 'Máy lạnh hỏng', 'Hoàn tất', 300000),
+(4, 'Cửa bị kẹt', 'Chưa xử lý', 0),
+(5, 'Nước yếu', 'Đang xử lý', 0);
 
--- ===================== Bảng ThanhToan (Logic tính toán tự động) =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ThanhToan]') AND type in (N'U'))
+-- ===================== Bảng ThanhToan =====================
 CREATE TABLE ThanhToan (
-  MaThanhToan INT IDENTITY(1,1) PRIMARY KEY,
+  MaThanhToan INT AUTO_INCREMENT PRIMARY KEY,
   MaHopDong INT,
   ThangNam CHAR(7) NOT NULL,
-  
-  -- Các khoản phí cơ bản
   TienThue DECIMAL(18,0) DEFAULT 0,
+  TienDien DECIMAL(18,0) DEFAULT 0,
+  TienNuoc DECIMAL(18,0) DEFAULT 0,
   TienInternet DECIMAL(18,0) DEFAULT 0,
   TienVeSinh DECIMAL(18,0) DEFAULT 0,
   TienGiuXe DECIMAL(18,0) DEFAULT 0,
   ChiPhiKhac DECIMAL(18,0) DEFAULT 0,
-  
-  -- Điện nước chi tiết
-  DonGiaDien DECIMAL(18,0) DEFAULT 3500,
-  DonGiaNuoc DECIMAL(18,0) DEFAULT 100000, -- Giả định đây là phí nước cố định
-  
-  -- Chỉ số điện nước
-  ChiSoDienCu DECIMAL(18,2) DEFAULT NULL,
-  ChiSoDienMoi DECIMAL(18,2) DEFAULT NULL,
-  SoNuoc DECIMAL(18,2) DEFAULT 1, -- Cố định 1 (đánh dấu đã tính tiền nước)
-
-  -- Tiền điện nước được tính tự động
-  SoDien AS (CASE 
-                  WHEN ChiSoDienMoi IS NOT NULL AND ChiSoDienCu IS NOT NULL AND ChiSoDienMoi >= ChiSoDienCu 
-                  THEN ChiSoDienMoi - ChiSoDienCu 
-                  ELSE NULL 
-                END),
-  TienDien AS (CAST(CASE 
-                          WHEN (ChiSoDienMoi - ChiSoDienCu) > 0 
-                          THEN (ChiSoDienMoi - ChiSoDienCu) * ISNULL(DonGiaDien, 3500) 
-                          ELSE 0 
-                        END AS DECIMAL(18,0))) PERSISTED,
-  TienNuoc AS (CAST(ISNULL(DonGiaNuoc, 100000) AS DECIMAL(18,0))) PERSISTED,
-  
-  -- Tổng tiền được tính tự động
-  TongTien AS (
-    COALESCE(TienThue, 0) + 
-    COALESCE(TienDien, 0) + 
-    COALESCE(TienNuoc, 0) + 
-    COALESCE(TienInternet, 0) + 
-    COALESCE(TienVeSinh, 0) + 
-    COALESCE(TienGiuXe, 0) + 
-    COALESCE(ChiPhiKhac, 0)
-  ) PERSISTED,
-  
-  TrangThaiThanhToan VARCHAR(20) DEFAULT N'Chưa trả' CHECK (TrangThaiThanhToan IN (N'Chưa trả', N'Đã trả')),
+  DonGiaDien DECIMAL(18,0) DEFAULT NULL,
+  DonGiaNuoc DECIMAL(18,0) DEFAULT NULL,
+  SoDien DECIMAL(18,0) DEFAULT NULL,
+  SoNuoc DECIMAL(18,0) DEFAULT NULL,
+  TongTien DECIMAL(18,0) GENERATED ALWAYS AS (
+    COALESCE(TienThue, 0) + COALESCE(TienDien, 0) + COALESCE(TienNuoc, 0) + 
+    COALESCE(TienInternet, 0) + COALESCE(TienVeSinh, 0) + COALESCE(TienGiuXe, 0) + COALESCE(ChiPhiKhac, 0)
+  ) STORED,
+  TrangThaiThanhToan ENUM('Chưa trả','Đã trả') DEFAULT 'Chưa trả',
   NgayThanhToan DATE,
-  NgayTao DATETIME DEFAULT GETDATE(),
-  GhiChu VARCHAR(500),
-  
-  FOREIGN KEY (MaHopDong) REFERENCES HopDong(MaHopDong) ON DELETE CASCADE,
-  
-  -- Đảm bảo không có 2 thanh toán cùng tháng cho 1 hợp đồng
-  UNIQUE (MaHopDong, ThangNam),
-  
-  -- Đảm bảo chỉ số điện mới phải lớn hơn hoặc bằng chỉ số cũ
-  CONSTRAINT CK_ChiSoDienHopLe CHECK (ChiSoDienMoi IS NULL OR ChiSoDienCu IS NULL OR ChiSoDienMoi >= ChiSoDienCu)
-);
-GO
+  FOREIGN KEY (MaHopDong) REFERENCES HopDong(MaHopDong) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insert dữ liệu mẫu cho ThanhToan
--- (Không cần INSERT các cột tính toán như TienDien, TienNuoc, TongTien)
-IF NOT EXISTS (SELECT 1 FROM ThanhToan WHERE MaHopDong = 1 AND ThangNam = '01/2025')
-INSERT INTO ThanhToan (
-    MaHopDong, ThangNam, TienThue, TienInternet, TienVeSinh, TienGiuXe, 
-    ChiSoDienCu, ChiSoDienMoi, ChiPhiKhac, TrangThaiThanhToan, NgayThanhToan, GhiChu
-)
+INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienDien, TienNuoc, TienInternet, TienVeSinh, TienGiuXe, ChiPhiKhac, DonGiaDien, DonGiaNuoc, SoDien, SoNuoc, TrangThaiThanhToan, NgayThanhToan)
 VALUES
--- TongTien tự tính = 3000k (Thuê) + (150-100)*3500 (Điện) + 100k (Nước) + 100k (Net) + 50k (VS) + 100k (Xe) = 3,525,000
-(1, '01/2025', 3000000, 100000, 50000, 100000, 100, 150, 0, N'Đã trả', '2025-01-05', N'Thanh toán đầy đủ'),
--- TongTien tự tính = 3500k (Thuê) + (200-150)*3500 (Điện) + 100k (Nước) + 100k (Net) + 60k (VS) + 120k (Xe) = 4,055,000
-(2, '02/2025', 3500000, 100000, 60000, 120000, 150, 200, 0, N'Đã trả', '2025-02-05', N'Khách hàng mới'),
--- TongTien tự tính = 3800k (Thuê) + (180-130)*3500 (Điện) + 100k (Nước) + 100k (Net) + 50k (VS) + 100k (Xe) + 50k (Khác) = 4,375,000
-(3, '03/2025', 3800000, 100000, 50000, 100000, 130, 180, 50000, N'Chưa trả', NULL, N'Có chi phí phát sinh'),
--- TongTien tự tính = 4000k (Thuê) + (220-180)*3500 (Điện) + 100k (Nước) + 100k (Net) + 60k (VS) + 120k (Xe) = 4,520,000
-(4, '04/2025', 4000000, 100000, 60000, 120000, 180, 220, 0, N'Chưa trả', NULL, N'Chờ xác nhận'),
--- TongTien tự tính = 4500k (Thuê) + (250-200)*3500 (Điện) + 100k (Nước) + 100k (Net) + 60k (VS) + 120k (Xe) + 100k (Khác) = 5,155,000
-(5, '05/2025', 4500000, 100000, 60000, 120000, 200, 250, 100000, N'Đã trả', '2025-05-06', N'Có chi phí sửa chữa');
-GO
-
--- ===================== Bảng GoogleFormLog (Từ script SQL Server) =====================
-IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[GoogleFormLog]') AND type in (N'U'))
-CREATE TABLE GoogleFormLog (
-    MaLog INT IDENTITY(1,1) PRIMARY KEY,
-    RoomName VARCHAR(50) NOT NULL,
-    ElectricImageUrl VARCHAR(500),
-    SubmittedValue DECIMAL(18,2),
-    ExtractedValue DECIMAL(18,2),
-    IsValid BIT DEFAULT 0, -- T-SQL dùng BIT (0=FALSE, 1=TRUE)
-    ErrorMessage VARCHAR(500),
-    Timestamp DATETIME DEFAULT GETDATE(),
-    Processed BIT DEFAULT 0
-);
-GO
+-- TongTien sẽ tự động tính: 3000000 + 200000 + 100000 + 100000 + 50000 + 100000 + 0 = 3650000
+(1, '01/2025', 3000000, 200000, 100000, 100000, 50000, 100000, 0, NULL, NULL, NULL, NULL, 'Đã trả', '2025-01-05'),
+-- TongTien sẽ tự động tính: 3500000 + 250000 + 120000 + 100000 + 60000 + 120000 + 0 = 4200000
+(2, '02/2025', 3500000, 250000, 120000, 100000, 60000, 120000, 0, NULL, NULL, NULL, NULL, 'Đã trả', '2025-02-05'),
+-- TongTien sẽ tự động tính: 3800000 + 200000 + 100000 + 100000 + 50000 + 100000 + 0 = 4450000
+(3, '03/2025', 3800000, 200000, 100000, 100000, 50000, 100000, 0, NULL, NULL, NULL, NULL, 'Chưa trả', NULL),
+-- TongTien sẽ tự động tính: 4000000 + 250000 + 120000 + 100000 + 60000 + 120000 + 0 = 4700000
+(4, '04/2025', 4000000, 250000, 120000, 100000, 60000, 120000, 0, NULL, NULL, NULL, NULL, 'Chưa trả', NULL),
+-- TongTien sẽ tự động tính: 4500000 + 250000 + 120000 + 100000 + 60000 + 120000 + 0 = 5200000
+(5, '05/2025', 4500000, 250000, 120000, 100000, 60000, 120000, 0, NULL, NULL, NULL, NULL, 'Đã trả', '2025-05-06');

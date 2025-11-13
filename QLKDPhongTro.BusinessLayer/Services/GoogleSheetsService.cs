@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -39,7 +39,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
                 // Parse CSV
                 var lines = csvContent.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-
+                
                 if (lines.Length < 2) // Ít nhất phải có header và 1 dòng dữ liệu
                     return result;
 

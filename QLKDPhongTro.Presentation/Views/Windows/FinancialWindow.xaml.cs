@@ -1,4 +1,6 @@
+using System; // Thêm namespace này cho Exception
 using System.Windows;
+using System.Windows.Controls; // Thêm namespace cho Button, StackPanel
 using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -11,9 +13,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                // Khởi tạo ViewModel trước InitializeComponent để tránh binding errors
+                // Khởi tạo ViewModel trước InitializeComponent
                 _viewModel = new FinancialViewModel();
-                
+
                 // Subscribe to error events
                 _viewModel.ShowMessageRequested += (s, msg) =>
                 {
@@ -29,17 +31,20 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         // Ignore nếu dispatcher không sẵn sàng
                     }
                 };
-                
+
                 DataContext = _viewModel;
-                
+
                 InitializeComponent();
-                
-                // Load data sau khi window đã load xong để tránh blocking UI
+
+                // Load data sau khi window đã load xong
                 Loaded += async (s, e) =>
                 {
                     try
                     {
-                        await _viewModel.LoadDataAsync();
+                        if (_viewModel != null)
+                        {
+                            await _viewModel.LoadDataAsync();
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -49,7 +54,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi khởi tạo cửa sổ Quản lý Tài chính:\n{ex.Message}\n\nChi tiết:\n{ex.StackTrace}", 
+                MessageBox.Show($"Lỗi khi khởi tạo cửa sổ Quản lý Tài chính:\n{ex.Message}\n\nChi tiết:\n{ex.StackTrace}",
                     "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 try
                 {
@@ -57,35 +62,29 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 }
                 catch
                 {
-                    // Ignore nếu không thể close
+                    // Ignore
                 }
             }
         }
 
+        // Event cũ ScanImageButton_Click đã bỏ vì thay bằng Command trong ViewModel, 
+        // nhưng nếu XAML vẫn còn sự kiện Click="ScanImageButton_Click" thì giữ lại hàm này để tránh lỗi biên dịch.
+        // Nếu đã xóa Click="..." trong XAML thì có thể xóa hàm này.
         private async void ScanImageButton_Click(object sender, RoutedEventArgs e)
         {
             if (_viewModel == null) return;
-            
-            try
+
+            // Gọi Command xử lý Google Form thay vì mở cửa sổ quét ảnh cũ
+            if (_viewModel.ProcessDebtsFromGoogleFormCommand.CanExecute(null))
             {
-                var dialog = new ScanImageView();
-                dialog.Owner = this;
-                if (dialog.ShowDialog() == true)
-                {
-                    // Refresh data sau khi quét ảnh thành công
-                    await _viewModel.LoadDataAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi mở cửa sổ quét ảnh: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                _viewModel.ProcessDebtsFromGoogleFormCommand.Execute(null);
             }
         }
 
         private async void ManualInputButton_Click(object sender, RoutedEventArgs e)
         {
             if (_viewModel == null) return;
-            
+
             try
             {
                 var dialog = new ManualInputView();
@@ -104,7 +103,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void ViewDetail_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (_viewModel != null && sender is System.Windows.FrameworkElement element && element.DataContext is BusinessLayer.DTOs.FinancialRecordDto record)
+            if (_viewModel != null && sender is FrameworkElement element && element.DataContext is BusinessLayer.DTOs.FinancialRecordDto record)
             {
                 _viewModel.ViewDetailCommand?.Execute(record);
             }
@@ -112,7 +111,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void Card_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (sender is System.Windows.Controls.Border border)
+            if (sender is Border border)
             {
                 border.Effect = new System.Windows.Media.Effects.DropShadowEffect
                 {
@@ -126,7 +125,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void Card_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (sender is System.Windows.Controls.Border border)
+            if (sender is Border border)
             {
                 border.Effect = new System.Windows.Media.Effects.DropShadowEffect
                 {
@@ -140,7 +139,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void PageNumber_Click(object sender, RoutedEventArgs e)
         {
-            if (_viewModel != null && sender is System.Windows.Controls.Button button && button.Content is int pageNumber)
+            if (_viewModel != null && sender is Button button && button.Content is int pageNumber)
             {
                 _viewModel.CurrentPage = pageNumber;
             }
@@ -151,7 +150,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             if (_viewModel != null)
             {
                 _viewModel.CurrentView = "AllRecords";
-                UpdateViewButtons(sender as System.Windows.Controls.Button);
+                UpdateViewButtons(sender as Button);
             }
         }
 
@@ -160,7 +159,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             if (_viewModel != null)
             {
                 _viewModel.CurrentView = "Debts";
-                UpdateViewButtons(sender as System.Windows.Controls.Button);
+                UpdateViewButtons(sender as Button);
             }
         }
 
@@ -169,26 +168,31 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             if (_viewModel != null)
             {
                 _viewModel.CurrentView = "Reports";
-                UpdateViewButtons(sender as System.Windows.Controls.Button);
+                UpdateViewButtons(sender as Button);
             }
         }
 
-        private void UpdateViewButtons(System.Windows.Controls.Button? activeButton)
+        private void UpdateViewButtons(Button? activeButton)
         {
             // Tìm tất cả các button trong StackPanel
-            if (activeButton?.Parent is System.Windows.Controls.StackPanel panel)
+            if (activeButton?.Parent is StackPanel panel)
             {
                 foreach (var child in panel.Children)
                 {
-                    if (child is System.Windows.Controls.Button btn)
+                    if (child is Button btn)
                     {
+                        // SỬA LỖI: Cập nhật tên Style mới khớp với file XAML hiện tại
                         if (btn == activeButton)
                         {
-                            btn.Style = (System.Windows.Style)FindResource("ActiveSecondarySegmentStyle");
+                            // Style khi đang Active
+                            var activeStyle = FindResource("ModernActiveSegmentButton") as Style;
+                            if (activeStyle != null) btn.Style = activeStyle;
                         }
                         else
                         {
-                            btn.Style = (System.Windows.Style)FindResource("SecondarySegmentStyle");
+                            // Style khi bình thường
+                            var normalStyle = FindResource("ModernSegmentButton") as Style;
+                            if (normalStyle != null) btn.Style = normalStyle;
                         }
                     }
                 }
@@ -196,5 +200,3 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         }
     }
 }
-
-

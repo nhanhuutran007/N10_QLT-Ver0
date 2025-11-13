@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.BusinessLayer.Services;
@@ -79,6 +79,31 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 new RentedRoomRepository(),
                 new TenantRepository()
             );
+        }
+
+        public async Task<RecentTenantInfoDto?> GetMostRecentTenantInfoAsync()
+        {
+            var result = await _contractRepository.GetMostRecentTenantWithDepositAsync();
+            if (result == null) return null;
+            return new RecentTenantInfoDto
+            {
+                MaNguoiThue = result.Value.MaNguoiThue,
+                HoTen = result.Value.HoTen,
+                TienCoc = result.Value.TienCoc,
+                TrangThai = result.Value.TrangThai
+            };
+        }
+
+        public async Task<List<RecentTenantInfoDto>> GetMostRecentTenantsInfoAsync(int count)
+        {
+            var list = await _contractRepository.GetMostRecentTenantsWithDepositAsync(count);
+            return list.Select(x => new RecentTenantInfoDto
+            {
+                MaNguoiThue = x.MaNguoiThue,
+                HoTen = x.HoTen,
+                TienCoc = x.TienCoc,
+                TrangThai = x.TrangThai
+            }).ToList();
         }
 
         /// <summary>
@@ -507,43 +532,77 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var currentYear = nam ?? DateTime.Now.Year;
             var allPayments = await _paymentRepository.GetAllAsync();
 
-            var yearlyPayments = allPayments.Where(p =>
-                !string.IsNullOrEmpty(p.ThangNam) && p.ThangNam.EndsWith($"/{currentYear}"));
-
-            var stats = new FinancialStatsDto
+            // Nếu có tham số năm, lọc theo năm, nếu không dùng toàn bộ dữ liệu
+            IEnumerable<DataLayer.Models.Payment> scopePayments = allPayments;
+            if (nam.HasValue)
             {
-                TongThuNhap = yearlyPayments.Where(p => p.TrangThaiThanhToan == "Đã trả")
-                                            .Sum(p => p.TongTien),
-                TongChiPhi = yearlyPayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
-                                           (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
-                                           (p.TienGiuXe ?? 0) + (p.ChiPhiKhac ?? 0)),
-                TongCongNo = yearlyPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả")
-                                          .Sum(p => p.TongTien),
-                SoPhongNo = yearlyPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả")
-                                         .Select(p => p.MaHopDong).Distinct().Count()
-            };
+                scopePayments = allPayments.Where(p =>
+                    !string.IsNullOrEmpty(p.ThangNam) && p.ThangNam.EndsWith($"/{currentYear}"));
+            }
+
+            var stats = new FinancialStatsDto();
+
+            // Tổng thu nhập: tổng TongTien các khoản đã trả
+            stats.TongThuNhap = scopePayments
+                .Where(p => string.Equals(p.TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
+                .Sum(p => p.TongTien);
+
+            // Tổng chi phí: cộng các khoản chi phí trong phạm vi
+            stats.TongChiPhi = scopePayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
+                                                      (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
+                                                      (p.TienGiuXe ?? 0) + (p.ChiPhiKhac ?? 0));
+
+            // Tổng công nợ: các khoản chưa trả
+            stats.TongCongNo = scopePayments
+                .Where(p => string.Equals(p.TrangThaiThanhToan, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+                .Sum(p => p.TongTien);
+
+            // Số phòng nợ: số hợp đồng có khoản nợ trong phạm vi
+            stats.SoPhongNo = scopePayments
+                .Where(p => string.Equals(p.TrangThaiThanhToan, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+                .Select(p => p.MaHopDong)
+                .Distinct()
+                .Count();
+
+            // Số khách đang thuê: đếm khách có hợp đồng TrangThai = "Hiệu lực" (một khách có nhiều HĐ vẫn tính 1)
+            var activeContracts = await _contractRepository.GetActiveContractsAsync();
+            var validActiveTenants = activeContracts
+                .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
+                .Select(c => c.MaNguoiThue)
+                .Distinct()
+                .Count();
+            stats.SoKhachDangThue = validActiveTenants;
+
+            // Số phòng đang thuê: đếm phòng có trạng thái "Đang thuê"
+            var roomsAll = await _roomRepository.GetAllAsync();
+            stats.SoPhongDangThue = roomsAll
+                .Count(r => string.Equals(r.TrangThai, "Đang thuê", StringComparison.OrdinalIgnoreCase));
 
             stats.LoiNhuan = stats.TongThuNhap - stats.TongChiPhi;
             stats.TyLeLoiNhuan = stats.TongThuNhap > 0 ? (stats.LoiNhuan / stats.TongThuNhap) * 100 : 0;
 
-            // Thống kê theo tháng
-            for (int month = 1; month <= 12; month++)
+            // Thống kê theo tháng chỉ khi có tham số năm
+            if (nam.HasValue)
             {
-                var monthStr = month.ToString().PadLeft(2, '0');
-                var monthlyPayments = yearlyPayments.Where(p => p.ThangNam.StartsWith($"{monthStr}/"));
-
-                var monthlyStat = new MonthlyStatsDto
+                for (int month = 1; month <= 12; month++)
                 {
-                    ThangNam = $"{monthStr}/{currentYear}",
-                    ThuNhap = monthlyPayments.Where(p => p.TrangThaiThanhToan == "Đã trả")
-                                            .Sum(p => p.TongTien),
-                    ChiPhi = monthlyPayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
-                                             (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
-                                             (p.TienGiuXe ?? 0) + (p.ChiPhiKhac ?? 0))
-                };
-                monthlyStat.LoiNhuan = monthlyStat.ThuNhap - monthlyStat.ChiPhi;
+                    var monthStr = month.ToString().PadLeft(2, '0');
+                    var monthlyPayments = scopePayments.Where(p => p.ThangNam != null && p.ThangNam.StartsWith($"{monthStr}/"));
 
-                stats.ThongKeTheoThang.Add(monthlyStat);
+                    var monthlyStat = new MonthlyStatsDto
+                    {
+                        ThangNam = $"{monthStr}/{currentYear}",
+                        ThuNhap = monthlyPayments
+                            .Where(p => string.Equals(p.TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
+                            .Sum(p => p.TongTien),
+                        ChiPhi = monthlyPayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
+                                                     (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
+                                                     (p.TienGiuXe ?? 0) + (p.ChiPhiKhac ?? 0))
+                    };
+                    monthlyStat.LoiNhuan = monthlyStat.ThuNhap - monthlyStat.ChiPhi;
+
+                    stats.ThongKeTheoThang.Add(monthlyStat);
+                }
             }
 
             return stats;
@@ -555,7 +614,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
         {
             var normalized = (trangThaiChuan ?? string.Empty).Trim();
-
+            
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: MaThanhToan={maThanhToan}, Input trangThaiChuan='{trangThaiChuan}', Normalized='{normalized}'");
+            
             if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
             {
@@ -568,12 +630,20 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Before update - TrangThaiThanhToan='{payment.TrangThaiThanhToan}'");
+
             var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
             payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
             payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
 
-            var success = await _paymentRepository.UpdateAsync(payment);
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: After set - TrangThaiThanhToan='{payment.TrangThaiThanhToan}', NgayThanhToan={payment.NgayThanhToan}");
 
+            var success = await _paymentRepository.UpdateAsync(payment);
+            
+            // Debug logging
+            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Update result = {success}");
             return new ValidationResult(success,
                 success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại");
         }

@@ -3,21 +3,57 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.ViewModels;
+using System.Threading.Tasks;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class ReportWindow : Window
     {
+        private FinancialDashboardViewModel? _viewModel;
         public ReportWindow()
         {
             InitializeComponent();
-            if (this.DataContext == null)
-            {
-                this.DataContext = new DashboardViewModel();
-            }
+            // Sử dụng ViewModel tài chính có kết nối Controller/Repository
+            _viewModel = new FinancialDashboardViewModel();
+            this.DataContext = _viewModel;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.MinHeight = 600;
             this.MinWidth = 800;
+
+            // Sự kiện vòng đời
+            this.Loaded += ReportWindow_Loaded;
+            this.Closed += ReportWindow_Closed;
+
+            // Đăng ký các sự kiện từ ViewModel để hiển thị thông báo
+            if (_viewModel != null)
+            {
+                _viewModel.ShowMessageRequested += ViewModel_ShowMessageRequested;
+            }
+        }
+
+        private async void ReportWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel != null)
+            {
+                // Tải dữ liệu ban đầu
+                await _viewModel.InitializeAsync();
+            }
+        }
+
+        private void ReportWindow_Closed(object? sender, EventArgs e)
+        {
+            if (_viewModel != null)
+            {
+                _viewModel.ShowMessageRequested -= ViewModel_ShowMessageRequested;
+            }
+        }
+
+        private void ViewModel_ShowMessageRequested(object? sender, string e)
+        {
+            if (!string.IsNullOrWhiteSpace(e))
+            {
+                MessageBox.Show(e, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
 
@@ -32,6 +68,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             // Logic search chung đã được chuyển vào TopbarControl.xaml.cs
             // Chỉ xử lý search logic riêng của ReportWindow nếu cần
+            if (_viewModel != null)
+            {
+                _viewModel.SearchText = searchText ?? string.Empty;
+                _ = _viewModel.SearchDebtsAsync();
+            }
         }
 
         private void TopbarControl_SettingsButtonClicked(object sender, EventArgs e)

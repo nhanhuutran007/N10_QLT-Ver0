@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -122,7 +123,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public MaintenanceListViewModel()
         {
-            _controller = new MaintenanceController(new MaintenanceRepository());
+            var maintenanceRepo = new MaintenanceRepository();
+            var roomRepo = new RentedRoomRepository();
+            _controller = new MaintenanceController(maintenanceRepo, null, roomRepo);
             EditCommand = new RelayCommand<MaintenanceIncidentViewModel>(EditRow);
             SaveCommand = new RelayCommand<MaintenanceIncidentViewModel>(async item => await SaveRow(item));
             CancelCommand = new RelayCommand<MaintenanceIncidentViewModel>(CancelRow);
@@ -134,42 +137,59 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public async Task LoadDataAsync()
         {
-            try
-            {
-                // Đồng bộ dữ liệu từ Google Sheets trước khi load
-                var addedCount = await _controller.SyncFromGoogleSheetsAsync();
-                if (addedCount > 0)
-                {
-                    // Có thể hiển thị thông báo nếu muốn
-                    System.Diagnostics.Debug.WriteLine($"Đã thêm {addedCount} bảo trì mới từ Google Sheets");
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log lỗi nhưng không chặn việc load dữ liệu từ database
-                System.Diagnostics.Debug.WriteLine($"Lỗi đồng bộ Google Sheets: {ex.Message}");
-                // Có thể hiển thị thông báo cho người dùng nếu cần
-                System.Windows.MessageBox.Show(
-                    $"Không thể đồng bộ từ Google Sheets: {ex.Message}\nVui lòng kiểm tra kết nối internet và quyền truy cập sheet.",
-                    "Cảnh báo",
-                    System.Windows.MessageBoxButton.OK,
-                    System.Windows.MessageBoxImage.Warning);
-            }
+            // 1) Luôn hiển thị dữ liệu cục bộ trước để UI phản hồi nhanh
+            await RefreshFromDbAsync();
 
-            // Load dữ liệu từ database
-            var data = await _controller.GetAllAsync();
-            _allMaintenances = new List<MaintenanceIncidentViewModel>();
-            foreach (var i in data)
-                _allMaintenances.Add(new MaintenanceIncidentViewModel
+            // 2) Chạy đồng bộ Google Sheets ở nền với timeout + retry (không chặn UI)
+            _ = Task.Run(async () =>
+            {
+                const int maxRetries = 2;
+                var delayBetweenRetriesMs = 1500;
+                var syncTimeout = TimeSpan.FromSeconds(30);
+
+                for (int attempt = 0; attempt <= maxRetries; attempt++)
                 {
-                    MaSuCo = i.MaSuCo,
-                    MaPhong = i.MaPhong,
-                    MoTaSuCo = i.MoTaSuCo,
-                    NgayBaoCao = i.NgayBaoCao,
-                    TrangThai = i.TrangThai,
-                    ChiPhi = i.ChiPhi
-                });
-            // Reset trang nếu ngoài phạm vi
+                    try
+                    {
+                        // Áp timeout cho tác vụ đồng bộ ngay cả khi controller không hỗ trợ token
+                        var syncTask = _controller.SyncFromGoogleSheetsAsync();
+                        var completed = await Task.WhenAny(syncTask, Task.Delay(syncTimeout)) == syncTask;
+                        if (!completed)
+                            throw new TimeoutException("Đồng bộ Google Sheets quá thời gian chờ");
+
+                        var addedCount = await syncTask; // đã xong, lấy kết quả thực
+                        if (addedCount > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Đã thêm {addedCount} bảo trì mới từ Google Sheets");
+                            // Tải lại dữ liệu và cập nhật UI
+                            await RefreshFromDbAsync();
+                        }
+                        break; // thành công hoặc không có dữ liệu mới -> thoát retry
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Lỗi đồng bộ Google Sheets (lần {attempt + 1}): {ex.Message}");
+                        if (attempt == maxRetries) break; // dừng sau lần cuối
+                        await Task.Delay(delayBetweenRetriesMs);
+                    }
+                }
+            });
+        }
+
+        private async Task RefreshFromDbAsync()
+        {
+            var data = await _controller.GetAllAsync();
+            _allMaintenances = data.Select(i => new MaintenanceIncidentViewModel
+            {
+                MaSuCo = i.MaSuCo,
+                MaPhong = i.MaPhong,
+                MoTaSuCo = i.MoTaSuCo,
+                NgayBaoCao = i.NgayBaoCao,
+                TrangThai = i.TrangThai,
+                ChiPhi = i.ChiPhi
+            }).ToList();
+
+            // Reset trang và áp lại phân trang/sắp xếp trên thread UI
             PageIndex = 1;
             ApplySortAndPage();
         }

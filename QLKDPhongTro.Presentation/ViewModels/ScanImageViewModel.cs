@@ -8,7 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
-
+using QLKDPhongTro.Presentation.ViewModels.Base;
 namespace QLKDPhongTro.Presentation.ViewModels
 {
     public class ScanImageViewModel : INotifyPropertyChanged

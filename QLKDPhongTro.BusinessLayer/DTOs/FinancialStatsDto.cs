@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
@@ -10,9 +10,11 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal LoiNhuan { get; set; }
         public decimal TongCongNo { get; set; }
         public int SoPhongNo { get; set; }
+        public int SoKhachDangThue { get; set; }
         public decimal TangTruongThuNhap { get; set; }
         public decimal TangTruongChiPhi { get; set; }
         public decimal TyLeLoiNhuan { get; set; }
+        public int SoPhongDangThue { get; set; }
 
         // Thống kê theo thời gian
         public List<MonthlyStatsDto> ThongKeTheoThang { get; set; } = new List<MonthlyStatsDto>();

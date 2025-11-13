@@ -18,15 +18,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 return _connectionString;
 
             // ===== CẤU HÌNH KẾT NỐI MYSQL =====
-            string server = "localhost";
+            string server = "127.0.0.1";
             string database = "database_v2";
             string username = "root";
             string password = "";
             string port = "3306";
             
             // Thêm charset=utf8mb4 để đảm bảo MySQL nhận diện đúng ký tự tiếng Việt trong ENUM
-            // Thêm ConnectionTimeout=10 và CommandTimeout=30 để tránh đơ khi database không phản hồi
-            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;ConnectionTimeout=10;DefaultCommandTimeout=30;";
+            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;";
             
             return _connectionString;
         }

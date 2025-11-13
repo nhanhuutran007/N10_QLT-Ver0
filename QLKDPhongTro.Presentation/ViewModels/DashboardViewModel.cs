@@ -1,14 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.Presentation.Views.Windows;
+// Bỏ using QLKDPhongTro.Presentation.ViewModels.Base;
 using System.Collections.ObjectModel;
+using System.Linq; // 👈 THÊM VÀO
 using System.Windows;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class DashboardViewModel : ViewModelBase
+    // 1. SỬA LỖI: Thay "ViewModelBase" bằng "ObservableObject"
+    public partial class DashboardViewModel : ObservableObject
     {
-        // Các thuộc tính thống kê
+        // Các thuộc tính thống kê (Bây giờ sẽ hoạt động)
         [ObservableProperty]
         private int _totalRooms = 24;
 
@@ -44,6 +47,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private void InitializeNotifications()
         {
+            // 'Notifications' (property) đã được tự động sinh ra
             Notifications = new ObservableCollection<NotificationItem>
             {
                 new NotificationItem
@@ -82,7 +86,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             var rentedRoomWindow = new RoomWindow();
             rentedRoomWindow.Show();
-            // Close the current dashboard window
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
 
@@ -91,9 +94,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             var tenantWindow = new TenantManagementWindow();
             tenantWindow.Show();
-            // Close the current dashboard window
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
+
         [RelayCommand]
         private void NavigateToFinances()
         {
@@ -101,6 +104,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             financialWindow.Show();
             Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w.DataContext == this)?.Close();
         }
+
         [RelayCommand]
         private void NavigateToBills()
         {
@@ -110,7 +114,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToContracts()
         {
-            // Lấy cửa sổ Dashboard hiện tại
             var dashboard = Application.Current.Windows
                 .OfType<Window>()
                 .FirstOrDefault(w => w.DataContext is DashboardViewModel);
@@ -121,18 +124,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            // Ẩn Dashboard
             dashboard.Hide();
 
-            // Mở cửa sổ Hợp đồng
             var contractWindow = new ContractManagementWindow
             {
-                Owner = dashboard, // 👈 Gắn Owner là Dashboard
+                Owner = dashboard,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 ShowInTaskbar = true
             };
 
-            // Khi cửa sổ Hợp đồng đóng → hiện lại Dashboard
             contractWindow.Closed += (s, e) =>
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -142,7 +142,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 });
             };
 
-            // Mở theo kiểu không chặn UI
             contractWindow.Show();
         }
 
@@ -155,12 +154,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void Logout()
         {
-            var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất", 
+            var result = MessageBox.Show("Bạn có chắc chắn muốn đăng xuất?", "Xác nhận đăng xuất",
                 MessageBoxButton.YesNo, MessageBoxImage.Question);
-            
+
             if (result == MessageBoxResult.Yes)
             {
-                // Logic đăng xuất sẽ được triển khai ở đây
+                // Logic đăng xuất
                 Application.Current.Shutdown();
             }
         }
