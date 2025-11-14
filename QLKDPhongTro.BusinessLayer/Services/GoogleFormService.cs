@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Apis.Drive.v3; // <-- THÊM DÒNG NÀY
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
@@ -14,16 +15,15 @@ namespace QLKDPhongTro.BusinessLayer.Services
     public class GoogleFormService
     {
         private readonly SheetsService _sheetsService;
-
+        public DriveService DriveService { get; }
         // ID file Google Sheet của bạn (giữ nguyên)
         private const string SPREADSHEET_ID = "1TXLdDe8aYi41_RJj8ZseOi12xcA4CvFuNmOoMSiw5vw";
 
-        // === SỬA LỖI TẠI ĐÂY ===
-        // 1. Thêm dấu nháy đơn '...' bao quanh tên sheet
-        // 2. Thêm !A:F để lấy dữ liệu từ cột A đến F
-        // Sửa lại đúng chính tả và thêm !A:F
-        // Sửa lại đúng tên Sheet và thêm !A:F
-        private const string SHEET_RANGE = "ElectricReport";
+        // === FIX 1 ===
+        // Sửa lại range theo đúng cú pháp A1 (Tên Sheet + Dải ô)
+        // Thêm dấu nháy đơn '...' để hỗ trợ tên sheet có dấu cách
+        // Thêm !A:F để lấy dữ liệu từ cột A đến F
+        private const string SHEET_RANGE = "'ElectricReport'!A:F";
 
         public GoogleFormService()
         {
@@ -33,6 +33,14 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 HttpClientInitializer = credential,
                 ApplicationName = "QLKDPhongTro"
             });
+
+            // <-- THÊM KHỐI NÀY ĐỂ KHỞI TẠO DRIVE SERVICE -->
+            DriveService = new DriveService(new BaseClientService.Initializer()
+            {
+                HttpClientInitializer = credential,
+                ApplicationName = "QLKDPhongTro"
+            });
+            // ------------------------------------------------
         }
 
         private GoogleCredential GetCredential()
@@ -50,7 +58,11 @@ namespace QLKDPhongTro.BusinessLayer.Services
             {
                 using var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read);
                 return GoogleCredential.FromStream(stream)
-                    .CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
+                    // === FIX: THÊM QUYỀN DRIVE VÀO ĐÂY ===
+                    .CreateScoped(
+                        SheetsService.Scope.SpreadsheetsReadonly,
+                        DriveService.Scope.DriveReadonly
+                    );
             }
             catch (Exception ex)
             {
@@ -68,6 +80,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 var rangeToUse = string.IsNullOrEmpty(range) ? SHEET_RANGE : range;
 
                 // Nếu range truyền vào chưa có dấu nháy đơn mà có dấu cách, tự động sửa (Optional)
+                // Logic này đã OK vì range mặc định (SHEET_RANGE) đã có dấu nháy đơn
                 if (!rangeToUse.StartsWith("'") && rangeToUse.Contains(" ") && rangeToUse.Contains("!"))
                 {
                     var parts = rangeToUse.Split('!');
@@ -96,7 +109,12 @@ namespace QLKDPhongTro.BusinessLayer.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi đọc Google Sheet: {ex.Message}");
+                // Báo lỗi chi tiết hơn nếu range sai
+                if (ex.Message.Contains("Unable to parse range"))
+                {
+                    throw new Exception($"Lỗi đọc Google Sheet: Dải ô (Range) '{SHEET_RANGE}' không hợp lệ. Vui lòng kiểm tra lại tên Sheet.", ex);
+                }
+                throw new Exception($"Lỗi đọc Google Sheet: {ex.Message}", ex);
             }
 
             return debtData;
@@ -139,6 +157,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
         private static decimal ParseDecimal(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
+            // Xử lý cả dấu phẩy (từ Google Form) và dấu chấm
             value = value.Replace(",", ".");
             return decimal.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0;
         }
@@ -148,14 +167,18 @@ namespace QLKDPhongTro.BusinessLayer.Services
             // Gọi hàm đọc với Range mặc định đã sửa
             var rawData = await ReadDebtDataFromGoogleSheetAsync(SPREADSHEET_ID, SHEET_RANGE);
 
+            // === FIX 2 ===
+            // 'item' là một DebtCreationDto, nó không chứa 'OldElectricValue'.
+            // OldElectricValue sẽ được gán giá trị 0 (mặc định)
+            // và sẽ được dịch vụ DebtProcessingService cập nhật sau từ DB.
             return rawData.Select(item => new DebtFormData
             {
                 Timestamp = item.Timestamp,
                 Email = item.Email,
                 RoomName = item.RoomName,
                 ElectricImageUrl = item.ElectricImageUrl,
-                OldElectricValue = item.OldElectricValue,
                 CurrentElectricValue = item.CurrentElectricValue
+       
             }).ToList();
         }
     }

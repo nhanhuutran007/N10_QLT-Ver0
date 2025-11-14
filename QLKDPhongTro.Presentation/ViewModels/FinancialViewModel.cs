@@ -38,7 +38,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private bool _isFiltering = false;
         private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _filterSemaphore = new SemaphoreSlim(1, 1);
-
+        private bool _isProcessingGoogleForm = false;
         // Thêm property để lưu trữ thông tin chi tiết sự cố
         private DebtDiscrepancyInfo? _selectedDebtDiscrepancy;
         public DebtDiscrepancyInfo? SelectedDebtDiscrepancy
@@ -583,6 +583,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task ProcessDebtsFromGoogleFormAsync()
         {
+            _isProcessingGoogleForm = true;
             try
             {
                 IsLoading = true;
@@ -631,7 +632,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         TrangThaiThanhToan = "Chờ duyệt",
                         GhiChu = "Số liệu khớp",
                         SoDienThoai = item.Email, // Giữ nguyên số điện thoại thực từ database
-                        ComparisonInfo = $"Giá trị: {item.CurrentElectricValue}" // HIỂN THỊ ĐÚNG THÔNG TIN
+                        //ComparisonInfo = $"Giá trị: {item.CurrentElectricValue}" // HIỂN THỊ ĐÚNG THÔNG TIN
+                        ComparisonInfo = $"Giá trị: {item.OcrValue}"
                     });
                 }
 
@@ -668,6 +670,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             finally
             {
                 IsLoading = false;
+                _isProcessingGoogleForm = false;
             }
         }
 
@@ -1209,6 +1212,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task LoadViewDataAsync()
         {
+            if (_isProcessingGoogleForm && _currentView == "Debts")
+            {
+                return;
+            }
             try
             {
                 if (_currentView == "Debts")

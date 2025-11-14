@@ -1,406 +1,449 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-// Ensure this namespace is accessible or classes are defined in a separate file
-using QLKDPhongTro.Presentation.Services;
+// Thư viện ImageSharp
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Drawing;
+using SixLabors.Fonts;
+using System.Diagnostics;
+using System.Globalization; // Cho CultureInfo
 
 namespace QLKDPhongTro.Presentation.Services
 {
     /// <summary>
-    /// Service sử dụng YOLOv9 để detect và đọc chỉ số đồng hồ điện/nước.
-    /// Đã tối ưu hóa bộ nhớ (LockBits + Unsafe) để tránh OutOfMemoryException.
+    /// Service YOLOv9 (Đã sửa logic theo data.yaml)
     /// </summary>
     public class YoloMeterReadingService : IDisposable
     {
         private InferenceSession? _session;
         private readonly string _modelPath;
-        private const int InputSize = 640; // Kích thước đầu vào chuẩn của YOLO
-        private readonly float _confidenceThreshold = 0.25f;
-        private readonly float _nmsThreshold = 0.45f;
+        private const int InputSize = 640;
 
-        // Class names cho các chữ số (0-9)
-        private readonly string[] _classNames = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+        // Ngưỡng từ Python
+        private readonly float _confidenceThreshold = 0.45f;
+        private readonly float _nmsThreshold = 0.85f;
+
+        // === FIX 1: Sửa lại mảng _classNames để khớp data.yaml (12 class) ===
+        private readonly string[] _classNames = {
+            ".", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "Kwh"
+        };
+
+        // 4 (xywh) + 12 (classes) = 16
+        private readonly int _numValuesPerBox = 16;
+        private readonly int _numClasses = 12;
 
         public YoloMeterReadingService(string? modelPath = null)
         {
-            // 1. Tìm đường dẫn model
             if (string.IsNullOrEmpty(modelPath))
             {
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 var possiblePaths = new[]
                 {
-                    Path.Combine(baseDir, "models", "yolov9n_meter_reading.onnx"),
-                    Path.Combine(baseDir, "yolov9n_meter_reading.onnx"),
-                    Path.Combine(Directory.GetCurrentDirectory(), "models", "yolov9n_meter_reading.onnx")
+                    @"C:\Users\User\Desktop\CNPM\N10_QLT-Ver0\QLKDPhongTro.Presentation\bin\Debug\net8.0-windows\models\yolov9n_meter_reading.onnx",
+                    System.IO.Path.Combine(baseDir, "models", "yolov9n_meter_reading.onnx"),
+                    System.IO.Path.Combine(baseDir, "yolov9n_meter_reading.onnx"),
                 };
-
-                _modelPath = possiblePaths.FirstOrDefault(File.Exists) ?? possiblePaths[0];
+                _modelPath = possiblePaths.FirstOrDefault(System.IO.File.Exists) ?? possiblePaths[0];
             }
-            else
-            {
-                _modelPath = modelPath;
-            }
+            else { _modelPath = modelPath; }
 
-            // 2. Khởi tạo Session
             InitializeSession();
         }
 
         private void InitializeSession()
         {
             if (_session != null) return;
-
-            if (File.Exists(_modelPath))
+            if (System.IO.File.Exists(_modelPath))
             {
                 try
                 {
-                    var options = new SessionOptions();
-                    // Tối ưu hóa graph để chạy nhanh hơn và ít tốn RAM hơn
-                    options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+                    var options = new SessionOptions { GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL };
                     _session = new InferenceSession(_modelPath, options);
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception($"Không thể load YOLOv9 model: {ex.Message}", ex);
+                    throw new Exception($"Không thể load YOLOv9 model tại {_modelPath}: {ex.Message}", ex);
                 }
+            }
+            else
+            {
+                throw new FileNotFoundException($"Model không tìm thấy tại {_modelPath}");
             }
         }
 
-        /// <summary>
-        /// Phân tích ảnh và trích xuất chỉ số
-        /// </summary>
+        // Helper class
+        private class PreprocessingResult
+        {
+            public DenseTensor<float> InputTensor { get; set; }
+            public (float W, float H) Ratio { get; set; }
+            public (float PadW, float PadH) Padding { get; set; }
+        }
+
         public async Task<MeterReadingResult> AnalyzeImageAsync(string imagePath, MeterType type)
         {
             if (_session == null) InitializeSession();
-
-            if (_session == null)
-            {
-                return new MeterReadingResult
-                {
-                    Type = type,
-                    Value = 0,
-                    Confidence = 0f,
-                    ErrorMessage = $"Model không tìm thấy tại: {_modelPath}",
-                    RawText = "Model missing"
-                };
-            }
 
             return await Task.Run(() =>
             {
                 try
                 {
-                    // BƯỚC 1: Load và Preprocess ảnh (Dùng LockBits để tối ưu bộ nhớ)
-                    var inputTensor = LoadAndPreprocessImage(imagePath);
+                    var prepResult = LoadAndPreprocessImage_Letterbox(imagePath);
+                    if (prepResult == null)
+                        return new MeterReadingResult { ErrorMessage = "Lỗi khi tiền xử lý ảnh." };
 
-                    // BƯỚC 2: Chạy Inference
-                    var inputs = new List<NamedOnnxValue>
-                    {
-                        NamedOnnxValue.CreateFromTensor("images", inputTensor)
-                    };
-
+                    var inputs = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor("images", prepResult.InputTensor) };
                     using var results = _session.Run(inputs);
                     var output = results.First().AsTensor<float>();
 
-                    // BƯỚC 3: Xử lý kết quả (Post-process & NMS)
-                    // Dùng InputSize vì ta đã resize ảnh về kích thước này
-                    var detections = PostProcess(output, InputSize, InputSize);
+                    var detections = PostProcess(output, prepResult.Ratio, prepResult.Padding);
 
-                    // BƯỚC 4: Đọc số
                     var result = ParseMeterReading(detections, type);
-
-                    // BƯỚC 5: Bổ sung Visualize và Raw Detections
-                    result.Detections = detections; // Lưu lại danh sách bounding box
+                    result.Detections = detections;
                     result.VisualizedImageBase64 = VisualizeDetections(imagePath, detections);
-
                     return result;
                 }
                 catch (Exception ex)
                 {
-                    // Nếu gặp lỗi bộ nhớ, ép GC chạy ngay lập tức
-                    if (ex is OutOfMemoryException)
-                    {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                    }
-
-                    return new MeterReadingResult
-                    {
-                        Type = type,
-                        Value = 0,
-                        Confidence = 0f,
-                        ErrorMessage = $"Lỗi xử lý ảnh: {ex.Message}",
-                        RawText = ex.Message
-                    };
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    return new MeterReadingResult { ErrorMessage = $"Lỗi xử lý ảnh: {ex.Message}" };
                 }
             });
         }
 
-        /// <summary>
-        /// Vẽ bounding box lên ảnh gốc và trả về chuỗi Base64
-        /// </summary>
         public string? VisualizeDetections(string imagePath, List<Detection> detections)
         {
-            if (!File.Exists(imagePath)) return null;
-
+            if (!System.IO.File.Exists(imagePath) || detections == null) return null;
             try
             {
-                using var originalImage = Image.FromFile(imagePath);
-                int originalWidth = originalImage.Width;
-                int originalHeight = originalImage.Height;
+                using var image = Image.Load(imagePath);
 
-                using var bitmap = new Bitmap(originalWidth, originalHeight);
-                using (var graphics = Graphics.FromImage(bitmap))
+                FontCollection collection = new();
+                collection.AddSystemFonts();
+                FontFamily family = collection.Families.FirstOrDefault(f => f.Name.Equals("Arial", StringComparison.OrdinalIgnoreCase));
+                if (family == null) { family = collection.Families.First(); }
+                Font font = family.CreateFont(16, FontStyle.Bold);
+
+                var pen = Pens.Solid(SixLabors.ImageSharp.Color.Red, 3);
+                var textBrush = Brushes.Solid(SixLabors.ImageSharp.Color.Red);
+                var bgBrush = Brushes.Solid(SixLabors.ImageSharp.Color.Black.WithAlpha(0.5f));
+
+                image.Mutate(ctx =>
                 {
-                    graphics.DrawImage(originalImage, 0, 0, originalWidth, originalHeight);
-                    graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-                    // Tính tỉ lệ scale từ 640x640 về kích thước thật
-                    float scaleX = (float)originalWidth / InputSize;
-                    float scaleY = (float)originalHeight / InputSize;
-
-                    using var pen = new Pen(Color.Red, 3);
-                    using var font = new Font("Arial", 16, FontStyle.Bold);
-                    using var brush = new SolidBrush(Color.Red);
-                    using var bgBrush = new SolidBrush(Color.FromArgb(150, Color.Black)); // Nền đen bán trong suốt
-
                     foreach (var det in detections)
                     {
-                        // Scale tọa độ
-                        float x = det.X * scaleX;
-                        float y = det.Y * scaleY;
-                        float w = det.Width * scaleX;
-                        float h = det.Height * scaleY;
+                        float x1 = Math.Max(0, det.X);
+                        float y1 = Math.Max(0, det.Y);
+                        float w = Math.Min(image.Width - x1, det.Width);
+                        float h = Math.Min(image.Height - y1, det.Height);
+                        var rect = new RectangleF(x1, y1, w, h);
+                        ctx.Draw(pen, rect);
 
-                        // Vẽ khung chữ nhật
-                        graphics.DrawRectangle(pen, x, y, w, h);
-
-                        // Vẽ nhãn
+                        // Hiển thị tên class từ mảng 12 class
                         string label = $"{det.ClassName} ({det.Confidence:0.00})";
-                        var size = graphics.MeasureString(label, font);
-
-                        // Vẽ nền cho nhãn để dễ đọc hơn
-                        float labelY = y - size.Height;
-                        if (labelY < 0) labelY = y; // Nếu sát mép trên thì vẽ vào trong
-
-                        graphics.FillRectangle(bgBrush, x, labelY, size.Width, size.Height);
-                        graphics.DrawString(label, font, brush, x, labelY);
+                        var textOptions = new RichTextOptions(font) { Origin = new PointF(x1 + 3, y1) };
+                        FontRectangle size = TextMeasurer.MeasureBounds(label, textOptions);
+                        float labelY = y1 - size.Height - 3;
+                        if (labelY < 0) labelY = y1;
+                        var textBgRect = new RectangleF(x1, labelY, size.Width + 6, size.Height + 6);
+                        var textPoint = new PointF(x1 + 3, labelY + 3);
+                        ctx.Fill(bgBrush, textBgRect);
+                        ctx.DrawText(label, font, textBrush, textPoint);
                     }
-                }
-
-                // Chuyển thành Base64
+                });
                 using var ms = new MemoryStream();
-                bitmap.Save(ms, ImageFormat.Jpeg);
+                image.SaveAsJpeg(ms);
                 return Convert.ToBase64String(ms.ToArray());
             }
-            catch
+            catch (Exception ex)
             {
-                return null; // Trả về null nếu lỗi vẽ (không làm crash app chính)
+                Debug.WriteLine($"[DEBUG] LỖI VisualizeDetections: {ex.Message}");
+                return null;
             }
         }
 
-        private DenseTensor<float> LoadAndPreprocessImage(string imagePath)
+        private PreprocessingResult? LoadAndPreprocessImage_Letterbox(string imagePath)
         {
-            // Load ảnh gốc từ file
-            using var originalImage = Image.FromFile(imagePath);
-
-            // Tạo bitmap đích với kích thước chuẩn YOLO (640x640) và định dạng pixel cố định (24bppRgb)
-            using var resized = new Bitmap(InputSize, InputSize, PixelFormat.Format24bppRgb);
-
-            using (var graphics = Graphics.FromImage(resized))
-            {
-                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-
-                // Vẽ ảnh gốc lên bitmap đích (Resize)
-                graphics.DrawImage(originalImage, 0, 0, InputSize, InputSize);
-            }
-
-            var tensor = new DenseTensor<float>(new[] { 1, 3, InputSize, InputSize });
-
-            // Kỹ thuật LockBits: Khóa vùng nhớ ảnh để truy cập trực tiếp
-            BitmapData bmpData = resized.LockBits(
-                new Rectangle(0, 0, resized.Width, resized.Height),
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format24bppRgb);
-
             try
             {
-                unsafe
+                using var image = Image.Load<Rgb24>(imagePath);
+                int originalWidth = image.Width;
+                int originalHeight = image.Height;
+
+                float r = Math.Min((float)InputSize / originalHeight, (float)InputSize / originalWidth);
+                (float r_w, float r_h) = (r, r);
+
+                int newUnpadWidth = (int)Math.Round(originalWidth * r);
+                int newUnpadHeight = (int)Math.Round(originalHeight * r);
+
+                float dw = (InputSize - newUnpadWidth) / 2.0f;
+                float dh = (InputSize - newUnpadHeight) / 2.0f;
+
+                var options = new ResizeOptions
                 {
-                    byte* ptr = (byte*)bmpData.Scan0;
-                    int stride = bmpData.Stride;
+                    Size = new Size(InputSize, InputSize),
+                    Mode = ResizeMode.Pad,
+                    PadColor = new Rgb24(114, 114, 114)
+                };
+                image.Mutate(x => x.Resize(options));
 
-                    Parallel.For(0, InputSize, y =>
+                var tensor = new DenseTensor<float>(new[] { 1, 3, InputSize, InputSize });
+                image.ProcessPixelRows(accessor =>
+                {
+                    for (int y = 0; y < accessor.Height; y++)
                     {
-                        byte* row = ptr + (y * stride);
-                        for (int x = 0; x < InputSize; x++)
+                        var pixelRow = accessor.GetRowSpan(y);
+                        for (int x = 0; x < accessor.Width; x++)
                         {
-                            // PixelFormat.Format24bppRgb lưu theo thứ tự B-G-R
-                            int i = x * 3;
-                            float b = row[i] / 255.0f;
-                            float g = row[i + 1] / 255.0f;
-                            float r = row[i + 2] / 255.0f;
-
-                            tensor[0, 0, y, x] = r;
-                            tensor[0, 1, y, x] = g;
-                            tensor[0, 2, y, x] = b;
+                            var pixel = pixelRow[x];
+                            // Dùng RGB (giống Python cvtColor)
+                            tensor[0, 0, y, x] = pixel.R / 255.0f;
+                            tensor[0, 1, y, x] = pixel.G / 255.0f;
+                            tensor[0, 2, y, x] = pixel.B / 255.0f;
                         }
-                    });
-                }
-            }
-            finally
-            {
-                resized.UnlockBits(bmpData);
-            }
+                    }
+                });
 
-            return tensor;
+                return new PreprocessingResult
+                {
+                    InputTensor = tensor,
+                    Ratio = (r_w, r_h),
+                    Padding = (dw, dh)
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[DEBUG] LỖI Preprocessing: {ex.Message}");
+                return null;
+            }
         }
 
-        private List<Detection> PostProcess(Tensor<float> output, int imgWidth, int imgHeight)
+        // Logic PostProcess (YOLOv8) này đã đúng
+        private List<Detection> PostProcess(Tensor<float> output, (float W, float H) ratio, (float PadW, float PadH) padding)
         {
             var detections = new List<Detection>();
+
             var shape = output.Dimensions.ToArray();
-            var numDetections = shape[1];
-            var numValues = shape[2];
+            if (shape[1] != _numValuesPerBox || shape[0] != 1)
+            {
+                Debug.WriteLine($"[DEBUG] LỖI SHAPE: Model trả về shape [{shape[0]}, {shape[1]}, {shape[2]}] nhưng code mong đợi [1, 16, 8400].");
+                return detections;
+            }
+
+            int numDetections = shape[2]; // 8400
+
+            var boxes = new List<float[]>();
+            var scores = new List<float>();
+            var classIds = new List<int>();
 
             for (int i = 0; i < numDetections; i++)
             {
-                float confidence = output[0, i, 4];
-                if (confidence < _confidenceThreshold) continue;
+                var data = Enumerable.Range(0, _numValuesPerBox).Select(index => output[0, index, i]).ToArray();
 
-                float maxClassScore = 0;
-                int bestClass = 0;
+                // Logic YOLOv8 (scores = pred[:, 4:])
+                var classScores = data.Skip(4).ToArray();
+                float finalConf = classScores.Max();
+                int bestClass = classScores.AsSpan().IndexOf(finalConf);
 
-                for (int c = 0; c < Math.Min(_classNames.Length, numValues - 5); c++)
-                {
-                    var score = output[0, i, 5 + c];
-                    if (score > maxClassScore)
-                    {
-                        maxClassScore = score;
-                        bestClass = c;
-                    }
-                }
-
-                float finalConf = confidence * maxClassScore;
                 if (finalConf < _confidenceThreshold) continue;
 
-                float x = output[0, i, 0];
-                float y = output[0, i, 1];
-                float w = output[0, i, 2];
-                float h = output[0, i, 3];
+                float x_center = data[0];
+                float y_center = data[1];
+                float w = data[2];
+                float h = data[3];
 
-                float x1 = x - w / 2;
-                float y1 = y - h / 2;
+                float x1 = x_center - w / 2;
+                float y1 = y_center - h / 2;
+                float x2 = x_center + w / 2;
+                float y2 = y_center + h / 2;
+
+                // Scale về ảnh GỐC (giống Python)
+                x1 = (x1 - padding.PadW) / ratio.W;
+                y1 = (y1 - padding.PadH) / ratio.H;
+                x2 = (x2 - padding.PadW) / ratio.W;
+                y2 = (y2 - padding.PadH) / ratio.H;
+
+                boxes.Add(new float[] { x1, y1, x2, y2 });
+                scores.Add(finalConf);
+                classIds.Add(bestClass);
+            }
+
+            if (boxes.Count == 0)
+            {
+                Debug.WriteLine("[DEBUG] Không tìm thấy box nào sau khi lọc bằng CONF_TH.");
+                return detections;
+            }
+
+            var indices = NMS(boxes, scores, _nmsThreshold);
+
+            foreach (var idx in indices)
+            {
+                var box = boxes[idx];
+                var score = scores[idx];
+                var classId = classIds[idx];
 
                 detections.Add(new Detection
                 {
-                    X = x1,
-                    Y = y1,
-                    Width = w,
-                    Height = h,
-                    Confidence = finalConf,
-                    ClassId = bestClass,
-                    ClassName = bestClass < _classNames.Length ? _classNames[bestClass] : "?"
+                    X = box[0], // x1
+                    Y = box[1], // y1
+                    Width = box[2] - box[0], // w
+                    Height = box[3] - box[1], // h
+                    Confidence = score,
+                    ClassId = classId,
+                    // Gán class name từ mảng 12 class
+                    ClassName = classId < _classNames.Length ? _classNames[classId] : "UKN"
                 });
             }
 
-            return ApplyNMS(detections);
+            return detections;
         }
 
-        private List<Detection> ApplyNMS(List<Detection> detections)
+        private List<int> NMS(List<float[]> boxes, List<float> scores, float iouThreshold)
         {
-            if (detections.Count == 0) return detections;
-
-            var sorted = detections.OrderByDescending(d => d.Confidence).ToList();
-            var result = new List<Detection>();
-            var suppressed = new bool[sorted.Count];
-
-            for (int i = 0; i < sorted.Count; i++)
+            var indices = Enumerable.Range(0, boxes.Count).ToList();
+            indices.Sort((a, b) => scores[b].CompareTo(scores[a]));
+            var keep = new List<int>();
+            var suppressed = new bool[boxes.Count];
+            for (int i_idx = 0; i_idx < indices.Count; i_idx++)
             {
+                int i = indices[i_idx];
                 if (suppressed[i]) continue;
-                result.Add(sorted[i]);
-
-                for (int j = i + 1; j < sorted.Count; j++)
+                keep.Add(i);
+                for (int j_idx = i_idx + 1; j_idx < indices.Count; j_idx++)
                 {
+                    int j = indices[j_idx];
                     if (suppressed[j]) continue;
-                    if (CalculateIoU(sorted[i], sorted[j]) > _nmsThreshold)
+                    float iou = CalculateIoU_xyxy(boxes[i], boxes[j]);
+                    if (iou > iouThreshold)
                     {
                         suppressed[j] = true;
                     }
                 }
             }
-            return result;
+            return keep;
         }
 
-        private float CalculateIoU(Detection box1, Detection box2)
+        private float CalculateIoU_xyxy(float[] box1, float[] box2)
         {
-            float x1 = Math.Max(box1.X, box2.X);
-            float y1 = Math.Max(box1.Y, box2.Y);
-            float x2 = Math.Min(box1.X + box1.Width, box2.X + box2.Width);
-            float y2 = Math.Min(box1.Y + box1.Height, box2.Y + box2.Height);
-
-            if (x2 <= x1 || y2 <= y1) return 0;
-
-            float intersection = (x2 - x1) * (y2 - y1);
-            float area1 = box1.Width * box1.Height;
-            float area2 = box2.Width * box2.Height;
-            float union = area1 + area2 - intersection;
-
-            return union > 0 ? intersection / union : 0;
+            float xA = Math.Max(box1[0], box2[0]);
+            float yA = Math.Max(box1[1], box2[1]);
+            float xB = Math.Min(box1[2], box2[2]);
+            float yB = Math.Min(box1[3], box2[3]);
+            float interArea = Math.Max(0, xB - xA) * Math.Max(0, yB - yA);
+            float box1Area = (box1[2] - box1[0]) * (box1[3] - box1[1]);
+            float box2Area = (box2[2] - box2[0]) * (box2[3] - box2[1]);
+            float unionArea = box1Area + box2Area - interArea;
+            return unionArea > 0 ? interArea / unionArea : 0;
         }
 
+
+        // === FIX 2: Sửa logic Parse để lọc đúng (Height + X-Gap) ===
+        // === FIX: Sửa logic Parse để áp dụng QUY TẮC 6 KÝ TỰ ===
         private MeterReadingResult ParseMeterReading(List<Detection> detections, MeterType type)
         {
-            if (detections.Count == 0)
+            if (detections == null || detections.Count == 0)
             {
-                return new MeterReadingResult
-                {
-                    Type = type,
-                    Value = 0,
-                    Confidence = 0,
-                    ErrorMessage = "Không tìm thấy số",
-                    RawText = "No data"
-                };
+                return new MeterReadingResult { ErrorMessage = "Không tìm thấy đối tượng nào" };
             }
 
-            // Sắp xếp từ trái qua phải
-            var sortedDigits = detections
+            // 1. Lọc TẤT CẢ các chữ số (0-9). 
+            // (Chúng ta bỏ qua class "." vì quy tắc của bạn là "ký tự cuối cùng")
+            var allDigits = detections
                 .Where(d => int.TryParse(d.ClassName, out _))
-                .OrderBy(d => d.X)
                 .ToList();
 
-            if (sortedDigits.Count == 0)
-                return new MeterReadingResult { Type = type, ErrorMessage = "Không tìm thấy số hợp lệ" };
-
-            string numberStr = string.Join("", sortedDigits.Select(d => d.ClassName));
-            float avgConf = sortedDigits.Average(d => d.Confidence);
-
-            if (decimal.TryParse(numberStr, out decimal val))
+            if (allDigits.Count == 0)
             {
+                return new MeterReadingResult { ErrorMessage = "Không tìm thấy CHỮ SỐ nào" };
+            }
+
+            // 2. === BỘ LỌC LỚP 1: LỌC THEO CHIỀU CAO ===
+            float maxHeight = allDigits.Max(d => d.Height);
+            var largeDigits = allDigits
+                .Where(d => d.Height >= (maxHeight * 0.7f))
+                .ToList();
+
+            if (largeDigits.Count == 0) { largeDigits = allDigits; }
+
+            // 3. === BỘ LỌC LỚP 2: LỌC THEO "X-GAP" (Khoảng cách ngang) ===
+            var sortedByX = largeDigits.OrderBy(d => d.X).ToList();
+            List<Detection> bestCluster = new List<Detection>();
+            List<Detection> currentCluster = new List<Detection>();
+
+            for (int i = 0; i < sortedByX.Count; i++)
+            {
+                if (currentCluster.Count == 0) { currentCluster.Add(sortedByX[i]); continue; }
+                var prevDigit = currentCluster.Last();
+                var currentDigit = sortedByX[i];
+                float gap = currentDigit.X - (prevDigit.X + prevDigit.Width);
+                float avgWidth = (prevDigit.Width + currentDigit.Width) / 2;
+
+                if (gap < (avgWidth * 1.5f)) { currentCluster.Add(currentDigit); }
+                else
+                {
+                    if (currentCluster.Count > bestCluster.Count) { bestCluster = new List<Detection>(currentCluster); }
+                    currentCluster.Clear();
+                    currentCluster.Add(currentDigit);
+                }
+            }
+            if (currentCluster.Count > bestCluster.Count) { bestCluster = new List<Detection>(currentCluster); }
+            // ==========================================
+
+            if (bestCluster.Count == 0)
+            {
+                Debug.WriteLine("[DEBUG] Lọc X-Gap thất bại.");
+                return new MeterReadingResult { ErrorMessage = "Lỗi khi lọc cụm X-Axis" };
+            }
+
+            // 4. === QUY TẮC NGHIỆP VỤ MỚI ===
+
+            // Sắp xếp cụm chính từ trái qua phải (theo X)
+            // VÀ CHỈ LẤY TỐI ĐA 6 KÝ TỰ ĐẦU TIÊN
+            var mainDigits = bestCluster.OrderBy(d => d.X).Take(6).ToList();
+
+            string numberStrRaw = string.Join("", mainDigits.Select(d => d.ClassName)); // Sẽ là "007590"
+            float avgConf = mainDigits.Average(d => d.Confidence);
+
+            // 5. Chèn dấu "." vào trước ký tự cuối cùng
+            string numberStrParsed = numberStrRaw;
+            if (numberStrParsed.Length > 1)
+            {
+                // "007590" -> "00759.0"
+                numberStrParsed = numberStrParsed.Insert(numberStrParsed.Length - 1, ".");
+            }
+
+            // 6. Bỏ số 0 ở đầu
+            numberStrParsed = numberStrParsed.TrimStart('0'); // "759.0"
+
+            if (numberStrParsed.StartsWith(".")) { numberStrParsed = "0" + numberStrParsed; }
+            if (string.IsNullOrEmpty(numberStrParsed)) { numberStrParsed = "0"; }
+
+            // 7. Parse
+            if (decimal.TryParse(numberStrParsed, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal val)) // val = 759.0m
+            {
+                // 8. LÀM TRÒN XUỐNG (theo yêu cầu)
+                // "chuyển thành 759"
+                val = Math.Floor(val); // val = 759m
+
                 return new MeterReadingResult
                 {
                     Type = type,
-                    Value = val,
+                    Value = val, // Sẽ là 759
                     Confidence = avgConf,
-                    RawText = numberStr, // Giữ nguyên chuỗi thô để xử lý bên ngoài (ví dụ cắt số 0)
-                    ErrorMessage = null
+                    RawText = numberStrRaw, // Giữ chuỗi gốc "007590"
                 };
             }
 
-            return new MeterReadingResult
-            {
-                Type = type,
-                Value = 0,
-                ErrorMessage = $"Lỗi parse số: {numberStr}",
-                RawText = numberStr
-            };
+            return new MeterReadingResult { ErrorMessage = $"Lỗi parse số: {numberStrParsed}", RawText = numberStrRaw };
         }
+
 
         public async Task<MeterReadingResult[]> AnalyzeImagesAsync(string[] imagePaths, MeterType type)
         {
@@ -408,17 +451,12 @@ namespace QLKDPhongTro.Presentation.Services
             for (int i = 0; i < imagePaths.Length; i++)
             {
                 results[i] = await AnalyzeImageAsync(imagePaths[i], type);
-
-                if (i > 0 && i % 5 == 0)
-                {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                }
+                if (i > 0 && i % 5 == 0) { GC.Collect(); GC.WaitForPendingFinalizers(); }
             }
             return results;
         }
 
-        public bool IsModelAvailable() => _session != null && File.Exists(_modelPath);
+        public bool IsModelAvailable() => _session != null && System.IO.File.Exists(_modelPath);
         public string GetModelPath() => _modelPath;
 
         public void Dispose()
@@ -427,7 +465,8 @@ namespace QLKDPhongTro.Presentation.Services
             _session = null;
             GC.SuppressFinalize(this);
         }
-        // Trong class MeterReadingResult (thêm vào cuối class)
+
+        // --- CÁC CLASS DTO NỘI BỘ ---
         public class MeterReadingResult
         {
             public MeterType Type { get; set; }
@@ -436,13 +475,10 @@ namespace QLKDPhongTro.Presentation.Services
             public string RawText { get; set; } = string.Empty;
             public string? ErrorMessage { get; set; }
             public bool IsValid => Confidence > 0.3f && Value > 0;
-
-            // Các property mới cho xử lý sự cố
             public List<Detection>? Detections { get; set; }
             public string? VisualizedImageBase64 { get; set; }
         }
 
-        // Đảm bảo class Detection tồn tại
         public class Detection
         {
             public float X { get; set; }
@@ -454,8 +490,4 @@ namespace QLKDPhongTro.Presentation.Services
             public string ClassName { get; set; } = string.Empty;
         }
     }
-
-    // Removed Duplicate class definitions. 
-    // Make sure these are defined in a separate DTO file (e.g., MeterReadingResult.cs) 
-    // or in OcrService.cs IF that is the primary place they should live.
 }

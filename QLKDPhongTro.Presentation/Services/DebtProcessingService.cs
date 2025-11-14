@@ -1,14 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+// THÊM 3 DÒNG NÀY:
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using System.Diagnostics; // Để ghi log [DEBUG]
 using System.Linq;
-using System.Net;
+using Google.Apis.Drive.v3;
+using Google.Apis.Download;
 using System.Threading.Tasks;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Services;
+// Thêm thư viện HttpClient (hiện đại hơn WebClient)
+using System.Net.Http;
+
 
 namespace QLKDPhongTro.Presentation.Services
 {
@@ -19,6 +28,12 @@ namespace QLKDPhongTro.Presentation.Services
         private readonly PaymentRepository _paymentRepository;
         private readonly ContractRepository _contractRepository;
         private readonly RentedRoomRepository _roomRepository;
+
+        // === FIX: Khởi tạo HttpClient một lần để tái sử dụng ===
+        // Tốt hơn cho hiệu năng so với việc tạo mới WebClient mỗi lần
+        private readonly DriveService _driveService;
+        private const string DEBUG_PATH = @"C:\TempOcrDebug";
+
 
         private const decimal ELECTRICITY_RATE = 3500;
         private const decimal WATER_RATE = 100000;
@@ -33,6 +48,11 @@ namespace QLKDPhongTro.Presentation.Services
             _paymentRepository = new PaymentRepository();
             _contractRepository = new ContractRepository();
             _roomRepository = new RentedRoomRepository();
+
+            // Thêm User-Agent cho HttpClient, một số dịch vụ (như Google) cần
+            Directory.CreateDirectory(DEBUG_PATH);
+
+            _driveService = _googleFormService.DriveService;
         }
 
         // Phương thức hiện có giữ nguyên
@@ -61,7 +81,54 @@ namespace QLKDPhongTro.Presentation.Services
 
             return results;
         }
+        /// <summary>
+        /// Thay đổi kích thước ảnh bằng ImageSharp (hiện đại, tránh lỗi OutOfMemory).
+        /// </summary>
+        private string ResizeImage(string originalImagePath, int maxWidth = 1024)
+        {
+            try
+            {
+                var tempPath = Path.GetTempPath();
+                var fileName = $"meter_resized_{Guid.NewGuid()}.jpg";
+                var resizedPath = Path.Combine(tempPath, fileName);
 
+                // 1. Tải ảnh bằng ImageSharp
+                using (Image image = Image.Load(originalImagePath))
+                {
+                    // Nếu ảnh đã nhỏ rồi thì thôi
+                    if (image.Width <= maxWidth)
+                    {
+                        // Chỉ cần lưu lại với bộ mã hóa chuẩn
+                        image.Save(resizedPath, new JpegEncoder());
+                        Debug.WriteLine($"[DEBUG] Ảnh gốc đã nhỏ, chỉ lưu lại: {resizedPath}");
+                        return resizedPath;
+                    }
+
+                    // 2. Tính toán tỷ lệ
+                    var newHeight = (int)Math.Round((double)image.Height * maxWidth / image.Width);
+
+                    // 3. Resize ảnh
+                    image.Mutate(x => x
+                         .Resize(new ResizeOptions
+                         {
+                             Size = new Size(maxWidth, newHeight),
+                             Mode = ResizeMode.Stretch // Đã tính toán tỷ lệ, chỉ cần kéo
+                         }));
+
+                    // 4. Lưu ảnh đã resize
+                    image.Save(resizedPath, new JpegEncoder());
+                }
+
+                Debug.WriteLine($"[DEBUG] Đã resize ảnh (ImageSharp) sang: {resizedPath}");
+                return resizedPath;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[DEBUG] LỖI khi resize (ImageSharp) {originalImagePath}: {ex.Message}");
+                // Nếu resize lỗi, trả về ảnh gốc và chấp nhận rủi ro
+                return originalImagePath;
+            }
+        }
         private async Task<DebtCalculationResult> ProcessSingleDebtAsync(DebtFormData formData)
         {
             try
@@ -89,6 +156,7 @@ namespace QLKDPhongTro.Presentation.Services
                 // 2. Xử lý so sánh: Form nhập tay vs OCR
                 decimal finalElectricValue = 0;
                 decimal manualValue = formData.CurrentElectricValue;
+                // Khởi tạo ocrValue = -1 (để phân biệt với 0 - lỗi)
                 decimal ocrValue = -1;
                 string ocrStatus = "";
                 bool isDiscrepancy = false;
@@ -99,21 +167,45 @@ namespace QLKDPhongTro.Presentation.Services
                 // Luôn chạy OCR để đối chiếu (nếu có ảnh)
                 if (!string.IsNullOrEmpty(formData.ElectricImageUrl))
                 {
-                    // Tải ảnh về local
+                    // Tải ảnh về local (Đã sửa hàm này)
                     originalImagePath = await DownloadImageAsync(formData.ElectricImageUrl);
+
                     if (!string.IsNullOrEmpty(originalImagePath))
                     {
-                        meterReadingResult = await ProcessElectricImageAsync(originalImagePath);
-                        ocrValue = meterReadingResult.Value;
-                        ocrStatus = meterReadingResult.IsValid ? "OCR OK" : "OCR Fail";
+                        // === FIX QUAN TRỌNG: RESIZE ẢNH TRƯỚC KHI OCR ===
+                        //string imageToProcess = ResizeImage(originalImagePath);
+                        string imageToProcess = originalImagePath;
+                        // ===============================================
+
+                        // Truyền ảnh đã resize vào OCR
+                        meterReadingResult = await ProcessElectricImageAsync(imageToProcess);
+
+                        // (Tùy chọn) Xóa file ảnh đã resize
+                        // File.Delete(imageToProcess);
+
+                        if (meterReadingResult.IsValid)
+                        {
+                            ocrValue = meterReadingResult.Value;
+                            ocrStatus = "OCR OK";
+                        }
+                        else
+                        {
+                            ocrValue = 0; // Gán 0 nếu OCR thất bại
+                            ocrStatus = $"OCR Fail: {meterReadingResult.ErrorMessage}";
+                        }
+                    }
+                    else
+                    {
+                        ocrStatus = "Tải ảnh thất bại";
                     }
                 }
 
                 // Logic so sánh và phát hiện sự cố
+                // ocrValue > 0 (đảm bảo OCR đọc được số dương)
                 if (manualValue > 0 && ocrValue > 0)
                 {
                     decimal difference = Math.Abs(manualValue - ocrValue);
-                    if (difference > 1) // Ngưỡng chênh lệch
+                    if (difference >= 1) // Ngưỡng chênh lệch
                     {
                         isDiscrepancy = true;
                         warningNote = $"CẢNH BÁO: Khách nhập {manualValue} nhưng Ảnh đọc được {ocrValue} (Chênh lệch: {difference})";
@@ -191,6 +283,7 @@ namespace QLKDPhongTro.Presentation.Services
                     ElectricImageUrl = formData.ElectricImageUrl,
                     IsProcessed = true,
                     ManualValue = manualValue,
+                    // Gán ocrValue (sẽ là -1, 0 hoặc giá trị detect được)
                     OcrValue = ocrValue,
                     IsDiscrepancy = isDiscrepancy,
                     WarningNote = warningNote,
@@ -363,7 +456,7 @@ namespace QLKDPhongTro.Presentation.Services
         {
             try
             {
-                // FIX: Sửa 'Electric' thành 'Electricity'
+                // FIX: Sửa 'Electric' thành 'Electricity' (Giữ nguyên fix của bạn)
                 return await _ocrService.AnalyzeImageAsync(imagePath, MeterType.Electricity);
             }
             catch (Exception ex)
@@ -372,19 +465,72 @@ namespace QLKDPhongTro.Presentation.Services
             }
         }
 
-        private static async Task<string> DownloadImageAsync(string imageUrl)
+        // === CRITICAL FIX: Sửa hàm tải ảnh Google Drive ===
+        // === FIX 3: THAY THẾ TOÀN BỘ HÀM NÀY ===
+        // === FIX: THAY THẾ TOÀN BỘ HÀM NÀY ===
+        private async Task<string> DownloadImageAsync(string imageUrl)
         {
+            Debug.WriteLine($"[DEBUG] Bắt đầu tải API: {imageUrl}");
             try
             {
-                if (string.IsNullOrEmpty(imageUrl)) return null;
-                var tempPath = Path.GetTempPath();
-                var fileName = $"meter_{Guid.NewGuid()}.jpg";
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    Debug.WriteLine("[DEBUG] LỖI: ImageUrl rỗng.");
+                    return null;
+                }
+
+                // 1. Parse File ID từ URL
+                string fileId = null;
+                if (imageUrl.Contains("id="))
+                {
+                    fileId = imageUrl.Split(new[] { "id=" }, StringSplitOptions.None)[1];
+                    fileId = fileId.Split('&')[0];
+                }
+                else if (imageUrl.Contains("/d/"))
+                {
+                    var parts = imageUrl.Split(new[] { "/d/" }, StringSplitOptions.None);
+                    if (parts.Length > 1)
+                    {
+                        fileId = parts[1].Split('/')[0];
+                    }
+                }
+
+                if (string.IsNullOrEmpty(fileId))
+                {
+                    Debug.WriteLine($"[DEBUG] LỖI: Không thể parse File ID từ {imageUrl}");
+                    return null;
+                }
+
+                Debug.WriteLine($"[DEBUG] File ID: {fileId}");
+
+                // 2. Chuẩn bị đường dẫn lưu file
+                var tempPath = Path.GetTempPath(); // Dùng thư mục temp chuẩn
+                var fileName = $"meter_api_{Guid.NewGuid()}.jpg";
                 var localPath = Path.Combine(tempPath, fileName);
-                using var webClient = new WebClient();
-                await webClient.DownloadFileTaskAsync(new Uri(imageUrl), localPath);
-                return File.Exists(localPath) ? localPath : null;
+
+                // 3. Dùng Drive API để tải
+                var request = _driveService.Files.Get(fileId);
+                using (var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write))
+                {
+                    // Download file
+                    var result = await request.DownloadAsync(fileStream);
+
+                    if (result.Status == DownloadStatus.Failed)
+                    {
+                        Debug.WriteLine($"[DEBUG] LỖI API Drive: {result.Exception.Message}");
+                        return null;
+                    }
+                }
+
+                var fileInfo = new FileInfo(localPath);
+                Debug.WriteLine($"[DEBUG] Tải API thành công. Kích thước: {fileInfo.Length} bytes.");
+                return localPath;
             }
-            catch { return null; }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[DEBUG] LỖI KHI TẢI API {imageUrl}: {ex.Message}");
+                return null;
+            }
         }
 
         public async Task<int> CreatePaymentRecordsFromDebtsAsync(List<DebtCalculationResult> debts)
@@ -441,7 +587,17 @@ namespace QLKDPhongTro.Presentation.Services
         private async Task<decimal> GetRentPriceAsync(int contractId)
         {
             var contract = await _contractRepository.GetByIdAsync(contractId);
-            return contract?.GiaThue ?? 0;
+
+            if (contract == null) return 0;
+
+            // FIX 2: Bỏ '?? 0'. Nếu 'GiaThue > 0', chỉ cần trả về nó.
+            if (contract.GiaThue > 0) return contract.GiaThue;
+
+            // FIX 1: Bỏ '?? 0'. Chỉ cần truyền 'contract.MaPhong'.
+            var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
+
+            // Dòng này đã đúng, vì 'room' có thể null ('?')
+            return room?.GiaCoBan ?? 0;
         }
 
         private async Task<Payment?> GetLastPaymentByContractIdAsync(int contractId)

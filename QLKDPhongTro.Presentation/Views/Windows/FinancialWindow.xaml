@@ -798,7 +798,7 @@
                                             <DataGrid.Columns>
                                                 <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="80" FontWeight="Bold"/>
 
-                                                <DataGridTextColumn Header="Số liệu (Nhập | Ảnh)" Binding="{Binding SoDienThoai}" Width="180"/>
+                                                <DataGridTextColumn Header="Số liệu (Nhập | Ảnh)" Binding="{Binding ComparisonInfo}" Width="180"/>
 
                                                 <DataGridTemplateColumn Header="Ghi chú hệ thống" Width="*">
                                                     <DataGridTemplateColumn.CellTemplate>
