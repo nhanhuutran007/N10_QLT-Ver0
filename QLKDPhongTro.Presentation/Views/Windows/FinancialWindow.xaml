@@ -19,7 +19,9 @@
     <Window.Resources>
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <converters:PageNumberEqualsConverter x:Key="PageNumberEqualsConverter"/>
+        <!-- FIX: Sử dụng MultiConverter đã sửa ở lượt trước -->
+        <converters:PageNumberEqualsMultiConverter x:Key="PageNumberEqualsMultiConverter"/>
+
 
         <!-- === STYLES CẢI TIẾN HIỆN ĐẠI === -->
 
@@ -409,6 +411,26 @@
                             FontWeight="Bold"
                                Margin="20,15,0,20"/>
 
+                    <!-- THANH CHUYỂN VIEW (TABS) -->
+                    <Border Background="White" CornerRadius="10" Padding="4" Margin="0,0,0,20"
+                            BorderThickness="1" BorderBrush="{StaticResource BorderColor}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Tất cả bản ghi" 
+                                    x:Name="ViewAllRecordsButton"
+                                    Click="ViewAllRecords_Click"
+                                    Style="{StaticResource ModernActiveSegmentButton}"/>
+                            <Button Content="Quản lý công nợ" 
+                                    x:Name="ViewDebtsButton"
+                                    Click="ViewDebts_Click"
+                                    Style="{StaticResource ModernSegmentButton}"/>
+                            <Button Content="Báo cáo thu chi" 
+                                    x:Name="ViewReportsButton"
+                                    Click="ViewReports_Click"
+                                    Style="{StaticResource ModernSegmentButton}"/>
+                        </StackPanel>
+                    </Border>
+
+
                     <!-- THANH HÀNH ĐỘNG TRÊN CÙNG -->
                     <Border Background="#FFFFFF"
                             CornerRadius="8"
@@ -423,8 +445,7 @@
 
                                 <Button Content="Nhập tay"
                                     Style="{StaticResource ModernPrimaryButton}" 
-                                    Command="{Binding ManualInputCommand}"
-                                    Click="ManualInputButton_Click"
+                                    Click="ManualInputButton_Click" 
                                     Width="120"
                                     Margin="10,0,0,0"/>
                             </StackPanel>
@@ -461,10 +482,10 @@
                         </Grid>
                     </Border>
 
-            <!-- MAIN CONTENT AREA HIỆN ĐẠI -->
-            <Grid Grid.Row="1">
-                <!-- Loading Indicator hiện đại -->
-                <Border Background="{StaticResource BackgroundCard}" 
+                    <!-- MAIN CONTENT AREA HIỆN ĐẠI -->
+                    <Grid Grid.Row="1">
+                        <!-- Loading Indicator hiện đại -->
+                        <Border Background="{StaticResource BackgroundCard}" 
                         CornerRadius="12"
                         Padding="32"
                         VerticalAlignment="Center"
@@ -473,86 +494,86 @@
                         BorderThickness="1"
                         BorderBrush="{StaticResource BorderLightColor}"
                         Effect="{StaticResource CardShadow}">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <ProgressBar IsIndeterminate="True" 
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True" 
                                      Width="24" 
                                      Height="24" 
                                      Margin="0,0,16,0"
                                      Foreground="{StaticResource SecondaryColor}"
                                      Style="{StaticResource ModernProgressBar}"/>
-                        <TextBlock Text="Đang tải dữ liệu..." 
+                                <TextBlock Text="Đang tải dữ liệu..." 
                                   FontSize="15" 
                                   Foreground="{StaticResource TextSecondary}" 
                                   VerticalAlignment="Center"
                                   FontWeight="Medium"/>
-                    </StackPanel>
-                </Border>
+                            </StackPanel>
+                        </Border>
 
-                <!-- === VIEW: TẤT CẢ BẢN GHI === -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                        <!-- === VIEW: TẤT CẢ BẢN GHI === -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               Visibility="{Binding IsAllRecordsView, Converter={StaticResource BooleanToVisibilityConverter}}"
                               Padding="2">
-                    <StackPanel>
-                        <!-- Danh sách bản ghi dạng lưới -->
-                        <ItemsControl ItemsSource="{Binding FinancialRecords}" Margin="0,0,0,20">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Style="{StaticResource ModernFinanceCard}"
+                            <StackPanel>
+                                <!-- Danh sách bản ghi dạng lưới -->
+                                <ItemsControl ItemsSource="{Binding FinancialRecords}" Margin="0,0,0,20">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Style="{StaticResource ModernFinanceCard}"
                                             Width="340"
                                             MouseEnter="Card_MouseEnter"
                                             MouseLeave="Card_MouseLeave"
                                             Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}"
                                             Cursor="Hand">
-                                        <Border.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="Xem chi tiết" 
+                                                <Border.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Xem chi tiết" 
                                                           Command="{Binding PlacementTarget.Tag.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="Đánh dấu đã trả" 
+                                                        <MenuItem Header="Đánh dấu đã trả" 
                                                           Command="{Binding PlacementTarget.Tag.MarkAsPaidCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <Separator/>
-                                                <MenuItem Header="Chỉnh sửa" 
+                                                        <Separator/>
+                                                        <MenuItem Header="Chỉnh sửa" 
                                                           Command="{Binding PlacementTarget.Tag.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                <MenuItem Header="Xóa" 
+                                                        <MenuItem Header="Xóa" 
                                                           Command="{Binding PlacementTarget.Tag.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
                                                           Foreground="{StaticResource ErrorColor}"/>
-                                            </ContextMenu>
-                                        </Border.ContextMenu>
+                                                    </ContextMenu>
+                                                </Border.ContextMenu>
 
-                                        <StackPanel>
-                                            <!-- Card Header -->
-                                            <Border Background="{StaticResource BackgroundLighter}"
+                                                <StackPanel>
+                                                    <!-- Card Header -->
+                                                    <Border Background="{StaticResource BackgroundLighter}"
                                                     Padding="20,16"
                                                     CornerRadius="12,12,0,0"
                                                     BorderThickness="0,0,0,1"
                                                     BorderBrush="{StaticResource BorderLightColor}">
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                    </Grid.ColumnDefinitions>
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
 
-                                                    <StackPanel Grid.Column="0">
-                                                        <TextBlock Text="{Binding TenPhong}"
+                                                            <StackPanel Grid.Column="0">
+                                                                <TextBlock Text="{Binding TenPhong}"
                                                                   FontWeight="Bold"
                                                                   FontSize="16"
                                                                   Foreground="{StaticResource TextPrimary}"/>
-                                                        <TextBlock Text="{Binding KyHan, StringFormat='Kỳ: {0:MMM yyyy}'}"
+                                                                <TextBlock Text="{Binding KyHan, StringFormat='Kỳ: {0:MMM yyyy}'}"
                                                                   FontSize="13"
                                                                   Foreground="{StaticResource TextTertiary}"
                                                                   Margin="0,4,0,0"/>
-                                                    </StackPanel>
+                                                            </StackPanel>
 
-                                                    <Border Grid.Column="1"
+                                                            <Border Grid.Column="1"
                                                             Background="{StaticResource BackgroundLighter}"
                                                             CornerRadius="6"
                                                             Padding="8,4"
@@ -561,114 +582,114 @@
                                                             BorderThickness="1"
                                                             BorderBrush="{StaticResource BorderColor}"
                                                             Effect="{StaticResource ButtonShadow}">
-                                                        <TextBlock Text="{Binding LoaiGiaoDich}"
+                                                                <TextBlock Text="{Binding LoaiGiaoDich}"
                                                                   FontSize="12"
                                                                   Foreground="{StaticResource TextSecondary}"
                                                                   FontWeight="Medium"/>
+                                                            </Border>
+                                                        </Grid>
                                                     </Border>
-                                                </Grid>
-                                            </Border>
 
-                                            <!-- Card Content -->
-                                            <StackPanel Margin="20" Grid.IsSharedSizeScope="True">
-                                                <!-- Thông tin chính -->
-                                                <Grid Margin="0,0,0,16">
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </Grid.RowDefinitions>
+                                                    <!-- Card Content -->
+                                                    <StackPanel Margin="20" Grid.IsSharedSizeScope="True">
+                                                        <!-- Thông tin chính -->
+                                                        <Grid Margin="0,0,0,16">
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
 
-                                                    <!-- Số tiền -->
-                                                    <StackPanel Grid.Row="0" Orientation="Horizontal" 
+                                                            <!-- Số tiền -->
+                                                            <StackPanel Grid.Row="0" Orientation="Horizontal" 
                                                                Margin="0,0,0,12">
-                                                        <TextBlock Text="Số tiền:" 
+                                                                <TextBlock Text="Số tiền:" 
                                                                   Foreground="{StaticResource TextSecondary}" 
                                                                   FontSize="14"
                                                                   Margin="0,0,8,0"/>
-                                                        <TextBlock Text="{Binding TongTien, StringFormat='{}{0:N0} VNĐ'}"
+                                                                <TextBlock Text="{Binding TongTien, StringFormat='{}{0:N0} VNĐ'}"
                                                                   FontWeight="Bold"
                                                                   FontSize="16"
                                                                   Foreground="{StaticResource TextPrimary}"/>
-                                                    </StackPanel>
+                                                            </StackPanel>
 
-                                                    <!-- Chi tiết và Trạng thái -->
-                                                    <Grid Grid.Row="1">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*" SharedSizeGroup="DetailColumn"/>
-                                                            <ColumnDefinition Width="*" SharedSizeGroup="StatusColumn"/>
-                                                        </Grid.ColumnDefinitions>
+                                                            <!-- Chi tiết và Trạng thái -->
+                                                            <Grid Grid.Row="1">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*" SharedSizeGroup="DetailColumn"/>
+                                                                    <ColumnDefinition Width="*" SharedSizeGroup="StatusColumn"/>
+                                                                </Grid.ColumnDefinitions>
 
-                                                        <StackPanel Grid.Column="0">
-                                                            <TextBlock Text="Chi tiết" 
+                                                                <StackPanel Grid.Column="0">
+                                                                    <TextBlock Text="Chi tiết" 
                                                                       Foreground="{StaticResource TextTertiary}" 
                                                                       FontSize="12"
                                                                       FontWeight="Medium"/>
-                                                            <TextBlock Text="{Binding ChiTietGiaoDich}"
+                                                                    <TextBlock Text="{Binding ChiTietGiaoDich}"
                                                                       FontSize="14"
                                                                       Foreground="{StaticResource TextPrimary}"
                                                                       Margin="0,4,0,0"
                                                                       TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
+                                                                </StackPanel>
 
-                                                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                                                            <TextBlock Text="Trạng thái" 
+                                                                <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                                                    <TextBlock Text="Trạng thái" 
                                                                       Foreground="{StaticResource TextTertiary}" 
                                                                       FontSize="12"
                                                                       FontWeight="Medium"/>
-                                                            <TextBlock Text="{Binding TrangThaiText}"
+                                                                    <TextBlock Text="{Binding TrangThaiText}"
                                                                       FontSize="14"
                                                                       FontWeight="SemiBold"
                                                                       Foreground="{Binding TrangThaiColor}"
                                                                       Margin="0,4,0,0"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Grid>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Grid>
 
-                                                <!-- Progress Section -->
-                                                <StackPanel>
-                                                    <Grid Margin="0,0,0,8">
-                                                        <TextBlock Text="Tiến độ" 
+                                                        <!-- Progress Section -->
+                                                        <StackPanel>
+                                                            <Grid Margin="0,0,0,8">
+                                                                <TextBlock Text="Tiến độ" 
                                                                   Foreground="{StaticResource TextSecondary}" 
                                                                   FontSize="12"
                                                                   FontWeight="Medium"/>
-                                                        <TextBlock Text="{Binding ProgressValue, StringFormat='{}{0}%'}"
+                                                                <TextBlock Text="{Binding ProgressValue, StringFormat='{}{0}%'}"
                                                                   Foreground="{StaticResource TextSecondary}" 
                                                                   FontSize="12"
                                                                   HorizontalAlignment="Right"/>
-                                                    </Grid>
+                                                            </Grid>
 
-                                                    <ProgressBar Style="{StaticResource ModernProgressBar}"
+                                                            <ProgressBar Style="{StaticResource ModernProgressBar}"
                                                                 Value="{Binding ProgressValue}"
                                                                 Margin="0,0,0,12"
                                                                 Minimum="0"
                                                                 Maximum="100"/>
 
-                                                    <TextBlock Text="Xem chi tiết" 
+                                                            <TextBlock Text="Xem chi tiết" 
                                                               Foreground="{StaticResource SecondaryColor}" 
                                                               FontSize="14"
                                                               FontWeight="Medium"
                                                               HorizontalAlignment="Right"
                                                               Cursor="Hand"
                                                               MouseLeftButtonDown="ViewDetail_MouseLeftButtonDown"/>
+                                                        </StackPanel>
+                                                    </StackPanel>
                                                 </StackPanel>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                        <!-- Pagination hiện đại -->
-                        <Border Style="{StaticResource ModernPaginationContainer}">
-                            <Grid>
-                                <TextBlock Text="{Binding PageInfo}"
+                                <!-- Pagination hiện đại -->
+                                <Border Style="{StaticResource ModernPaginationContainer}">
+                                    <Grid>
+                                        <TextBlock Text="{Binding PageInfo}"
                                           VerticalAlignment="Center"
                                           HorizontalAlignment="Left"
                                           Foreground="{StaticResource TextSecondary}"
                                           FontSize="14"
                                           FontWeight="Medium"/>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <Button Content="&lt; Trước" 
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Content="&lt; Trước" 
                                             Style="{StaticResource ModernSegmentButton}" 
                                             Margin="0,0,8,0" 
                                             Height="36" 
@@ -676,117 +697,227 @@
                                             Command="{Binding PreviousPageCommand}"
                                             IsEnabled="{Binding CanGoToPreviousPage}"/>
 
-                                    <StackPanel Orientation="Horizontal">
-                                        <ItemsControl ItemsSource="{Binding PageNumbers}">
-                                            <ItemsControl.ItemsPanel>
-                                                <ItemsPanelTemplate>
-                                                    <StackPanel Orientation="Horizontal"/>
-                                                </ItemsPanelTemplate>
-                                            </ItemsControl.ItemsPanel>
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Button Content="{Binding}" 
+                                            <StackPanel Orientation="Horizontal">
+                                                <ItemsControl ItemsSource="{Binding PageNumbers}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal"/>
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Button Content="{Binding}" 
                                                             Margin="4,0,0,0" 
                                                             Height="36" 
                                                             Width="36" 
                                                             Padding="0"
                                                             Click="PageNumber_Click"
                                                             CommandParameter="{Binding}">
-                                                        <Button.Style>
-                                                            <Style TargetType="Button" BasedOn="{StaticResource ModernSegmentButton}">
-                                                                <Setter Property="Background" Value="Transparent"/>
-                                                                <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
-                                                                        <Setter Property="Background" Value="{StaticResource TextPrimary}"/>
-                                                                        <Setter Property="Foreground" Value="White"/>
-                                                                        <Setter Property="Effect" Value="{StaticResource ButtonShadow}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Button.Style>
-                                                    </Button>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </StackPanel>
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource ModernSegmentButton}">
+                                                                        <Setter Property="Background" Value="Transparent"/>
+                                                                        <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+                                                                        <Style.Triggers>
+                                                                            <!-- FIX: Sử dụng MultiBinding DataTrigger đã sửa -->
+                                                                            <DataTrigger Value="True">
+                                                                                <DataTrigger.Binding>
+                                                                                    <MultiBinding Converter="{StaticResource PageNumberEqualsMultiConverter}">
+                                                                                        <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="DataContext.CurrentPage" />
+                                                                                        <Binding />
+                                                                                    </MultiBinding>
+                                                                                </DataTrigger.Binding>
+                                                                                <Setter Property="Background" Value="{StaticResource TextPrimary}"/>
+                                                                                <Setter Property="Foreground" Value="White"/>
+                                                                                <Setter Property="Effect" Value="{StaticResource ButtonShadow}"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
 
-                                    <Button Content="Sau &gt;" 
+                                            <Button Content="Sau &gt;" 
                                             Style="{StaticResource ModernSegmentButton}" 
                                             Margin="8,0,0,0" 
                                             Height="36" 
                                             Padding="16,0"
                                             Command="{Binding NextPageCommand}"
                                             IsEnabled="{Binding CanGoToNextPage}"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
 
-                <!-- Các view khác giữ nguyên logic nhưng áp dụng style mới -->
-                <!-- === VIEW: QUẢN LÝ CÔNG NỢ === -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                        <!-- Các view khác giữ nguyên logic nhưng áp dụng style mới -->
+                        <!-- === VIEW: QUẢN LÝ CÔNG NỢ === -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               Visibility="{Binding IsDebtsView, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <Border Style="{StaticResource ModernStatCard}" Margin="0,0,0,10">
                             <StackPanel>
-                                <TextBlock Text="Danh sách công nợ" 
+                                <Border Style="{StaticResource ModernStatCard}" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Danh sách công nợ" 
                                           FontSize="20" 
                                           FontWeight="Bold" 
                                           Foreground="{StaticResource TextPrimary}" 
                                           Margin="0,0,0,20"/>
-                                <!-- DataGrid content giữ nguyên logic -->
-                                <DataGrid ItemsSource="{Binding Debts}"
-                                          AutoGenerateColumns="False"
-                                          CanUserAddRows="False"
-                                          Background="White"
-                                          BorderThickness="0"
-                                          GridLinesVisibility="None"
-                                          HeadersVisibility="Column"
-                                          RowHeight="45"
-                                          HorizontalAlignment="Stretch">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="100"/>
-                                        <DataGridTextColumn Header="Khách hàng" Binding="{Binding TenKhachHang}" Width="*"/>
-                                        <DataGridTextColumn Header="Tháng/Năm" Binding="{Binding ThangNam}" Width="100"/>
-                                        <DataGridTextColumn Header="Số tiền" Binding="{Binding TongTien, StringFormat='{}{0:N0} VNĐ'}" Width="130"/>
-                                        <DataGridTextColumn Header="Số tháng nợ" Binding="{Binding SoThangNo}" Width="100"/>
-                                        <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThaiThanhToan}" Width="120"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                                        <!-- DataGrid content giữ nguyên logic -->
+                                        <DataGrid ItemsSource="{Binding Debts}"
+                                                  AutoGenerateColumns="False"
+                                                  CanUserAddRows="False"
+                                                  Background="White"
+                                                  BorderThickness="0"
+                                                  GridLinesVisibility="Horizontal"
+                                                  HeadersVisibility="Column"
+                                                  RowHeight="50"
+                                                  HorizontalAlignment="Stretch">
 
-                <!-- === VIEW: BÁO CÁO THU CHI === -->
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                            <DataGrid.RowStyle>
+                                                <Style TargetType="DataGridRow">
+                                                    <!--
+                                                        UPDATE: Thêm EventSetter để xử lý DoubleClick
+                                                        Handler="DataGridRow_MouseDoubleClick" sẽ trỏ tới file .xaml.cs
+                                                    -->
+                                                    <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Cảnh báo">
+                                                            <Setter Property="Background" Value="#FFF7ED"/>
+                                                            <Setter Property="BorderBrush" Value="#F97316"/>
+                                                            <Setter Property="BorderThickness" Value="1"/>
+                                                            <Setter Property="ToolTip" Value="Có sự sai lệch giữa ảnh và số nhập tay. Vui lòng kiểm tra!"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </DataGrid.RowStyle>
+
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="80" FontWeight="Bold"/>
+
+                                                <DataGridTextColumn Header="Số liệu (Nhập | Ảnh)" Binding="{Binding SoDienThoai}" Width="180"/>
+
+                                                <DataGridTemplateColumn Header="Ghi chú hệ thống" Width="*">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding DiaChi}" 
+                                                                       TextWrapping="Wrap" 
+                                                                       VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="#6B7280"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Cảnh báo">
+                                                                                <Setter Property="Foreground" Value="#EF4444"/>
+                                                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <DataGridTextColumn Header="Tổng tiền dự kiến" Binding="{Binding TongTien, StringFormat='{}{0:N0} VNĐ'}" Width="140" FontWeight="Bold"/>
+
+                                                <DataGridTemplateColumn Header="Trạng thái" Width="120">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Border CornerRadius="12" Padding="10,4" HorizontalAlignment="Center">
+                                                                <Border.Style>
+                                                                    <Style TargetType="Border">
+                                                                        <Setter Property="Background" Value="#E5E7EB"/>
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Cảnh báo">
+                                                                                <Setter Property="Background" Value="#FEE2E2"/>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Chờ duyệt">
+                                                                                <Setter Property="Background" Value="#D1FAE5"/>
+                                                                            </DataTrigger>
+                                                                            <!-- Thêm style cho trạng thái đã xác nhận -->
+                                                                            <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Đã xác nhận">
+                                                                                <Setter Property="Background" Value="#DBEAFE"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Border.Style>
+                                                                <TextBlock Text="{Binding TrangThaiThanhToan}" FontWeight="SemiBold">
+                                                                    <TextBlock.Style>
+                                                                        <Style TargetType="TextBlock">
+                                                                            <Setter Property="Foreground" Value="#374151"/>
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Cảnh báo">
+                                                                                    <Setter Property="Foreground" Value="#DC2626"/>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Chờ duyệt">
+                                                                                    <Setter Property="Foreground" Value="#059669"/>
+                                                                                </DataTrigger>
+                                                                                <!-- Thêm style cho trạng thái đã xác nhận -->
+                                                                                <DataTrigger Binding="{Binding TrangThaiThanhToan}" Value="Đã xác nhận">
+                                                                                    <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBlock.Style>
+                                                                </TextBlock>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <DataGridTemplateColumn Width="80">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <!-- 
+                                                                Nút "Sửa" này đã được trỏ đúng
+                                                                vào 'InspectDiscrepancyCommand' ở lượt trước.
+                                                            -->
+                                                            <Button Content="Sửa" 
+                                                                    Command="{Binding DataContext.InspectDiscrepancyCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
+                                                                    CommandParameter="{Binding}"
+                                                                    Style="{StaticResource ModernSegmentButton}"
+                                                                    Padding="10,0" Height="30" FontSize="12"/>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- === VIEW: BÁO CÁO THU CHI === -->
+                        <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               Visibility="{Binding IsReportsView, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel>
-                        <Border Style="{StaticResource ModernStatCard}" Margin="0,0,0,10">
                             <StackPanel>
-                                <TextBlock Text="Báo cáo tài chính" 
+                                <Border Style="{StaticResource ModernStatCard}" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="Báo cáo tài chính" 
                                           FontSize="20" 
                                           FontWeight="Bold" 
                                           Foreground="{StaticResource TextPrimary}" 
                                           Margin="0,0,0,16"/>
-                                <TextBlock Text="Thống kê theo tháng" 
+                                        <TextBlock Text="Thống kê theo tháng" 
                                           FontSize="15" 
                                           FontWeight="SemiBold" 
                                           Foreground="{StaticResource TextSecondary}" 
                                           Margin="0,0,0,12"/>
-                                <TextBlock Text="Dữ liệu thống kê sẽ được hiển thị tại đây" 
+                                        <TextBlock Text="Dữ liệu thống kê sẽ được hiển thị tại đây" 
                                           Foreground="{StaticResource TextTertiary}" 
                                           FontSize="14"
                                           FontStyle="Italic"/>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </Grid>
+                        </ScrollViewer>
+                    </Grid>
                 </StackPanel>
                 <!-- Đóng StackPanel chính (từ dòng 344) -->
             </ScrollViewer>

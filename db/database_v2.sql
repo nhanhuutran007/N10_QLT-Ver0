@@ -246,3 +246,69 @@ CREATE TABLE GoogleFormLog (
     Processed BIT DEFAULT 0
 );
 GO
+USE database_v2;
+GO
+
+-- 1. Xóa bảng ThanhToan cũ (để tạo lại cấu trúc đúng)
+IF OBJECT_ID('dbo.ThanhToan', 'U') IS NOT NULL
+    DROP TABLE dbo.ThanhToan;
+GO
+
+-- 2. Tạo lại bảng ThanhToan (Bỏ Computed Columns, dùng cột thường)
+CREATE TABLE ThanhToan (
+  MaThanhToan INT IDENTITY(1,1) PRIMARY KEY,
+  MaHopDong INT,
+  ThangNam CHAR(7) NOT NULL, -- Định dạng MM/yyyy
+  
+  -- Các khoản tiền (C# sẽ tính và đẩy vào đây)
+  TienThue DECIMAL(18,0) DEFAULT 0,
+  TienInternet DECIMAL(18,0) DEFAULT 0,
+  TienVeSinh DECIMAL(18,0) DEFAULT 0,
+  TienGiuXe DECIMAL(18,0) DEFAULT 0,
+  ChiPhiKhac DECIMAL(18,0) DEFAULT 0,
+  
+  -- Điện Nước
+  DonGiaDien DECIMAL(18,0) DEFAULT 3500,
+  DonGiaNuoc DECIMAL(18,0) DEFAULT 100000, 
+  
+  ChiSoDienCu DECIMAL(18,2) DEFAULT 0, -- Lấy từ tháng trước
+  ChiSoDienMoi DECIMAL(18,2) DEFAULT 0, -- Lấy từ Google Form
+  
+  SoDien DECIMAL(18,2) DEFAULT 0, -- C# tính: Mới - Cũ
+  SoNuoc DECIMAL(18,2) DEFAULT 1,
+  
+  -- Cột thường (Không dùng AS ... PERSISTED nữa)
+  TienDien DECIMAL(18,0) DEFAULT 0, 
+  TienNuoc DECIMAL(18,0) DEFAULT 0,
+  TongTien DECIMAL(18,0) DEFAULT 0,
+
+  TrangThaiThanhToan NVARCHAR(20) DEFAULT N'Chưa trả' CHECK (TrangThaiThanhToan IN (N'Chưa trả', N'Đã trả')),
+  NgayThanhToan DATE,
+  NgayTao DATETIME DEFAULT GETDATE(),
+  GhiChu NVARCHAR(500),
+  
+  FOREIGN KEY (MaHopDong) REFERENCES HopDong(MaHopDong) ON DELETE CASCADE,
+  -- Ràng buộc mỗi hợp đồng chỉ có 1 hóa đơn trong 1 tháng
+  UNIQUE (MaHopDong, ThangNam) 
+);
+GO
+
+-- 3. DỮ LIỆU MẪU ĐỂ TEST (QUAN TRỌNG)
+-- Để test logic "Lấy số điện tháng trước", ta cần tạo giả một hóa đơn của tháng trước.
+-- Giả sử tháng hiện tại là tháng 11/2025, ta tạo dữ liệu tháng 10/2025.
+
+-- Đảm bảo có hợp đồng cho P101 (MaPhong = 1, MaHopDong = 1)
+-- Tạo hóa đơn Tháng 10/2025 cho P101 với Chỉ số điện Mới là 1000
+INSERT INTO ThanhToan (
+    MaHopDong, ThangNam, 
+    TienThue, TienDien, TienNuoc, TongTien,
+    ChiSoDienCu, ChiSoDienMoi, SoDien,
+    TrangThaiThanhToan, GhiChu
+)
+VALUES (
+    1, '10/2025', 
+    3000000, 350000, 100000, 3450000,
+    900, 1000, 100, -- Số mới tháng 10 là 1000. Khi chạy tháng 11, số Cũ sẽ là 1000.
+    N'Đã trả', N'Dữ liệu mẫu tháng trước'
+);
+GO

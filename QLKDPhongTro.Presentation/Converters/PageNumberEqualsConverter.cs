@@ -5,27 +5,26 @@ using System.Windows.Data;
 namespace QLKDPhongTro.Presentation.Converters
 {
     /// <summary>
-    /// Converter để so sánh CurrentPage với PageNumber trong pagination
+    /// Converter này so sánh hai giá trị (CurrentPage từ VM và PageNumber từ Button).
+    /// Trả về True nếu chúng bằng nhau, False nếu không.
     /// </summary>
-    public class PageNumberEqualsConverter : IMultiValueConverter
+    public class PageNumberEqualsConverter : IValueConverter
     {
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values == null || values.Length < 2)
-                return false;
+            // value: Là giá trị từ Binding chính (DataContext.CurrentPage)
+            // parameter: Là giá trị từ ConverterParameter (Page number của Button)
 
-            if (values[0] is int currentPage && values[1] is int pageNumber)
-            {
-                return currentPage == pageNumber;
-            }
+            // Chuyển đổi cả hai giá trị sang string để so sánh an toàn
+            string? currentPage = value?.ToString();
+            string? buttonPage = parameter?.ToString();
 
-            return false;
+            return currentPage == buttonPage;
         }
 
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
     }
 }
-

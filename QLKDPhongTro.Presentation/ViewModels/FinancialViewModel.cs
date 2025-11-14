@@ -39,6 +39,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private readonly SemaphoreSlim _loadSemaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _filterSemaphore = new SemaphoreSlim(1, 1);
 
+        // Thêm property để lưu trữ thông tin chi tiết sự cố
+        private DebtDiscrepancyInfo? _selectedDebtDiscrepancy;
+        public DebtDiscrepancyInfo? SelectedDebtDiscrepancy
+        {
+            get => _selectedDebtDiscrepancy;
+            set
+            {
+                _selectedDebtDiscrepancy = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasDiscrepancyInfo));
+            }
+        }
+
+        public bool HasDiscrepancyInfo => SelectedDebtDiscrepancy != null;
+
         #region Properties
 
         public ObservableCollection<FinancialRecordDto> FinancialRecords
@@ -269,6 +284,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand ExportCommand { get; }
         public ICommand ProcessDebtsFromGoogleFormCommand { get; }
 
+        // Thêm command mới để xem chi tiết sự cố
+        public ICommand InspectDiscrepancyCommand { get; }
+        public ICommand ResolveDiscrepancyCommand { get; }
+
         #endregion
 
         #region Events
@@ -300,6 +319,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             _debtProcessingService = new DebtProcessingService();
 
+            // Khởi tạo commands
             ManualInputRentCommand = new RelayCommand(() => { });
             ScanImageCommand = new RelayCommand(() => { });
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
@@ -312,6 +332,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
             ProcessDebtsFromGoogleFormCommand = new RelayCommand(async () => await ProcessDebtsFromGoogleFormAsync());
             PreviousPageCommand = new RelayCommand(() => { if (CanGoToPreviousPage) CurrentPage--; }, () => CanGoToPreviousPage);
             NextPageCommand = new RelayCommand(() => { if (CanGoToNextPage) CurrentPage++; }, () => CanGoToNextPage);
+
+            // Thêm commands mới
+            InspectDiscrepancyCommand = new RelayCommand<DebtReportDto>(async (debt) => await InspectDiscrepancyAsync(debt));
+            ResolveDiscrepancyCommand = new RelayCommand(async () => await ResolveDiscrepancyAsync());
         }
 
         #region Public Methods
@@ -409,47 +433,371 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        /// <summary>
+        /// Xử lý sự cố khi có sai lệch giữa giá trị nhập tay và OCR
+        /// </summary>
+        private async Task HandleDiscrepancyAsync(DebtCalculationResult debtResult)
+        {
+            try
+            {
+                // Service (DebtProcessingService) đã cache thông tin này rồi.
+                // ViewModel không cần tạo lại. Nó chỉ cần biết là có lỗi.
+
+                // Tải MeterReadingResult (nếu chưa có) để đảm bảo cache đầy đủ
+                if (debtResult.IsDiscrepancy)
+                {
+                    var info = await _debtProcessingService.GetDiscrepancyInfoAsync(debtResult.RoomName);
+                    if (info.MeterReadingResult == null)
+                    {
+                        info.MeterReadingResult = await GetMeterReadingResultAsync(debtResult);
+                    }
+                }
+
+                // Hiển thị thông báo cho admin
+                ShowMessageRequested?.Invoke(this,
+                    $"Phát hiện sai lệch ở phòng {debtResult.RoomName}: " +
+                    $"Nhập tay: {debtResult.ManualValue} | OCR: {debtResult.OcrValue}");
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi xử lý sự cố: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Lấy kết quả đọc chỉ số từ ảnh
+        /// </summary>
+        private async Task<MeterReadingResult> GetMeterReadingResultAsync(DebtCalculationResult debtResult)
+        {
+            if (!string.IsNullOrEmpty(debtResult.OriginalImagePath))
+            {
+                var ocrService = new OcrService();
+                return await ocrService.AnalyzeImageAsync(debtResult.OriginalImagePath, MeterType.Electricity);
+            }
+
+            // Fallback nếu không có ảnh (mặc dù logic sự cố yêu cầu phải có ảnh)
+            return new MeterReadingResult
+            {
+                Value = debtResult.OcrValue,
+                RawText = debtResult.OcrValue.ToString(),
+                Confidence = 0.5f // Giả định độ tin cậy trung bình
+            };
+        }
+
+        /// <summary>
+        /// Mở cửa sổ kiểm tra chi tiết sự cố
+        /// </summary>
+        public async Task OpenDiscrepancyInspectionAsync(DebtReportDto debt)
+        {
+            // FIX: Kiểm tra 'TrangThaiThanhToan'
+            if (debt == null || debt.TrangThaiThanhToan != "Cảnh báo") return;
+
+            try
+            {
+                IsLoading = true;
+
+                // Lấy thông tin chi tiết sự cố
+                // FIX: Dùng 'TenPhong'
+                var discrepancyInfo = await _debtProcessingService.GetDiscrepancyInfoAsync(debt.TenPhong);
+                if (discrepancyInfo != null)
+                {
+                    // Tạo ViewModel cho cửa sổ kiểm tra
+                    var inspectVM = new MeterReadingInspectionViewModel(
+                        discrepancyInfo.MeterReadingResult,
+                        discrepancyInfo.OriginalImagePath);
+
+                    // Mở cửa sổ kiểm tra
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        var inspectionWindow = new MeterReadingInspectionWindow(inspectVM)
+                        {
+                            Owner = Application.Current.MainWindow,
+                            WindowStartupLocation = WindowStartupLocation.CenterOwner
+                        };
+
+                        // Xử lý khi admin xác nhận
+                        inspectionWindow.Closed += async (s, e) =>
+                        {
+                            if (inspectVM.IsConfirmed)
+                            {
+                                await ResolveDiscrepancyWithConfirmedValue(debt, inspectVM.FinalValue);
+                            }
+                        };
+
+                        inspectionWindow.ShowDialog();
+                    });
+                }
+                else
+                {
+                    ShowMessageRequested?.Invoke(this, "Không tìm thấy thông tin chi tiết sự cố.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi mở cửa sổ kiểm tra: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Giải quyết sự cố với giá trị đã xác nhận
+        /// </summary>
+        private async Task ResolveDiscrepancyWithConfirmedValue(DebtReportDto debt, decimal confirmedValue)
+        {
+            try
+            {
+                IsLoading = true;
+
+                // FIX: Dùng 'TenPhong'
+                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue);
+                if (result.IsSuccess)
+                {
+                    ShowMessageRequested?.Invoke(this,
+                        $"Đã giải quyết sự cố cho phòng {debt.TenPhong}. Giá trị xác nhận: {confirmedValue}");
+
+                    // Cập nhật UI
+                    debt.TrangThaiThanhToan = "Đã xác nhận";
+                    debt.GhiChu = $"Đã xác nhận: {confirmedValue}";
+                    debt.ComparisonInfo = $"Xác nhận: {confirmedValue}";
+
+                    // Refresh dữ liệu
+                    await LoadViewDataAsync();
+                }
+                else
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi giải quyết sự cố: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
         private async Task ProcessDebtsFromGoogleFormAsync()
         {
             try
             {
                 IsLoading = true;
-                ShowMessageRequested?.Invoke(this, "Đang xử lý dữ liệu từ Google Form...");
+                ShowMessageRequested?.Invoke(this, "Đang xử lý và đối chiếu dữ liệu từ Google Form...");
 
+                // Xử lý công nợ từ Google Form
                 var results = await _debtProcessingService.ProcessDebtsAsync();
 
-                var successCount = results.Count(r => r.IsProcessed);
-                var totalCount = results.Count;
+                // Phân loại kết quả
+                var validDebts = results.Where(r => r.IsProcessed && !r.IsDiscrepancy).ToList();
+                var discrepancyDebts = results.Where(r => r.IsProcessed && r.IsDiscrepancy).ToList();
+                var errorDebts = results.Where(r => !r.IsProcessed).ToList();
 
-                var message = $"Đã xử lý {successCount}/{totalCount} công nợ từ Google Form:\n\n";
-
-                foreach (var result in results)
+                // Xử lý các trường hợp có sai lệch
+                foreach (var discrepancy in discrepancyDebts)
                 {
-                    if (result.IsProcessed)
-                    {
-                        message += $"- Phòng {result.RoomName}: {result.TotalDebt:N0} VNĐ (Điện: {result.ElectricityCost:N0} + Nước: {result.WaterCost:N0})\n";
-                    }
-                    else
-                    {
-                        message += $"- Phòng {result.RoomName}: LỖI - {result.ErrorMessage}\n";
-                    }
+                    await HandleDiscrepancyAsync(discrepancy);
                 }
 
-                ShowMessageRequested?.Invoke(this, message);
+                // Tạo danh sách báo cáo cho UI
+                var reportList = new ObservableCollection<DebtReportDto>();
 
-                if (successCount > 0)
+                // 1. Thêm các khoản có sai lệch (Ưu tiên hiển thị)
+                foreach (var item in discrepancyDebts)
                 {
-                    var createdCount = await _debtProcessingService.CreatePaymentRecordsFromDebtsAsync(results);
-                    if (createdCount > 0)
+                    reportList.Add(new DebtReportDto
                     {
-                        ShowMessageRequested?.Invoke(this, $"Đã tạo {createdCount} bản ghi thanh toán từ công nợ");
-                        await LoadDataAsync();
-                    }
+                        TenPhong = item.RoomName,
+                        ThangNam = DateTime.Now.ToString("MM/yyyy"),
+                        TongTien = item.TotalDebt,
+                        TrangThaiThanhToan = "Cảnh báo",
+                        GhiChu = item.WarningNote,
+                        SoDienThoai = item.Email, // Giữ nguyên số điện thoại thực từ database
+                        ComparisonInfo = $"Nhập tay: {item.ManualValue} | OCR: {item.OcrValue}" // HIỂN THỊ ĐÚNG THÔNG TIN SO SÁNH
+                    });
+                }
+
+                // 2. Thêm các khoản hợp lệ
+                foreach (var item in validDebts)
+                {
+                    reportList.Add(new DebtReportDto
+                    {
+                        TenPhong = item.RoomName,
+                        ThangNam = DateTime.Now.ToString("MM/yyyy"),
+                        TongTien = item.TotalDebt,
+                        TrangThaiThanhToan = "Chờ duyệt",
+                        GhiChu = "Số liệu khớp",
+                        SoDienThoai = item.Email, // Giữ nguyên số điện thoại thực từ database
+                        ComparisonInfo = $"Giá trị: {item.CurrentElectricValue}" // HIỂN THỊ ĐÚNG THÔNG TIN
+                    });
+                }
+
+                // Cập nhật UI
+                Debts = reportList;
+                CurrentView = "Debts";
+
+                // Thông báo kết quả
+                string summary = $"Xử lý xong Google Form:\n" +
+                                 $"✅ {validDebts.Count} phòng khớp số liệu\n" +
+                                 $"⚠️ {discrepancyDebts.Count} phòng có sai lệch (Cần kiểm tra)\n" +
+                                 $"❌ {errorDebts.Count} lỗi xử lý";
+
+                ShowMessageRequested?.Invoke(this, summary);
+
+                // Tự động tạo payment records cho các bản ghi hợp lệ
+                if (validDebts.Count > 0)
+                {
+                    var createdCount = await _debtProcessingService.CreatePaymentRecordsFromDebtsAsync(validDebts);
+                    ShowMessageRequested?.Invoke(this, $"Đã tự động tạo {createdCount} bản ghi thanh toán hợp lệ.");
+                }
+
+                // Thông báo về các sự cố cần xử lý
+                if (discrepancyDebts.Count > 0)
+                {
+                    ShowMessageRequested?.Invoke(this,
+                        $"Có {discrepancyDebts.Count} sự cố cần kiểm tra. Vui lòng chuyển đến tab 'Quản lý công nợ' để xử lý.");
                 }
             }
             catch (Exception ex)
             {
-                ShowMessageRequested?.Invoke(this, $"Lỗi khi xử lý công nợ từ Google Form: {ex.Message}");
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi xử lý Google Form: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // Phương thức kiểm tra sự cố
+        private async Task InspectDiscrepancyAsync(DebtReportDto? debt)
+        {
+            // FIX: Kiểm tra 'TrangThaiThanhToan'
+            if (debt == null || debt.TrangThaiThanhToan != "Cảnh báo") return;
+
+            try
+            {
+                IsLoading = true;
+
+                // Lấy thông tin chi tiết sự cố từ service
+                // FIX: Dùng 'TenPhong'
+                var discrepancyInfo = await _debtProcessingService.GetDiscrepancyInfoAsync(debt.TenPhong);
+                if (discrepancyInfo != null)
+                {
+                    SelectedDebtDiscrepancy = discrepancyInfo;
+
+                    // Hiển thị cửa sổ kiểm tra chi tiết
+                    var inspectVM = new MeterReadingInspectionViewModel(
+                        discrepancyInfo.MeterReadingResult,
+                        discrepancyInfo.OriginalImagePath);
+
+                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        var window = new MeterReadingInspectionWindow(inspectVM);
+                        window.Owner = Application.Current.MainWindow;
+
+                        // Xử lý khi cửa sổ đóng
+                        window.Closed += async (s, e) =>
+                        {
+                            if (inspectVM.IsConfirmed)
+                            {
+                                // Cập nhật giá trị đã xác nhận
+                                await ResolveDiscrepancyWithValue(debt, inspectVM.FinalValue);
+                            }
+                        };
+
+                        window.ShowDialog();
+                    });
+                }
+                else
+                {
+                    ShowMessageRequested?.Invoke(this, "Không tìm thấy thông tin chi tiết sự cố.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi kiểm tra sự cố: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // Phương thức giải quyết sự cố với giá trị cụ thể
+        private async Task ResolveDiscrepancyWithValue(DebtReportDto debt, decimal confirmedValue)
+        {
+            try
+            {
+                IsLoading = true;
+
+                // FIX: Dùng 'TenPhong'
+                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue);
+                if (result.IsSuccess)
+                {
+                    ShowMessageRequested?.Invoke(this, $"Đã giải quyết sự cố cho phòng {debt.TenPhong} với giá trị {confirmedValue}");
+
+                    // Cập nhật UI
+                    debt.TrangThaiThanhToan = "Đã xác nhận";
+                    debt.GhiChu = $"Đã xác nhận: {confirmedValue}";
+                    debt.ComparisonInfo = $"Xác nhận: {confirmedValue}";
+
+                    // Refresh data
+                    await LoadViewDataAsync();
+
+                    SelectedDebtDiscrepancy = null;
+                }
+                else
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi giải quyết sự cố: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        // Phương thức giải quyết sự cố từ panel thông tin
+        private async Task ResolveDiscrepancyAsync()
+        {
+            if (SelectedDebtDiscrepancy == null) return;
+
+            try
+            {
+                IsLoading = true;
+
+                // Sử dụng giá trị đã xác nhận hoặc giá trị thủ công làm mặc định
+                decimal valueToUse = SelectedDebtDiscrepancy.ConfirmedValue > 0 ?
+                    SelectedDebtDiscrepancy.ConfirmedValue : SelectedDebtDiscrepancy.ManualValue;
+
+                var result = await _debtProcessingService.ResolveDiscrepancyAsync(
+                    SelectedDebtDiscrepancy.RoomName, valueToUse);
+
+                if (result.IsSuccess)
+                {
+                    ShowMessageRequested?.Invoke(this, "Đã giải quyết sự cố thành công!");
+
+                    // Cập nhật lại danh sách
+                    await LoadViewDataAsync();
+
+                    // Reset selected discrepancy
+                    SelectedDebtDiscrepancy = null;
+                }
+                else
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi giải quyết sự cố: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi: {ex.Message}");
             }
             finally
             {
@@ -740,6 +1088,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
+            // FIX: Đã loại bỏ nhánh logic xử lý "Cảnh báo"
+            // EditCommand chỉ dành cho FinancialRecordDto
+
+            // Logic cũ cho các trường hợp khác
             if (_financialController == null)
             {
                 ShowMessageRequested?.Invoke(this, "Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
@@ -785,6 +1137,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 ShowMessageRequested?.Invoke(this, $"Lỗi khi mở form chỉnh sửa: {ex.Message}");
             }
         }
+
+        // FIX: Đã loại bỏ phương thức EditDebtWarningAsync vì logic của nó bị sai
+        // (trộn lẫn DTO) và chức năng của nó đã được xử lý bởi InspectDiscrepancyAsync
 
         private async Task CalculateStatisticsAsync()
         {
@@ -1092,4 +1447,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         #endregion
     }
+
+    // FIX: Đã xóa class 'DebtDiscrepancyInfo' trùng lặp.
+    // ViewModel sẽ sử dụng class được định nghĩa trong DebtProcessingService.cs
 }

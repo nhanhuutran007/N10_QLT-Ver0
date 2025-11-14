@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
@@ -15,5 +15,9 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public int SoThangNo { get; set; }
         public DateTime? NgayThanhToan { get; set; }
         public string DiaChi { get; set; }
+        public string GhiChu { get; set; }
+
+        // THÊM property mới để hiển thị thông tin so sánh
+        public string ComparisonInfo { get; set; }
     }
 }

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic; // Cần cho List<T>
 using System.IO;
+using System.Linq; // FIX: Thêm 'using' cho .Cast<object>()
 using System.Threading.Tasks;
 
 namespace QLKDPhongTro.Presentation.Services
@@ -16,7 +18,7 @@ namespace QLKDPhongTro.Presentation.Services
         {
             // Chỉ sử dụng YOLOv9 model đã train
             _yoloService = new YoloMeterReadingService();
-            
+
             if (!_yoloService.IsModelAvailable())
             {
                 throw new InvalidOperationException(
@@ -52,7 +54,25 @@ namespace QLKDPhongTro.Presentation.Services
 
             try
             {
-                return await _yoloService.AnalyzeImageAsync(imagePath, type);
+                // FIX: Ánh xạ kết quả từ class nội bộ (Yolo.MeterReadingResult)
+                // sang class công khai (OcrService.MeterReadingResult)
+                // để giải quyết lỗi chuyển đổi kiểu.
+
+                // 1. Gọi YoloService (trả về YoloMeterReadingService.MeterReadingResult)
+                var yoloResult = await _yoloService.AnalyzeImageAsync(imagePath, type);
+
+                // 2. Ánh xạ sang class public (OcrService.MeterReadingResult)
+                return new MeterReadingResult
+                {
+                    Type = yoloResult.Type,
+                    Value = yoloResult.Value,
+                    Confidence = yoloResult.Confidence,
+                    RawText = yoloResult.RawText,
+                    ErrorMessage = yoloResult.ErrorMessage,
+                    VisualizedImageBase64 = yoloResult.VisualizedImageBase64,
+                    // FIX: Chuyển đổi List<Detection> sang List<object>
+                    Detections = yoloResult.Detections?.Cast<object>().ToList()
+                };
             }
             catch (Exception ex)
             {
@@ -73,7 +93,7 @@ namespace QLKDPhongTro.Presentation.Services
         public async Task<MeterReadingResult[]> AnalyzeImagesAsync(string[] imagePaths, MeterType type)
         {
             var results = new MeterReadingResult[imagePaths.Length];
-            
+
             for (int i = 0; i < imagePaths.Length; i++)
             {
                 try
@@ -108,6 +128,11 @@ namespace QLKDPhongTro.Presentation.Services
         public string RawText { get; set; } = string.Empty;
         public string? ErrorMessage { get; set; }
         public bool IsValid => Confidence > 0.3f && Value > 0;
+
+        // FIX: Thêm các thuộc tính còn thiếu khớp với YoloMeterReadingService.MeterReadingResult
+        public string? VisualizedImageBase64 { get; set; }
+        public List<object>? Detections { get; set; } // Dùng 'object' hoặc 'dynamic' nếu không muốn tham chiếu Yolo.Detection
+                                                      // Hoặc tạo một class Detection public
     }
 
     /// <summary>

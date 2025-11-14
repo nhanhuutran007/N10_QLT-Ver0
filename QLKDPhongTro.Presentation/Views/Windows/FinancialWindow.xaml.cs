@@ -1,7 +1,9 @@
-using System; // Thêm namespace này cho Exception
+using System;
 using System.Windows;
-using System.Windows.Controls; // Thêm namespace cho Button, StackPanel
+using System.Windows.Controls;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.BusinessLayer.DTOs;
+using System.Windows.Input; // Cần thiết cho MouseButtonEventArgs
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -44,6 +46,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         if (_viewModel != null)
                         {
                             await _viewModel.LoadDataAsync();
+                            // Đặt view mặc định sau khi load
+                            UpdateViewButtons(ViewAllRecordsButton);
                         }
                     }
                     catch (Exception ex)
@@ -67,33 +71,21 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        // Event cũ ScanImageButton_Click đã bỏ vì thay bằng Command trong ViewModel, 
-        // nhưng nếu XAML vẫn còn sự kiện Click="ScanImageButton_Click" thì giữ lại hàm này để tránh lỗi biên dịch.
-        // Nếu đã xóa Click="..." trong XAML thì có thể xóa hàm này.
-        private async void ScanImageButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_viewModel == null) return;
-
-            // Gọi Command xử lý Google Form thay vì mở cửa sổ quét ảnh cũ
-            if (_viewModel.ProcessDebtsFromGoogleFormCommand.CanExecute(null))
-            {
-                _viewModel.ProcessDebtsFromGoogleFormCommand.Execute(null);
-            }
-        }
-
         private async void ManualInputButton_Click(object sender, RoutedEventArgs e)
         {
             if (_viewModel == null) return;
 
             try
             {
-                var dialog = new ManualInputView();
-                dialog.Owner = this;
-                if (dialog.ShowDialog() == true)
-                {
-                    // Refresh data sau khi nhập liệu thành công
-                    await _viewModel.LoadDataAsync();
-                }
+                // var dialog = new ManualInputView(); // Lỗi: 'ManualInputView' could not be found
+                // dialog.Owner = this;
+                // if (dialog.ShowDialog() == true)
+                // {
+                //     // Refresh data sau khi nhập liệu thành công
+                //     await _viewModel.LoadDataAsync();
+                // }
+                MessageBox.Show("Chức năng 'Nhập tay' chưa được liên kết (thiếu file ManualInputView).");
+                await Task.CompletedTask; // Giữ cho hàm async
             }
             catch (Exception ex)
             {
@@ -103,7 +95,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void ViewDetail_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (_viewModel != null && sender is FrameworkElement element && element.DataContext is BusinessLayer.DTOs.FinancialRecordDto record)
+            if (_viewModel != null && sender is FrameworkElement element && element.DataContext is FinancialRecordDto record)
             {
                 _viewModel.ViewDetailCommand?.Execute(record);
             }
@@ -139,9 +131,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void PageNumber_Click(object sender, RoutedEventArgs e)
         {
-            if (_viewModel != null && sender is Button button && button.Content is int pageNumber)
+            if (_viewModel != null && sender is Button button && button.Content != null)
             {
-                _viewModel.CurrentPage = pageNumber;
+                if (int.TryParse(button.Content.ToString(), out int pageNumber))
+                {
+                    _viewModel.CurrentPage = pageNumber;
+                }
             }
         }
 
@@ -195,6 +190,28 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                             if (normalStyle != null) btn.Style = normalStyle;
                         }
                     }
+                }
+            }
+        }
+
+        // UPDATE: Thêm trình xử lý sự kiện double-click
+        private void DataGridRow_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            // Lấy hàng được click và DataContext (DebtReportDto) của nó
+            if (sender is DataGridRow row && row.DataContext is DebtReportDto debt)
+            {
+                // Chỉ kích hoạt nếu công nợ đang ở trạng thái "Cảnh báo"
+                if (debt.TrangThaiThanhToan == "Cảnh báo")
+                {
+                    // Thực thi Command kiểm tra sự cố từ ViewModel
+                    if (_viewModel.InspectDiscrepancyCommand.CanExecute(debt))
+                    {
+                        _viewModel.InspectDiscrepancyCommand.Execute(debt);
+                    }
+                    // Đánh dấu sự kiện đã được xử lý
+                    e.Handled = true;
                 }
             }
         }

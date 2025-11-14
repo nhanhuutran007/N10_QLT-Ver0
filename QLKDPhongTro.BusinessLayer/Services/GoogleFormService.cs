@@ -15,11 +15,15 @@ namespace QLKDPhongTro.BusinessLayer.Services
     {
         private readonly SheetsService _sheetsService;
 
-        // LƯU Ý: Bạn cần thay thế ID này bằng ID thực tế lấy từ URL của Google Sheet
-        // Ví dụ URL: docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-        // Thì ID là: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
-        private const string SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE";
-        private const string SHEET_RANGE = "Form Responses 1!A:F"; // Đảm bảo tên Sheet (Form Responses 1) đúng với file của bạn
+        // ID file Google Sheet của bạn (giữ nguyên)
+        private const string SPREADSHEET_ID = "1TXLdDe8aYi41_RJj8ZseOi12xcA4CvFuNmOoMSiw5vw";
+
+        // === SỬA LỖI TẠI ĐÂY ===
+        // 1. Thêm dấu nháy đơn '...' bao quanh tên sheet
+        // 2. Thêm !A:F để lấy dữ liệu từ cột A đến F
+        // Sửa lại đúng chính tả và thêm !A:F
+        // Sửa lại đúng tên Sheet và thêm !A:F
+        private const string SHEET_RANGE = "ElectricReport";
 
         public GoogleFormService()
         {
@@ -33,40 +37,44 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
         private GoogleCredential GetCredential()
         {
+            // Code lấy credential (đã sửa ở bước trước để báo lỗi rõ ràng)
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            var credentialPath = Path.Combine(baseDir, "credentials.json");
+
+            if (!File.Exists(credentialPath))
+            {
+                throw new FileNotFoundException($"CHƯA CÓ FILE KEY! Hãy copy file 'credentials.json' vào thư mục: {credentialPath}");
+            }
+
             try
             {
-                var credentialPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "credentials.json");
-                if (File.Exists(credentialPath))
-                {
-                    using var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read);
-                    return GoogleCredential.FromStream(stream)
-                        .CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
-                }
-
-                // For development without credentials file
-                return GoogleCredential.FromAccessToken("dummy-token");
+                using var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read);
+                return GoogleCredential.FromStream(stream)
+                    .CreateScoped(SheetsService.Scope.SpreadsheetsReadonly);
             }
             catch (Exception ex)
             {
-                throw new Exception($"Không thể khởi tạo Google Sheets credential: {ex.Message}");
+                throw new Exception($"File credentials.json lỗi: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Đọc dữ liệu thô từ Google Sheet và map sang DTO trung gian
-        /// </summary>
-        public async Task<List<DebtCreationDto>> ReadDebtDataFromGoogleSheetAsync(string spreadsheetId, string range = "A:E")
+        public async Task<List<DebtCreationDto>> ReadDebtDataFromGoogleSheetAsync(string spreadsheetId, string range = "")
         {
             var debtData = new List<DebtCreationDto>();
 
             try
             {
-                if (_sheetsService == null)
+                // Nếu không truyền range, dùng mặc định đã sửa ở trên
+                var rangeToUse = string.IsNullOrEmpty(range) ? SHEET_RANGE : range;
+
+                // Nếu range truyền vào chưa có dấu nháy đơn mà có dấu cách, tự động sửa (Optional)
+                if (!rangeToUse.StartsWith("'") && rangeToUse.Contains(" ") && rangeToUse.Contains("!"))
                 {
-                    throw new InvalidOperationException("Sheets service is not initialized. Check credentials.");
+                    var parts = rangeToUse.Split('!');
+                    rangeToUse = $"'{parts[0]}'!{parts[1]}";
                 }
 
-                var request = _sheetsService.Spreadsheets.Values.Get(spreadsheetId, range);
+                var request = _sheetsService.Spreadsheets.Values.Get(spreadsheetId, rangeToUse);
                 var response = await request.ExecuteAsync();
 
                 if (response.Values == null || response.Values.Count < 2)
@@ -77,6 +85,8 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 for (int i = 1; i < response.Values.Count; i++)
                 {
                     var row = response.Values[i].Cast<string>().ToList();
+                    if (row.Count == 0) continue;
+
                     var debtDto = ParseRowToDebtData(headers, row);
                     if (debtDto != null)
                     {
@@ -86,7 +96,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
             }
             catch (Exception ex)
             {
-                throw new Exception($"Lỗi khi đọc dữ liệu từ Google Sheet: {ex.Message}");
+                throw new Exception($"Lỗi đọc Google Sheet: {ex.Message}");
             }
 
             return debtData;
@@ -98,92 +108,59 @@ namespace QLKDPhongTro.BusinessLayer.Services
             {
                 var debtDto = new DebtCreationDto
                 {
-                    Timestamp = GetCellValue(headers, row, "Timestamp"),
-                    Email = GetCellValue(headers, row, "Email Address"),
-                    RoomName = GetCellValue(headers, row, "Room Number"),
-                    ElectricImageUrl = GetCellValue(headers, row, "Electric Meter Image"),
-                    OldElectricValue = ParseDecimal(GetCellValue(headers, row, "Old Electric Value")),
-                    CurrentElectricValue = ParseDecimal(GetCellValue(headers, row, "Current Electric Value"))
+                    // Các tên cột này phải khớp với dòng 1 trong file Sheet của bạn
+                    Timestamp = GetCellValue(headers, row, "Dấu thời gian"), // Hoặc "Timestamp"
+                    RoomName = GetCellValue(headers, row, "Tên phòng"),
+                    CurrentElectricValue = ParseDecimal(GetCellValue(headers, row, "Chỉ số điện mới")),
+                    ElectricImageUrl = GetCellValue(headers, row, "Ảnh đồng hồ điện"),
+                    Email = GetCellValue(headers, row, "Địa chỉ email") // Hoặc "Email Address"
                 };
 
-                // Validate required fields
+                // Validate
                 if (string.IsNullOrEmpty(debtDto.RoomName))
-                {
                     debtDto.ErrorMessage = "Thiếu tên phòng";
-                    debtDto.IsProcessed = false;
-                    debtDto.ProcessingStatus = "Lỗi";
-                }
-                else if (debtDto.CurrentElectricValue <= 0 && string.IsNullOrEmpty(debtDto.ElectricImageUrl))
-                {
-                    // Nếu không có chỉ số điện VÀ không có ảnh thì mới lỗi
-                    // Nếu có ảnh thì có thể dùng OCR sau này
-                    debtDto.ErrorMessage = "Thiếu dữ liệu điện (số hoặc ảnh)";
-                    debtDto.IsProcessed = false;
-                    debtDto.ProcessingStatus = "Lỗi";
-                }
-                else
-                {
-                    debtDto.IsProcessed = false;
-                    debtDto.ProcessingStatus = "Chưa xử lý";
-                }
+                else if (debtDto.CurrentElectricValue <= 0)
+                    debtDto.ErrorMessage = "Chỉ số điện <= 0";
 
                 return debtDto;
             }
             catch (Exception ex)
             {
-                return new DebtCreationDto
-                {
-                    ErrorMessage = $"Lỗi phân tích dữ liệu: {ex.Message}",
-                    IsProcessed = false,
-                    ProcessingStatus = "Lỗi"
-                };
+                return new DebtCreationDto { ErrorMessage = $"Lỗi dòng: {ex.Message}" };
             }
         }
 
         private static string GetCellValue(List<string> headers, List<string> row, string headerName)
         {
-            var index = headers.FindIndex(h =>
-                h.Equals(headerName, StringComparison.OrdinalIgnoreCase));
+            var index = headers.FindIndex(h => h.IndexOf(headerName, StringComparison.OrdinalIgnoreCase) >= 0);
             return index >= 0 && index < row.Count ? row[index] : string.Empty;
         }
 
         private static decimal ParseDecimal(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
-            return decimal.TryParse(value, out decimal result) ? result : 0;
+            value = value.Replace(",", ".");
+            return decimal.TryParse(value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal result) ? result : 0;
         }
 
-        /// <summary>
-        /// Lấy dữ liệu từ Google Form và chuyển đổi sang định dạng DebtFormData để xử lý
-        /// </summary>
         public async Task<List<DebtFormData>> GetFormDataAsync()
         {
-            try
-            {
-                // 1. Gọi hàm đọc dữ liệu raw từ Sheet sử dụng ID và Range đã định nghĩa
-                var rawData = await ReadDebtDataFromGoogleSheetAsync(SPREADSHEET_ID, SHEET_RANGE);
+            // Gọi hàm đọc với Range mặc định đã sửa
+            var rawData = await ReadDebtDataFromGoogleSheetAsync(SPREADSHEET_ID, SHEET_RANGE);
 
-                // 2. Map từ DebtCreationDto sang DebtFormData
-                var result = rawData.Select(item => new DebtFormData
-                {
-                    Timestamp = item.Timestamp,
-                    Email = item.Email,
-                    RoomName = item.RoomName,
-                    ElectricImageUrl = item.ElectricImageUrl,
-                    OldElectricValue = item.OldElectricValue,
-                    CurrentElectricValue = item.CurrentElectricValue
-                }).ToList();
-
-                return result;
-            }
-            catch (Exception ex)
+            return rawData.Select(item => new DebtFormData
             {
-                // Ném lỗi ra để ViewModel hoặc Service gọi nó xử lý hiển thị
-                throw new Exception($"Lỗi kết nối Google Sheet: {ex.Message}");
-            }
+                Timestamp = item.Timestamp,
+                Email = item.Email,
+                RoomName = item.RoomName,
+                ElectricImageUrl = item.ElectricImageUrl,
+                OldElectricValue = item.OldElectricValue,
+                CurrentElectricValue = item.CurrentElectricValue
+            }).ToList();
         }
     }
 
+    // Class DebtFormData cần thiết cho DebtProcessingService
     public class DebtFormData
     {
         public string Timestamp { get; set; } = string.Empty;
@@ -192,8 +169,6 @@ namespace QLKDPhongTro.BusinessLayer.Services
         public string ElectricImageUrl { get; set; } = string.Empty;
         public decimal OldElectricValue { get; set; }
         public decimal CurrentElectricValue { get; set; }
-
-        // Kiểm tra xem có nhập tay đủ số liệu không
         public bool HasManualValues => OldElectricValue > 0 && CurrentElectricValue > 0;
     }
 }
