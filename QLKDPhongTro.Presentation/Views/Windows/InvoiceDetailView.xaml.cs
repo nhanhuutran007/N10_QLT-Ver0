@@ -8,6 +8,7 @@ using System.IO;
 using System.Windows.Input;
 using Microsoft.Win32;
 using System.Threading.Tasks;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -56,6 +57,85 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             catch
             {
                 // Không ném lỗi ra ngoài UI; giữ nguyên để tránh crash cửa sổ
+            }
+        }
+
+        private async void SendToCustomerButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (InvoiceData == null)
+            {
+                MessageBox.Show("Không có dữ liệu hóa đơn để gửi.", "Thông báo",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(InvoiceData.Email))
+            {
+                MessageBox.Show("Không tìm thấy email của khách hàng để gửi hóa đơn.", "Thông báo",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                // Lấy thông tin contract và room giống như khi tạo PDF để tải xuống
+                ContractDto? contract = null;
+                string tenPhong = "N/A";
+                int soNguoiLuuTru = 1;
+                string email = InvoiceData.Email;
+
+                if (InvoiceData.MaHopDong > 0)
+                {
+                    var contractController = ContractController.CreateDefault();
+                    contract = await contractController.GetByIdAsync(InvoiceData.MaHopDong);
+                    if (contract != null)
+                    {
+                        if (contract.MaPhong > 0)
+                        {
+                            var financialController = FinancialController.CreateDefault();
+                            var room = await financialController.GetRoomByIdAsync(contract.MaPhong);
+                            if (room != null)
+                            {
+                                tenPhong = room.TenPhong ?? "N/A";
+                            }
+                        }
+                        else
+                        {
+                            tenPhong = contract.TenPhong ?? "N/A";
+                        }
+                    }
+                }
+
+                var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(contract, email, tenPhong, soNguoiLuuTru);
+
+                // Tạo file PDF tạm thời
+                string tempFileName = $"HoaDon_{InvoiceData.MaThanhToan}_{InvoiceData.ThangNam.Replace("/", "_")}.pdf";
+                string tempFilePath = Path.Combine(Path.GetTempPath(), tempFileName);
+
+                string logoPath = FindLogoPath();
+                PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, tempFilePath, logoPath);
+
+                // Nội dung email gửi cho khách
+                string subject = $"Hóa đơn thanh toán tháng {InvoiceData.ThangNam} - #{InvoiceData.MaThanhToan}";
+                string body =
+                    $"Kính gửi {InvoiceData.HoTen}," + Environment.NewLine + Environment.NewLine +
+                    "Thông tin về hóa đơn thanh toán:" + Environment.NewLine +
+                    $"- Mã thanh toán: {InvoiceData.MaThanhToan}" + Environment.NewLine +
+                    $"- Tháng: {InvoiceData.ThangNam}" + Environment.NewLine +
+                    $"- Tổng tiền: {InvoiceData.TongTien:N0} đ" + Environment.NewLine + Environment.NewLine +
+                    "Chi tiết các khoản phí được đính kèm trong file PDF./" + Environment.NewLine + Environment.NewLine +
+                    "Trân trọng," + Environment.NewLine +
+                    "Hệ thống Quản lý Phòng Trọ";
+
+                await EmailService.SendEmailWithAttachmentAsync(email, subject, body, tempFilePath);
+
+                MessageBox.Show("Đã gửi hóa đơn đến khách hàng thành công!", "Thành công",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi gửi email hóa đơn: {ex.Message}", "Lỗi",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

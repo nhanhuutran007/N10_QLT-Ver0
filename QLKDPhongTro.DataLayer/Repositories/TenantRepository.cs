@@ -20,7 +20,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu,NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru FROM NguoiThue ORDER BY MaNguoiThue DESC", conn);
+                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru, Email FROM NguoiThue ORDER BY MaNguoiThue DESC", conn);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -35,7 +35,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
                             NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
                             DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                            Email = reader.IsDBNull(11) ? "" : reader.GetString(11)
                         });
                     }
                 }
@@ -51,11 +52,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT DISTINCT nt.MaNguoiThue, nt.HoTen, nt.SoDienThoai, nt.CCCD, nt.NgayBatDau, nt.TrangThai, nt.GhiChu,
-                           nt.NgaySinh, nt.NgayCapCCCD, nt.NoiCapCCCD, nt.DiaChiThuongTru
+                           nt.NgaySinh, nt.NgayCapCCCD, nt.NoiCapCCCD, nt.DiaChiThuongTru, nt.Email
                     FROM NguoiThue nt
                     LEFT JOIN HopDong hd ON nt.MaNguoiThue = hd.MaNguoiThue
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
-                    WHERE p.MaNha = @MaNha
+                    WHERE p.MaNha = @MaNha OR p.MaNha IS NULL
                     ORDER BY nt.MaNguoiThue DESC", conn);
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 using (var reader = await cmd.ExecuteReaderAsync())
@@ -72,7 +73,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
                             NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
                             DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                            Email = reader.IsDBNull(11) ? "" : reader.GetString(11)
                         });
                     }
                 }
@@ -85,7 +87,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu,NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
+                var cmd = new MySqlCommand("SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru, Email FROM NguoiThue WHERE MaNguoiThue = @MaNguoiThue", conn);
                 cmd.Parameters.AddWithValue("@MaNguoiThue", maKhachThue);
 
                 using (var reader = await cmd.ExecuteReaderAsync())
@@ -102,7 +104,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
                             NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
                             DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
-                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                            Email = reader.IsDBNull(11) ? "" : reader.GetString(11)
                         };
                     }
                 }
@@ -118,10 +121,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 var cmd = new MySqlCommand(@"
                     INSERT INTO NguoiThue
                     (HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                     NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru)
+                     NgaySinh, NgayCapCCCD, NoiCapCCCD, DiaChiThuongTru, Email)
                     VALUES
                     (@HoTen, @SoDienThoai, @CCCD, @NgayBatDau, @TrangThai, @GhiChu,
-                     @NgaySinh, @NgayCapCCCD, @NoiCapCCCD, @DiaChiThuongTru)", conn);
+                     @NgaySinh, @NgayCapCCCD, @NoiCapCCCD, @DiaChiThuongTru, @Email)", conn);
 
                 cmd.Parameters.AddWithValue("@HoTen", tenant.HoTen);
                 cmd.Parameters.AddWithValue("@SoDienThoai", (object?)tenant.SoDienThoai ?? DBNull.Value);
@@ -133,11 +136,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 cmd.Parameters.AddWithValue("@NgayCapCCCD", (object?)tenant.NgayCap ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@NoiCapCCCD", (object?)tenant.NoiCap ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@DiaChiThuongTru", (object?)tenant.DiaChi ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Email", (object?)tenant.Email ?? DBNull.Value);
 
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
         }
-
 
         public async Task<bool> UpdateAsync(Tenant tenant)
         {
@@ -153,7 +156,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         NgaySinh = @NgaySinh,
                         NgayCapCCCD = @NgayCapCCCD,
                         NoiCapCCCD = @NoiCapCCCD,
-                        DiaChiThuongTru = @DiaChiThuongTru
+                        DiaChiThuongTru = @DiaChiThuongTru,
+                        Email = @Email
                     WHERE MaNguoiThue = @MaNguoiThue", conn);
 
                 cmd.Parameters.AddWithValue("@MaNguoiThue", tenant.MaKhachThue);
@@ -165,12 +169,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 cmd.Parameters.AddWithValue("@NgayCapCCCD", (object?)tenant.NgayCap ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@NoiCapCCCD", (object?)tenant.NoiCap ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@DiaChiThuongTru", (object?)tenant.DiaChi ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@Email", (object?)tenant.Email ?? DBNull.Value);
 
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
         }
 
-        // 🗑️ Xóa khách thuê
+        // Xóa khách thuê
         public async Task<bool> DeleteAsync(int maKhachThue)
         {
             using (MySqlConnection conn = new MySqlConnection(connectionString))
