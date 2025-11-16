@@ -845,18 +845,6 @@
                             VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal"
                             HorizontalAlignment="Right">
-                        <Button Style="{StaticResource ActionButtonStyle}"
-                                Width="110"
-                                Click="DownloadButton_Click"
-                                x:Name="DownloadButtonFooter">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Download"
-                                        VerticalAlignment="Center"/>
-                                <TextBlock Text="⬇️"
-                                        Margin="5,0,0,0"
-                                        FontSize="12"/>
-                            </StackPanel>
-                        </Button>
                     </StackPanel>
                 </Grid>
             </StackPanel>
