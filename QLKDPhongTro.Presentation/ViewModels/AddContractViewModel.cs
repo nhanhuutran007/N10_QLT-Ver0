@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
@@ -81,8 +81,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 NguoiThueList.Clear();
                 PhongList.Clear();
 
-                var tenants = await _tenantRepo.GetAllAsync();
-                var rooms = await _roomRepo.GetAllAsync();
+                var current = AuthController.CurrentUser;
+                var tenants = (current != null && current.MaNha > 0)
+                    ? await _tenantRepo.GetAllByMaNhaAsync(current.MaNha)
+                    : await _tenantRepo.GetAllAsync();
+                var rooms = (current != null && current.MaNha > 0)
+                    ? await _roomRepo.GetAllByMaNhaAsync(current.MaNha)
+                    : await _roomRepo.GetAllAsync();
 
                 foreach (var t in tenants)
                     NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = t.MaKhachThue, HoTen = t.HoTen });

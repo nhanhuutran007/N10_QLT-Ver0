@@ -17,6 +17,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<bool> DeleteAsync(string id);
         Task<bool> IsUsernameExistsAsync(string username);
         Task<bool> IsEmailExistsAsync(string email);
+        Task<bool> IsMaNhaExistsAsync(int maNha);
         Task<User?> LoginAsync(string username, string password);
         Task<bool> RegisterAsync(User user);
     }

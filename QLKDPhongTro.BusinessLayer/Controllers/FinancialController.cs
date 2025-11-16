@@ -32,6 +32,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         // ==== Lookups for UI ====
         public async Task<List<DataLayer.Models.Tenant>> GetAllTenantsAsync()
         {
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                return await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+
             return await _tenantRepository.GetAllAsync();
         }
 
@@ -103,7 +109,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// </summary>
         public async Task<List<PaymentDto>> GetAllPaymentsAsync()
         {
-            var payments = await _paymentRepository.GetAllAsync();
+            List<DataLayer.Models.Payment> payments;
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                payments = await _paymentRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+            else
+            {
+                payments = await _paymentRepository.GetAllAsync();
+            }
             return payments.Select(p => new PaymentDto
             {
                 MaThanhToan = p.MaThanhToan,
@@ -291,7 +306,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// </summary>
         public async Task<List<DebtReportDto>> GetDebtReportAsync(string? thangNam = null)
         {
-            var allPayments = await _paymentRepository.GetAllAsync();
+            var current = AuthController.CurrentUser;
+            var allPayments = (current != null && current.MaNha > 0)
+                ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _paymentRepository.GetAllAsync();
             var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả" &&
                 (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam));
 
@@ -336,12 +354,24 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             try
             {
                 var currentMonth = DateTime.Now.ToString("MM/yyyy");
-                var activeContracts = await _contractRepository.GetActiveContractsAsync();
+                var current = AuthController.CurrentUser;
+                IEnumerable<DataLayer.Models.Contract> activeContracts;
+                if (current != null && current.MaNha > 0)
+                {
+                    var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                    activeContracts = contractsByHouse.Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    activeContracts = await _contractRepository.GetActiveContractsAsync();
+                }
 
                 int count = 0;
                 foreach (var contract in activeContracts)
                 {
-                    var existingPayments = await _paymentRepository.GetAllAsync();
+                    var existingPayments = (current != null && current.MaNha > 0)
+                        ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                        : await _paymentRepository.GetAllAsync();
                     var existingPayment = existingPayments.FirstOrDefault(p =>
                         p.MaHopDong == contract.MaHopDong && p.ThangNam == currentMonth);
 
@@ -383,7 +413,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<FinancialStatsDto> GetFinancialStatsAsync(int? nam = null)
         {
             var currentYear = nam ?? DateTime.Now.Year;
-            var allPayments = await _paymentRepository.GetAllAsync();
+            var current = AuthController.CurrentUser;
+            var allPayments = (current != null && current.MaNha > 0)
+                ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _paymentRepository.GetAllAsync();
 
             // Nếu có tham số năm, lọc theo năm, nếu không dùng toàn bộ dữ liệu
             IEnumerable<DataLayer.Models.Payment> scopePayments = allPayments;
@@ -418,7 +451,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 .Count();
 
             // Số khách đang thuê: đếm khách có hợp đồng TrangThai = "Hiệu lực" (một khách có nhiều HĐ vẫn tính 1)
-            var activeContracts = await _contractRepository.GetActiveContractsAsync();
+            IEnumerable<DataLayer.Models.Contract> activeContracts;
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                activeContracts = contractsByHouse;
+            }
+            else
+            {
+                activeContracts = await _contractRepository.GetActiveContractsAsync();
+            }
             var validActiveTenants = activeContracts
                 .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
                 .Select(c => c.MaNguoiThue)
@@ -427,7 +469,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             stats.SoKhachDangThue = validActiveTenants;
 
             // Số phòng đang thuê: đếm phòng có trạng thái "Đang thuê"
-            var roomsAll = await _roomRepository.GetAllAsync();
+            var roomsAll = (current != null && current.MaNha > 0)
+                ? await _roomRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _roomRepository.GetAllAsync();
             stats.SoPhongDangThue = roomsAll
                 .Count(r => string.Equals(r.TrangThai, "Đang thuê", StringComparison.OrdinalIgnoreCase));
 
@@ -627,26 +671,28 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<TransactionHistoryDto>> GetTransactionHistoryAsync(
             DateTime? tuNgay = null, DateTime? denNgay = null)
         {
-            var allPayments = await _paymentRepository.GetAllAsync();
-            var transactions = allPayments.Where(p => p.TrangThaiThanhToan == "Đã trả" &&
-                p.NgayThanhToan.HasValue &&
-                (tuNgay == null || p.NgayThanhToan >= tuNgay) &&
-                (denNgay == null || p.NgayThanhToan <= denNgay));
-
-            // Map từ model sang DTO
-            var result = new List<TransactionHistoryDto>();
-            foreach (var transaction in transactions)
+            var current = AuthController.CurrentUser;
+            List<DataLayer.Models.Payment> transactions;
+            if (current != null && current.MaNha > 0)
             {
-                var contract = await _contractRepository.GetByIdAsync(transaction.MaHopDong ?? 0);
-                var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
+                transactions = await _paymentRepository.GetTransactionHistoryByMaNhaAsync(current.MaNha, tuNgay, denNgay);
+            }
+            else
+            {
+                transactions = await _paymentRepository.GetTransactionHistoryAsync(tuNgay, denNgay);
+            }
+
+            var result = new List<TransactionHistoryDto>();
+            foreach (var p in transactions)
+            {
                 result.Add(new TransactionHistoryDto
                 {
-                    MaThanhToan = transaction.MaThanhToan,
-                    TenPhong = contract?.MaPhong.ToString() ?? "Không xác định",
-                    TenKhachHang = tenant?.HoTen ?? "Không xác định",
-                    MoTa = $"Thanh toán tháng {transaction.ThangNam}",
-                    SoTien = transaction.TongTien,
-                    ThoiGian = transaction.NgayThanhToan ?? DateTime.Now,
+                    MaThanhToan = p.MaThanhToan,
+                    TenPhong = p.TenPhong ?? "Không xác định",
+                    TenKhachHang = p.TenKhachHang ?? "Không xác định",
+                    MoTa = $"Thanh toán tháng {p.ThangNam}",
+                    SoTien = p.TongTien,
+                    ThoiGian = p.NgayThanhToan ?? DateTime.Now,
                     LoaiGiaoDich = "Thuê phòng",
                     LoaiGiaoDichIcon = "💰",
                     TrangThai = "Hoàn thành",
@@ -657,11 +703,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             return result;
         }
-        // Thêm vào class FinancialController
+
+        /// <summary>
+        /// Lấy danh sách hợp đồng đang hiệu lực, trả về dạng DTO, có lọc theo MaNha nếu có
+        /// </summary>
         public async Task<List<ContractDto>> GetActiveContractDtosAsync()
         {
-            var contracts = await _contractRepository.GetActiveContractsAsync();
-            return contracts.Select(c => new ContractDto
+            var current = AuthController.CurrentUser;
+            IEnumerable<DataLayer.Models.Contract> activeContracts;
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                activeContracts = contractsByHouse.Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                activeContracts = await _contractRepository.GetActiveContractsAsync();
+            }
+
+            return activeContracts.Select(c => new ContractDto
             {
                 MaHopDong = c.MaHopDong,
                 MaNguoiThue = c.MaNguoiThue,
@@ -671,8 +731,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = c.TienCoc,
                 FileHopDong = c.FileHopDong,
                 TrangThai = c.TrangThai,
-                TenNguoiThue = c.MaNguoiThue.ToString(), // Có thể lấy từ tenant repository
-                TenPhong = c.MaPhong.ToString() // Có thể lấy từ room repository
+                TenNguoiThue = c.MaNguoiThue.ToString(),
+                TenPhong = c.MaPhong.ToString()
             }).ToList();
         }
 

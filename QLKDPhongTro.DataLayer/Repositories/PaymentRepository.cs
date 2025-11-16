@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -33,6 +33,61 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                     LEFT JOIN Nha n ON p.MaNha = n.MaNha
                     ORDER BY tt.ThangNam DESC, tt.MaThanhToan DESC", conn);
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        payments.Add(new Payment
+                        {
+                            MaThanhToan = reader.GetInt32(0),
+                            MaHopDong = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                            ThangNam = reader.GetString(2),
+                            TienThue = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
+                            TienDien = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+                            TienNuoc = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
+                            TienInternet = reader.IsDBNull(6) ? null : reader.GetDecimal(6),
+                            TienVeSinh = reader.IsDBNull(7) ? null : reader.GetDecimal(7),
+                            TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                            ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                            TongTien = reader.GetDecimal(10),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
+                            NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
+                            TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+                            TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                            SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16),
+                            DonGiaDien = reader.IsDBNull(17) ? null : reader.GetDecimal(17),
+                            DonGiaNuoc = reader.IsDBNull(18) ? null : reader.GetDecimal(18),
+                            SoDien = reader.IsDBNull(19) ? null : reader.GetDecimal(19),
+                            SoNuoc = reader.IsDBNull(20) ? null : reader.GetDecimal(20)
+                        });
+                    }
+                }
+            }
+            return payments;
+        }
+
+        public async Task<List<Payment>> GetAllByMaNhaAsync(int maNha)
+        {
+            var payments = new List<Payment>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var cmd = new MySqlCommand(@"
+                    SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan,
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.SoNuoc
+                    FROM ThanhToan tt
+                    LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
+                    LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    LEFT JOIN Nha n ON p.MaNha = n.MaNha
+                    WHERE p.MaNha = @MaNha
+                    ORDER BY tt.ThangNam DESC, tt.MaThanhToan DESC", conn);
+                cmd.Parameters.AddWithValue("@MaNha", maNha);
 
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -628,6 +683,76 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 sql += " ORDER BY tt.NgayThanhToan DESC";
 
                 var cmd = new MySqlCommand(sql, conn);
+                if (tuNgay.HasValue)
+                {
+                    cmd.Parameters.AddWithValue("@TuNgay", tuNgay.Value);
+                }
+                if (denNgay.HasValue)
+                {
+                    cmd.Parameters.AddWithValue("@DenNgay", denNgay.Value);
+                }
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        transactions.Add(new Payment
+                        {
+                            MaThanhToan = reader.GetInt32(0),
+                            MaHopDong = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                            ThangNam = reader.GetString(2),
+                            TienThue = reader.IsDBNull(3) ? null : reader.GetDecimal(3),
+                            TienDien = reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+                            TienNuoc = reader.IsDBNull(5) ? null : reader.GetDecimal(5),
+                            TienInternet = reader.IsDBNull(6) ? null : reader.GetDecimal(6),
+                            TienVeSinh = reader.IsDBNull(7) ? null : reader.GetDecimal(7),
+                            TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
+                            ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
+                            TongTien = reader.GetDecimal(10),
+                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
+                            NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
+                            TenKhachHang = reader.IsDBNull(13) ? string.Empty : reader.GetString(13),
+                            TenPhong = reader.IsDBNull(14) ? string.Empty : reader.GetString(14),
+                            SoDienThoai = reader.IsDBNull(15) ? string.Empty : reader.GetString(15),
+                            DiaChi = reader.IsDBNull(16) ? string.Empty : reader.GetString(16)
+                        });
+                    }
+                }
+            }
+            return transactions;
+        }
+
+        public async Task<List<Payment>> GetTransactionHistoryByMaNhaAsync(int maNha, DateTime? tuNgay = null, DateTime? denNgay = null)
+        {
+            var transactions = new List<Payment>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"
+                    SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan,
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi
+                    FROM ThanhToan tt
+                    LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
+                    LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    LEFT JOIN Nha n ON p.MaNha = n.MaNha
+                    WHERE tt.TrangThaiThanhToan = 'Đã trả' AND p.MaNha = @MaNha";
+
+                if (tuNgay.HasValue)
+                {
+                    sql += " AND tt.NgayThanhToan >= @TuNgay";
+                }
+                if (denNgay.HasValue)
+                {
+                    sql += " AND tt.NgayThanhToan <= @DenNgay";
+                }
+
+                sql += " ORDER BY tt.NgayThanhToan DESC";
+
+                var cmd = new MySqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@MaNha", maNha);
                 if (tuNgay.HasValue)
                 {
                     cmd.Parameters.AddWithValue("@TuNgay", tuNgay.Value);

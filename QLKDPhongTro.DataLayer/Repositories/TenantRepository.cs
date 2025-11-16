@@ -43,6 +43,43 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return tenants;
         }
 
+        public async Task<List<Tenant>> GetAllByMaNhaAsync(int maNha)
+        {
+            var tenants = new List<Tenant>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var cmd = new MySqlCommand(@"
+                    SELECT DISTINCT nt.MaNguoiThue, nt.HoTen, nt.SoDienThoai, nt.CCCD, nt.NgayBatDau, nt.TrangThai, nt.GhiChu,
+                           nt.NgaySinh, nt.NgayCapCCCD, nt.NoiCapCCCD, nt.DiaChiThuongTru
+                    FROM NguoiThue nt
+                    LEFT JOIN HopDong hd ON nt.MaNguoiThue = hd.MaNguoiThue
+                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    WHERE p.MaNha = @MaNha
+                    ORDER BY nt.MaNguoiThue DESC", conn);
+                cmd.Parameters.AddWithValue("@MaNha", maNha);
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        tenants.Add(new Tenant
+                        {
+                            MaKhachThue = reader.GetInt32(0),
+                            HoTen = reader.GetString(1),
+                            SoDienThoai = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                            CCCD = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                            NgaySinh = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                            NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
+                            NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
+                            DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
+                            GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                        });
+                    }
+                }
+            }
+            return tenants;
+        }
+
         public async Task<Tenant?> GetByIdAsync(int maKhachThue)
         {
             using (MySqlConnection conn = new MySqlConnection(connectionString))

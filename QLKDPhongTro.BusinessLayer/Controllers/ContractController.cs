@@ -29,7 +29,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<List<ContractDto>> GetAllHopDongAsync()
         {
-            var entities = await _repository.GetAllHopDongAsync();
+            List<Contract> entities;
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                entities = await _repository.GetAllByMaNhaAsync(current.MaNha);
+            }
+            else
+            {
+                entities = await _repository.GetAllHopDongAsync();
+            }
             return entities.Select(e => new ContractDto
             {
                 MaHopDong = e.MaHopDong,

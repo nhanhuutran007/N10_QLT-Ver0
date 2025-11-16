@@ -13,6 +13,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// Lấy tất cả khách thuê
         /// </summary>
         Task<List<Tenant>> GetAllAsync();
+        /// <summary>
+        /// Lấy tất cả khách thuê theo mã nhà
+        /// </summary>
+        Task<List<Tenant>> GetAllByMaNhaAsync(int maNha);
 
         /// <summary>
         /// Lấy khách thuê theo ID

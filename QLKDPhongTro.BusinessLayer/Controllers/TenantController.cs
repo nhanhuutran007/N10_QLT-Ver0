@@ -18,7 +18,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<List<TenantDto>> GetAllTenantsAsync()
         {
-            var tenants = await _tenantRepository.GetAllAsync();
+            List<Tenant> tenants;
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                tenants = await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+            else
+            {
+                tenants = await _tenantRepository.GetAllAsync();
+            }
             return tenants.Select(t => new TenantDto
             {
                 MaKhachThue = t.MaKhachThue,

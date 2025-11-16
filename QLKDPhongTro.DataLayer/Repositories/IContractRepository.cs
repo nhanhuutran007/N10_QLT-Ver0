@@ -7,6 +7,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
     public interface IContractRepository
     {
         Task<List<Contract>> GetAllHopDongAsync();
+        Task<List<Contract>> GetAllByMaNhaAsync(int maNha);
         Task AddHopDongAsync(Contract contract);
         Task UpdateHopDongAsync(Contract contract);
         Task DeleteHopDongAsync(int maHopDong);

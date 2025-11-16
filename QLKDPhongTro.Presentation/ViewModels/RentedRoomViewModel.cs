@@ -211,22 +211,36 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand]
-        private void ShowAddRoomPanel()
+        private async Task ShowAddRoomPanel()
         {
-            NewRoom = new RentedRoomDto
+            try
             {
-                TrangThai = "Trống"
-            };
+                var validationMessage = await _rentedRoomController.CheckCanCreateRoomAsync();
+                if (!string.IsNullOrEmpty(validationMessage))
+                {
+                    MessageBox.Show(validationMessage, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
-            Title = "Thêm phòng mới";
-            ButtonContent = "Thêm phòng";
-            SaveCommand = SaveRoomCommand;
+                NewRoom = new RentedRoomDto
+                {
+                    TrangThai = "Trống"
+                };
 
-            var window = new AddRoomWindow(this)
+                Title = "Thêm phòng mới";
+                ButtonContent = "Thêm phòng";
+                SaveCommand = SaveRoomCommand;
+
+                var window = new AddRoomWindow(this)
+                {
+                    Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
+                };
+                window.ShowDialog();
+            }
+            catch (Exception ex)
             {
-                Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
-            };
-            window.ShowDialog();
+                MessageBox.Show($"Lỗi khi kiểm tra số lượng phòng: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         [RelayCommand]

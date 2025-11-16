@@ -6,11 +6,12 @@ CREATE TABLE Admin (
   TenDangNhap VARCHAR(50) NOT NULL UNIQUE,
   MatKhau VARCHAR(255) NOT NULL,
   Email VARCHAR(100),
-  SoDienThoai VARCHAR(15)
+  SoDienThoai VARCHAR(15),
+  MaNha INT NOT NULL UNIQUE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai)
-VALUES ('admin', 'admin123', 'admin@example.com', '0901000001');
+INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, MaNha)
+VALUES ('admin', 'admin123', 'admin@example.com', '0901000001', 1);
 
 -- ===================== Bảng Nha =====================
 CREATE TABLE Nha (
@@ -27,6 +28,11 @@ VALUES
 ('789 Đường C, Bình Thạnh', 4, 'Khu yên tĩnh'),
 ('12 Nguyễn Văn Linh, Quận 7', 8, 'Gần siêu thị'),
 ('99 Lý Thường Kiệt, Quận 10', 10, 'Gần trường học');
+
+ALTER TABLE Admin
+  ADD CONSTRAINT FK_Admin_Nha
+  FOREIGN KEY (MaNha) REFERENCES Nha(MaNha)
+  ON DELETE RESTRICT;
 
 -- ===================== Bảng Phong =====================
 CREATE TABLE Phong (

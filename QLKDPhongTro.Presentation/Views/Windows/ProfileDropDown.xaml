@@ -96,7 +96,7 @@
             </Border>
 
             <!-- Các mục Menu -->
-            <RadioButton Content="Support"
+            <RadioButton Content="Thông tin nhà"
                          GroupName="ProfileMenu"
                          Style="{StaticResource ProfileMenuButtonStyle}"
                          Click="Support_Click"

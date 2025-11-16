@@ -8,6 +8,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
     public interface IRentedRoomRepository
     {
         Task<List<RentedRoom>> GetAllAsync();
+        Task<List<RentedRoom>> GetAllByMaNhaAsync(int maNha);
         Task<RentedRoom?> GetByIdAsync(int maPhong);
         Task<bool> IsRoomExistsAsync(int maPhong);
         Task<bool> CreateAsync(RentedRoom room);

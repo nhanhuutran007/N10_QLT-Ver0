@@ -37,6 +37,30 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
+        public async Task<List<Contract>> GetAllByMaNhaAsync(int maNha)
+        {
+            var contracts = new List<Contract>();
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc,
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE p.MaNha = @MaNha
+                  ORDER BY hd.MaHopDong DESC", connection);
+
+            command.Parameters.AddWithValue("@MaNha", maNha);
+            await connection.OpenAsync();
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContractWithJoin(reader));
+            }
+            return contracts;
+        }
+
         public async Task AddHopDongAsync(Contract contract)
         {
             using var connection = new MySqlConnection(_connectionString);

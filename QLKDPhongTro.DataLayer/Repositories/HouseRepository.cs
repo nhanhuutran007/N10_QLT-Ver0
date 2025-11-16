@@ -20,15 +20,22 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Nha", connection);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
+                    var maNhaOrdinal = reader.GetOrdinal("MaNha");
+                    var diaChiOrdinal = reader.GetOrdinal("DiaChi");
+                    var tongSoPhongOrdinal = reader.GetOrdinal("TongSoPhong");
+                    var ghiChuOrdinal = reader.GetOrdinal("GhiChu");
+
                     while (await reader.ReadAsync())
                     {
-                        houses.Add(new House
+                        var house = new House
                         {
-                            MaNha = reader.GetInt32(0),
-                            DiaChi = reader.GetString(1),
-                            TongSoPhong = reader.GetInt32(2),
-                            GhiChu = reader.GetString(3)
-                        });
+                            MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal),
+                            DiaChi = reader.IsDBNull(diaChiOrdinal) ? string.Empty : reader.GetString(diaChiOrdinal),
+                            TongSoPhong = reader.IsDBNull(tongSoPhongOrdinal) ? 0 : reader.GetInt32(tongSoPhongOrdinal),
+                            GhiChu = reader.IsDBNull(ghiChuOrdinal) ? string.Empty : reader.GetString(ghiChuOrdinal)
+                        };
+
+                        houses.Add(house);
                     }
                 }
             }
@@ -45,14 +52,19 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
+                    var maNhaOrdinal = reader.GetOrdinal("MaNha");
+                    var diaChiOrdinal = reader.GetOrdinal("DiaChi");
+                    var tongSoPhongOrdinal = reader.GetOrdinal("TongSoPhong");
+                    var ghiChuOrdinal = reader.GetOrdinal("GhiChu");
+
                     if (await reader.ReadAsync())
                     {
                         house = new House
                         {
-                            MaNha = reader.GetInt32(0),
-                            DiaChi = reader.GetString(1),
-                            TongSoPhong = reader.GetInt32(2),
-                            GhiChu = reader.GetString(3)
+                            MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal),
+                            DiaChi = reader.IsDBNull(diaChiOrdinal) ? string.Empty : reader.GetString(diaChiOrdinal),
+                            TongSoPhong = reader.IsDBNull(tongSoPhongOrdinal) ? 0 : reader.GetInt32(tongSoPhongOrdinal),
+                            GhiChu = reader.IsDBNull(ghiChuOrdinal) ? string.Empty : reader.GetString(ghiChuOrdinal)
                         };
                     }
                 }

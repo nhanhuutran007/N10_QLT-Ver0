@@ -178,7 +178,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task RefreshFromDbAsync()
         {
-            var data = await _controller.GetAllAsync();
+            var data = await _controller.GetAllForCurrentUserAsync();
             _allMaintenances = data.Select(i => new MaintenanceIncidentViewModel
             {
                 MaSuCo = i.MaSuCo,

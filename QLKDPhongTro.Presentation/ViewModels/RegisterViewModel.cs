@@ -24,6 +24,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _email = string.Empty;
 
         [ObservableProperty]
+        private string _maNha = string.Empty;
+
+        [ObservableProperty]
         private string _password = string.Empty;
 
         [ObservableProperty]
@@ -36,9 +39,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public async Task RegisterAsync()
         {
             if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Email) ||
-                string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
+                string.IsNullOrWhiteSpace(MaNha) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
             {
                 MessageBox.Show("Vui lòng nhập đầy đủ thông tin!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!int.TryParse(MaNha, out var maNhaParsed) || maNhaParsed <= 0)
+            {
+                MessageBox.Show("Mã nhà phải là số nguyên dương!", "Thông báo", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -75,7 +85,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     TenDangNhap = Username,
                     Email = Email,
                     MatKhau = Password,
-                    SoDienThoai = "" // Có thể thêm trường này nếu cần
+                    SoDienThoai = "", // Có thể thêm trường này nếu cần
+                    MaNha = maNhaParsed
                 };
 
                 bool accountCreated = await _userRepository.RegisterAsync(newUser);

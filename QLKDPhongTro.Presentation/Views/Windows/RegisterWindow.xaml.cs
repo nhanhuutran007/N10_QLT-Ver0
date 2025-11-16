@@ -223,9 +223,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Lấy thông tin từ các trường
             var emailTextBox = this.FindName("EmailTextBox") as TextBox;
             var usernameTextBox = this.FindName("UsernameTextBox") as TextBox;
+            var maNhaTextBox = this.FindName("MaNhaTextBox") as TextBox;
             
             string email = emailTextBox?.Text ?? "";
             string username = usernameTextBox?.Text ?? "";
+            string maNha = maNhaTextBox?.Text ?? "";
             
             string password = "";
             string confirmPassword = "";
@@ -252,6 +254,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 viewModel.Email = email;
                 viewModel.Username = username;
+                viewModel.MaNha = maNha;
                 viewModel.Password = password;
                 viewModel.ConfirmPassword = confirmPassword;
                 
