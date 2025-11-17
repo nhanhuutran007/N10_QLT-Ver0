@@ -183,14 +183,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 int thoiHanNam = Math.Max(1, NgayKetThuc.Value.Year - NgayBatDau.Value.Year);
                 DateTime ngayGiaoNha = NgayBatDau.Value;
 
-                // === Tạo file hợp đồng DOCX ===
-                string filePath = ContractTemplateService.CreateContractFile(
+                // === Tạo file hợp đồng DOCX + PDF ===
+                var contractFiles = ContractTemplateService.CreateContractFile(
                     "TP.HCM", DateTime.Now,       // Nơi tạo + Ngày tạo
                     tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
                     tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
                     tenPhong, diaChiPhong, dienTich, trangThietBi,
                     giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha
                 );
+                string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
 
                 if (!IsEditMode)
                 {
