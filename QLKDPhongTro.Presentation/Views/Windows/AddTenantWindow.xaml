@@ -221,28 +221,28 @@
 
             <!-- 📋 Content -->
             <ScrollViewer Grid.Row="1" Margin="24,0,24,24" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- Các trường nhập -->
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Họ tên *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.HoTen, Mode=TwoWay}"/>
-                        </StackPanel>
+                <StackPanel>
+                    <!-- Các trường nhập -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Họ tên *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.HoTen, Mode=TwoWay}"/>
+                    </StackPanel>
 
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.CCCD, Mode=TwoWay}"/>
-                        </StackPanel>
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.CCCD, Mode=TwoWay}"/>
+                    </StackPanel>
 
-                        <StackPanel Margin="0,8">
-                            <TextBlock Text="Ngày sinh *" 
+                    <StackPanel Margin="0,8">
+                        <TextBlock Text="Ngày sinh *" 
               FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
 
-                            <Border CornerRadius="10" 
+                        <Border CornerRadius="10" 
             BorderBrush="#4F7DFB" 
             BorderThickness="1" 
             Background="White" 
             Padding="8,0">
-                                <DatePicker SelectedDate="{Binding NewTenant.NgaySinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            <DatePicker SelectedDate="{Binding NewTenant.NgaySinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     FontSize="16"
                     Foreground="#333"
                     Width="601"
@@ -251,26 +251,26 @@
                     BorderThickness="0"
                     Language="vi-VN"
                     SelectedDateFormat="Short"/>
-                            </Border>
-                        </StackPanel>
+                        </Border>
+                    </StackPanel>
 
 
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Nơi cấp CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NoiCap, Mode=TwoWay}"/>
-                        </StackPanel>
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Nơi cấp CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NoiCap, Mode=TwoWay}"/>
+                    </StackPanel>
 
 
-                        <StackPanel Margin="0,8">
-                            <TextBlock Text="Ngày cấp CCCD *" 
+                    <StackPanel Margin="0,8">
+                        <TextBlock Text="Ngày cấp CCCD *" 
               FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
 
-                            <Border CornerRadius="10" 
+                        <Border CornerRadius="10" 
             BorderBrush="#4F7DFB" 
             BorderThickness="1" 
             Background="White" 
             Padding="8,0">
-                                <DatePicker SelectedDate="{Binding NewTenant.NgayCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            <DatePicker SelectedDate="{Binding NewTenant.NgayCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                     FontSize="16"
                     Foreground="#333"
                     Width="601"
@@ -279,28 +279,33 @@
                     BorderThickness="0"
                     Language="vi-VN"
                     SelectedDateFormat="Short"/>
-                            </Border>
-                        </StackPanel>
+                        </Border>
+                    </StackPanel>
 
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Địa chỉ thường trú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.DiaChi, Mode=TwoWay}"/>
-                        </StackPanel>
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Địa chỉ thường trú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.DiaChi, Mode=TwoWay}"/>
+                    </StackPanel>
 
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Số điện thoại *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.SoDienThoai, Mode=TwoWay}"/>
-                        </StackPanel>
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Số điện thoại *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.SoDienThoai, Mode=TwoWay}"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Email" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.Email, Mode=TwoWay}"/>
+                    </StackPanel>
 
 
 
-                        <StackPanel Margin="0,0,0,20">
-                            <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" Height="80" 
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Height="80" 
                                      TextWrapping="Wrap" AcceptsReturn="True" 
                                      Text="{Binding NewTenant.GhiChu, Mode=TwoWay}"/>
-                        </StackPanel>
                     </StackPanel>
+                </StackPanel>
             </ScrollViewer>
 
             <!-- 🟫 Footer -->

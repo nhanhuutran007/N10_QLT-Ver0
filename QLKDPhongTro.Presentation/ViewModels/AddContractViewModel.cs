@@ -81,13 +81,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 NguoiThueList.Clear();
                 PhongList.Clear();
 
-                var current = AuthController.CurrentUser;
-                var tenants = (current != null && current.MaNha > 0)
-                    ? await _tenantRepo.GetAllByMaNhaAsync(current.MaNha)
-                    : await _tenantRepo.GetAllAsync();
-                var rooms = (current != null && current.MaNha > 0)
-                    ? await _roomRepo.GetAllByMaNhaAsync(current.MaNha)
-                    : await _roomRepo.GetAllAsync();
+                var tenants = await _tenantRepo.GetAllAsync();
+                var rooms = await _roomRepo.GetAllAsync();
 
                 foreach (var t in tenants)
                     NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = t.MaKhachThue, HoTen = t.HoTen });
@@ -211,8 +206,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         TrangThai = "Hiệu lực"
                     };
 
-                    await _contractController.CreateHopDongAsync(newContract);
+                    int maHopDong = await _contractController.CreateHopDongAsync(newContract);
                     MessageBox.Show("✅ Hợp đồng đã được thêm và tạo file thành công!");
+
+
+
                 }
                 else
                 {

@@ -61,13 +61,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
-        public async Task AddHopDongAsync(Contract contract)
+        public async Task<int> AddHopDongAsync(Contract contract)
         {
             using var connection = new MySqlConnection(_connectionString);
             var command = new MySqlCommand(
                 @"INSERT INTO HopDong 
                   (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
-                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai)",
+                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai);
+                  SELECT LAST_INSERT_ID();",
                 connection);
 
             command.Parameters.AddWithValue("@MaNguoiThue", contract.MaNguoiThue);
@@ -79,7 +80,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             command.Parameters.AddWithValue("@TrangThai", contract.TrangThai);
 
             await connection.OpenAsync();
-            await command.ExecuteNonQueryAsync();
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
         }
 
         public async Task UpdateHopDongAsync(Contract contract)
@@ -146,6 +148,32 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
+        public async Task<List<Contract>> GetContractsExpiringInExactDaysAsync(int exactDays)
+        {
+            var contracts = new List<Contract>();
+            using var connection = new MySqlConnection(_connectionString);
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE BINARY hd.TrangThai = 'Hiệu lực' 
+                  AND DATEDIFF(hd.NgayKetThuc, NOW()) = @ExactDays
+                  ORDER BY hd.NgayKetThuc ASC", connection);
+
+            command.Parameters.AddWithValue("@ExactDays", exactDays);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                contracts.Add(ReadContractWithJoin(reader));
+            }
+
+            return contracts;
+        }
         public async Task<Contract?> GetByIdAsync(int maHopDong)
         {
             using var connection = new MySqlConnection(_connectionString);

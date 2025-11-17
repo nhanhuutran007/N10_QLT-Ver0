@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace QLKDPhongTro.Presentation.Utils
 {
@@ -26,27 +27,28 @@ namespace QLKDPhongTro.Presentation.Utils
         }
 
         /// <summary>
-        /// Gửi email bất đồng bộ kèm một file đính kèm
+        /// Gửi email bất đồng bộ qua Gmail SMTP với file đính kèm
         /// </summary>
-        public static async Task SendEmailWithAttachmentAsync(string toEmail, string subject, string body, string attachmentPath)
+        public static async Task SendEmailWithAttachmentAsync(string toEmail, string subject, string body, string attachmentFilePath)
         {
             using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
             {
                 client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
                 client.EnableSsl = true;
 
-                using (var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
+                var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
                 {
                     IsBodyHtml = false // có thể chuyển sang true nếu muốn gửi HTML
-                })
-                {
-                    if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
-                    {
-                        mailMessage.Attachments.Add(new Attachment(attachmentPath));
-                    }
+                };
 
-                    await client.SendMailAsync(mailMessage);
+                // Thêm file đính kèm nếu file tồn tại
+                if (!string.IsNullOrEmpty(attachmentFilePath) && File.Exists(attachmentFilePath))
+                {
+                    var attachment = new Attachment(attachmentFilePath);
+                    mailMessage.Attachments.Add(attachment);
                 }
+
+                await client.SendMailAsync(mailMessage);
             }
         }
     }

@@ -8,7 +8,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using CommunityToolkit.Mvvm.Input;
+using System.Windows.Input;
+using Microsoft.Win32;
 
 
 namespace QLKDPhongTro.Presentation.ViewModels
@@ -23,15 +24,25 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
         [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
+
         private ContractDto _selectedContract;
 
         // Sắp xếp: newest | oldest (bind từ ComboBox SelectedValue Tag)
         [ObservableProperty]
         private string _sortOrder = "newest";
 
+        // Commands
+        public ICommand SendExpiryWarningEmailsCommand { get; }
+
+
+
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
+
+            // Khởi tạo command
+            SendExpiryWarningEmailsCommand = new Commands.RelayCommand(async () => await SendExpiryWarningEmailsAsync());
+
             _ = LoadContractsAsync();
         }
 
@@ -177,20 +188,64 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private async Task SendExpiryWarningEmailsAsync()
         {
-            var result = await _contractController.SendExpiryWarningEmailsAsync(30);
+            // Đảm bảo method được gọi - hiển thị thông báo ngay
+            MessageBox.Show("⏳ Bắt đầu gửi email cảnh báo...",
+                            "Đang xử lý",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
 
-            if (!result)
+            try
             {
-                MessageBox.Show("✅ Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.",
-                                "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
+                int days = 30; // Hợp đồng sắp hết hạn trong 30 ngày
+
+                // Gọi method async
+                var result = await _contractController.SendExpiryWarningEmailsAsync(days);
+                var (success, failed, errors) = result;
+
+                // Xử lý kết quả
+                if (success == 0 && failed == 0)
+                {
+                    if (errors != null && errors.Count > 0 && errors[0].Contains("Không có hợp đồng"))
+                    {
+                        MessageBox.Show("ℹ️ " + errors[0],
+                                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("ℹ️ Không có hợp đồng nào sắp hết hạn trong 30 ngày tới.",
+                                        "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    return;
+                }
+
+                string message = $"📧 Đã gửi email cảnh báo:\n\n✅ Thành công: {success} email\n❌ Thất bại: {failed} email";
+
+                if (errors != null && errors.Count > 0)
+                {
+                    message += "\n\nChi tiết lỗi:\n" + string.Join("\n", errors.Take(5));
+                    if (errors.Count > 5)
+                    {
+                        message += $"\n... và {errors.Count - 5} lỗi khác.";
+                    }
+                }
+
+                MessageBox.Show(message,
+                                success > 0 ? "Thành công" : "Có lỗi xảy ra",
+                                MessageBoxButton.OK,
+                                success > 0 ? MessageBoxImage.Information : MessageBoxImage.Warning);
             }
+            catch (Exception ex)
+            {
+                string errorMessage = $"❌ Lỗi khi gửi email cảnh báo:\n\n{ex.Message}";
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $"\n\nChi tiết: {ex.InnerException.Message}";
+                }
 
-            MessageBox.Show("📧 Đã gửi email cảnh báo thành công!", "Thành công",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(errorMessage,
+                                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
-
-
 
 
     }
