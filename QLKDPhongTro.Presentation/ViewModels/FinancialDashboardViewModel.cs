@@ -310,7 +310,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     .ToList();
 
                 Debts = new ObservableCollection<DebtReportDto>(filtered);
-                ShowMessageRequested?.Invoke(this, $"Tìm thấy {filtered.Count} kết quả");
             }
             catch (Exception ex)
             {

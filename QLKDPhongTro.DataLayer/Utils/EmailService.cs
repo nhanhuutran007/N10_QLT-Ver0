@@ -19,7 +19,7 @@ namespace QLKDPhongTro.Presentation.Utils
 
                 var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
                 {
-                    IsBodyHtml = false // có thể chuyển sang true nếu muốn gửi HTML
+                    IsBodyHtml = true // có thể chuyển sang true nếu muốn gửi HTML
                 };
 
                 await client.SendMailAsync(mailMessage);
@@ -38,7 +38,7 @@ namespace QLKDPhongTro.Presentation.Utils
 
                 var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
                 {
-                    IsBodyHtml = false // có thể chuyển sang true nếu muốn gửi HTML
+                    IsBodyHtml = true // có thể chuyển sang true nếu muốn gửi HTML
                 };
 
                 // Thêm file đính kèm nếu file tồn tại
