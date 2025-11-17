@@ -1,8 +1,8 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -10,19 +10,15 @@ using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class OtpViewModel : ObservableObject, IOtpEntryViewModel
+    public partial class ForgotPasswordOtpViewModel : ObservableObject, IOtpEntryViewModel
     {
         private readonly UserRepository _userRepository;
-        private readonly string _username;
         private readonly string _email;
-        private readonly string _password;
 
-        public OtpViewModel(UserRepository userRepository, string username, string email, string password)
+        public ForgotPasswordOtpViewModel(string email)
         {
-            _userRepository = userRepository;
-            _username = username;
             _email = email;
-            _password = password;
+            _userRepository = new UserRepository();
             VerifyOtpCommand = new AsyncRelayCommand(VerifyOtpAsync);
         }
 
@@ -38,8 +34,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             if (string.IsNullOrWhiteSpace(OtpCode))
             {
-                MessageBox.Show("Vui lòng nhập mã OTP!", "Thông báo", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Vui lòng nhập mã OTP!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
@@ -50,30 +45,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 bool isValid = await _userRepository.VerifyOtpAsync(OtpCode);
                 if (isValid)
                 {
-                    MessageBox.Show("✅ Xác thực OTP thành công!", "Thông báo",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("✅ Xác thực OTP thành công!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    // Mở Dashboard
-                    var dashboardWindow = new DashWindow
+                    // Mở popup đặt lại mật khẩu
+                    var resetWindow = new ResetPasswordWindow(_email)
                     {
-                        DataContext = new DashboardViewModel()
+                        WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                        Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(w => w is OtpLoginWindow)
                     };
-                    dashboardWindow.Show();
 
-                    // Đóng OTP window
-                    Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = dashboardWindow;
+                    resetWindow.ShowDialog();
+
+                    // Đóng cửa sổ OTP sau khi xử lý xong
+                    var otpWindow = Application.Current.Windows.OfType<OtpLoginWindow>().FirstOrDefault();
+                    otpWindow?.Close();
                 }
                 else
                 {
-                    MessageBox.Show("❌ OTP không đúng hoặc đã hết hạn.", "Lỗi",
-                        MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("❌ OTP không đúng hoặc đã hết hạn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Lỗi: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -87,6 +81,5 @@ namespace QLKDPhongTro.Presentation.ViewModels
             get => OtpCode;
             set => OtpCode = value;
         }
-
     }
 }

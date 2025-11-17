@@ -96,6 +96,45 @@ namespace QLKDPhongTro.DataLayer.Repositories
         }
 
         /// <summary>
+        /// Lấy user theo email
+        /// </summary>
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE Email = @Email";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Email", email);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
+                                return new User
+                                {
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader.GetString(reader.GetOrdinal("TenDangNhap")),
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting user by email: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Lấy user theo MaAdmin (int)
         /// </summary>
         public async Task<User?> GetByMaAdminAsync(int maAdmin)
@@ -237,6 +276,34 @@ namespace QLKDPhongTro.DataLayer.Repositories
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating user: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật mật khẩu cho user
+        /// </summary>
+        public async Task<bool> UpdatePasswordAsync(int maAdmin, string hashedPassword)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = @"UPDATE Admin SET MatKhau = @MatKhau WHERE MaAdmin = @MaAdmin";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        command.Parameters.AddWithValue("@MatKhau", hashedPassword);
+
+                        var result = await command.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating password: {ex.Message}");
                 return false;
             }
         }

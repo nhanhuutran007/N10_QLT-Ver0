@@ -47,62 +47,54 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                // // ✅ Gọi login có OTP (TẠM TẮT)
-                // var result = await _authController.LoginWithOtpAsync(Username, Password);
+                //// ✅ Đăng nhập có OTP (tạm thời không dùng)
+                ////var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
+                ////if (otpResult.IsSuccess)
+                ////{
+                ////    MessageBox.Show(otpResult.Message, "Thông báo",
+                ////        MessageBoxButton.OK, MessageBoxImage.Information);
+                ////
+                ////    var email = otpResult.User?.Email ?? string.Empty;
+                ////    var otpWindow = new OtpLoginWindow(Username, email, Password)
+                ////    {
+                ////        WindowStartupLocation = WindowStartupLocation.CenterScreen
+                ////    };
+                ////
+                ////    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                ////    loginWindow?.Close();
+                ////
+                ////    Application.Current.MainWindow = otpWindow;
+                ////    otpWindow.Show();
+                ////}
+                ////else
+                ////{
+                ////    MessageBox.Show(otpResult.Message, "Lỗi",
+                ////        MessageBoxButton.OK, MessageBoxImage.Error);
+                ////    ResetLoginButtonState();
+                ////}
 
-                // ✅ Đăng nhập THÔNG THƯỜNG: kiểm tra đúng user/password là vào Dashboard
+                // ✅ Đăng nhập bình thường, không dùng OTP
                 var result = await _authController.LoginAsync(Username, Password);
-
                 if (result.IsSuccess)
                 {
-                    // // ✅ Thông báo OTP đã gửi (TẠM TẮT)
-                    // MessageBox.Show(result.Message, "Thông báo",
-                    //     MessageBoxButton.OK, MessageBoxImage.Information);
-
-                    // Bỏ thông báo, chuyển thẳng vào Dashboard
+                    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
                     // Mở Dashboard
                     var dashboardWindow = new DashWindow
                     {
                         DataContext = new DashboardViewModel()
                     };
-
-                    // Đóng cửa sổ đăng nhập hiện tại trước
-                    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
-                    loginWindow?.Close();
-
-                    // Đặt Dashboard làm MainWindow và hiển thị
-                    Application.Current.MainWindow = dashboardWindow;
                     dashboardWindow.Show();
+                    Application.Current.MainWindow?.Close();
+                    Application.Current.MainWindow = dashboardWindow;
                 }
                 else
                 {
                     MessageBox.Show(result.Message, "Lỗi",
                         MessageBoxButton.OK, MessageBoxImage.Error);
-
                     // Reset button state khi đăng nhập thất bại
                     ResetLoginButtonState();
                 }
-                //var result = await _authController.LoginAsync(Username, Password);
-                //if (result.IsSuccess)
-                //{
-                //    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
-                //        MessageBoxButton.OK, MessageBoxImage.Information);
-                //    // Mở Dashboard
-                //    var dashboardWindow = new DashWindow
-                //    {
-                //        DataContext = new DashboardViewModel()
-                //    };
-                //    dashboardWindow.Show();
-                //    Application.Current.MainWindow?.Close();
-                //    Application.Current.MainWindow = dashboardWindow;
-                //}
-                //else
-                //{
-                //    MessageBox.Show(result.Message, "Lỗi",
-                //        MessageBoxButton.OK, MessageBoxImage.Error);
-                //    // Reset button state khi đăng nhập thất bại
-                //    ResetLoginButtonState();
-                //}
             }
             catch (Exception ex)
             {
