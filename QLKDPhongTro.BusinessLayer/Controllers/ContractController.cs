@@ -157,7 +157,35 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }).ToList();
         }
         // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn kèm file hợp đồng (gửi cho cả người thuê và admin)
+        /// <summary>
+        /// Lấy hợp đồng đang có hiệu lực của một phòng cụ thể
+        /// </summary>
+        public async Task<ContractDto?> GetActiveContractByRoomIdAsync(int maPhong)
+        {
+            // Gọi Repository để lấy hợp đồng active theo MaPhong
+            // (Bạn cần đảm bảo Repository đã có hàm GetActiveByRoomIdAsync, xem bước 2 bên dưới)
+            var entity = await _repository.GetActiveByRoomIdAsync(maPhong);
 
+            if (entity == null) return null;
+
+            return new ContractDto
+            {
+                MaHopDong = entity.MaHopDong,
+                MaNguoiThue = entity.MaNguoiThue,
+                MaPhong = entity.MaPhong,
+                NgayBatDau = entity.NgayBatDau,
+                NgayKetThuc = entity.NgayKetThuc,
+
+                // Quan trọng: Map các trường tiền để ViewModel tính toán
+                TienCoc = entity.TienCoc,
+                GiaThue = entity.GiaThue,
+
+                FileHopDong = entity.FileHopDong,
+                TrangThai = entity.TrangThai,
+                TenNguoiThue = entity.TenNguoiThue,
+                TenPhong = entity.TenPhong
+            };
+        }
         public async Task<(int Success, int Failed, List<string> Errors)> SendExpiryWarningEmailsAsync(int days)
         {
             var expiringContracts = await GetExpiringContractsAsync(days);

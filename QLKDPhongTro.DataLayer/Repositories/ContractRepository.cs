@@ -1,10 +1,11 @@
+using MySql.Data.MySqlClient;
 using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Linq; // Cần thêm để dùng .FirstOrDefault()
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
 
 namespace QLKDPhongTro.DataLayer.Repositories
 {
@@ -304,6 +305,54 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 ));
             }
             return list;
+        }
+        public async Task<Contract?> GetActiveByRoomIdAsync(int maPhong)
+        {
+            using (var conn = new MySqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                // FIX: Thêm 'hd.GiaThue' vào câu lệnh SELECT
+                var sql = @"
+                    SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                           hd.TienCoc, hd.GiaThue, hd.FileHopDong, hd.TrangThai,
+                           nt.HoTen AS TenNguoiThue, p.TenPhong
+                    FROM HopDong hd
+                    LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    WHERE hd.MaPhong = @MaPhong 
+                      AND hd.TrangThai = 'Hiệu lực'
+                    LIMIT 1";
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@MaPhong", maPhong);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return new Contract
+                            {
+                                MaHopDong = reader.GetInt32("MaHopDong"),
+                                MaNguoiThue = reader.GetInt32("MaNguoiThue"),
+                                MaPhong = reader.GetInt32("MaPhong"),
+                                NgayBatDau = reader.GetDateTime("NgayBatDau"),
+                                NgayKetThuc = reader.GetDateTime("NgayKetThuc"),
+
+                                // Bây giờ cột GiaThue đã có trong SELECT, lệnh này sẽ chạy đúng
+                                TienCoc = reader.IsDBNull(reader.GetOrdinal("TienCoc")) ? 0 : reader.GetDecimal("TienCoc"),
+                                GiaThue = reader.IsDBNull(reader.GetOrdinal("GiaThue")) ? 0 : reader.GetDecimal("GiaThue"),
+
+                                FileHopDong = reader.IsDBNull(reader.GetOrdinal("FileHopDong")) ? null : reader.GetString("FileHopDong"),
+                                TrangThai = reader.IsDBNull(reader.GetOrdinal("TrangThai")) ? null : reader.GetString("TrangThai"),
+
+                                TenNguoiThue = reader.IsDBNull(reader.GetOrdinal("TenNguoiThue")) ? "" : reader.GetString("TenNguoiThue"),
+                                TenPhong = reader.IsDBNull(reader.GetOrdinal("TenPhong")) ? "" : reader.GetString("TenPhong")
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         // ============================================================

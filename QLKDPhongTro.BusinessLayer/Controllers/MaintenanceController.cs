@@ -30,6 +30,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
             return await _repo.GetAllAsync();
         }
+        public Task<List<MaintenanceIncident>> GetByRoomAsync(int maPhong) => _repo.GetByRoomAsync(maPhong);
         public Task<MaintenanceIncident?> GetByIdAsync(int id) => _repo.GetByIdAsync(id);
         public Task AddAsync(MaintenanceIncident incident) => _repo.AddAsync(incident);
         public Task UpdateAsync(MaintenanceIncident incident) => _repo.UpdateAsync(incident);

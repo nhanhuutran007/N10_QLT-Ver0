@@ -5,6 +5,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
     public class RentedRoomDto
     {
         public int MaPhong { get; set; } // Chỉ bắt buộc khi cập nhật
+        public int MaNha { get; set; }
 
         [Required(ErrorMessage = "Tên phòng không được bỏ trống")]
         public string TenPhong { get; set; } = string.Empty;

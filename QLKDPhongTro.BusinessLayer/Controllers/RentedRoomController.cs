@@ -33,6 +33,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return rooms.Select(r => new RentedRoomDto
             {
                 MaPhong = r.MaPhong,
+                MaNha = r.MaNha,
                 TenPhong = r.TenPhong,
                 DienTich = (double)r.DienTich,
                 GiaCoBan = r.GiaCoBan,

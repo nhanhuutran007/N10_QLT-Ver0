@@ -17,7 +17,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong", conn);
+                var cmd = new MySqlCommand("SELECT MaPhong, MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong", conn);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -25,13 +25,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         rooms.Add(new RentedRoom
                         {
                             MaPhong = reader.GetInt32(0),
-                            TenPhong = reader.GetString(1),
-                            DienTich = reader.GetDecimal(2),
-                            GiaCoBan = reader.GetDecimal(3),
-                            TrangThai = reader.GetString(4),
-                            GhiChu = reader.GetString(5),
-                            GiaBangChu = reader.GetString(6),
-                            TrangThietBi = reader.GetString(7)
+                            MaNha = reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+                            TenPhong = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            DienTich = reader.IsDBNull(3) ? 0 : reader.GetDecimal(3),
+                            GiaCoBan = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4),
+                            TrangThai = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            GhiChu = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                            GiaBangChu = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            TrangThietBi = reader.IsDBNull(8) ? string.Empty : reader.GetString(8)
                         });
                     }
                 }
@@ -45,7 +46,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaNha = @MaNha", conn);
+                var cmd = new MySqlCommand("SELECT MaPhong, MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaNha = @MaNha", conn);
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -54,13 +55,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         rooms.Add(new RentedRoom
                         {
                             MaPhong = reader.GetInt32(0),
-                            TenPhong = reader.GetString(1),
-                            DienTich = reader.GetDecimal(2),
-                            GiaCoBan = reader.GetDecimal(3),
-                            TrangThai = reader.GetString(4),
-                            GhiChu = reader.GetString(5),
-                            GiaBangChu = reader.GetString(6),
-                            TrangThietBi = reader.GetString(7)
+                            MaNha = reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+                            TenPhong = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            DienTich = reader.IsDBNull(3) ? 0 : reader.GetDecimal(3),
+                            GiaCoBan = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4),
+                            TrangThai = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            GhiChu = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                            GiaBangChu = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            TrangThietBi = reader.IsDBNull(8) ? string.Empty : reader.GetString(8)
                         });
                     }
                 }
@@ -74,7 +76,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaPhong=@MaPhong", conn);
+                var cmd = new MySqlCommand("SELECT MaPhong, MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaPhong=@MaPhong", conn);
                 cmd.Parameters.AddWithValue("@MaPhong", maPhong);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
@@ -83,13 +85,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         room = new RentedRoom
                         {
                             MaPhong = reader.GetInt32(0),
-                            TenPhong = reader.GetString(1),
-                            DienTich = reader.GetDecimal(2),
-                            GiaCoBan = reader.GetDecimal(3),
-                            TrangThai = reader.GetString(4),
-                            GhiChu = reader.GetString(5),
-                            GiaBangChu = reader.GetString(6),
-                            TrangThietBi = reader.GetString(7)
+                            MaNha = reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+                            TenPhong = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            DienTich = reader.IsDBNull(3) ? 0 : reader.GetDecimal(3),
+                            GiaCoBan = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4),
+                            TrangThai = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                            GhiChu = reader.IsDBNull(6) ? string.Empty : reader.GetString(6),
+                            GiaBangChu = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                            TrangThietBi = reader.IsDBNull(8) ? string.Empty : reader.GetString(8)
                         };
                     }
                 }

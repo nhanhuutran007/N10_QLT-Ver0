@@ -20,7 +20,13 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.LeftButton == MouseButtonState.Pressed)
-                DragMove();
+            {
+                try
+                {
+                    this.DragMove();
+                }
+                catch { }
+            }
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

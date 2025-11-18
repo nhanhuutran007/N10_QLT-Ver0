@@ -8,6 +8,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
     {
         Task<List<MaintenanceIncident>> GetAllAsync();
         Task<List<MaintenanceIncident>> GetAllByMaNhaAsync(int maNha);
+        Task<List<MaintenanceIncident>> GetByRoomAsync(int maPhong);
         Task<MaintenanceIncident?> GetByIdAsync(int id);
         Task AddAsync(MaintenanceIncident incident);
         Task UpdateAsync(MaintenanceIncident incident);
