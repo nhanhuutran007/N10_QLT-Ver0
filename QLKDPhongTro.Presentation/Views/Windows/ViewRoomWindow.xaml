@@ -174,7 +174,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <StackPanel Margin="0,0,20,0">
                                         <TextBlock Text="Giá thuê" FontSize="12" Foreground="#6b7280"/>
-                                        <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}/tháng'}" 
+                                        <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:N0} VNĐ/tháng'}" 
                                                    FontSize="18" FontWeight="Bold" Foreground="#1f2937"/>
                                     </StackPanel>
                                     <StackPanel Margin="0,0,20,0">
@@ -275,37 +275,21 @@
                                     </StackPanel>
                                 </Border>
                                 <StackPanel Margin="20">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                        <StackPanel>
-                                            <TextBlock Text="Tháng hiện tại" FontSize="12" Foreground="#6b7280"/>
-                                            <TextBlock Text="Tháng 10, 2024" FontSize="14" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                        <Border Background="#d1fae5" CornerRadius="12" Padding="8,4" Margin="20,0,0,0">
-                                            <TextBlock Text="Đã thanh toán" FontSize="11" FontWeight="SemiBold" Foreground="#065f46"/>
-                                        </Border>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Margin="0,12,0,0">
+                                    <StackPanel Margin="0,0,0,0">
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <TextBlock Text="Tiền thuê" FontSize="12" Foreground="#6b7280" Width="80"/>
-                                            <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}'}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
+                                            <TextBlock Text="Tạm tính" FontSize="12" Foreground="#6b7280" Width="120"/>
+                                            <TextBlock Text="{Binding TamTinh, StringFormat='{}{0:N0} VNĐ'}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="120"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <TextBlock Text="Điện" FontSize="12" Foreground="#6b7280" Width="80"/>
-                                            <TextBlock Text="450,000" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                            <TextBlock Text="Nước" FontSize="12" Foreground="#6b7280" Width="80"/>
-                                            <TextBlock Text="120,000" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="60"/>
+                                            <TextBlock Text="Tiền cọc" FontSize="12" Foreground="#6b7280" Width="120"/>
+                                            <TextBlock Text="{Binding TienCocHienCo, StringFormat='{}{0:N0} VNĐ'}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="120"/>
                                         </StackPanel>
                                         <Border Background="#f8f9fa" Height="1" Margin="0,8,0,8"/>
                                         <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Tổng" FontSize="12" FontWeight="SemiBold" Width="80"/>
-                                            <TextBlock Text="{Binding SelectedRoom.GiaCoBan, StringFormat='{}{0:C}'}" FontSize="12" FontWeight="Bold" Foreground="#1a7bff" HorizontalAlignment="Right" Width="60"/>
+                                            <TextBlock Text="Tổng sau trừ cọc" FontSize="12" FontWeight="SemiBold" Width="120"/>
+                                            <TextBlock Text="{Binding TongTienTinhToan, StringFormat='{}{0:N0} VNĐ'}" FontSize="12" FontWeight="Bold" Foreground="#1a7bff" HorizontalAlignment="Right" Width="120"/>
                                         </StackPanel>
                                     </StackPanel>
-
-                                    <Button Content="Xem lịch sử thanh toán" Style="{StaticResource SecondaryButtonStyle}" Margin="0,15,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>

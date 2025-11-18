@@ -166,7 +166,7 @@ CREATE TABLE `ThanhToan` (
   `SoDien` decimal(18,0) DEFAULT NULL,
   `SoNuoc` decimal(18,0) DEFAULT NULL,
   `TongTien` decimal(18,0) GENERATED ALWAYS AS (coalesce(`TienThue`,0) + coalesce(`TienDien`,0) + coalesce(`TienNuoc`,0) + coalesce(`TienInternet`,0) + coalesce(`TienVeSinh`,0) + coalesce(`TienGiuXe`,0) + coalesce(`ChiPhiKhac`,0)) STORED,
-  `TrangThaiThanhToan` enum('Chưa trả','Đã trả') DEFAULT 'Chưa trả',
+  `TrangThaiThanhToan` enum('Chưa trả','Đã trả','Trả một phần') DEFAULT 'Chưa trả',
   `NgayThanhToan` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

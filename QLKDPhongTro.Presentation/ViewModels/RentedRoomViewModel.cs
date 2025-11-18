@@ -60,6 +60,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         [ObservableProperty] private ObservableCollection<RentedRoomDto> _rooms = new();
         [ObservableProperty] private RentedRoomDto? _selectedRoom;
+
+        // Các thuộc tính tổng hợp để hiển thị phần thanh toán trong ViewRoomWindow
+        [ObservableProperty] private decimal _tamTinh;
+        [ObservableProperty] private decimal _tienCocHienCo;
+        [ObservableProperty] private decimal _tienCocConDu;
+        [ObservableProperty] private decimal _tongTienTinhToan;
+        [ObservableProperty] private string _tongTienHienThi = string.Empty;
+
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private string _statusMessage = string.Empty;
         [ObservableProperty] private RentedRoomDto _newRoom = new();
@@ -121,6 +129,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private IAsyncRelayCommand _saveCommand = null!;
 
         public string[] StatusOptions { get; } = new[] { "Trống", "Đang thuê", "Đang bảo trì" };
+
+        partial void OnSelectedRoomChanged(RentedRoomDto? value)
+        {
+            if (value == null)
+            {
+                TamTinh = 0;
+                TienCocHienCo = 0;
+                TienCocConDu = 0;
+                TongTienTinhToan = 0;
+                TongTienHienThi = string.Empty;
+                return;
+            }
+
+            // Tạm tính hiện tại lấy theo giá cơ bản của phòng
+            TamTinh = value.GiaCoBan;
+
+            // Chưa có thông tin tiền cọc trong RentedRoomDto, để 0 cho tới khi mở rộng mô hình dữ liệu
+            TienCocHienCo = 0;
+            TienCocConDu = 0;
+
+            TongTienTinhToan = TamTinh - TienCocHienCo;
+            TongTienHienThi = string.Format("{0:N0} VNĐ", TongTienTinhToan);
+        }
 
         [RelayCommand]
         private async Task LoadRooms()
