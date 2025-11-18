@@ -18,9 +18,12 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public string HoTen { get; set; } = string.Empty;
         public string CCCD { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
 
         // Thông tin hợp đồng
         public int MaHopDong { get; set; }
+        public decimal TienCocHienCo { get; set; }
+        public decimal TienCocConDu { get; set; }
 
         // Chi tiết các khoản phí
         public decimal TienThue { get; set; }
@@ -48,7 +51,23 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TamTinh => TamTinhThue + TamTinhDien + TamTinhNuoc + TamTinhInternet + TamTinhVeSinh + TamTinhGiuXe + TamTinhKhac;
         public decimal KhauTru { get; set; } = 0;
         public decimal TongTienTinhToan => TamTinh - KhauTru;
-        public decimal? SoDienThangTruoc { get; set; } // Thêm trường này
+
+        /// <summary>
+        /// Chuỗi hiển thị tổng tiền: nếu đã trả thì hiển thị "Đã thanh toán",
+        /// nếu chưa thì hiển thị số tiền sau khi khấu trừ tiền cọc.
+        /// </summary>
+        public string TongTienHienThi
+        {
+            get
+            {
+                if (string.Equals(TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "Đã thanh toán";
+                }
+
+                return string.Format("{0:N0} đ", TongTienTinhToan);
+            }
+        }
     }
 }
 

@@ -47,7 +47,9 @@
     <Resource Include="Resources\Images\email_icon.png" />
     <Resource Include="Resources\Images\password_icon.png" />
     <Resource Include="Resources\Images\QR.jpg" />
-    <Resource Include="Resources\Images\QR_Baotri.png" />
+    <Resource Include="Resources\Images\QR_Baotri.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>

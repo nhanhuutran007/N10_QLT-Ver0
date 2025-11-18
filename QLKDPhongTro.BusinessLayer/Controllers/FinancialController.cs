@@ -40,6 +40,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         // ==== Lookups for UI ====
         public async Task<List<DataLayer.Models.Tenant>> GetAllTenantsAsync()
         {
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                return await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+
             return await _tenantRepository.GetAllAsync();
         }
 
@@ -83,6 +89,39 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<RecentTenantInfoDto?> GetMostRecentTenantInfoAsync()
         {
+            var current = AuthController.CurrentUser;
+
+            // Nếu đang đăng nhập và có MaNha, chỉ lấy khách thuộc nhà đó
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                if (contractsByHouse == null || contractsByHouse.Count == 0)
+                    return null;
+
+                // Lọc các hợp đồng hiệu lực, nhóm theo MaNguoiThue, lấy HĐ mới nhất
+                var mostRecentPerTenant = contractsByHouse
+                    .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(c => c.MaNguoiThue)
+                    .Select(g => g.OrderByDescending(c => c.NgayBatDau)
+                                  .ThenByDescending(c => c.MaHopDong)
+                                  .First())
+                    .OrderByDescending(c => c.NgayBatDau)
+                    .ThenByDescending(c => c.MaHopDong)
+                    .ToList();
+
+                var first = mostRecentPerTenant.FirstOrDefault();
+                if (first == null) return null;
+
+                return new RecentTenantInfoDto
+                {
+                    MaNguoiThue = first.MaNguoiThue,
+                    HoTen = first.TenNguoiThue ?? first.MaNguoiThue.ToString(),
+                    TienCoc = first.TienCoc,
+                    TrangThai = first.TrangThai
+                };
+            }
+
+            // Nếu không có MaNha, dùng logic cũ (toàn bộ hệ thống)
             var result = await _contractRepository.GetMostRecentTenantWithDepositAsync();
             if (result == null) return null;
             return new RecentTenantInfoDto
@@ -96,6 +135,38 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<List<RecentTenantInfoDto>> GetMostRecentTenantsInfoAsync(int count)
         {
+            var current = AuthController.CurrentUser;
+
+            // Nếu đang đăng nhập và có MaNha, chỉ lấy khách thuộc nhà đó
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                if (contractsByHouse == null || contractsByHouse.Count == 0)
+                    return new List<RecentTenantInfoDto>();
+
+                var limit = Math.Max(1, Math.Min(10, count));
+
+                var mostRecentPerTenant = contractsByHouse
+                    .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
+                    .GroupBy(c => c.MaNguoiThue)
+                    .Select(g => g.OrderByDescending(c => c.NgayBatDau)
+                                  .ThenByDescending(c => c.MaHopDong)
+                                  .First())
+                    .OrderByDescending(c => c.NgayBatDau)
+                    .ThenByDescending(c => c.MaHopDong)
+                    .Take(limit)
+                    .ToList();
+
+                return mostRecentPerTenant.Select(c => new RecentTenantInfoDto
+                {
+                    MaNguoiThue = c.MaNguoiThue,
+                    HoTen = c.TenNguoiThue ?? c.MaNguoiThue.ToString(),
+                    TienCoc = c.TienCoc,
+                    TrangThai = c.TrangThai
+                }).ToList();
+            }
+
+            // Nếu không có MaNha, dùng logic cũ (toàn bộ hệ thống)
             var list = await _contractRepository.GetMostRecentTenantsWithDepositAsync(count);
             return list.Select(x => new RecentTenantInfoDto
             {
@@ -219,7 +290,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// </summary>
         public async Task<List<PaymentDto>> GetAllPaymentsAsync()
         {
-            var payments = await _paymentRepository.GetAllAsync();
+            List<DataLayer.Models.Payment> payments;
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                payments = await _paymentRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+            else
+            {
+                payments = await _paymentRepository.GetAllAsync();
+            }
             return payments.Select(p => new PaymentDto
             {
                 MaThanhToan = p.MaThanhToan,
@@ -343,7 +423,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
 
             // Tạo chi phí mới (cần có bảng Expenses riêng)
-            // Tạm thời cập nhật vào payment
+            // Tạm thởi cập nhật vào payment
             switch (dto.LoaiChiPhi?.ToLower())
             {
                 case "điện":
@@ -375,7 +455,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Thanh toán tiền thuê
+        /// Thanh toán tiền thuê (sử dụng ở một số nơi cũ)
         /// </summary>
         public async Task<ValidationResult> PayRentAsync(PayRentDto dto)
         {
@@ -385,7 +465,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
-            if (payment.TrangThaiThanhToan == "Đã trả")
+            if (string.Equals(payment.TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
             {
                 return new ValidationResult(false, "Thanh toán đã được thực hiện trước đó");
             }
@@ -399,29 +479,125 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Cập nhật chi phí phát sinh
+        /// Cập nhật trạng thái thanh toán (Đã trả/Chưa trả) và set lại tiền cọc nếu cần
         /// </summary>
-        public async Task<ValidationResult> UpdateExpenseAsync(UpdatePaymentDto dto)
+        public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
         {
-            var payment = await _paymentRepository.GetByIdAsync(dto.MaThanhToan);
+            var normalized = (trangThaiChuan ?? string.Empty).Trim();
+
+            if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ValidationResult(false, "Trạng thái không hợp lệ. Chỉ chấp nhận 'Đã trả' hoặc 'Chưa trả'.");
+            }
+
+            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
             if (payment == null)
             {
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
-            if (dto.TienDien.HasValue) payment.TienDien = dto.TienDien.Value;
-            if (dto.TienNuoc.HasValue) payment.TienNuoc = dto.TienNuoc.Value;
-            if (dto.TienInternet.HasValue) payment.TienInternet = dto.TienInternet.Value;
-            if (dto.TienVeSinh.HasValue) payment.TienVeSinh = dto.TienVeSinh.Value;
-            if (dto.TienGiuXe.HasValue) payment.TienGiuXe = dto.TienGiuXe.Value;
-            if (dto.ChiPhiKhac.HasValue) payment.ChiPhiKhac = dto.ChiPhiKhac.Value;
+            var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
+            payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
+            payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
 
-            // Cập nhật tổng tiền
-            payment.TongTien = CalculateTotalAmount(payment);
+            decimal depositUsed = 0;
+
+            // Nếu đánh dấu Đã trả và có hợp đồng thì áp dụng tiền cọc một phần hoặc toàn bộ
+            if (isPaid && payment.MaHopDong.HasValue)
+            {
+                var contract = await _contractRepository.GetByIdAsync(payment.MaHopDong.Value);
+                if (contract != null)
+                {
+                    var tamTinh = CalculateTotalAmount(payment);
+                    var currentDeposit = contract.TienCoc;
+
+                    depositUsed = Math.Min(currentDeposit, tamTinh);
+
+                    // Cập nhật tổng tiền phải trả sau khi áp dụng cọc
+                    payment.TongTien = tamTinh - depositUsed;
+
+                    // Giảm tiền cọc tương ứng, nếu còn dư thì giữ lại
+                    contract.TienCoc = currentDeposit - depositUsed;
+                    await _contractRepository.UpdateHopDongAsync(contract);
+                }
+            }
+
+            // Nếu chưa trả hoặc không có hợp đồng, đảm bảo TongTien phản ánh tổng các khoản phí
+            if (!isPaid)
+            {
+                payment.TongTien = CalculateTotalAmount(payment);
+            }
 
             var success = await _paymentRepository.UpdateAsync(payment);
+
             return new ValidationResult(success,
-                success ? "Cập nhật chi phí thành công" : "Cập nhật chi phí thất bại");
+                success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại");
+        }
+
+        /// <summary>
+        /// Xóa thanh toán theo ID
+        /// </summary>
+        public async Task<ValidationResult> DeletePaymentAsync(int maThanhToan)
+        {
+            var success = await _paymentRepository.DeleteAsync(maThanhToan);
+            return new ValidationResult(success,
+                success ? "Xóa thanh toán thành công" : "Xóa thanh toán thất bại");
+        }
+
+        /// <summary>
+        /// Lấy thông tin chi tiết hóa đơn thanh toán
+        /// </summary>
+        public async Task<InvoiceDetailDto?> GetInvoiceDetailAsync(int maThanhToan)
+        {
+            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
+            if (payment == null) return null;
+
+            var contract = payment.MaHopDong.HasValue
+                ? await _contractRepository.GetByIdAsync(payment.MaHopDong.Value)
+                : null;
+
+            var tenant = contract != null
+                ? await _tenantRepository.GetByIdAsync(contract.MaNguoiThue)
+                : null;
+
+            // Tạo DTO trước để dùng được thuộc tính TamTinh
+            var dto = new InvoiceDetailDto
+            {
+                MaThanhToan = payment.MaThanhToan,
+                ThangNam = payment.ThangNam,
+                NgayThanhToan = payment.NgayThanhToan,
+                TrangThaiThanhToan = payment.TrangThaiThanhToan ?? "Chưa trả",
+                TongTien = payment.TongTien,
+                MaHopDong = payment.MaHopDong ?? 0,
+                HoTen = tenant?.HoTen ?? "Không xác định",
+                CCCD = tenant?.CCCD ?? "Không xác định",
+                SoDienThoai = tenant?.SoDienThoai ?? "Không xác định",
+                Email = string.IsNullOrWhiteSpace(tenant?.Email) ? null : tenant!.Email,
+                TienThue = payment.TienThue ?? 0,
+                TienDien = payment.TienDien ?? 0,
+                TienNuoc = payment.TienNuoc ?? 0,
+                TienInternet = payment.TienInternet ?? 0,
+                TienVeSinh = payment.TienVeSinh ?? 0,
+                TienGiuXe = payment.TienGiuXe ?? 0,
+                ChiPhiKhac = payment.ChiPhiKhac ?? 0,
+                DonGiaDien = payment.DonGiaDien ?? DON_GIA_DIEN,
+                DonGiaNuoc = payment.DonGiaNuoc ?? DON_GIA_NUOC,
+                SoDien = payment.SoDien,
+                SoNuoc = payment.SoNuoc
+            };
+
+            // Tiền cọc hiện có để hiển thị
+            var currentDeposit = contract?.TienCoc ?? 0;
+            dto.TienCocHienCo = currentDeposit;
+
+            // Khấu trừ thực tế dùng để tính tổng: min(Tạm tính, tiền cọc hiện tại)
+            dto.KhauTru = Math.Min(dto.TamTinh, currentDeposit);
+
+            // Tiền cọc còn dư sau khi trừ vào hóa đơn (không âm)
+            dto.TienCocConDu = Math.Max(0, currentDeposit - dto.KhauTru);
+
+            return dto;
         }
 
         /// <summary>
@@ -429,7 +605,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// </summary>
         public async Task<List<DebtReportDto>> GetDebtReportAsync(string? thangNam = null)
         {
-            var allPayments = await _paymentRepository.GetAllAsync();
+            /// <summary>
+            /// Lấy báo cáo công nợ
+            /// </summary>
+            var current = AuthController.CurrentUser;
+            var allPayments = (current != null && current.MaNha > 0)
+                ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _paymentRepository.GetAllAsync();
             var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả" &&
                 (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam));
 
@@ -467,48 +649,51 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Tổng hợp công nợ tự động với logic tính điện nước mới
+        /// Tổng hợp công nợ tự động
         /// </summary>
         public async Task<ValidationResult> AutoGenerateDebtsAsync()
         {
             try
             {
                 var currentMonth = DateTime.Now.ToString("MM/yyyy");
-                var activeContracts = await _contractRepository.GetActiveContractsAsync();
+                var current = AuthController.CurrentUser;
+                IEnumerable<DataLayer.Models.Contract> activeContracts;
+                if (current != null && current.MaNha > 0)
+                {
+                    var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                    activeContracts = contractsByHouse.Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    activeContracts = await _contractRepository.GetActiveContractsAsync();
+                }
 
                 int count = 0;
                 foreach (var contract in activeContracts)
                 {
-                    var existingPayments = await _paymentRepository.GetAllAsync();
+                    var existingPayments = (current != null && current.MaNha > 0)
+                        ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                        : await _paymentRepository.GetAllAsync();
                     var existingPayment = existingPayments.FirstOrDefault(p =>
                         p.MaHopDong == contract.MaHopDong && p.ThangNam == currentMonth);
 
                     if (existingPayment == null)
                     {
                         var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
-
-                        // Tìm số điện tháng trước từ thanh toán gần nhất
-                        var previousPayment = await GetLastPaymentByContractIdAsync(contract.MaHopDong);
-                        var chiSoDienCu = previousPayment?.ChiSoDienMoi ?? 0;
-
                         var payment = new Payment
                         {
                             MaHopDong = contract.MaHopDong,
                             ThangNam = currentMonth,
-                            TienThue = contract.GiaThue,
-                            TienDien = 0, // Sẽ tính khi có số điện
-                            TienNuoc = DON_GIA_NUOC, // Nước cố định 100k
+                            TienThue = room?.GiaCoBan ?? 0,
+                            TienDien = 0,
+                            TienNuoc = 0,
                             TienInternet = 0,
                             TienVeSinh = 0,
                             TienGiuXe = 0,
                             ChiPhiKhac = 0,
-                            ChiSoDienCu = chiSoDienCu,
-                            DonGiaDien = DON_GIA_DIEN,
-                            DonGiaNuoc = DON_GIA_NUOC,
-                            SoNuoc = 1,
                             TrangThaiThanhToan = "Chưa trả",
                             NgayThanhToan = null,
-                            TongTien = contract.GiaThue + DON_GIA_NUOC // Tiền thuê + tiền nước
+                            TongTien = room?.GiaCoBan ?? 0
                         };
 
                         await _paymentRepository.CreateAsync(payment);
@@ -530,7 +715,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<FinancialStatsDto> GetFinancialStatsAsync(int? nam = null)
         {
             var currentYear = nam ?? DateTime.Now.Year;
-            var allPayments = await _paymentRepository.GetAllAsync();
+            var current = AuthController.CurrentUser;
+            var allPayments = (current != null && current.MaNha > 0)
+                ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _paymentRepository.GetAllAsync();
 
             // Nếu có tham số năm, lọc theo năm, nếu không dùng toàn bộ dữ liệu
             IEnumerable<DataLayer.Models.Payment> scopePayments = allPayments;
@@ -565,7 +753,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 .Count();
 
             // Số khách đang thuê: đếm khách có hợp đồng TrangThai = "Hiệu lực" (một khách có nhiều HĐ vẫn tính 1)
-            var activeContracts = await _contractRepository.GetActiveContractsAsync();
+            IEnumerable<DataLayer.Models.Contract> activeContracts;
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                activeContracts = contractsByHouse;
+            }
+            else
+            {
+                activeContracts = await _contractRepository.GetActiveContractsAsync();
+            }
             var validActiveTenants = activeContracts
                 .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
                 .Select(c => c.MaNguoiThue)
@@ -574,7 +771,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             stats.SoKhachDangThue = validActiveTenants;
 
             // Số phòng đang thuê: đếm phòng có trạng thái "Đang thuê"
-            var roomsAll = await _roomRepository.GetAllAsync();
+            var roomsAll = (current != null && current.MaNha > 0)
+                ? await _roomRepository.GetAllByMaNhaAsync(current.MaNha)
+                : await _roomRepository.GetAllAsync();
             stats.SoPhongDangThue = roomsAll
                 .Count(r => string.Equals(r.TrangThai, "Đang thuê", StringComparison.OrdinalIgnoreCase));
 
@@ -606,97 +805,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
 
             return stats;
-        }
-
-        /// <summary>
-        /// Cập nhật trạng thái thanh toán
-        /// </summary>
-        public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
-        {
-            var normalized = (trangThaiChuan ?? string.Empty).Trim();
-            
-            // Debug logging
-            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: MaThanhToan={maThanhToan}, Input trangThaiChuan='{trangThaiChuan}', Normalized='{normalized}'");
-            
-            if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
-            {
-                return new ValidationResult(false, "Trạng thái không hợp lệ. Chỉ chấp nhận 'Đã trả' hoặc 'Chưa trả'.");
-            }
-
-            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
-            if (payment == null)
-            {
-                return new ValidationResult(false, "Thanh toán không tồn tại");
-            }
-
-            // Debug logging
-            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Before update - TrangThaiThanhToan='{payment.TrangThaiThanhToan}'");
-
-            var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
-            payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
-            payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
-
-            // Debug logging
-            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: After set - TrangThaiThanhToan='{payment.TrangThaiThanhToan}', NgayThanhToan={payment.NgayThanhToan}");
-
-            var success = await _paymentRepository.UpdateAsync(payment);
-            
-            // Debug logging
-            System.Diagnostics.Debug.WriteLine($"UpdatePaymentStatusAsync: Update result = {success}");
-            return new ValidationResult(success,
-                success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại");
-        }
-
-        /// <summary>
-        /// Xóa thanh toán theo ID
-        /// </summary>
-        public async Task<ValidationResult> DeletePaymentAsync(int maThanhToan)
-        {
-            var success = await _paymentRepository.DeleteAsync(maThanhToan);
-            return new ValidationResult(success,
-                success ? "Xóa thanh toán thành công" : "Xóa thanh toán thất bại");
-        }
-
-        /// <summary>
-        /// Lấy thông tin chi tiết hóa đơn thanh toán
-        /// </summary>
-        public async Task<InvoiceDetailDto?> GetInvoiceDetailAsync(int maThanhToan)
-        {
-            var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
-            if (payment == null) return null;
-
-            var contract = payment.MaHopDong.HasValue
-                ? await _contractRepository.GetByIdAsync(payment.MaHopDong.Value)
-                : null;
-
-            var tenant = contract != null
-                ? await _tenantRepository.GetByIdAsync(contract.MaNguoiThue)
-                : null;
-
-            return new InvoiceDetailDto
-            {
-                MaThanhToan = payment.MaThanhToan,
-                ThangNam = payment.ThangNam,
-                NgayThanhToan = payment.NgayThanhToan,
-                TrangThaiThanhToan = payment.TrangThaiThanhToan ?? "Chưa trả",
-                TongTien = payment.TongTien,
-                MaHopDong = payment.MaHopDong ?? 0,
-                HoTen = tenant?.HoTen ?? "Không xác định",
-                CCCD = tenant?.CCCD ?? "Không xác định",
-                SoDienThoai = tenant?.SoDienThoai ?? "Không xác định",
-                TienThue = payment.TienThue ?? 0,
-                TienDien = payment.TienDien ?? 0,
-                TienNuoc = payment.TienNuoc ?? 0,
-                TienInternet = payment.TienInternet ?? 0,
-                TienVeSinh = payment.TienVeSinh ?? 0,
-                TienGiuXe = payment.TienGiuXe ?? 0,
-                ChiPhiKhac = payment.ChiPhiKhac ?? 0,
-                DonGiaDien = payment.DonGiaDien ?? DON_GIA_DIEN,
-                DonGiaNuoc = payment.DonGiaNuoc ?? DON_GIA_NUOC,
-                SoDien = payment.SoDien,
-                SoNuoc = payment.SoNuoc
-            };
         }
 
         /// <summary>
@@ -756,7 +864,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                           + (payment.TienGiuXe ?? 0)
                           + (payment.ChiPhiKhac ?? 0);
 
-            payment.TongTien = tamTinh - khauTru;
+            // Lưu tổng tiền trước khi áp dụng cọc. Tiền cọc sẽ được trừ khi xác nhận đã thanh toán.
+            payment.TongTien = tamTinh;
 
             return await _paymentRepository.UpdateAsync(payment);
         }
@@ -767,27 +876,28 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<TransactionHistoryDto>> GetTransactionHistoryAsync(
             DateTime? tuNgay = null, DateTime? denNgay = null)
         {
-            var allPayments = await _paymentRepository.GetAllAsync();
-            var transactions = allPayments.Where(p => p.TrangThaiThanhToan == "Đã trả" &&
-                p.NgayThanhToan.HasValue &&
-                (tuNgay == null || p.NgayThanhToan >= tuNgay) &&
-                (denNgay == null || p.NgayThanhToan <= denNgay));
+            var current = AuthController.CurrentUser;
+            List<DataLayer.Models.Payment> transactions;
+            if (current != null && current.MaNha > 0)
+            {
+                transactions = await _paymentRepository.GetTransactionHistoryByMaNhaAsync(current.MaNha, tuNgay, denNgay);
+            }
+            else
+            {
+                transactions = await _paymentRepository.GetTransactionHistoryAsync(tuNgay, denNgay);
+            }
 
             var result = new List<TransactionHistoryDto>();
-            foreach (var transaction in transactions)
+            foreach (var p in transactions)
             {
-                var contract = await _contractRepository.GetByIdAsync(transaction.MaHopDong ?? 0);
-                if (contract == null) continue;
-
-                var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
                 result.Add(new TransactionHistoryDto
                 {
-                    MaThanhToan = transaction.MaThanhToan,
-                    TenPhong = contract.MaPhong.ToString(),
-                    TenKhachHang = tenant?.HoTen ?? "Không xác định",
-                    MoTa = $"Thanh toán tháng {transaction.ThangNam}",
-                    SoTien = transaction.TongTien,
-                    ThoiGian = transaction.NgayThanhToan ?? DateTime.Now,
+                    MaThanhToan = p.MaThanhToan,
+                    TenPhong = p.TenPhong ?? "Không xác định",
+                    TenKhachHang = p.TenKhachHang ?? "Không xác định",
+                    MoTa = $"Thanh toán tháng {p.ThangNam}",
+                    SoTien = p.TongTien,
+                    ThoiGian = p.NgayThanhToan ?? DateTime.Now,
                     LoaiGiaoDich = "Thuê phòng",
                     LoaiGiaoDichIcon = "💰",
                     TrangThai = "Hoàn thành",
@@ -800,12 +910,23 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách hợp đồng active dạng DTO
+        /// Lấy danh sách hợp đồng đang hiệu lực, trả về dạng DTO, có lọc theo MaNha nếu có
         /// </summary>
         public async Task<List<ContractDto>> GetActiveContractDtosAsync()
         {
-            var contracts = await _contractRepository.GetActiveContractsAsync();
-            return contracts.Select(c => new ContractDto
+            var current = AuthController.CurrentUser;
+            IEnumerable<DataLayer.Models.Contract> activeContracts;
+            if (current != null && current.MaNha > 0)
+            {
+                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
+                activeContracts = contractsByHouse.Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                activeContracts = await _contractRepository.GetActiveContractsAsync();
+            }
+
+            return activeContracts.Select(c => new ContractDto
             {
                 MaHopDong = c.MaHopDong,
                 MaNguoiThue = c.MaNguoiThue,

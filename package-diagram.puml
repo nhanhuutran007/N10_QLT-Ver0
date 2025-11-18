@@ -1,0 +1,191 @@
+@startuml Package_Diagram_QLKDPhongTro
+
+!theme plain
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+title Sơ đồ Package - Hệ thống Quản lý Thuê Trọ (QLKDPhongTro)
+
+' External Dependencies
+package "External Libraries" as ExtLib {
+    package ".NET 8.0 Framework" as DotNet
+    package "WPF Framework" as WPF
+    package "CommunityToolkit.Mvvm" as MVVM
+    package "System.Data.SqlClient" as SqlClient
+    package "System.Net.Mail" as Mail
+}
+
+' Database
+package "SQL Server Database" as DB {
+    package "QLThueNhaV0" as DBSchema
+}
+
+' Main Application Layers
+package "QLKDPhongTro Application" as MainApp {
+    
+    ' Presentation Layer
+    package "QLKDPhongTro.Presentation" as PresentationLayer {
+        package "Views" as Views {
+            package "Windows" as Windows {
+                package "LoginWindow" {}
+                package "RegisterWindow" {}
+                package "OtpWindow" {}
+                package "DashWindow" {}
+                package "ContractManagementWindow" {}
+                package "TenantManagementWindow" {}
+                package "RoomWindow" {}
+                package "FinancialWindow" {}
+                note right : 55+ View files
+            }
+            package "Components" as Components {
+                package "SidebarControl" {}
+                package "TopbarControl" {}
+                package "ProfileDropDown" {}
+            }
+        }
+        
+        package "ViewModels" as ViewModels {
+            package "LoginViewModel" {}
+            package "RegisterViewModel" {}
+            package "OtpViewModel" {}
+            package "DashboardViewModel" {}
+            package "ContractManagementViewModel" {}
+            package "AddContractViewModel" {}
+            package "RentedRoomViewModel" {}
+            package "TenantViewModel" {}
+            package "FinancialDashboardViewModel" {}
+            package "PaymentViewModel" {}
+            package "ViewModelBase" {}
+            note right : 14 ViewModels
+        }
+        
+        package "Converters" as Converters {
+            package "BoolToLoadingTextConverter" {}
+            package "InverseBooleanConverter" {}
+            package "StatusToColorConverter" {}
+            note right : 15+ Converters
+        }
+        
+        package "Resources" as Resources {
+            package "Images" {}
+            package "Templates" {}
+        }
+        
+        package "Services" as PresentationServices {
+            package "NavigationService" {}
+        }
+        
+        package "Commands" as Commands {
+            package "RelayCommand" {}
+        }
+    }
+    
+    ' Business Layer
+    package "QLKDPhongTro.BusinessLayer" as BusinessLayer {
+        package "Controllers" as Controllers {
+            package "AuthController" {}
+            package "ContractController" {}
+            package "FinancialController" {}
+            package "HouseController" {}
+            package "MaintenanceController" {}
+            package "RentedRoomController" {}
+            package "TenantController" {}
+            note right : 7 Controllers
+        }
+        
+        package "DTOs" as DTOs {
+            package "LoginResult" {}
+            package "RegisterResult" {}
+            package "ValidationResult" {}
+            package "ContractDto" {}
+            package "HouseDto" {}
+            package "RentedRoomDto" {}
+            package "TenantDto" {}
+            package "PaymentDto" {}
+            package "FinancialStatsDto" {}
+            note right : 19 DTOs
+        }
+        
+        package "Services" as BusinessServices {
+            package "BusinessService" {}
+        }
+    }
+    
+    ' Data Layer
+    package "QLKDPhongTro.DataLayer" as DataLayer {
+        package "Models" as Models {
+            package "User" {}
+            package "House" {}
+            package "RentedRoom" {}
+            package "Contract" {}
+            package "Tenant" {}
+            package "Payment" {}
+            package "MaintenanceIncident" {}
+            note right : 7 Models
+        }
+        
+        package "Repositories" as Repositories {
+            package "IUserRepository" {}
+            package "IHouseRepository" {}
+            package "IRentedRoomRepository" {}
+            package "IContractRepository" {}
+            package "ITenantRepository" {}
+            package "IPaymentRepository" {}
+            package "IMaintenanceRepository" {}
+            
+            package "UserRepository" {}
+            package "HouseRepository" {}
+            package "RentedRoomRepository" {}
+            package "ContractRepository" {}
+            package "TenantRepository" {}
+            package "PaymentRepository" {}
+            package "MaintenanceRepository" {}
+            note right : 7 Interfaces + 8 Implementations
+        }
+        
+        package "Utils" as DataUtils {
+            package "ConnectDB" {}
+            package "PasswordHelper" {}
+            package "EmailService" {}
+            package "OtpHelper" {}
+            note right : 5 Utility classes
+        }
+    }
+    
+    ' Utilities Layer
+    package "QLKDPhongTro.Utilities" as UtilitiesLayer {
+        package "UtilityClass" {}
+        note right : Shared utilities
+    }
+}
+
+' Dependencies - Layer to Layer
+PresentationLayer ..> BusinessLayer : <<uses>>
+BusinessLayer ..> DataLayer : <<uses>>
+DataLayer ..> UtilitiesLayer : <<uses>>
+
+' Dependencies - Internal Layer Dependencies
+Views ..> ViewModels : <<binds to>>
+ViewModels ..> Controllers : <<calls>>
+Controllers ..> DTOs : <<uses>>
+Controllers ..> Repositories : <<calls>>
+Repositories ..> Models : <<uses>>
+Repositories ..> DataUtils : <<uses>>
+
+' External Dependencies
+PresentationLayer ..> WPF : <<uses>>
+ViewModels ..> MVVM : <<uses>>
+DataUtils ..> SqlClient : <<uses>>
+DataUtils ..> Mail : <<uses>>
+Repositories ..> DB : <<connects to>>
+
+' Specific connections
+UserRepository ..> PasswordHelper : <<uses>>
+EmailService ..> OtpHelper : <<uses>>
+AuthController ..> EmailService : <<uses>>
+
+' Notes
+note top of MainApp : Kiến trúc 3-Layer với MVVM Pattern
+note bottom of DB : Chứa dữ liệu người dùng,\nnhà trọ, hợp đồng, thanh toán
+
+@enduml

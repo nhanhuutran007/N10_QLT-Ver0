@@ -93,7 +93,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
         private void Support_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Chức năng hỗ trợ sẽ được phát triển trong tương lai.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                var window = new HouseInfoWindow
+                {
+                    Owner = Application.Current.MainWindow
+                };
+                window.ShowDialog();
+            }
+            catch (System.Exception ex)
+            {
+                MessageBox.Show($"Không thể mở màn hình thông tin nhà: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void LogOut_Click(object sender, RoutedEventArgs e)

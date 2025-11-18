@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.DataLayer.Models;
+using QLKDPhongTro.DataLayer.Models;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -14,6 +14,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// Lấy tất cả thanh toán
         /// </summary>
         Task<List<Payment>> GetAllAsync();
+
+        /// <summary>
+        /// Lấy tất cả thanh toán theo mã nhà (lọc theo Phong.MaNha qua HopDong)
+        /// </summary>
+        Task<List<Payment>> GetAllByMaNhaAsync(int maNha);
 
         /// <summary>
         /// Lấy thanh toán theo ID
@@ -69,6 +74,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// Lấy lịch sử giao dịch
         /// </summary>
         Task<List<Payment>> GetTransactionHistoryAsync(DateTime? tuNgay = null, DateTime? denNgay = null);
+        /// <summary>
+        /// Lấy lịch sử giao dịch theo mã nhà
+        /// </summary>
+        Task<List<Payment>> GetTransactionHistoryByMaNhaAsync(int maNha, DateTime? tuNgay = null, DateTime? denNgay = null);
 
         /// <summary>
         /// Tạo thanh toán hàng tháng tự động

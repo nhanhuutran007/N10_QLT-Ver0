@@ -218,10 +218,24 @@
                                         Margin="0,0,10,0"/>
                                 <Button Content="📧 Gửi cảnh báo hết hạn"
                                         Style="{StaticResource PrimaryButtonStyle}"
-                                        Command="{Binding SendExpiryWarningEmailsAsyncCommand}"
+                                        Command="{Binding SendExpiryWarningEmailsCommand}"
                                         Background="#4CAF50"
                                         Foreground="White"
                                         Width="200"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="📄 Xuất PDF"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding ExportToPdfCommand}"
+                                        Background="#2196F3"
+                                        Foreground="White"
+                                        Width="120"
+                                        Margin="0,0,10,0"/>
+                                <Button Content="☁️ PDF + Drive"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding ExportToPdfAndDriveCommand}"
+                                        Background="#FF9800"
+                                        Foreground="White"
+                                        Width="130"
                                         Margin="0,0,10,0"/>
                                 <ComboBox Width="132"
                                         Style="{StaticResource ComboBoxStyle}"
@@ -258,89 +272,89 @@
                           CanUserResizeRows="False"
                           CanUserReorderColumns="False"
                           CanUserSortColumns="True">
-                        <DataGrid.Resources>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                <Setter Property="BorderBrush" Value="#EEEEEE"/>
-                                <Setter Property="Padding" Value="10,12"/>
-                                <Setter Property="FontWeight" Value="Medium"/>
-                                <Setter Property="Foreground" Value="#7D8FA9"/>
-                            </Style>
-                            <!-- Style cho DataGridRow -->
-                            <Style TargetType="DataGridRow">
-                                <Setter Property="MinHeight" Value="50"/>
-                                <Setter Property="Cursor" Value="Arrow"/>
-                                <Setter Property="Margin" Value="0,2"/>
-                                <Setter Property="Padding" Value="0"/>
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="DataGridRow">
-                                            <Border Background="{TemplateBinding Background}"
+                                <DataGrid.Resources>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                        <Setter Property="BorderBrush" Value="#EEEEEE"/>
+                                        <Setter Property="Padding" Value="10,12"/>
+                                        <Setter Property="FontWeight" Value="Medium"/>
+                                        <Setter Property="Foreground" Value="#7D8FA9"/>
+                                    </Style>
+                                    <!-- Style cho DataGridRow -->
+                                    <Style TargetType="DataGridRow">
+                                        <Setter Property="MinHeight" Value="50"/>
+                                        <Setter Property="Cursor" Value="Arrow"/>
+                                        <Setter Property="Margin" Value="0,2"/>
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridRow">
+                                                    <Border Background="{TemplateBinding Background}"
                                                     BorderThickness="0"
                                                     CornerRadius="0"
                                                     Padding="0">
-                                                <SelectiveScrollingGrid>
-                                                    <SelectiveScrollingGrid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </SelectiveScrollingGrid.ColumnDefinitions>
-                                                    <SelectiveScrollingGrid.RowDefinitions>
-                                                        <RowDefinition Height="*"/>
-                                                        <RowDefinition Height="Auto"/>
-                                                    </SelectiveScrollingGrid.RowDefinitions>
-                                                    <DataGridCellsPresenter Grid.Column="1"
+                                                        <SelectiveScrollingGrid>
+                                                            <SelectiveScrollingGrid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                            </SelectiveScrollingGrid.ColumnDefinitions>
+                                                            <SelectiveScrollingGrid.RowDefinitions>
+                                                                <RowDefinition Height="*"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </SelectiveScrollingGrid.RowDefinitions>
+                                                            <DataGridCellsPresenter Grid.Column="1"
                                                                             ItemsPanel="{TemplateBinding ItemsPanel}"
                                                                             SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                                    <DataGridDetailsPresenter Grid.Column="1"
+                                                            <DataGridDetailsPresenter Grid.Column="1"
                                                                                 Grid.Row="1"
                                                                                 Visibility="{TemplateBinding DetailsVisibility}"/>
-                                                    <DataGridRowHeader Grid.RowSpan="2"
+                                                            <DataGridRowHeader Grid.RowSpan="2"
                                                                         Visibility="{Binding HeadersVisibility, Converter={x:Static DataGrid.HeadersVisibilityConverter}, ConverterParameter={x:Static DataGridHeadersVisibility.Row}, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"/>
-                                                </SelectiveScrollingGrid>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                            
-                            <!-- Style cho DataGridCell -->
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Padding" Value="10,12"/>
-                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#3B4758"/>
-                                <Setter Property="Cursor" Value="Arrow"/>
-                                <Setter Property="Margin" Value="0"/>
-                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="DataGridCell">
-                                            <Border Background="{TemplateBinding Background}"
+                                                        </SelectiveScrollingGrid>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+
+                                    <!-- Style cho DataGridCell -->
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Padding" Value="10,12"/>
+                                        <Setter Property="VerticalAlignment" Value="Center"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#3B4758"/>
+                                        <Setter Property="Cursor" Value="Arrow"/>
+                                        <Setter Property="Margin" Value="0"/>
+                                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Background="{TemplateBinding Background}"
                                                     BorderThickness="{TemplateBinding BorderThickness}"
                                                     BorderBrush="{TemplateBinding BorderBrush}"
                                                     CornerRadius="0"
                                                     Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                        <ContentPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                                                 SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </DataGrid.Resources>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </DataGrid.Resources>
 
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
-                            <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
-                            <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
-                            <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                            <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
-                            <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
-                            <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Mã HĐ" Binding="{Binding MaHopDong}" Width="Auto"/>
+                                    <DataGridTextColumn Header="Phòng" Binding="{Binding TenPhong}" Width="*"/>
+                                    <DataGridTextColumn Header="Người thuê" Binding="{Binding TenNguoiThue}" Width="2*"/>
+                                    <DataGridTextColumn Header="Ngày BĐ" Binding="{Binding NgayBatDau, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                                    <DataGridTextColumn Header="Ngày KT" Binding="{Binding NgayKetThuc, StringFormat='dd/MM/yyyy'}" Width="*"/>
+                                    <DataGridTextColumn Header="Tiền cọc" Binding="{Binding TienCoc, StringFormat='N0'}" Width="*"/>
+                                    <DataGridTextColumn Header="Trạng thái" Binding="{Binding TrangThai}" Width="*"/>
                                 </DataGrid.Columns>
                             </DataGrid>
 

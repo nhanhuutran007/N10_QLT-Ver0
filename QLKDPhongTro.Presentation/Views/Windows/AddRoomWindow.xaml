@@ -13,7 +13,7 @@
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
-    MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
         <!-- Style cho nút đóng -->
@@ -45,7 +45,7 @@
 
         <!-- Style cho nút chính -->
         <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}">
-            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Background" Value="#319DFF"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -64,7 +64,7 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#485BB0"/>
+                    <Setter Property="Background" Value="#1F8AF0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -248,127 +248,117 @@
         </Style>
     </Window.Resources>
 
-    <!-- Background overlay với hiệu ứng mờ -->
-    <Border Background="#F8F9FA" CornerRadius="12">
-        <Border.Effect>
-            <DropShadowEffect Color="#000000" Opacity="0.3" BlurRadius="10" ShadowDepth="0"/>
-        </Border.Effect>
+    <!-- Khung chính bo góc và bóng đổ như Billing -->
+    <Border Background="Transparent" CornerRadius="12">
         <!-- Main content -->
-        <Border Background="White" CornerRadius="12" Margin="5" BorderThickness="0">
+        <Border Background="White" CornerRadius="12" Margin="10" BorderThickness="0">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="0" Color="#CCCCCC" Opacity="0.5" BlurRadius="10"/>
+            </Border.Effect>
             <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header giống Billing: chữ tối, nút đóng bên phải -->
+            <Grid Grid.Row="0" Margin="24,24,24,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <!-- Header -->
-                <Border Grid.Row="0" Background="#5B75D4" CornerRadius="12,12,0,0" Padding="20,15">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#33FFFFFF" CornerRadius="8" Padding="8" Margin="0,0,10,0">
-                                <TextBlock Text="➕" FontSize="20" Foreground="White"/>
-                            </Border>
-                            <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="White"/>
-                        </StackPanel>
-
-                        <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" 
-                                Click="CloseButton_Click"/>
-                    </Grid>
-                </Border>
-
-                <!-- Form content -->
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="30,20">
-                    <ScrollViewer.Resources>
-                        <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource CustomScrollBar}"/>
-                    </ScrollViewer.Resources>
-                    <StackPanel>
-                        <!-- Tên phòng -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Tên phòng *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="{Binding NewRoom.TenPhong, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập tên phòng"/>
-                        </StackPanel>
-
-                        <!-- Diện tích -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Diện tích (m²) *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="{Binding NewRoom.DienTich, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập diện tích (lớn hơn 0)"/>
-                        </StackPanel>
-
-                        <!-- Giá thuê -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Giá thuê (VNĐ) *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-                                     Text="{Binding NewRoom.GiaCoBan, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập giá thuê (không âm)"/>
-                        </StackPanel>
-
-                        <!-- GiaBangChu -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Giá bằng chữ *" FontSize="14" FontWeight="SemiBold" 
-                 Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-               Text="{Binding NewRoom.GiaBangChu, UpdateSourceTrigger=PropertyChanged}"
-               Tag="Nhập tên phòng"/>
-                        </StackPanel>
-
-                        <!-- Trạng thái -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333333" Margin="0,0,0,8"/>
-                            <ComboBox Style="{StaticResource InputComboBoxStyle}" 
-                                      ItemsSource="{Binding StatusOptions}"
-                                      SelectedValue="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-
-                        
-
-                        <!-- Ghi chú -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" 
-                                       Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-                                     Height="96" TextWrapping="Wrap" AcceptsReturn="True"
-                                     Text="{Binding NewRoom.GhiChu, UpdateSourceTrigger=PropertyChanged}"
-                                     Tag="Nhập ghi chú (tùy chọn)"/>
-                        </StackPanel>
-
-                        <!-- TrangThiêtBi -->
-                        <StackPanel Margin="0,0,0,24">
-                            <TextBlock Text="Trang thiết bị *" FontSize="14" FontWeight="SemiBold" 
-                 Foreground="#333333" Margin="0,0,0,8"/>
-                            <TextBox Style="{StaticResource InputTextBoxStyle}" 
-               Text="{Binding NewRoom.TrangThietBi, UpdateSourceTrigger=PropertyChanged}"
-               Tag="Nhập tên phòng"/>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
-
-                <!-- Footer buttons -->
-                <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="30,20">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
-                                Width="100" Margin="0,0,15,0" Command="{Binding CancelAddEditCommand}"/>
-                        <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" 
-                                Width="120" Command="{Binding SaveCommand}"/>
-                    </StackPanel>
-                </Border>
+                <TextBlock Grid.Column="0" Text="{Binding Title}" FontSize="18" FontWeight="Medium" Foreground="#3B4758" VerticalAlignment="Center"/>
+                <Button Grid.Column="1" Click="CloseButton_Click" Width="32" Height="32" BorderThickness="0" Background="Transparent" Foreground="#586A84" ToolTip="Đóng">
+                    <TextBlock Text="✕" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
             </Grid>
-        </Border>
+
+            <!-- Form content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="24,0,24,24">
+                <ScrollViewer.Resources>
+                    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource CustomScrollBar}"/>
+                </ScrollViewer.Resources>
+                <StackPanel>
+                    <!-- Tên phòng -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Tên phòng *" FontSize="14" FontWeight="SemiBold" 
+                                   Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                 Text="{Binding NewRoom.TenPhong, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Nhập tên phòng"/>
+                    </StackPanel>
+
+                    <!-- Diện tích -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Diện tích (m²) *" FontSize="14" FontWeight="SemiBold" 
+                                   Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                 Text="{Binding NewRoom.DienTich, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Nhập diện tích (lớn hơn 0)"/>
+                    </StackPanel>
+
+                    <!-- Giá thuê -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Giá thuê (VNĐ) *" FontSize="14" FontWeight="SemiBold" 
+                                   Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                 Text="{Binding NewRoom.GiaCoBan, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Nhập giá thuê (không âm)"/>
+                    </StackPanel>
+
+                    <!-- GiaBangChu -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Giá bằng chữ *" FontSize="14" FontWeight="SemiBold" 
+                     Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+           Text="{Binding NewRoom.GiaBangChu, UpdateSourceTrigger=PropertyChanged}"
+           Tag="Nhập tên phòng"/>
+                    </StackPanel>
+
+                    <!-- Trạng thái -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Trạng thái *" FontSize="14" FontWeight="SemiBold" 
+                                   Foreground="#333333" Margin="0,0,0,8"/>
+                        <ComboBox Style="{StaticResource InputComboBoxStyle}" 
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedValue="{Binding NewRoom.TrangThai, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <!-- Ghi chú -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" 
+                                   Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+                                 Height="96" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Text="{Binding NewRoom.GhiChu, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Nhập ghi chú (tùy chọn)"/>
+                    </StackPanel>
+
+                    <!-- TrangThiêtBi -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="Trang thiết bị *" FontSize="14" FontWeight="SemiBold" 
+                     Foreground="#333333" Margin="0,0,0,8"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" 
+           Text="{Binding NewRoom.TrangThietBi, UpdateSourceTrigger=PropertyChanged}"
+           Tag="Nhập tên phòng"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer buttons -->
+            <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="24,20" Margin="0,0,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" 
+                            Width="100" Margin="0,0,15,0" Command="{Binding CancelAddEditCommand}"/>
+                    <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" 
+                            Width="120" Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Border>
+</Border>
 </Window>

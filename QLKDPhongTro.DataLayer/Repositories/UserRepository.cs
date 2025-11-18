@@ -96,6 +96,45 @@ namespace QLKDPhongTro.DataLayer.Repositories
         }
 
         /// <summary>
+        /// Lấy user theo email
+        /// </summary>
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT MaAdmin, TenDangNhap, Email, SoDienThoai FROM Admin WHERE Email = @Email";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Email", email);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                var emailOrdinal = reader.GetOrdinal("Email");
+                                var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
+                                return new User
+                                {
+                                    MaAdmin = Convert.ToInt32(reader["MaAdmin"]),
+                                    TenDangNhap = reader.IsDBNull(reader.GetOrdinal("TenDangNhap")) ? string.Empty : reader.GetString(reader.GetOrdinal("TenDangNhap")),
+                                    Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
+                                    SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting user by email: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Lấy user theo MaAdmin (int)
         /// </summary>
         public async Task<User?> GetByMaAdminAsync(int maAdmin)
@@ -183,14 +222,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = @"INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai) 
-                                  VALUES (@TenDangNhap, @MatKhau, @Email, @SoDienThoai)";
+                    var query = @"INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, MaNha) 
+                                  VALUES (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @MaNha)";
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
                         command.Parameters.AddWithValue("@MatKhau", user.MatKhau);
                         command.Parameters.AddWithValue("@Email", user.Email);
                         command.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai);
+                        command.Parameters.AddWithValue("@MaNha", user.MaNha);
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;
@@ -236,6 +276,34 @@ namespace QLKDPhongTro.DataLayer.Repositories
             catch (Exception ex)
             {
                 Console.WriteLine($"Error updating user: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật mật khẩu cho user
+        /// </summary>
+        public async Task<bool> UpdatePasswordAsync(int maAdmin, string hashedPassword)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = @"UPDATE Admin SET MatKhau = @MatKhau WHERE MaAdmin = @MaAdmin";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaAdmin", maAdmin);
+                        command.Parameters.AddWithValue("@MatKhau", hashedPassword);
+
+                        var result = await command.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating password: {ex.Message}");
                 return false;
             }
         }
@@ -419,6 +487,33 @@ namespace QLKDPhongTro.DataLayer.Repositories
         }
 
         /// <summary>
+        /// Kiểm tra MaNha có tồn tại trong bảng Nha không
+        /// </summary>
+        public async Task<bool> IsMaNhaExistsAsync(int maNha)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = "SELECT COUNT(*) FROM Nha WHERE MaNha = @MaNha";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaNha", maNha);
+                        var result = await command.ExecuteScalarAsync();
+                        var count = result != null ? Convert.ToInt32(result) : 0;
+                        return count > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking MaNha exists: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Đăng nhập user
         /// </summary>
         public async Task<User?> LoginAsync(string username, string password)
@@ -428,7 +523,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT MaAdmin, TenDangNhap, MatKhau, Email, SoDienThoai FROM Admin WHERE TenDangNhap = @TenDangNhap";
+                    var query = "SELECT MaAdmin, TenDangNhap, MatKhau, Email, SoDienThoai, MaNha FROM Admin WHERE TenDangNhap = @TenDangNhap";
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
@@ -448,6 +543,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                 
                                 var emailOrdinal = reader.GetOrdinal("Email");
                                 var soDienThoaiOrdinal = reader.GetOrdinal("SoDienThoai");
+                                var maNhaOrdinal = reader.GetOrdinal("MaNha");
                                 
                                 // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ)
                                 if (storedPassword?.Trim() == password?.Trim())
@@ -458,7 +554,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                         MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
                                         Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
-                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
+                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal),
+                                        MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal)
                                     };
                                 }
                                 
@@ -471,7 +568,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                         MaAdmin = maAdmin,
                                         TenDangNhap = tenDangNhap,
                                         Email = reader.IsDBNull(emailOrdinal) ? string.Empty : reader.GetString(emailOrdinal),
-                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal)
+                                        SoDienThoai = reader.IsDBNull(soDienThoaiOrdinal) ? string.Empty : reader.GetString(soDienThoaiOrdinal),
+                                        MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal)
                                     };
                                 }
                                 
@@ -563,7 +661,59 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 }
 
                 user.MatKhau = PasswordHelper.HashPassword(user.MatKhau);
-                return await CreateAsync(user);
+
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = await connection.BeginTransactionAsync())
+                    {
+                        try
+                        {
+                            // Tạo Nha nếu chưa tồn tại với MaNha được nhập
+                            var insertHouseQuery = @"INSERT INTO Nha (MaNha, DiaChi, TongSoPhong, GhiChu)
+                                                     VALUES (@MaNha, 'Chưa cập nhật', 1, NULL)";
+                            using (var houseCmd = new MySqlCommand(insertHouseQuery, connection, (MySqlTransaction)transaction))
+                            {
+                                houseCmd.Parameters.AddWithValue("@MaNha", user.MaNha);
+                                try
+                                {
+                                    await houseCmd.ExecuteNonQueryAsync();
+                                }
+                                catch (MySqlException ex) when (ex.Number == 1062)
+                                {
+                                    // MaNha đã tồn tại -> bỏ qua
+                                }
+                            }
+
+                            // Tạo Admin gắn với MaNha
+                            var insertAdminQuery = @"INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, MaNha)
+                                                    VALUES (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @MaNha)";
+                            using (var adminCmd = new MySqlCommand(insertAdminQuery, connection, (MySqlTransaction)transaction))
+                            {
+                                adminCmd.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
+                                adminCmd.Parameters.AddWithValue("@MatKhau", user.MatKhau);
+                                adminCmd.Parameters.AddWithValue("@Email", user.Email ?? string.Empty);
+                                adminCmd.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai ?? string.Empty);
+                                adminCmd.Parameters.AddWithValue("@MaNha", user.MaNha);
+
+                                var rows = await adminCmd.ExecuteNonQueryAsync();
+                                if (rows <= 0)
+                                {
+                                    await transaction.RollbackAsync();
+                                    return false;
+                                }
+                            }
+
+                            await transaction.CommitAsync();
+                            return true;
+                        }
+                        catch
+                        {
+                            await transaction.RollbackAsync();
+                            throw;
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

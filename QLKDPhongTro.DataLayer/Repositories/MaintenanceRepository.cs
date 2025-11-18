@@ -26,6 +26,24 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return result;
         }
 
+        public async Task<List<MaintenanceIncident>> GetAllByMaNhaAsync(int maNha)
+        {
+            var result = new List<MaintenanceIncident>();
+            using var connection = await ConnectDB.CreateConnectionAsync();
+            var cmd = new MySqlCommand(@"
+                SELECT b.*
+                FROM BaoTri_SuCo b
+                INNER JOIN Phong p ON p.MaPhong = b.MaPhong
+                WHERE p.MaNha = @MaNha", connection);
+            cmd.Parameters.AddWithValue("@MaNha", maNha);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(ReadIncident(reader));
+            }
+            return result;
+        }
+
         public async Task<MaintenanceIncident?> GetByIdAsync(int id)
         {
             // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4

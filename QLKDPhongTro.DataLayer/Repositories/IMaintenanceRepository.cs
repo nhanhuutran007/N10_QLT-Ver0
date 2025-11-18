@@ -7,6 +7,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
     public interface IMaintenanceRepository
     {
         Task<List<MaintenanceIncident>> GetAllAsync();
+        Task<List<MaintenanceIncident>> GetAllByMaNhaAsync(int maNha);
         Task<MaintenanceIncident?> GetByIdAsync(int id);
         Task AddAsync(MaintenanceIncident incident);
         Task UpdateAsync(MaintenanceIncident incident);

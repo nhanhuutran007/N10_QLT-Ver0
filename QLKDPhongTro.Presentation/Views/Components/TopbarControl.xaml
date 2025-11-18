@@ -67,7 +67,38 @@
                         </TextBlock.Style>
                     </TextBlock>
                     <!-- Actual TextBox -->
-                    <TextBox x:Name="SearchTextBox" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="36,0,10,0" TextChanged="SearchTextBox_TextChanged"/>
+                    <TextBox x:Name="SearchTextBox" Background="Transparent" BorderThickness="0" VerticalAlignment="Center" Margin="36,0,10,0" TextChanged="SearchTextBox_TextChanged" KeyDown="SearchTextBox_KeyDown"/>
+
+                    <!-- Gợi ý lệnh (command suggestions) -->
+                    <Popup x:Name="CommandSuggestionPopup"
+                           PlacementTarget="{Binding ElementName=SearchTextBox}"
+                           Placement="Bottom"
+                           StaysOpen="False"
+                           AllowsTransparency="True"
+                           PopupAnimation="Fade">
+                        <Border Background="White"
+                                CornerRadius="8"
+                                Padding="4"
+                                Margin="0,4,0,0">
+                            <Border.Effect>
+                                <DropShadowEffect ShadowDepth="1" Color="#D6D8E0" Opacity="0.3" BlurRadius="10"/>
+                            </Border.Effect>
+
+                            <ListBox x:Name="CommandSuggestionListBox"
+                                     MinWidth="220"
+                                     MaxHeight="220"
+                                     BorderThickness="0"
+                                     MouseLeftButtonUp="CommandSuggestionListBox_MouseLeftButtonUp">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="6,4"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </Border>
+                    </Popup>
                 </Grid>
             </Border>
 

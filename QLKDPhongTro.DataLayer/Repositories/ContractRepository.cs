@@ -41,40 +41,39 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
-        public async Task<Contract?> GetByIdAsync(int maHopDong)
+        public async Task<List<Contract>> GetAllByMaNhaAsync(int maNha)
         {
+            var contracts = new List<Contract>();
             using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT 
-                    hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
-                    hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
-                    p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
-                FROM HopDong hd
-                LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
-                LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
-                WHERE hd.MaHopDong = @MaHopDong";
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc,
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE p.MaNha = @MaNha
+                  ORDER BY hd.MaHopDong DESC", connection);
 
-            using var command = new MySqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@MaHopDong", maHopDong);
+            command.Parameters.AddWithValue("@MaNha", maNha);
             await connection.OpenAsync();
             using var reader = await command.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
+            while (await reader.ReadAsync())
             {
-                return ReadContractWithJoin(reader);
+                contracts.Add(ReadContractWithJoin(reader));
             }
-            return null;
+            return contracts;
         }
 
-        public async Task AddHopDongAsync(Contract contract)
+        public async Task<int> AddHopDongAsync(Contract contract)
         {
             using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                INSERT INTO HopDong 
-                (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
-                VALUES 
-                (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai)";
+            var command = new MySqlCommand(
+                @"INSERT INTO HopDong 
+                  (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
+                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai);
+                  SELECT LAST_INSERT_ID();",
+                connection);
 
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@MaNguoiThue", contract.MaNguoiThue);
@@ -86,7 +85,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             command.Parameters.AddWithValue("@TrangThai", contract.TrangThai ?? "Hiệu lực");
 
             await connection.OpenAsync();
-            await command.ExecuteNonQueryAsync();
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
         }
 
         public async Task UpdateHopDongAsync(Contract contract)
@@ -191,37 +191,33 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return contracts;
         }
 
-        // 3. Lấy hợp đồng còn hiệu lực của một khách thuê cụ thể
-        public async Task<List<Contract>> GetActiveContractsByTenantAsync(int maNguoiThue)
+        public async Task<List<Contract>> GetContractsExpiringInExactDaysAsync(int exactDays)
         {
             var contracts = new List<Contract>();
             using var connection = new MySqlConnection(_connectionString);
-            var sql = @"
-                SELECT 
-                    hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
-                    hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
-                    p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
-                FROM HopDong hd
-                LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
-                LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
-                WHERE hd.TrangThai = 'Hiệu lực' AND hd.MaNguoiThue = @MaNguoiThue
-                ORDER BY hd.MaHopDong DESC";
+            var command = new MySqlCommand(
+                @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                         p.TenPhong, nt.HoTen
+                  FROM HopDong hd
+                  LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                  LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                  WHERE BINARY hd.TrangThai = 'Hiệu lực' 
+                  AND DATEDIFF(hd.NgayKetThuc, NOW()) = @ExactDays
+                  ORDER BY hd.NgayKetThuc ASC", connection);
 
-            using var command = new MySqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+            command.Parameters.AddWithValue("@ExactDays", exactDays);
             await connection.OpenAsync();
+
             using var reader = await command.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
                 contracts.Add(ReadContractWithJoin(reader));
             }
+
             return contracts;
         }
-
-        // 4. Lấy 1 khách thuê mới nhất có đặt cọc
-        public async Task<(int MaNguoiThue, string HoTen, decimal TienCoc, string TrangThai)?> GetMostRecentTenantWithDepositAsync()
+        public async Task<Contract?> GetByIdAsync(int maHopDong)
         {
             using var connection = new MySqlConnection(_connectionString);
             // Lấy hợp đồng hiệu lực mới nhất, join với người thuê

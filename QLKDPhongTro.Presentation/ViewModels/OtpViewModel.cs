@@ -6,10 +6,11 @@ using QLKDPhongTro.Presentation.Views.Windows;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
-    public partial class OtpViewModel : ObservableObject
+    public partial class OtpViewModel : ObservableObject, IOtpEntryViewModel
     {
         private readonly UserRepository _userRepository;
         private readonly string _username;
@@ -22,6 +23,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _username = username;
             _email = email;
             _password = password;
+            VerifyOtpCommand = new AsyncRelayCommand(VerifyOtpAsync);
         }
 
         [ObservableProperty]
@@ -30,7 +32,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         private bool _isVerifying = false;
 
-        [RelayCommand]
+        public ICommand VerifyOtpCommand { get; }
+
         private async Task VerifyOtpAsync()
         {
             if (string.IsNullOrWhiteSpace(OtpCode))
@@ -76,6 +79,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsVerifying = false;
             }
+        }
+
+        // IOtpEntryViewModel implementation
+        string IOtpEntryViewModel.OtpCode
+        {
+            get => OtpCode;
+            set => OtpCode = value;
         }
 
     }

@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
@@ -64,7 +64,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _formTitle = "Thêm hợp đồng mới";
 
         // ---- CONSTRUCTOR ----
-        public AddContractViewModel(ContractController contractController, ContractDto? editingContract = null)
+        public AddContractViewModel(ContractController contractController, ContractDto editingContract = null)
         {
             _contractController = contractController;
             _tenantRepo = new TenantRepository();
@@ -183,14 +183,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 int thoiHanNam = Math.Max(1, NgayKetThuc.Value.Year - NgayBatDau.Value.Year);
                 DateTime ngayGiaoNha = NgayBatDau.Value;
 
-                // === Tạo file hợp đồng DOCX ===
-                string filePath = ContractTemplateService.CreateContractFile(
+                // === Tạo file hợp đồng DOCX + PDF ===
+                var contractFiles = ContractTemplateService.CreateContractFile(
                     "TP.HCM", DateTime.Now,       // Nơi tạo + Ngày tạo
                     tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
                     tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
                     tenPhong, diaChiPhong, dienTich, trangThietBi,
                     giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha
                 );
+                string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
 
                 if (!IsEditMode)
                 {
@@ -206,8 +207,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         TrangThai = "Hiệu lực"
                     };
 
-                    await _contractController.CreateHopDongAsync(newContract);
+                    int maHopDong = await _contractController.CreateHopDongAsync(newContract);
                     MessageBox.Show("✅ Hợp đồng đã được thêm và tạo file thành công!");
+
+
+
                 }
                 else
                 {

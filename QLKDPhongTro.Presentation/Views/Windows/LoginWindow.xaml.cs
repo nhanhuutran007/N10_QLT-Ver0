@@ -200,7 +200,20 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         // Xử lý quên mật khẩu
         private void ForgotPassword_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng quên mật khẩu sẽ được triển khai trong phiên bản tiếp theo!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                var popup = new ForgotPasswordEmailWindow
+                {
+                    Owner = this,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner
+                };
+
+                popup.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi mở chức năng quên mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
 

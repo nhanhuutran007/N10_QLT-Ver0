@@ -17,5 +17,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             if (e.LeftButton == MouseButtonState.Pressed)
                 DragMove();
         }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
     }
 }

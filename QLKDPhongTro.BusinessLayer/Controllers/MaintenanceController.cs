@@ -21,6 +21,15 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         public Task<List<MaintenanceIncident>> GetAllAsync() => _repo.GetAllAsync();
+        public async Task<List<MaintenanceIncident>> GetAllForCurrentUserAsync()
+        {
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                return await _repo.GetAllByMaNhaAsync(current.MaNha);
+            }
+            return await _repo.GetAllAsync();
+        }
         public Task<MaintenanceIncident?> GetByIdAsync(int id) => _repo.GetByIdAsync(id);
         public Task AddAsync(MaintenanceIncident incident) => _repo.AddAsync(incident);
         public Task UpdateAsync(MaintenanceIncident incident) => _repo.UpdateAsync(incident);

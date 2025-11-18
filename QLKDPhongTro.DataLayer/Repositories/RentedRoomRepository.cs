@@ -39,6 +39,35 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return rooms;
         }
 
+        public async Task<List<RentedRoom>> GetAllByMaNhaAsync(int maNha)
+        {
+            var rooms = new List<RentedRoom>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var cmd = new MySqlCommand("SELECT MaPhong, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi FROM Phong WHERE MaNha = @MaNha", conn);
+                cmd.Parameters.AddWithValue("@MaNha", maNha);
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        rooms.Add(new RentedRoom
+                        {
+                            MaPhong = reader.GetInt32(0),
+                            TenPhong = reader.GetString(1),
+                            DienTich = reader.GetDecimal(2),
+                            GiaCoBan = reader.GetDecimal(3),
+                            TrangThai = reader.GetString(4),
+                            GhiChu = reader.GetString(5),
+                            GiaBangChu = reader.GetString(6),
+                            TrangThietBi = reader.GetString(7)
+                        });
+                    }
+                }
+            }
+            return rooms;
+        }
+
         public async Task<RentedRoom?> GetByIdAsync(int maPhong)
         {
             RentedRoom? room = null;
@@ -85,7 +114,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                var cmd = new MySqlCommand("INSERT INTO Phong(TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi) VALUES(@TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu,  @GiaBangChu, @TrangThietBi)", conn);
+                var cmd = new MySqlCommand("INSERT INTO Phong(MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi) VALUES(@MaNha, @TenPhong, @DienTich, @GiaCoBan, @TrangThai, @GhiChu, @GiaBangChu, @TrangThietBi)", conn);
+                cmd.Parameters.AddWithValue("@MaNha", room.MaNha);
                 cmd.Parameters.AddWithValue("@TenPhong", room.TenPhong);
                 cmd.Parameters.AddWithValue("@DienTich", room.DienTich);
                 cmd.Parameters.AddWithValue("@GiaCoBan", room.GiaCoBan);
