@@ -583,6 +583,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ChiPhiKhac = payment.ChiPhiKhac ?? 0,
                 DonGiaDien = payment.DonGiaDien ?? DON_GIA_DIEN,
                 DonGiaNuoc = payment.DonGiaNuoc ?? DON_GIA_NUOC,
+                // Gán chỉ số điện tháng trước và tháng này
+                SoDienThangTruoc = payment.ChiSoDienCu,
                 SoDien = payment.SoDien,
                 SoNuoc = payment.SoNuoc
             };

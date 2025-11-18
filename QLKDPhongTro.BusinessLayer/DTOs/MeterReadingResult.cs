@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using QLKDPhongTro.BusinessLayer.DTOs;
+
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
     public class MeterReadingResult
@@ -16,10 +16,9 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public string? ErrorMessage { get; set; }
         public bool IsValid => Confidence > 0.3f && Value > 0;
 
-        // FIX: Thêm các thuộc tính còn thiếu khớp với YoloMeterReadingService.MeterReadingResult
+        // Dữ liệu hình ảnh trực quan hoá và danh sách detection (nếu cần hiển thị)
         public string? VisualizedImageBase64 { get; set; }
-        public List<Detection>? Detections { get; set; } // Dùng 'object' hoặc 'dynamic' nếu không muốn tham chiếu Yolo.Detection
-                                                         // Hoặc tạo một class Detection public
+        public List<object>? Detections { get; set; }
     }
 
     public enum MeterType

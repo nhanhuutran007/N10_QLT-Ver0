@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using QLKDPhongTro.BusinessLayer.DTOs;
 using System.Windows.Input;
 using QLKDPhongTro.BusinessLayer.DTOs;
 namespace QLKDPhongTro.Presentation.Views.Windows
