@@ -472,7 +472,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (!string.IsNullOrEmpty(debtResult.OriginalImagePath))
             {
                 var ocrService = new OcrService();
-                return await ocrService.AnalyzeImageAsync(debtResult.OriginalImagePath, MeterType.Electricity);
+                return await ocrService.AnalyzeImageAsync(debtResult.OriginalImagePath, debtResult.MeterType);
             }
 
             // Fallback nếu không có ảnh (mặc dù logic sự cố yêu cầu phải có ảnh)

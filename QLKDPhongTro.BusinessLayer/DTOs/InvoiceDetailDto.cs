@@ -37,6 +37,8 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         // Điện nước chi tiết
         public decimal? DonGiaDien { get; set; }
         public decimal? DonGiaNuoc { get; set; }
+        // Chỉ số điện tháng trước (để hiển thị và chỉnh đơn giá)
+        public decimal? SoDienThangTruoc { get; set; }
         public decimal? SoDien { get; set; }
         public decimal? SoNuoc { get; set; }
 

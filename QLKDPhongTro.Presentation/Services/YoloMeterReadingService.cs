@@ -14,6 +14,7 @@ using SixLabors.ImageSharp.Drawing;
 using SixLabors.Fonts;
 using System.Diagnostics;
 using System.Globalization; // Cho CultureInfo
+using QLKDPhongTro.BusinessLayer.DTOs;
 
 namespace QLKDPhongTro.Presentation.Services
 {

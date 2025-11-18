@@ -27,9 +27,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
-        [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
-
         private ContractDto _selectedContract;
 
         // Sắp xếp: newest | oldest (bind từ ComboBox SelectedValue Tag)
@@ -37,38 +34,30 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _sortOrder = "newest";
 
         // Commands
-        public ICommand SendExpiryWarningEmailsCommand { get; }
-
-
-
-        // Sử dụng ICommand thay vì RelayCommand cụ thể để tránh xung đột
         public ICommand AddContractCommand { get; }
         public ICommand EditContractCommand { get; }
         public ICommand DeleteContractCommand { get; }
         public ICommand LoadExpiringContractsCommand { get; }
         public ICommand ReloadAllContractsCommand { get; }
-        public ICommand SendExpiryWarningEmailsCommand { get; }
+        public ICommand SendExpiryWarningEmailsAsyncCommand { get; }
 
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
 
             // Khởi tạo command
-            SendExpiryWarningEmailsCommand = new Commands.RelayCommand(async () => await SendExpiryWarningEmailsAsync());
-
             AddContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(AddContract);
 
             EditContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
                 EditContract,
                 () => SelectedContract != null); // Điều kiện check null
 
-            DeleteContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
-                async () => await DeleteContract(),
+            DeleteContractCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(DeleteContractAsync,
                 () => SelectedContract != null);
 
             LoadExpiringContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(LoadExpiringContractsAsync);
             ReloadAllContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(ReloadAllContractsAsync);
-            SendExpiryWarningEmailsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(SendExpiryWarningEmailsAsync);
+            SendExpiryWarningEmailsAsyncCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(SendExpiryWarningEmailsAsync);
 
             _ = LoadContractsAsync();
         }
@@ -150,8 +139,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         // 🔹 Lệnh: Xóa hợp đồng
-        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
-        private void DeleteContract()
+        private async Task DeleteContractAsync()
         {
             if (SelectedContract == null) return;
 
@@ -181,6 +169,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 int days = 30;
+
                 var expiringContracts = await _contractController.GetExpiringContractsAsync(days);
 
                 if (expiringContracts.Count == 0)
@@ -200,6 +189,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"❌ Lỗi khi tải hợp đồng sắp hết hạn: {ex.Message}",
                                 "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // 🔹 Reload toàn bộ danh sách hợp đồng (dùng cho ReloadAllContractsCommand)
+        private async Task ReloadAllContractsAsync()
+        {
+            await LoadContractsAsync();
         }
 
         private async Task SendExpiryWarningEmailsAsync()

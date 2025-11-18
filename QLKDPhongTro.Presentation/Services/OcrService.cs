@@ -3,6 +3,7 @@ using System.Collections.Generic; // Cần cho List<T>
 using System.IO;
 using System.Linq; // FIX: Thêm 'using' cho .Cast<object>()
 using System.Threading.Tasks;
+using QLKDPhongTro.BusinessLayer.DTOs;
 
 namespace QLKDPhongTro.Presentation.Services
 {
@@ -38,11 +39,11 @@ namespace QLKDPhongTro.Presentation.Services
         /// Phân tích ảnh và trích xuất cả chỉ số điện và nước
         /// Chỉ sử dụng YOLOv9 model đã train
         /// </summary>
-        public async Task<MeterReadingResult> AnalyzeImageAsync(string imagePath, MeterType type)
+        public async Task<QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult> AnalyzeImageAsync(string imagePath, QLKDPhongTro.BusinessLayer.DTOs.MeterType type)
         {
             if (!_yoloService.IsModelAvailable())
             {
-                return new MeterReadingResult
+                return new QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult
                 {
                     Type = type,
                     Value = 0,
@@ -62,7 +63,7 @@ namespace QLKDPhongTro.Presentation.Services
                 var yoloResult = await _yoloService.AnalyzeImageAsync(imagePath, type);
 
                 // 2. Ánh xạ sang class public (OcrService.MeterReadingResult)
-                return new MeterReadingResult
+                return new QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult
                 {
                     Type = yoloResult.Type,
                     Value = yoloResult.Value,
@@ -76,7 +77,7 @@ namespace QLKDPhongTro.Presentation.Services
             }
             catch (Exception ex)
             {
-                return new MeterReadingResult
+                return new QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult
                 {
                     Type = type,
                     Value = 0,
@@ -90,9 +91,9 @@ namespace QLKDPhongTro.Presentation.Services
         /// <summary>
         /// Phân tích nhiều ảnh và trích xuất chỉ số
         /// </summary>
-        public async Task<MeterReadingResult[]> AnalyzeImagesAsync(string[] imagePaths, MeterType type)
+        public async Task<QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult[]> AnalyzeImagesAsync(string[] imagePaths, QLKDPhongTro.BusinessLayer.DTOs.MeterType type)
         {
-            var results = new MeterReadingResult[imagePaths.Length];
+            var results = new QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult[imagePaths.Length];
 
             for (int i = 0; i < imagePaths.Length; i++)
             {
@@ -102,7 +103,7 @@ namespace QLKDPhongTro.Presentation.Services
                 }
                 catch (Exception ex)
                 {
-                    results[i] = new MeterReadingResult
+                    results[i] = new QLKDPhongTro.BusinessLayer.DTOs.MeterReadingResult
                     {
                         Type = type,
                         Value = 0,
@@ -115,32 +116,5 @@ namespace QLKDPhongTro.Presentation.Services
 
             return results;
         }
-    }
-
-    /// <summary>
-    /// Kết quả đọc chỉ số từ YOLOv9
-    /// </summary>
-    public class MeterReadingResult
-    {
-        public MeterType Type { get; set; }
-        public decimal Value { get; set; }
-        public float Confidence { get; set; }
-        public string RawText { get; set; } = string.Empty;
-        public string? ErrorMessage { get; set; }
-        public bool IsValid => Confidence > 0.3f && Value > 0;
-
-        // FIX: Thêm các thuộc tính còn thiếu khớp với YoloMeterReadingService.MeterReadingResult
-        public string? VisualizedImageBase64 { get; set; }
-        public List<object>? Detections { get; set; } // Dùng 'object' hoặc 'dynamic' nếu không muốn tham chiếu Yolo.Detection
-                                                      // Hoặc tạo một class Detection public
-    }
-
-    /// <summary>
-    /// Loại chỉ số
-    /// </summary>
-    public enum MeterType
-    {
-        Electricity,
-        Water
     }
 }

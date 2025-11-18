@@ -239,7 +239,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     commandText.Contains("quản lý tài chính") ||
                     commandText.Contains("financial"))
                 {
-                    var window = new FinancialDashboardWindow();
+                    var window = new FinancialWindow();
                     window.Show();
                     return;
                 }

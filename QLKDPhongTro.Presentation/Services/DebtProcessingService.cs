@@ -268,11 +268,18 @@ namespace QLKDPhongTro.Presentation.Services
                 decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
                 decimal totalDebt = electricityCost + WATER_RATE;
 
+                // Chuyển đổi Timestamp (string từ Google Form) sang DateTime an toàn
+                DateTime parsedTimestamp;
+                if (!DateTime.TryParse(formData.Timestamp, out parsedTimestamp))
+                {
+                    parsedTimestamp = DateTime.Now;
+                }
+
                 return new DebtCalculationResult
                 {
                     RoomName = formData.RoomName,
                     Email = formData.Email,
-                    Timestamp = formData.Timestamp,
+                    Timestamp = parsedTimestamp,
                     OldElectricValue = dbOldElectricValue,
                     CurrentElectricValue = finalElectricValue,
                     ElectricityUsage = electricityUsage,

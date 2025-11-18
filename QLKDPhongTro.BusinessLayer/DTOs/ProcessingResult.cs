@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    internal class ProcessingResult
+    public class ProcessingResult
     {
+        public bool IsSuccess { get; set; }
+        public string? ErrorMessage { get; set; }
     }
 }
