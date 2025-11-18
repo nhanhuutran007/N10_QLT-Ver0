@@ -38,6 +38,12 @@ namespace QLKDPhongTro.Presentation.Services
         private const decimal ELECTRICITY_RATE = 3500;
         private const decimal WATER_RATE = 100000;
 
+        // === FIX: THÊM DON_GIA_NUOC VÀO ĐÂY ===
+        private const decimal DON_GIA_NUOC = 100000;     // ✅ Đã thêm (bằng với WATER_RATE)
+        private const decimal DON_GIA_INTERNET = 100000; // Giá trị giả định
+        private const decimal DON_GIA_VE_SINH = 60000;   // Giá trị giả định
+        private const decimal DON_GIA_GIU_XE = 120000;   // Giá trị giả định
+
         // Dictionary để lưu trữ thông tin sự cố tạm thời
         private readonly Dictionary<string, DebtDiscrepancyInfo> _discrepancyCache = new();
 
@@ -360,11 +366,7 @@ namespace QLKDPhongTro.Presentation.Services
                 var contractId = await GetContractIdByRoomNameAsync(roomName);
                 if (!contractId.HasValue)
                 {
-                    return new ProcessingResult
-                    {
-                        IsSuccess = false,
-                        ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {roomName}"
-                    };
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {roomName}" };
                 }
 
                 // 2. Lấy chỉ số cũ
@@ -374,11 +376,7 @@ namespace QLKDPhongTro.Presentation.Services
                 // 3. Validation
                 if (confirmedValue < oldElectricValue)
                 {
-                    return new ProcessingResult
-                    {
-                        IsSuccess = false,
-                        ErrorMessage = $"Số mới ({confirmedValue}) không thể nhỏ hơn số cũ ({oldElectricValue})"
-                    };
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Số mới ({confirmedValue}) không thể nhỏ hơn số cũ ({oldElectricValue})" };
                 }
 
                 // 4. Tính toán
@@ -390,11 +388,7 @@ namespace QLKDPhongTro.Presentation.Services
                 var existing = await GetPaymentByMonthAsync(contractId.Value, currentMonth);
                 if (existing != null)
                 {
-                    return new ProcessingResult
-                    {
-                        IsSuccess = false,
-                        ErrorMessage = $"Đã tồn tại thanh toán cho tháng {currentMonth}"
-                    };
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Đã tồn tại thanh toán cho tháng {currentMonth}" };
                 }
 
                 var payment = new Payment
@@ -410,36 +404,39 @@ namespace QLKDPhongTro.Presentation.Services
                     SoNuoc = 1,
                     DonGiaNuoc = WATER_RATE,
                     TienNuoc = WATER_RATE,
+                    // Gán giá trị cố định
+                    TienInternet = DON_GIA_INTERNET,
+                    TienVeSinh = DON_GIA_VE_SINH,
+                    TienGiuXe = DON_GIA_GIU_XE,
                     TrangThaiThanhToan = "Chưa trả",
                     NgayTao = DateTime.Now,
                     GhiChu = $"Đã xác nhận sau kiểm tra sự cố. Giá trị: {confirmedValue}"
                 };
-                payment.TongTien = (payment.TienThue ?? 0) + (payment.TienDien ?? 0) + (payment.TienNuoc ?? 0);
+
+                // === FIX LỖI CONVERT TYPE TẠI ĐÂY ===
+                // Sử dụng (?? 0) cho TẤT CẢ các trường nullable
+                payment.TongTien = (payment.TienThue ?? 0)
+                                 + (payment.TienDien ?? 0)
+                                 + (payment.TienNuoc ?? 0)
+                                 + (payment.TienInternet ?? 0) // Thêm ?? 0
+                                 + (payment.TienVeSinh ?? 0)    // Thêm ?? 0
+                                 + (payment.TienGiuXe ?? 0);    // Thêm ?? 0
 
                 // 6. Lưu vào database
                 var success = await _paymentRepository.CreateAsync(payment);
                 if (success)
                 {
-                    // Xóa khỏi cache sau khi giải quyết thành công
                     _discrepancyCache.Remove(roomName);
                     return new ProcessingResult { IsSuccess = true };
                 }
                 else
                 {
-                    return new ProcessingResult
-                    {
-                        IsSuccess = false,
-                        ErrorMessage = "Lỗi khi lưu vào database"
-                    };
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = "Lỗi khi lưu vào database" };
                 }
             }
             catch (Exception ex)
             {
-                return new ProcessingResult
-                {
-                    IsSuccess = false,
-                    ErrorMessage = $"Lỗi khi giải quyết sự cố: {ex.Message}"
-                };
+                return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Lỗi khi giải quyết sự cố: {ex.Message}" };
             }
         }
 
@@ -536,7 +533,7 @@ namespace QLKDPhongTro.Presentation.Services
         public async Task<int> CreatePaymentRecordsFromDebtsAsync(List<DebtCalculationResult> debts)
         {
             int createdCount = 0;
-            foreach (var debt in debts.Where(d => d.IsProcessed && !d.IsDiscrepancy)) // Chỉ tạo cho các bản ghi không có sự cố
+            foreach (var debt in debts.Where(d => d.IsProcessed && !d.IsDiscrepancy))
             {
                 try
                 {
@@ -560,11 +557,23 @@ namespace QLKDPhongTro.Presentation.Services
                             SoNuoc = 1,
                             DonGiaNuoc = WATER_RATE,
                             TienNuoc = debt.WaterCost,
+                            // Gán giá trị cố định
+                            TienInternet = DON_GIA_INTERNET,
+                            TienVeSinh = DON_GIA_VE_SINH,
+                            TienGiuXe = DON_GIA_GIU_XE,
                             TrangThaiThanhToan = "Chưa trả",
                             NgayTao = DateTime.Now,
                             GhiChu = $"Auto Google Form. {debt.OcrStatus}"
                         };
-                        payment.TongTien = (payment.TienThue ?? 0) + (payment.TienDien ?? 0) + (payment.TienNuoc ?? 0);
+
+                        // === FIX LỖI CONVERT TYPE TẠI ĐÂY ===
+                        // Sử dụng (?? 0) cho TẤT CẢ các trường nullable
+                        payment.TongTien = (payment.TienThue ?? 0)
+                                         + (payment.TienDien ?? 0)
+                                         + (payment.TienNuoc ?? 0)
+                                         + (payment.TienInternet ?? 0) // Thêm ?? 0
+                                         + (payment.TienVeSinh ?? 0)    // Thêm ?? 0
+                                         + (payment.TienGiuXe ?? 0);    // Thêm ?? 0
 
                         var success = await _paymentRepository.CreateAsync(payment);
                         if (success) createdCount++;
@@ -574,7 +583,6 @@ namespace QLKDPhongTro.Presentation.Services
             }
             return createdCount;
         }
-
         private async Task<int?> GetContractIdByRoomNameAsync(string roomName)
         {
             var rooms = await _roomRepository.GetAllAsync();

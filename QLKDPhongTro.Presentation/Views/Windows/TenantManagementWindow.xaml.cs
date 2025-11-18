@@ -154,5 +154,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 viewModel.ShowAddTenantPanelCommand?.Execute(null);
             }
         }
+
+        private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

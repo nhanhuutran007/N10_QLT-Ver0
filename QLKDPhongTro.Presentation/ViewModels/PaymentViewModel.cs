@@ -96,6 +96,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
         public ICommand DeleteCommand { get; }
+        public ICommand ShowAddPaymentCommand { get; }
 
         // Danh sách lựa chọn trạng thái khi chỉnh sửa: Đã trả/Chưa trả
         public IReadOnlyList<string> EditStatusChoices { get; } = new List<string> { "Chưa trả", "Đã trả" };
@@ -112,6 +113,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             SaveCommand = new RelayCommand<PaymentItem>(async p => await SavePayment(p));
             CancelCommand = new RelayCommand<PaymentItem>(CancelEdit);
             DeleteCommand = new RelayCommand<PaymentItem>(async p => await DeletePayment(p));
+            ShowAddPaymentCommand = new RelayCommand(ShowAddPayment);
 
             PrevPageCommand = new RelayCommand(
                 () => { if (PageIndex > 1) PageIndex--; },
@@ -135,7 +137,48 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"Lỗi tải danh sách thanh toán: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        private void ShowAddPayment()
+        {
+            // 1. Khởi tạo cửa sổ thêm mới
+            var addWindow = new AddBillingInfoWindow();
 
+            // 2. Hiển thị dạng Dialog (chờ người dùng thao tác xong)
+            bool? result = addWindow.ShowDialog();
+
+            // 3. Nếu form trả về True (Lưu thành công) -> Reload danh sách
+            if (result == true)
+            {
+                _ = LoadDataAsync();
+            }
+        }
+        private async void ViewPayment(PaymentItem? payment)
+        {
+            if (payment != null)
+            {
+                try
+                {
+                    var id = int.Parse(payment.Id);
+                    var invoiceData = await _financialController.GetInvoiceDetailAsync(id);
+
+                    if (invoiceData != null)
+                    {
+                        var invoiceWindow = new InvoiceDetailView(invoiceData)
+                        {
+                            Owner = Application.Current.MainWindow
+                        };
+                        invoiceWindow.ShowDialog();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không tìm thấy thông tin hóa đơn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Lỗi khi tải thông tin hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
         private void ApplySortAndPage()
         {
             IEnumerable<PaymentItem> query = _allPayments;
@@ -258,59 +301,33 @@ namespace QLKDPhongTro.Presentation.ViewModels
             return DateTime.Now;
         }
 
-        private async void ViewPayment(PaymentItem? payment)
-        {
-            if (payment != null)
-            {
-                try
-                {
-                    var id = int.Parse(payment.Id);
-                    var invoiceData = await _financialController.GetInvoiceDetailAsync(id);
-                    
-                    if (invoiceData != null)
-                    {
-                        var invoiceWindow = new InvoiceDetailView(invoiceData)
-                        {
-                            Owner = Application.Current.MainWindow
-                        };
-                        invoiceWindow.ShowDialog();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Không tìm thấy thông tin hóa đơn.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Lỗi khi tải thông tin hóa đơn: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
 
         private void EditPayment(PaymentItem? payment)
         {
             if (payment != null)
             {
+                // Tắt chế độ sửa của dòng khác (nếu có) để tránh lỗi
+                if (_editingItem != null && _editingItem != payment)
+                {
+                    CancelEdit(_editingItem);
+                }
+
                 _editingItem = payment;
-                
-                // Khởi tạo giá trị cho ComboBox chỉnh sửa theo trạng thái hiển thị từ DB (Đã trả/Chưa trả)
-                var initialStatus = string.Equals(payment.Status, "Đã trả", StringComparison.OrdinalIgnoreCase)
-                    ? "Đã trả" : "Chưa trả";
-                
+
+                // Lưu trạng thái gốc để restore nếu bấm Hủy
+                var initialStatus = string.Equals(payment.Status, "Đã trả", StringComparison.OrdinalIgnoreCase) ? "Đã trả" : "Chưa trả";
+
                 _originalItem = new PaymentItem
                 {
                     Id = payment.Id,
-                    Date = payment.Date,
-                    TotalAmount = payment.TotalAmount,
+                    // ... copy các thuộc tính khác
                     Status = payment.Status,
-                    PaymentMethod = payment.PaymentMethod,
-                    EditableStatus = initialStatus // Lưu giá trị ban đầu để có thể khôi phục
+                    EditableStatus = initialStatus
                 };
-                
-                // Set editing mode
-                payment.IsEditing = true;
+
+                // Kích hoạt chế độ sửa
                 payment.EditableStatus = initialStatus;
-                OnPropertyChanged(nameof(Payments));
+                payment.IsEditing = true; // Property này sẽ kích hoạt Trigger ẩn hiện nút bấm
             }
         }
 
@@ -372,6 +389,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     }
                 }
             }
+
         }
 
         private void CancelEdit(PaymentItem? payment)

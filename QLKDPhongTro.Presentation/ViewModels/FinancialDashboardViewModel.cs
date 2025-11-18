@@ -75,17 +75,23 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 _paidMonthlyStats = value;
                 OnPropertyChanged();
-                MaxMonthlyRevenue = _paidMonthlyStats != null && _paidMonthlyStats.Any() ? _paidMonthlyStats.Max(m => m.ThuNhap) : 0;
+                // Đảm bảo MaxMonthlyRevenue luôn > 0 để biểu đồ hiển thị đúng
+                var maxValue = _paidMonthlyStats != null && _paidMonthlyStats.Any()
+                    ? _paidMonthlyStats.Max(m => m.ThuNhap)
+                    : 0;
+                // Nếu max = 0, đặt giá trị mặc định là 1 để tránh chia cho 0
+                MaxMonthlyRevenue = maxValue > 0 ? maxValue * 1.5m : 1000000;
             }
         }
 
-        private decimal _maxMonthlyRevenue;
+        private decimal _maxMonthlyRevenue = 1; // Giá trị mặc định để tránh chia cho 0
         public decimal MaxMonthlyRevenue
         {
             get => _maxMonthlyRevenue;
             private set
             {
-                _maxMonthlyRevenue = value;
+                // Đảm bảo giá trị luôn >= 1
+                _maxMonthlyRevenue = value >= 1 ? value : 1;
                 OnPropertyChanged();
             }
         }

@@ -17,10 +17,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: Dùng tên cột mới (NgayCap, NoiCap, DiaChi)
+                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
                     SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                           NgaySinh, NgayCap, NoiCap, DiaChi, Email 
+                           NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
                     FROM NguoiThue 
                     ORDER BY MaNguoiThue DESC";
 
@@ -44,10 +44,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: Dùng tên cột mới trong câu lệnh JOIN
+                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
                     SELECT DISTINCT nt.MaNguoiThue, nt.HoTen, nt.SoDienThoai, nt.CCCD, nt.NgayBatDau, nt.TrangThai, nt.GhiChu,
-                           nt.NgaySinh, nt.NgayCap, nt.NoiCap, nt.DiaChi, nt.Email
+                           nt.NgaySinh, nt.NgayCap, nt.NoiCap, nt.DiaChi, nt.Email, nt.GioiTinh, nt.NgheNghiep
                     FROM NguoiThue nt
                     LEFT JOIN HopDong hd ON nt.MaNguoiThue = hd.MaNguoiThue
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
@@ -74,10 +74,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: Dùng tên cột mới
+                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
                     SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                           NgaySinh, NgayCap, NoiCap, DiaChi, Email 
+                           NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
                     FROM NguoiThue 
                     WHERE MaNguoiThue = @MaNguoiThue";
 
@@ -105,18 +105,21 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 HoTen = reader.IsDBNull(1) ? "" : reader.GetString(1),
                 SoDienThoai = reader.IsDBNull(2) ? "" : reader.GetString(2),
                 CCCD = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                // Index 4 (NgayBatDau) và 5 (TrangThai) - Có thể map thêm nếu Model có
+                // Index 4 (NgayBatDau) và 5 (TrangThai)
                 TrangThai = reader.IsDBNull(5) ? "Đang ở" : reader.GetString(5),
 
                 GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6),
                 NgaySinh = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
 
-                // === CẬP NHẬT MAPPING ===
-                NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8), // Cột DB là NgayCap
-                NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),      // Cột DB là NoiCap
-                DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),    // Cột DB là DiaChi
+                NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
+                NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
+                DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
 
                 Email = reader.IsDBNull(11) ? "" : reader.GetString(11),
+
+                // ✅ ĐÃ SỬA: Map thêm 2 trường mới theo thứ tự trong câu SQL SELECT
+                GioiTinh = reader.IsDBNull(12) ? "" : reader.GetString(12),
+                NgheNghiep = reader.IsDBNull(13) ? "" : reader.GetString(13),
 
                 NgayTao = DateTime.Now,
                 NgayCapNhat = DateTime.Now
@@ -128,14 +131,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: Insert vào NgayCap, NoiCap, DiaChi
+                // ✅ Cập nhật INSERT để bao gồm GioiTinh, NgheNghiep
                 var sql = @"
                     INSERT INTO NguoiThue
                     (HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                     NgaySinh, NgayCap, NoiCap, DiaChi, Email)
+                     NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep)
                     VALUES
                     (@HoTen, @SoDienThoai, @CCCD, @NgayBatDau, @TrangThai, @GhiChu,
-                     @NgaySinh, @NgayCap, @NoiCap, @DiaChi, @Email)";
+                     @NgaySinh, @NgayCap, @NoiCap, @DiaChi, @Email, @GioiTinh, @NgheNghiep)";
 
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
@@ -147,11 +150,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     cmd.Parameters.AddWithValue("@GhiChu", (object?)tenant.GhiChu ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgaySinh", (object?)tenant.NgaySinh ?? DBNull.Value);
 
-                    // Map Parameter
                     cmd.Parameters.AddWithValue("@NgayCap", (object?)tenant.NgayCap ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NoiCap", (object?)tenant.NoiCap ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@DiaChi", (object?)tenant.DiaChi ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@Email", (object?)tenant.Email ?? DBNull.Value);
+
+                    // Parameter GioiTinh, NgheNghiep
+                    cmd.Parameters.AddWithValue("@GioiTinh", (object?)tenant.GioiTinh ?? DBNull.Value);
+                    cmd.Parameters.AddWithValue("@NgheNghiep", (object?)tenant.NgheNghiep ?? DBNull.Value);
 
                     return await cmd.ExecuteNonQueryAsync() > 0;
                 }
@@ -163,7 +169,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: Update NgayCap, NoiCap, DiaChi
                 var sql = @"
                     UPDATE NguoiThue SET
                         HoTen = @HoTen,
@@ -186,14 +191,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     cmd.Parameters.AddWithValue("@SoDienThoai", (object?)tenant.SoDienThoai ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CCCD", (object?)tenant.CCCD ?? DBNull.Value);
 
-                    // Thêm parameter GioiTinh, NgheNghiep (nếu Model có)
                     cmd.Parameters.AddWithValue("@GioiTinh", (object?)tenant.GioiTinh ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgheNghiep", (object?)tenant.NgheNghiep ?? DBNull.Value);
 
                     cmd.Parameters.AddWithValue("@GhiChu", (object?)tenant.GhiChu ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgaySinh", (object?)tenant.NgaySinh ?? DBNull.Value);
 
-                    // Map Parameter Update
                     cmd.Parameters.AddWithValue("@NgayCap", (object?)tenant.NgayCap ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NoiCap", (object?)tenant.NoiCap ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@DiaChi", (object?)tenant.DiaChi ?? DBNull.Value);
@@ -221,11 +224,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // CẬP NHẬT: SQL cho Search
+                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
                     SELECT 
                         MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                        NgaySinh, NgayCap, NoiCap, DiaChi, Email
+                        NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
                     FROM NguoiThue
                     WHERE HoTen LIKE @Name
                     ORDER BY MaNguoiThue DESC";

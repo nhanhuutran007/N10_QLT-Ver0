@@ -1,36 +1,53 @@
-<Window
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddTenantWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="av"
-    x:Class="QLKDPhongTro.Presentation.Views.Windows.AddTenantWindow"
-    Title="Thêm Khách Thuê"
-    Height="650"
-    Width="700"
+    xmlns:vm="clr-namespace:QLKDPhongTro.Presentation.ViewModels"
+    mc:Ignorable="d"
+    Title="{Binding Title}"
+    Height="750"
+    Width="680"
     WindowStartupLocation="CenterOwner"
     ResizeMode="NoResize"
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
-    Icon="/Resources/Images/Logo.png">
+    FontFamily="Segoe UI"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType"
+    Icon="/Resources/Images/Logo.png"
+    d:DataContext="{d:DesignInstance Type=vm:TenantViewModel}">
 
     <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#1F2937"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="BackgroundLighter" Color="#F9FAFB"/>
 
-        <!-- 🔴 Close Button -->
+        <LinearGradientBrush x:Key="SecondaryGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#3B82F6" Offset="0"/>
+            <GradientStop Color="#2563EB" Offset="1"/>
+        </LinearGradientBrush>
+
+        <DropShadowEffect x:Key="CardShadow" Color="#000000" Opacity="0.1" ShadowDepth="4" BlurRadius="20" Direction="270"/>
+        <DropShadowEffect x:Key="ButtonShadow" Color="#000000" Opacity="0.15" ShadowDepth="2" BlurRadius="6" Direction="270"/>
+
+        <!-- Button Styles -->
         <Style x:Key="CloseButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="FontSize" Value="16"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Width" Value="30"/>
-            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="15">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="16">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
@@ -38,146 +55,33 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#FF6B6B"/>
+                    <Setter Property="Background" Value="#FEE2E2"/>
+                    <Setter Property="Foreground" Value="#EF4444"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- 🔵 Primary Button -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#319DFF"/>
+            <Setter Property="Background" Value="{StaticResource SecondaryGradient}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="20,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="8" Effect="{StaticResource ButtonShadow}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#1F8AF0"/>
-                </Trigger>
-                <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Opacity" Value="0.8"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- ⚪ Cancel Button -->
-        <Style x:Key="CancelButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#6C757D"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#495057"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- 🩶 Input TextBox -->
-        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#333"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="12,10"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#E0E0E0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="#5B75D4"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- 🗓 DatePicker -->
-        <Style x:Key="DatePickerStyle" TargetType="DatePicker">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Foreground" Value="#333"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Height" Value="44"/>
-            <Setter Property="SelectedDateFormat" Value="Short"/>
-            <Setter Property="Language" Value="vi-VN"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="DatePicker">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border x:Name="TextBorder"
-                                    Grid.Column="0"
-                                    CornerRadius="8"
-                                    BorderThickness="1"
-                                    BorderBrush="#E0E0E0"
-                                    Background="White">
-                                <DatePickerTextBox x:Name="PART_TextBox"
-                   Background="Transparent"
-                   BorderThickness="0"
-                   Padding="12,10"
-                   Foreground="#333"
-                   Text="{Binding Path=SelectedDate, 
-                                  RelativeSource={RelativeSource AncestorType=DatePicker}, 
-                                  StringFormat='{}{0:dd/MM/yyyy}'}"/>
-
-                            </Border>
-
-                            <Button x:Name="PART_Button"
-                                    Grid.Column="1"
-                                    Focusable="False"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Width="40"
-                                    Cursor="Hand">
-                                <Path Data="M3,6 L17,6 L17,8 L3,8 Z M5,10 L7,10 L7,12 L5,12 Z M9,10 L11,10 L11,12 L9,12 Z M13,10 L15,10 L15,12 L13,12 Z M5,2 L7,2 L7,4 L5,4 Z M9,2 L11,2 L11,4 L9,4 Z M13,2 L15,2 L15,4 L13,4 Z M3,4 L17,4 L17,14 L3,14 Z"
-                                      Fill="#666" Width="16" Height="16"/>
-                            </Button>
-
-                            <Popup x:Name="PART_Popup"
-                                   Placement="Bottom"
-                                   StaysOpen="False"
-                                   AllowsTransparency="True"
-                                   PopupAnimation="Slide">
-                                <Border Background="White"
-                                        BorderBrush="#E0E0E0"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        Padding="8">
-                                    <Calendar x:Name="PART_Calendar"
-                                              BorderThickness="0"
-                                              DisplayMode="Month"
-                                              SelectionMode="SingleDate"
-                                              Background="White"
-                                              Foreground="#333"/>
-                                </Border>
-                            </Popup>
-                        </Grid>
-
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
-                                <Setter TargetName="TextBorder" Property="BorderBrush" Value="#5B75D4"/>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.8"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -185,13 +89,144 @@
             </Setter>
         </Style>
 
+        <Style x:Key="CancelButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource BackgroundLighter}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Input Styles -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                                <Setter TargetName="Border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#3B82F6" Opacity="0.2" ShadowDepth="0" BlurRadius="4"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#A1A1AA"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style x:Key="InputComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8">
+                            <Grid>
+                                <ToggleButton x:Name="ToggleButton" 
+                                              Focusable="false" 
+                                              IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                              ClickMode="Press"
+                                              Background="Transparent"
+                                              BorderThickness="0"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Stretch">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent">
+                                                <Path x:Name="Arrow" Fill="{StaticResource TextSecondary}" 
+                                                      HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,0" 
+                                                      Data="M 0 0 L 4 4 L 8 0 Z"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <ContentPresenter Name="ContentSite" IsHitTestVisible="False" 
+                                                  Content="{TemplateBinding SelectionBoxItem}"
+                                                  ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                  ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left" />
+                                <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                    <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder" Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" CornerRadius="8" Margin="0,2,0,0" Effect="{StaticResource CardShadow}">
+                                            <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#A1A1AA"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
     </Window.Resources>
 
-    <!-- White rounded card with drop shadow like Billing -->
-    <Border CornerRadius="12" Background="White" Margin="10">
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0" Color="#CCCCCC" Opacity="0.5" BlurRadius="10"/>
-        </Border.Effect>
+    <Border CornerRadius="16" Background="White" Margin="20" Effect="{StaticResource CardShadow}">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -200,119 +235,136 @@
             </Grid.RowDefinitions>
 
             <!-- Header -->
-            <Grid Grid.Row="0" Margin="24,24,24,20">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" FontSize="18" FontWeight="Medium" Foreground="#3B4758" VerticalAlignment="Center"
-                           Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                <Button Grid.Column="1"
-                        Content="✕"
-                        Style="{StaticResource CloseButtonStyle}"
-                        Width="32"
-                        Height="32"
-                        BorderThickness="0"
-                        Background="Transparent"
-                        Foreground="#586A84"
-                        ToolTip="Đóng"
-                        Click="CloseButton_Click"/>
-            </Grid>
+            <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderColor}" Padding="24,20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Title}" 
+                                   FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                        <TextBlock Text="Vui lòng nhập đầy đủ thông tin bên dưới" 
+                                   FontSize="13" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="✕" Style="{StaticResource CloseButtonStyle}" Click="CloseButton_Click" ToolTip="Đóng"/>
+                </Grid>
+            </Border>
 
-            <!-- 📋 Content -->
-            <ScrollViewer Grid.Row="1" Margin="24,0,24,24" VerticalScrollBarVisibility="Auto">
+            <!-- Body Content -->
+            <ScrollViewer Grid.Row="1" Padding="24" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <!-- Các trường nhập -->
+                    <!-- Row 1: Họ tên & CCCD -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Họ tên *" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.HoTen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="CCCD *" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.CCCD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 2: Ngày sinh & Giới tính -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ngày sinh *" Style="{StaticResource LabelTextStyle}"/>
+                            <Border CornerRadius="8" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Background="White" Height="44">
+                                <DatePicker SelectedDate="{Binding NewTenant.NgaySinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            VerticalContentAlignment="Center" Padding="8,0" BorderThickness="0" Background="Transparent"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Giới tính" Style="{StaticResource LabelTextStyle}"/>
+                            <ComboBox Style="{StaticResource InputComboBoxStyle}" 
+                                      ItemsSource="{Binding GenderOptions}"
+                                      SelectedItem="{Binding NewTenant.GioiTinh, Mode=TwoWay}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 3: Số điện thoại & Nghề nghiệp -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Số điện thoại *" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.SoDienThoai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Nghề nghiệp" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NgheNghiep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 4: Nơi cấp & Ngày cấp -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Nơi cấp CCCD" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NoiCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Ngày cấp CCCD" Style="{StaticResource LabelTextStyle}"/>
+                            <Border CornerRadius="8" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Background="White" Height="44">
+                                <DatePicker SelectedDate="{Binding NewTenant.NgayCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            VerticalContentAlignment="Center" Padding="8,0" BorderThickness="0" Background="Transparent"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Row 5: Email -->
                     <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Họ tên *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.HoTen, Mode=TwoWay}"/>
+                        <TextBlock Text="Email" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
+                    <!-- Row 6: Địa chỉ thường trú -->
                     <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.CCCD, Mode=TwoWay}"/>
+                        <TextBlock Text="Địa chỉ thường trú" Style="{StaticResource LabelTextStyle}"/>
+                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.DiaChi, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
 
-                    <StackPanel Margin="0,8">
-                        <TextBlock Text="Ngày sinh *" 
-              FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-
-                        <Border CornerRadius="10" 
-            BorderBrush="#4F7DFB" 
-            BorderThickness="1" 
-            Background="White" 
-            Padding="8,0">
-                            <DatePicker SelectedDate="{Binding NewTenant.NgaySinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    FontSize="16"
-                    Foreground="#333"
-                    Width="601"
-                    Height="45"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Language="vi-VN"
-                    SelectedDateFormat="Short"/>
-                        </Border>
-                    </StackPanel>
-
-
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Nơi cấp CCCD *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NoiCap, Mode=TwoWay}"/>
-                    </StackPanel>
-
-
-                    <StackPanel Margin="0,8">
-                        <TextBlock Text="Ngày cấp CCCD *" 
-              FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-
-                        <Border CornerRadius="10" 
-            BorderBrush="#4F7DFB" 
-            BorderThickness="1" 
-            Background="White" 
-            Padding="8,0">
-                            <DatePicker SelectedDate="{Binding NewTenant.NgayCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                    FontSize="16"
-                    Foreground="#333"
-                    Width="601"
-                    Height="45"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    Language="vi-VN"
-                    SelectedDateFormat="Short"/>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Địa chỉ thường trú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.DiaChi, Mode=TwoWay}"/>
-                    </StackPanel>
-
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Số điện thoại *" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.SoDienThoai, Mode=TwoWay}"/>
-                    </StackPanel>
-
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Email" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
-                        <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.Email, Mode=TwoWay}"/>
-                    </StackPanel>
-
-
-
-                    <StackPanel Margin="0,0,0,20">
-                        <TextBlock Text="Ghi chú" FontSize="14" FontWeight="SemiBold" Foreground="#333"/>
+                    <!-- Row 7: Ghi chú -->
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="Ghi chú" Style="{StaticResource LabelTextStyle}"/>
                         <TextBox Style="{StaticResource InputTextBoxStyle}" Height="80" 
-                                     TextWrapping="Wrap" AcceptsReturn="True" 
-                                     Text="{Binding NewTenant.GhiChu, Mode=TwoWay}"/>
+                                 TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"
+                                 Text="{Binding NewTenant.GhiChu, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- 🟫 Footer -->
-            <Border Grid.Row="2" Background="#F8F9FA" CornerRadius="0,0,12,12" Padding="24,20">
+            <!-- Footer Actions -->
+            <Border Grid.Row="2" Background="{StaticResource BackgroundLighter}" CornerRadius="0,0,16,16" Padding="24,20" BorderThickness="0,1,0,0" BorderBrush="{StaticResource BorderColor}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Hủy" Style="{StaticResource CancelButtonStyle}" Width="100" Margin="0,0,15,0" Click="CloseButton_Click"/>
-                    <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" Width="120" Command="{Binding SaveCommand}"/>
+                    <Button Content="Hủy bỏ" Style="{StaticResource CancelButtonStyle}" Width="100" Margin="0,0,12,0" Click="CloseButton_Click"/>
+                    <Button Content="{Binding ButtonContent}" Style="{StaticResource PrimaryButtonStyle}" Width="140" Command="{Binding SaveCommand}"/>
                 </StackPanel>
             </Border>
         </Grid>

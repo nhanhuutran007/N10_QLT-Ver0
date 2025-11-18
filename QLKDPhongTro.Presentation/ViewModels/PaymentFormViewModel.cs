@@ -14,7 +14,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
     {
         private readonly FinancialController _financialController;
 
-        #region Properties
+        #region Properties Binding
 
         private ObservableCollection<ContractDto> _contracts = new ObservableCollection<ContractDto>();
         public ObservableCollection<ContractDto> Contracts
@@ -29,228 +29,147 @@ namespace QLKDPhongTro.Presentation.ViewModels
             get => _selectedContract;
             set
             {
+                // 1. Cập nhật hợp đồng được chọn
                 SetProperty(ref _selectedContract, value);
-                // Auto-fill amount when contract is selected
+
+                // 2. Logic tự động điền thông tin khi chọn hợp đồng
                 if (value != null)
                 {
-                    // Lấy giá phòng từ thông tin hợp đồng hoặc phòng
-                    // Tạm thời set mặc định
-                    Amount = 2500000; // Có thể thay bằng giá thực tế từ database
+                    // Tự động điền Giá thuê
+                    Amount = value.GiaThue;
+
+                    // Tự động điền Tên phòng (Lấy từ DTO hoặc tìm theo logic)
+                    // Giả sử ContractDto có sẵn TenPhong. Nếu không, cần gọi Controller lấy Room theo MaPhong
+                    RoomName = value.TenPhong ?? "Không xác định";
+                }
+                else
+                {
+                    RoomName = string.Empty;
+                    Amount = 0;
                 }
             }
         }
 
-        private decimal _amount;
-        public decimal Amount
+        // Thêm Property riêng cho Tên Phòng để Binding ổn định hơn
+        private string _roomName;
+        public string RoomName
         {
-            get => _amount;
-            set => SetProperty(ref _amount, value);
+            get => _roomName;
+            set => SetProperty(ref _roomName, value);
         }
+
+        // ... Các properties khác giữ nguyên (Amount, SoDien, SoNuoc...)
+        private decimal _amount;
+        public decimal Amount { get => _amount; set => SetProperty(ref _amount, value); }
+
+        private decimal _soDien;
+        public decimal SoDien { get => _soDien; set => SetProperty(ref _soDien, value); }
+
+        private decimal _donGiaDien = 3500;
+        public decimal DonGiaDien { get => _donGiaDien; set => SetProperty(ref _donGiaDien, value); }
+
+        // Nước khoán
+        private decimal _soNuoc = 1;
+        public decimal SoNuoc { get => _soNuoc; set => SetProperty(ref _soNuoc, value); }
+
+        private decimal _donGiaNuoc = 100000;
+        public decimal DonGiaNuoc { get => _donGiaNuoc; set => SetProperty(ref _donGiaNuoc, value); }
+
+        // Dịch vụ
+        public decimal TienInternet { get; set; }
+        public decimal TienVeSinh { get; set; }
+        public decimal TienGiuXe { get; set; }
+        public decimal ChiPhiKhac { get; set; }
 
         private DateTime _paymentDate = DateTime.Now;
-        public DateTime PaymentDate
-        {
-            get => _paymentDate;
-            set => SetProperty(ref _paymentDate, value);
-        }
-
-        private string _paymentMethod = "Tiền mặt";
-        public string PaymentMethod
-        {
-            get => _paymentMethod;
-            set => SetProperty(ref _paymentMethod, value);
-        }
-
-        private string _notes;
-        public string Notes
-        {
-            get => _notes;
-            set => SetProperty(ref _notes, value);
-        }
-
-        private string _thangNam = DateTime.Now.ToString("MM/yyyy");
-        public string ThangNam
-        {
-            get => _thangNam;
-            set => SetProperty(ref _thangNam, value);
-        }
+        public DateTime PaymentDate { get => _paymentDate; set => SetProperty(ref _paymentDate, value); }
 
         private bool _isLoading;
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
-        }
+        public bool IsLoading { get => _isLoading; set => SetProperty(ref _isLoading, value); }
 
         #endregion
 
         #region Commands
-
         public ICommand SavePaymentCommand { get; }
         public ICommand CancelCommand { get; }
-        public ICommand LoadDataCommand { get; }
-
-        #endregion
-
-        #region Events
-
-        public event EventHandler<string> ShowMessageRequested;
         public event EventHandler PaymentSaved;
-
         #endregion
 
         public PaymentFormViewModel()
         {
-            // Khởi tạo controller với các repositories
-            var paymentRepository = new PaymentRepository();
-            var contractRepository = new ContractRepository();
-            var roomRepository = new RentedRoomRepository();
-            var tenantRepository = new TenantRepository();
-
-            _financialController = new FinancialController(
-                paymentRepository,
-                contractRepository,
-                roomRepository,
-                tenantRepository);
-
-            // Khởi tạo commands
+            _financialController = FinancialController.CreateDefault();
             SavePaymentCommand = new RelayCommand(async () => await SavePaymentAsync());
-            CancelCommand = new RelayCommand(() => CancelPayment());
-            LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
-
-            // Load dữ liệu ban đầu
+            CancelCommand = new RelayCommand<Window>((w) => w?.Close());
             _ = LoadDataAsync();
         }
-
-        #region Public Methods
 
         public async Task LoadDataAsync()
         {
             try
             {
                 IsLoading = true;
-
-                // Lấy danh sách hợp đồng đang hoạt động
                 var activeContracts = await _financialController.GetActiveContractDtosAsync();
                 Contracts.Clear();
+                foreach (var c in activeContracts) Contracts.Add(c);
 
-                foreach (var contract in activeContracts)
-                {
-                    Contracts.Add(contract);
-                }
-
-                if (Contracts.Count > 0)
-                {
-                    SelectedContract = Contracts[0];
-                }
-
-                ShowMessage("Đã tải danh sách hợp đồng thành công!", "Thành công", MessageBoxImage.Information);
+                // Chọn hợp đồng đầu tiên nếu có
+                if (Contracts.Count > 0) SelectedContract = Contracts[0];
             }
-            catch (Exception ex)
-            {
-                ShowMessage($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxImage.Error);
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        public bool ValidatePayment()
-        {
-            if (SelectedContract == null)
-            {
-                ShowMessage("Vui lòng chọn hợp đồng", "Lỗi", MessageBoxImage.Warning);
-                return false;
-            }
-
-            if (Amount <= 0)
-            {
-                ShowMessage("Số tiền phải lớn hơn 0", "Lỗi", MessageBoxImage.Warning);
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(ThangNam) || !System.Text.RegularExpressions.Regex.IsMatch(ThangNam, @"^(0[1-9]|1[0-2])/\d{4}$"))
-            {
-                ShowMessage("Tháng năm phải có định dạng MM/yyyy", "Lỗi", MessageBoxImage.Warning);
-                return false;
-            }
-
-            return true;
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+            finally { IsLoading = false; }
         }
 
         public async Task SavePaymentAsync()
         {
+            if (SelectedContract == null)
+            {
+                MessageBox.Show("Vui lòng chọn hợp đồng!", "Cảnh báo");
+                return;
+            }
+
             try
             {
-                if (!ValidatePayment()) return;
+                decimal thanhTienDien = SoDien * DonGiaDien;
+                decimal thanhTienNuoc = SoNuoc * DonGiaNuoc;
 
                 var paymentDto = new CreatePaymentDto
                 {
                     MaHopDong = SelectedContract.MaHopDong,
-                    ThangNam = ThangNam,
+                    ThangNam = PaymentDate.ToString("MM/yyyy"),
                     TienThue = Amount,
-                    TienDien = 0, // Có thể thêm fields cho các loại chi phí khác
-                    TienNuoc = 0,
-                    TienInternet = 0,
-                    TienVeSinh = 0,
-                    TienGiuXe = 0,
-                    ChiPhiKhac = 0
+
+                    SoDien = SoDien,
+                    DonGiaDien = DonGiaDien,
+                    TienDien = thanhTienDien,
+                    SoDienThangTruoc = 0,
+
+                    SoNuoc = SoNuoc,
+                    DonGiaNuoc = DonGiaNuoc,
+                    TienNuoc = thanhTienNuoc,
+
+                    TienInternet = TienInternet,
+                    TienVeSinh = TienVeSinh,
+                    TienGiuXe = TienGiuXe,
+                    ChiPhiKhac = ChiPhiKhac
                 };
 
                 var result = await _financialController.CreatePaymentAsync(paymentDto);
 
                 if (result.IsValid)
                 {
-                    ShowMessage("Ghi nhận thanh toán thành công!", "Thành công", MessageBoxImage.Information);
+                    MessageBox.Show("Thêm thanh toán thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                     PaymentSaved?.Invoke(this, EventArgs.Empty);
-
-                    // Reset form sau khi lưu thành công
-                    ResetForm();
                 }
                 else
                 {
-                    ShowMessage($"Lỗi: {result.Message}", "Lỗi", MessageBoxImage.Error);
+                    MessageBox.Show($"Lỗi: {result.Message}", "Lỗi Validate", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
             {
-                ShowMessage($"Lỗi khi lưu thanh toán: {ex.Message}", "Lỗi", MessageBoxImage.Error);
+                MessageBox.Show($"Lỗi hệ thống: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        #endregion
-
-        #region Private Methods
-
-        private void CancelPayment()
-        {
-            // Reset form khi hủy
-            ResetForm();
-        }
-
-        private void ResetForm()
-        {
-            Amount = 0;
-            ThangNam = DateTime.Now.ToString("MM/yyyy");
-            PaymentDate = DateTime.Now;
-            PaymentMethod = "Tiền mặt";
-            Notes = string.Empty;
-
-            if (Contracts.Count > 0)
-            {
-                SelectedContract = Contracts[0];
-            }
-        }
-
-        // Sửa lại: Bỏ qua title và icon, chỉ gửi message
-        private void ShowMessage(string message, string title, MessageBoxImage icon)
-        {
-            ShowMessageRequested?.Invoke(this, message);
-            // MessageBox.Show(message, title, MessageBoxButton.OK, icon); // View sẽ xử lý việc hiển thị MessageBox
-        }
-
-        #endregion
     }
 
     public class ExpenseFormViewModel : ViewModelBase
