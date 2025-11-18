@@ -18,7 +18,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 
         // Dữ liệu hình ảnh trực quan hoá và danh sách detection (nếu cần hiển thị)
         public string? VisualizedImageBase64 { get; set; }
-        public List<object>? Detections { get; set; }
+        public List<Detection>? Detections { get; set; }
     }
 
     public enum MeterType

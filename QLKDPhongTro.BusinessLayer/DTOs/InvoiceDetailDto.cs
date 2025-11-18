@@ -38,7 +38,6 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         /// <summary>
         /// Chỉ số điện tháng trước (ChiSoDienCu).
         /// </summary>
-        public decimal SoDienThangTruoc { get; set; }
 
         public decimal? DonGiaDien { get; set; }
         public decimal? DonGiaNuoc { get; set; }
