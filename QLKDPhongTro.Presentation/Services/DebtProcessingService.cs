@@ -272,7 +272,7 @@ namespace QLKDPhongTro.Presentation.Services
                 {
                     RoomName = formData.RoomName,
                     Email = formData.Email,
-                    Timestamp = formData.Timestamp,
+                    Timestamp = Convert.ToDateTime(formData.Timestamp),
                     OldElectricValue = dbOldElectricValue,
                     CurrentElectricValue = finalElectricValue,
                     ElectricityUsage = electricityUsage,

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using QLKDPhongTro.BusinessLayer.DTOs;
 // Thư viện ImageSharp
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -464,30 +465,6 @@ namespace QLKDPhongTro.Presentation.Services
             _session?.Dispose();
             _session = null;
             GC.SuppressFinalize(this);
-        }
-
-        // --- CÁC CLASS DTO NỘI BỘ ---
-        public class MeterReadingResult
-        {
-            public MeterType Type { get; set; }
-            public decimal Value { get; set; }
-            public float Confidence { get; set; }
-            public string RawText { get; set; } = string.Empty;
-            public string? ErrorMessage { get; set; }
-            public bool IsValid => Confidence > 0.3f && Value > 0;
-            public List<Detection>? Detections { get; set; }
-            public string? VisualizedImageBase64 { get; set; }
-        }
-
-        public class Detection
-        {
-            public float X { get; set; }
-            public float Y { get; set; }
-            public float Width { get; set; }
-            public float Height { get; set; }
-            public float Confidence { get; set; }
-            public int ClassId { get; set; }
-            public string ClassName { get; set; } = string.Empty;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using QLKDPhongTro.BusinessLayer.DTOs; // Chứa MeterReadingResult nếu bạn để ở đây, hoặc namespace tương ứng
+﻿using QLKDPhongTro.BusinessLayer.DTOs; // Các DTO tài chính khác
 using QLKDPhongTro.Presentation.Commands;
 using QLKDPhongTro.Presentation.Services; // Chứa MeterReadingResult
 using System;

@@ -8,6 +8,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 {
     public class MeterReadingResult
     {
+        // Đổi sang sử dụng enum ở Presentation để tránh trùng tên giữa hai layer
         public MeterType Type { get; set; }
         public decimal Value { get; set; }
         public float Confidence { get; set; }
@@ -21,9 +22,6 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
                                                          // Hoặc tạo một class Detection public
     }
 
-    /// <summary>
-    /// Loại chỉ số
-    /// </summary>
     public enum MeterType
     {
         Electricity,

@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Input;
-
+using QLKDPhongTro.BusinessLayer.DTOs;
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
     public partial class ScanImageView : Window

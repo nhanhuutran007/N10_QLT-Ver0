@@ -1,12 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace QLKDPhongTro.BusinessLayer.DTOs
 {
-    internal class ProcessingResult
+    public class ProcessingResult
     {
+        /// <summary>
+        /// Xử lý thành công hay thất bại.
+        /// </summary>
+        public bool IsSuccess { get; set; }
+
+        /// <summary>
+        /// Thông báo lỗi (nếu có).
+        /// </summary>
+        public string ErrorMessage { get; set; } = string.Empty;
     }
 }

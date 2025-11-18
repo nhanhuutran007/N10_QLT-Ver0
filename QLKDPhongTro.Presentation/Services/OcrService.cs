@@ -3,7 +3,7 @@ using System.Collections.Generic; // Cần cho List<T>
 using System.IO;
 using System.Linq; // FIX: Thêm 'using' cho .Cast<object>()
 using System.Threading.Tasks;
-
+using QLKDPhongTro.BusinessLayer.DTOs;
 namespace QLKDPhongTro.Presentation.Services
 {
     /// <summary>
@@ -71,7 +71,7 @@ namespace QLKDPhongTro.Presentation.Services
                     ErrorMessage = yoloResult.ErrorMessage,
                     VisualizedImageBase64 = yoloResult.VisualizedImageBase64,
                     // FIX: Chuyển đổi List<Detection> sang List<object>
-                    Detections = yoloResult.Detections?.Cast<object>().ToList()
+                    Detections = yoloResult.Detections?.Cast<Detection>().ToList()
                 };
             }
             catch (Exception ex)
@@ -120,27 +120,4 @@ namespace QLKDPhongTro.Presentation.Services
     /// <summary>
     /// Kết quả đọc chỉ số từ YOLOv9
     /// </summary>
-    public class MeterReadingResult
-    {
-        public MeterType Type { get; set; }
-        public decimal Value { get; set; }
-        public float Confidence { get; set; }
-        public string RawText { get; set; } = string.Empty;
-        public string? ErrorMessage { get; set; }
-        public bool IsValid => Confidence > 0.3f && Value > 0;
-
-        // FIX: Thêm các thuộc tính còn thiếu khớp với YoloMeterReadingService.MeterReadingResult
-        public string? VisualizedImageBase64 { get; set; }
-        public List<object>? Detections { get; set; } // Dùng 'object' hoặc 'dynamic' nếu không muốn tham chiếu Yolo.Detection
-                                                      // Hoặc tạo một class Detection public
-    }
-
-    /// <summary>
-    /// Loại chỉ số
-    /// </summary>
-    public enum MeterType
-    {
-        Electricity,
-        Water
-    }
 }

@@ -239,7 +239,8 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     commandText.Contains("quản lý tài chính") ||
                     commandText.Contains("financial"))
                 {
-                    var window = new FinancialDashboardWindow();
+                    // Mở cửa sổ Quản lý tài chính hiện có
+                    var window = new FinancialWindow();
                     window.Show();
                     return;
                 }

@@ -503,7 +503,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     // Tạo ViewModel cho cửa sổ kiểm tra
                     var inspectVM = new MeterReadingInspectionViewModel(
-                        discrepancyInfo.MeterReadingResult,
+                        discrepancyInfo.MeterReadingResult as MeterReadingResult,
                         discrepancyInfo.OriginalImagePath);
 
                     // Mở cửa sổ kiểm tra
@@ -693,7 +693,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                     // Hiển thị cửa sổ kiểm tra chi tiết
                     var inspectVM = new MeterReadingInspectionViewModel(
-                        discrepancyInfo.MeterReadingResult,
+                        discrepancyInfo.MeterReadingResult as MeterReadingResult,
                         discrepancyInfo.OriginalImagePath);
 
                     await Application.Current.Dispatcher.InvokeAsync(() =>

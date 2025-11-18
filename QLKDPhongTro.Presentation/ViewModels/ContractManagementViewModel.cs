@@ -18,7 +18,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
     {
         private readonly ContractController _contractController;
 
-        // 1. KHAI BÁO TƯỜNG MINH PROPERTY "Contracts" (Sửa lỗi 'Contracts' does not exist)
+        // 1. KHAI BÁO TƯỜNG MINH PROPERTY "Contracts"
         private ObservableCollection<ContractDto> _contracts;
         public ObservableCollection<ContractDto> Contracts
         {
@@ -27,49 +27,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
-        [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
-
         private ContractDto _selectedContract;
 
         // Sắp xếp: newest | oldest (bind từ ComboBox SelectedValue Tag)
         [ObservableProperty]
         private string _sortOrder = "newest";
 
-        // Commands
-        public ICommand SendExpiryWarningEmailsCommand { get; }
-
-
-
-        // Sử dụng ICommand thay vì RelayCommand cụ thể để tránh xung đột
-        public ICommand AddContractCommand { get; }
-        public ICommand EditContractCommand { get; }
-        public ICommand DeleteContractCommand { get; }
-        public ICommand LoadExpiringContractsCommand { get; }
-        public ICommand ReloadAllContractsCommand { get; }
-        public ICommand SendExpiryWarningEmailsCommand { get; }
-
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
-
-            // Khởi tạo command
-            SendExpiryWarningEmailsCommand = new Commands.RelayCommand(async () => await SendExpiryWarningEmailsAsync());
-
-            AddContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(AddContract);
-
-            EditContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
-                EditContract,
-                () => SelectedContract != null); // Điều kiện check null
-
-            DeleteContractCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(
-                async () => await DeleteContract(),
-                () => SelectedContract != null);
-
-            LoadExpiringContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(LoadExpiringContractsAsync);
-            ReloadAllContractsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(ReloadAllContractsAsync);
-            SendExpiryWarningEmailsCommand = new CommunityToolkit.Mvvm.Input.AsyncRelayCommand(SendExpiryWarningEmailsAsync);
-
             _ = LoadContractsAsync();
         }
 
@@ -123,6 +89,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
         private void EditContract()
         {
             if (SelectedContract == null)
@@ -176,6 +143,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        private bool CanEditOrDelete() => SelectedContract != null;
+
+        [RelayCommand]
         private async Task LoadExpiringContractsAsync()
         {
             try
@@ -202,6 +172,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        [RelayCommand]
         private async Task SendExpiryWarningEmailsAsync()
         {
             // Đảm bảo method được gọi - hiển thị thông báo ngay
