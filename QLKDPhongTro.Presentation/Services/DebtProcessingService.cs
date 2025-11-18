@@ -613,46 +613,4 @@ namespace QLKDPhongTro.Presentation.Services
         }
     }
 
-    // CÁC LỚP DTO BỔ SUNG
-
-    public class DebtCalculationResult
-    {
-        public string RoomName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Timestamp { get; set; } = string.Empty;
-        public decimal OldElectricValue { get; set; }
-        public decimal CurrentElectricValue { get; set; }
-        public decimal ElectricityUsage { get; set; }
-        public decimal ElectricityCost { get; set; }
-        public decimal WaterCost { get; set; }
-        public decimal TotalDebt { get; set; }
-        public string OcrStatus { get; set; } = string.Empty;
-        public string ElectricImageUrl { get; set; } = string.Empty;
-        public bool IsProcessed { get; set; }
-        public string ErrorMessage { get; set; } = string.Empty;
-        public decimal ManualValue { get; set; }
-        public decimal OcrValue { get; set; }
-        public bool IsDiscrepancy { get; set; }
-        public string WarningNote { get; set; } = string.Empty;
-        public string OriginalImagePath { get; set; } = string.Empty;
-    }
-
-    public class DebtDiscrepancyInfo
-    {
-        public string RoomName { get; set; } = string.Empty;
-        public decimal ManualValue { get; set; }
-        public decimal OcrValue { get; set; }
-        public decimal ConfirmedValue { get; set; }
-        public decimal Difference => Math.Abs(ManualValue - OcrValue);
-        public string WarningNote { get; set; } = string.Empty;
-        public MeterReadingResult MeterReadingResult { get; set; } = new();
-        public string? OriginalImagePath { get; set; }
-        public DateTime DetectionTime { get; set; } = DateTime.Now;
-    }
-
-    public class ProcessingResult
-    {
-        public bool IsSuccess { get; set; }
-        public string ErrorMessage { get; set; } = string.Empty;
-    }
 }
