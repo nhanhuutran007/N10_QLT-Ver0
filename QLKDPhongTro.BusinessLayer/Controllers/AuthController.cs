@@ -205,7 +205,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 if (user != null)
                 {
                     //// Sinh OTP
-                    //var otp = OtpHelper.GenerateOtp();
+                    var otp = OtpHelper.GenerateOtp();
 
                     // Gửi email với layout HTML đẹp (tương tự mail nhắc thanh toán)
                     var subject = "Mã OTP đăng nhập hệ thống quản lý thuê nhà";
