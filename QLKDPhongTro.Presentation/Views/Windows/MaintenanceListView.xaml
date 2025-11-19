@@ -310,7 +310,7 @@
                     </ComboBox>
 
                     <!-- Add Maintenance Button -->
-                    <Button Command="{Binding ShowAddMaintenanceCommand}" 
+                    <Button Click="AddMaintenance_Click"
                             Style="{StaticResource ModernPrimaryButton}"
                             Height="40" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -465,7 +465,7 @@
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
 
                                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                                                <Button Command="{Binding DataContext.ViewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                         CommandParameter="{Binding}" 
                                         Style="{StaticResource IconButtonStyle}" 
                                         ToolTip="Chỉnh sửa"
