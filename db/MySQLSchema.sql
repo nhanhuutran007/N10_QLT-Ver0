@@ -150,16 +150,16 @@ CREATE TABLE IF NOT EXISTS BaoTri_SuCo (
 CREATE TABLE IF NOT EXISTS ThanhToan (
   MaThanhToan INT AUTO_INCREMENT PRIMARY KEY,
   MaHopDong INT,
-  ThangNam CHAR(7) NOT NULL, -- MM/yyyy
+  ThangNam CHAR(7) NOT NULL, -- Định dạng: MM/yyyy
   
-  -- Các khoản thu
+  -- CÁC KHOẢN PHÍ CỐ ĐỊNH & BIẾN ĐỔI
   TienThue DECIMAL(18,0) DEFAULT 0,
   TienInternet DECIMAL(18,0) DEFAULT 0,
   TienVeSinh DECIMAL(18,0) DEFAULT 0,
   TienGiuXe DECIMAL(18,0) DEFAULT 0,
   ChiPhiKhac DECIMAL(18,0) DEFAULT 0,
 
-  -- Điện Nước
+  -- ĐIỆN NƯỚC (Dữ liệu từ AI/Form hoặc nhập tay)
   DonGiaDien DECIMAL(18,0) DEFAULT 3500,
   DonGiaNuoc DECIMAL(18,0) DEFAULT 100000, 
   
@@ -167,19 +167,29 @@ CREATE TABLE IF NOT EXISTS ThanhToan (
   ChiSoDienMoi DECIMAL(18,2) DEFAULT 0,
   
   SoDien DECIMAL(18,2) DEFAULT 0,
-  SoNuoc DECIMAL(18,2) DEFAULT 1,
+  SoNuoc DECIMAL(18,2) DEFAULT 1, -- Mặc định 1 người/khối nếu tính theo đầu người
   
   TienDien DECIMAL(18,0) DEFAULT 0, 
   TienNuoc DECIMAL(18,0) DEFAULT 0,
-  TongTien DECIMAL(18,0) DEFAULT 0,
+  
+  -- TỔNG HỢP TÀI CHÍNH
+  TongTien DECIMAL(18,0) DEFAULT 0 COMMENT 'Tổng số tiền phải thanh toán trong tháng',
 
-  TrangThaiThanhToan ENUM('Chưa trả','Đã trả') DEFAULT 'Chưa trả',
-  NgayThanhToan DATE,
+  -- [CẬP NHẬT MỚI] QUẢN LÝ THANH TOÁN & CÔNG NỢ
+  SoTienDaTra DECIMAL(18,0) DEFAULT 0 COMMENT 'Số tiền thực tế khách đã đóng',
+  
+  -- Cột ảo tự động tính công nợ (Chỉ hỗ trợ MySQL 5.7 trở lên, nếu thấp hơn thì bỏ dòng này và tính trong code)
+  ConLai DECIMAL(18,0) AS (TongTien - SoTienDaTra) STORED COMMENT 'Công nợ còn thiếu',
+
+  -- Cập nhật ENUM theo yêu cầu 2.5
+  TrangThaiThanhToan ENUM('Chưa trả', 'Trả một phần', 'Đã trả') DEFAULT 'Chưa trả',
+  
+  NgayThanhToan DATE COMMENT 'Ngày thực hiện giao dịch gần nhất',
   NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-  GhiChu VARCHAR(500),
+  GhiChu VARCHAR(500) COMMENT 'Ghi chú (VD: Chuyển khoản, Tiền mặt...)',
   
   FOREIGN KEY (MaHopDong) REFERENCES HopDong(MaHopDong) ON DELETE CASCADE,
-  UNIQUE (MaHopDong, ThangNam)
+  UNIQUE (MaHopDong, ThangNam) -- Đảm bảo mỗi hợp đồng chỉ có 1 phiếu thu mỗi tháng
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ===================== 9. Bảng GoogleFormLog =====================
