@@ -9,6 +9,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
     public class TenantDto
     {
         public int MaKhachThue { get; set; }
+        public int? MaPhong { get; set; }
 
         [Required(ErrorMessage = "Họ tên không được bỏ trống")]
         public string HoTen { get; set; } = string.Empty;
@@ -25,6 +26,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 
         public string GioiTinh { get; set; } = string.Empty;
         public string NgheNghiep { get; set; } = string.Empty;
+        public string TrangThai { get; set; } = string.Empty;
 
         [StringLength(500)]
         public string GhiChu { get; set; } = string.Empty;

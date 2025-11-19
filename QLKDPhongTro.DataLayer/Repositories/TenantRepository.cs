@@ -17,12 +17,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
-                    SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                           NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
-                    FROM NguoiThue 
-                    ORDER BY MaNguoiThue DESC";
+                    SELECT nt.*
+                    FROM NguoiThue nt
+                    ORDER BY nt.MaNguoiThue DESC";
 
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
@@ -44,13 +42,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
-                    SELECT DISTINCT nt.MaNguoiThue, nt.HoTen, nt.SoDienThoai, nt.CCCD, nt.NgayBatDau, nt.TrangThai, nt.GhiChu,
-                           nt.NgaySinh, nt.NgayCap, nt.NoiCap, nt.DiaChi, nt.Email, nt.GioiTinh, nt.NgheNghiep
+                    SELECT DISTINCT nt.*
                     FROM NguoiThue nt
                     LEFT JOIN HopDong hd ON nt.MaNguoiThue = hd.MaNguoiThue
-                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    LEFT JOIN Phong p ON p.MaPhong = COALESCE(nt.MaPhong, hd.MaPhong)
                     WHERE p.MaNha = @MaNha OR p.MaNha IS NULL
                     ORDER BY nt.MaNguoiThue DESC";
 
@@ -74,12 +70,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
-                    SELECT MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                           NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
-                    FROM NguoiThue 
-                    WHERE MaNguoiThue = @MaNguoiThue";
+                    SELECT nt.*
+                    FROM NguoiThue nt
+                    WHERE nt.MaNguoiThue = @MaNguoiThue";
 
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
@@ -96,31 +90,24 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return null;
         }
 
-        // Helper method map dữ liệu (Map theo đúng thứ tự SELECT ở trên)
         private Tenant MapReaderToTenant(DbDataReader reader)
         {
             return new Tenant
             {
-                MaKhachThue = reader.GetInt32(0),
-                HoTen = reader.IsDBNull(1) ? "" : reader.GetString(1),
-                SoDienThoai = reader.IsDBNull(2) ? "" : reader.GetString(2),
-                CCCD = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                // Index 4 (NgayBatDau) và 5 (TrangThai)
-                TrangThai = reader.IsDBNull(5) ? "Đang ở" : reader.GetString(5),
-
-                GhiChu = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                NgaySinh = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-
-                NgayCap = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
-                NoiCap = reader.IsDBNull(9) ? "" : reader.GetString(9),
-                DiaChi = reader.IsDBNull(10) ? "" : reader.GetString(10),
-
-                Email = reader.IsDBNull(11) ? "" : reader.GetString(11),
-
-                // ✅ ĐÃ SỬA: Map thêm 2 trường mới theo thứ tự trong câu SQL SELECT
-                GioiTinh = reader.IsDBNull(12) ? "" : reader.GetString(12),
-                NgheNghiep = reader.IsDBNull(13) ? "" : reader.GetString(13),
-
+                MaKhachThue = ReadInt(reader, "MaNguoiThue"),
+                MaPhong = ReadNullableInt(reader, "MaPhong"),
+                HoTen = ReadString(reader, "HoTen"),
+                SoDienThoai = ReadString(reader, "SoDienThoai"),
+                CCCD = ReadString(reader, "CCCD"),
+                TrangThai = ReadString(reader, "TrangThai", "Đang ở"),
+                GhiChu = ReadString(reader, "GhiChu"),
+                NgaySinh = ReadNullableDateTime(reader, "NgaySinh"),
+                NgayCap = ReadNullableDateTime(reader, "NgayCap"),
+                NoiCap = ReadString(reader, "NoiCap"),
+                DiaChi = ReadString(reader, "DiaChi"),
+                Email = ReadString(reader, "Email"),
+                GioiTinh = ReadString(reader, "GioiTinh"),
+                NgheNghiep = ReadString(reader, "NgheNghiep"),
                 NgayTao = DateTime.Now,
                 NgayCapNhat = DateTime.Now
             };
@@ -134,14 +121,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 // ✅ Cập nhật INSERT để bao gồm GioiTinh, NgheNghiep
                 var sql = @"
                     INSERT INTO NguoiThue
-                    (HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
+                    (MaPhong, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
                      NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep)
                     VALUES
-                    (@HoTen, @SoDienThoai, @CCCD, @NgayBatDau, @TrangThai, @GhiChu,
+                    (@MaPhong, @HoTen, @SoDienThoai, @CCCD, @NgayBatDau, @TrangThai, @GhiChu,
                      @NgaySinh, @NgayCap, @NoiCap, @DiaChi, @Email, @GioiTinh, @NgheNghiep)";
 
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
+                    cmd.Parameters.AddWithValue("@MaPhong", (object?)tenant.MaPhong ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@HoTen", tenant.HoTen);
                     cmd.Parameters.AddWithValue("@SoDienThoai", (object?)tenant.SoDienThoai ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CCCD", (object?)tenant.CCCD ?? DBNull.Value);
@@ -171,6 +159,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var sql = @"
                     UPDATE NguoiThue SET
+                        MaPhong = @MaPhong,
                         HoTen = @HoTen,
                         SoDienThoai = @SoDienThoai,
                         CCCD = @CCCD,
@@ -187,6 +176,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@MaNguoiThue", tenant.MaKhachThue);
+                    cmd.Parameters.AddWithValue("@MaPhong", (object?)tenant.MaPhong ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@HoTen", tenant.HoTen);
                     cmd.Parameters.AddWithValue("@SoDienThoai", (object?)tenant.SoDienThoai ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CCCD", (object?)tenant.CCCD ?? DBNull.Value);
@@ -224,14 +214,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection conn = new MySqlConnection(connectionString))
             {
                 await conn.OpenAsync();
-                // ✅ ĐÃ SỬA: Thêm GioiTinh, NgheNghiep vào SELECT
                 var sql = @"
-                    SELECT 
-                        MaNguoiThue, HoTen, SoDienThoai, CCCD, NgayBatDau, TrangThai, GhiChu, 
-                        NgaySinh, NgayCap, NoiCap, DiaChi, Email, GioiTinh, NgheNghiep
-                    FROM NguoiThue
-                    WHERE HoTen LIKE @Name
-                    ORDER BY MaNguoiThue DESC";
+                    SELECT nt.*
+                    FROM NguoiThue nt
+                    WHERE nt.HoTen LIKE @Name
+                    ORDER BY nt.MaNguoiThue DESC";
 
                 using (var cmd = new MySqlCommand(sql, conn))
                 {
@@ -260,6 +247,197 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 long count = Convert.ToInt64(await cmd.ExecuteScalarAsync());
                 return count > 0;
             }
+        }
+
+        private static int GetOrdinalSafe(DbDataReader reader, string columnName)
+        {
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        private static string ReadString(DbDataReader reader, string columnName, string defaultValue = "")
+        {
+            int ordinal = GetOrdinalSafe(reader, columnName);
+            return ordinal >= 0 && !reader.IsDBNull(ordinal) ? reader.GetString(ordinal) : defaultValue;
+        }
+
+        private static int? ReadNullableInt(DbDataReader reader, string columnName)
+        {
+            int ordinal = GetOrdinalSafe(reader, columnName);
+            return ordinal >= 0 && !reader.IsDBNull(ordinal) ? reader.GetInt32(ordinal) : (int?)null;
+        }
+
+        private static int ReadInt(DbDataReader reader, string columnName, int defaultValue = 0)
+        {
+            int ordinal = GetOrdinalSafe(reader, columnName);
+            return ordinal >= 0 && !reader.IsDBNull(ordinal) ? reader.GetInt32(ordinal) : defaultValue;
+        }
+
+        private static DateTime? ReadNullableDateTime(DbDataReader reader, string columnName)
+        {
+            int ordinal = GetOrdinalSafe(reader, columnName);
+            return ordinal >= 0 && !reader.IsDBNull(ordinal) ? reader.GetDateTime(ordinal) : null;
+        }
+
+        public async Task<List<TenantAsset>> GetAssetsAsync(int maNguoiThue)
+        {
+            var assets = new List<TenantAsset>();
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = @"
+                SELECT MaTaiSan, MaNguoiThue, LoaiTaiSan, MoTa, IFNULL(PhiPhuThu,0) AS PhiPhuThu
+                FROM TaiSanNguoiThue
+                WHERE MaNguoiThue = @MaNguoiThue
+                ORDER BY MaTaiSan DESC";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                assets.Add(new TenantAsset
+                {
+                    MaTaiSan = reader.GetInt32(0),
+                    MaNguoiThue = reader.GetInt32(1),
+                    LoaiTaiSan = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    MoTa = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    PhiPhuThu = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4),
+                    NgayTao = null
+                });
+            }
+            return assets;
+        }
+
+        public async Task<TenantStayInfo?> GetCurrentStayInfoAsync(int maNguoiThue)
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = @"
+                SELECT 
+                    hd.MaHopDong,
+                    hd.MaPhong,
+                    p.TenPhong,
+                    p.TrangThai AS TrangThaiPhong,
+                    hd.TrangThai AS TrangThaiHopDong,
+                    hd.NgayBatDau,
+                    hd.NgayKetThuc,
+                    hd.TienCoc,
+                    nt.TrangThai AS TrangThaiNguoiThue,
+                    nt.SoDienThoai
+                FROM NguoiThue nt
+                LEFT JOIN HopDong hd ON hd.MaNguoiThue = nt.MaNguoiThue
+                LEFT JOIN Phong p ON p.MaPhong = hd.MaPhong
+                WHERE nt.MaNguoiThue = @MaNguoiThue
+                ORDER BY 
+                    CASE 
+                        WHEN hd.TrangThai = 'Hiệu lực' THEN 0
+                        WHEN hd.TrangThai = 'Sắp hết hạn' THEN 1
+                        WHEN hd.TrangThai = 'Hết hạn' THEN 2
+                        WHEN hd.TrangThai = 'Hủy' THEN 3
+                        WHEN hd.MaHopDong IS NULL THEN 4
+                        ELSE 5
+                    END,
+                    hd.NgayKetThuc DESC
+                LIMIT 1";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new TenantStayInfo
+                {
+                    MaHopDong = reader.IsDBNull(0) ? (int?)null : reader.GetInt32(0),
+                    MaPhong = reader.IsDBNull(1) ? (int?)null : reader.GetInt32(1),
+                    TenPhong = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    TrangThaiPhong = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    TrangThaiHopDong = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    NgayBatDau = reader.IsDBNull(5) ? (DateTime?)null : reader.GetDateTime(5),
+                    NgayKetThuc = reader.IsDBNull(6) ? (DateTime?)null : reader.GetDateTime(6),
+                    TienCoc = reader.IsDBNull(7) ? (decimal?)null : reader.GetDecimal(7),
+                    TrangThaiNguoiThue = reader.IsDBNull(8) ? null : reader.GetString(8),
+                    SoDienThoai = reader.IsDBNull(9) ? null : reader.GetString(9)
+                };
+            }
+            return null;
+        }
+
+        public async Task<List<RoomTenantInfo>> GetTenantsByRoomIdAsync(int maPhong)
+        {
+            var roomTenants = new List<RoomTenantInfo>();
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = @"
+                SELECT 
+                    nt.MaNguoiThue,
+                    nt.HoTen,
+                    nt.SoDienThoai,
+                    nt.TrangThai AS TrangThaiNguoiThue,
+                    hd.MaHopDong,
+                    hd.TrangThai AS TrangThaiHopDong,
+                    hd.NgayBatDau,
+                    hd.NgayKetThuc
+                FROM NguoiThue nt
+                LEFT JOIN HopDong hd ON hd.MaHopDong = (
+                    SELECT h.MaHopDong
+                    FROM HopDong h
+                    WHERE h.MaNguoiThue = nt.MaNguoiThue
+                      AND h.MaPhong = @MaPhong
+                      AND (h.TrangThai IS NULL OR h.TrangThai <> 'Hủy')
+                    ORDER BY 
+                        CASE 
+                            WHEN h.TrangThai = 'Hiệu lực' THEN 0
+                            WHEN h.TrangThai = 'Sắp hết hạn' THEN 1
+                            WHEN h.TrangThai = 'Hết hạn' THEN 2
+                            ELSE 3
+                        END,
+                        h.NgayKetThuc DESC
+                    LIMIT 1
+                )
+                WHERE nt.MaPhong = @MaPhong
+                ORDER BY 
+                    CASE 
+                        WHEN hd.TrangThai = 'Hiệu lực' THEN 0
+                        WHEN hd.TrangThai = 'Sắp hết hạn' THEN 1
+                        WHEN hd.TrangThai = 'Hết hạn' THEN 2
+                        ELSE 3
+                    END,
+                    hd.NgayKetThuc DESC";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaPhong", maPhong);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                roomTenants.Add(new RoomTenantInfo
+                {
+                    MaNguoiThue = reader.GetInt32(0),
+                    HoTen = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
+                    SoDienThoai = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    TrangThaiNguoiThue = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    MaHopDong = reader.IsDBNull(4) ? (int?)null : reader.GetInt32(4),
+                    TrangThaiHopDong = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                    NgayBatDau = reader.IsDBNull(6) ? (DateTime?)null : reader.GetDateTime(6),
+                    NgayKetThuc = reader.IsDBNull(7) ? (DateTime?)null : reader.GetDateTime(7)
+                });
+            }
+            return roomTenants;
+        }
+
+        public async Task<bool> UpdateTenantStatusAsync(int maNguoiThue, string trangThai)
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var cmd = new MySqlCommand("UPDATE NguoiThue SET TrangThai = @TrangThai WHERE MaNguoiThue = @MaNguoiThue", conn);
+            cmd.Parameters.AddWithValue("@TrangThai", trangThai);
+            cmd.Parameters.AddWithValue("@MaNguoiThue", maNguoiThue);
+            return await cmd.ExecuteNonQueryAsync() > 0;
         }
     }
 }

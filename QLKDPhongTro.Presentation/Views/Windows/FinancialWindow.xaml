@@ -380,6 +380,74 @@
                             </ComboBox>
                         </StackPanel>
                     </Grid>
+
+                    <!-- Fee configuration -->
+                    <Border Background="White"
+                            CornerRadius="10"
+                            Padding="16"
+                            Margin="0,0,0,20"
+                            BorderThickness="1"
+                            BorderBrush="{StaticResource BorderColor}"
+                            Effect="{StaticResource CardShadow}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="Thiết lập phí cố định trước khi tạo công nợ"
+                                           FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}"/>
+                                <TextBlock Text=" (áp dụng cho lần xử lý tiếp theo)"
+                                           FontSize="13"
+                                           Foreground="{StaticResource TextSecondary}"
+                                           Margin="6,0,0,0"/>
+                            </StackPanel>
+
+                            <UniformGrid Columns="3" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                                <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
+                                    <StackPanel>
+                                        <TextBlock Text="Tiền nước (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding WaterFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 Height="36"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="{StaticResource BorderColor}"
+                                                 BorderThickness="1"
+                                                 Padding="10,0"
+                                                 Background="White"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
+                                    <StackPanel>
+                                        <TextBlock Text="Tiền internet (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding InternetFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 Height="36"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="{StaticResource BorderColor}"
+                                                 BorderThickness="1"
+                                                 Padding="10,0"
+                                                 Background="White"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
+                                    <StackPanel>
+                                        <TextBlock Text="Tiền vệ sinh (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding SanitationFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                                 Height="36"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="{StaticResource BorderColor}"
+                                                 BorderThickness="1"
+                                                 Padding="10,0"
+                                                 Background="White"/>
+                                    </StackPanel>
+                                </Border>
+                            </UniformGrid>
+
+                            <TextBlock Text="Các giá trị trên sẽ được ghi nhớ cho tới khi bạn thay đổi và được áp dụng khi đồng bộ dữ liệu Google Form."
+                                       FontSize="12"
+                                       Foreground="{StaticResource TextSecondary}"
+                                       Margin="0,12,0,0"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
                 <!-- Main Views -->

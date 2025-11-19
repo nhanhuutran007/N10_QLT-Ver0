@@ -8,6 +8,7 @@ namespace QLKDPhongTro.DataLayer.Models
     public class Tenant
     {
         public int MaKhachThue { get; set; } = 0; // Mapping từ MaNguoiThue
+        public int? MaPhong { get; set; }
         public string HoTen { get; set; } = string.Empty;
         public string CCCD { get; set; } = string.Empty;
         public string SoDienThoai { get; set; } = string.Empty;

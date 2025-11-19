@@ -148,6 +148,9 @@
                 <DataTrigger Binding="{Binding Status}" Value="Chưa trả">
                     <Setter Property="Background" Value="#FEE2E2"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Trả một phần">
+                    <Setter Property="Background" Value="#FEF3C7"/>
+                </DataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -162,7 +165,17 @@
                 <DataTrigger Binding="{Binding Status}" Value="Chưa trả">
                     <Setter Property="Foreground" Value="#991B1B"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Trả một phần">
+                    <Setter Property="Foreground" Value="#92400E"/>
+                </DataTrigger>
             </Style.Triggers>
+        </Style>
+
+        <Style TargetType="Border" x:Key="InfoChipStyle">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="Background" Value="#F3F4F6"/>
         </Style>
 
         <Style TargetType="{x:Type DataGridColumnHeader}">
@@ -187,8 +200,8 @@
         </Style>
 
         <Style TargetType="{x:Type DataGridCell}">
-            <Setter Property="Padding" Value="16,0"/>
-            <Setter Property="Height" Value="56"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="MinHeight" Value="60"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
@@ -264,7 +277,7 @@
                         </Border.Style>
                         <Grid>
                             <TextBlock Text="🔍 Tìm kiếm thanh toán..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
-                                       Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                     Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
                         </Grid>
@@ -286,7 +299,7 @@
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BorderLightColor}" 
                           HeadersVisibility="Column" BorderThickness="0" Background="White"
-                          RowHeight="64" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
                           Margin="0">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="MÃ THANH TOÁN" Binding="{Binding Id}" Width="1.5*" MinWidth="150">
@@ -333,22 +346,79 @@
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTemplateColumn Header="TRẠNG THÁI" Width="Auto" MinWidth="160">
+                        <DataGridTemplateColumn Header="TRẠNG THÁI" Width="Auto" MinWidth="280">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="16,0,20,0">
-                                        <Border Style="{StaticResource StatusBadgeStyle}"
-                                                HorizontalAlignment="Left" VerticalAlignment="Center"
-                                                Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
-                                            <TextBlock Text="{Binding Status}" 
-                                                       Style="{StaticResource StatusBadgeTextStyle}"/>
-                                        </Border>
+                                    <Grid Margin="12,8,20,8">
+                                        <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
+                                            <Border Style="{StaticResource StatusBadgeStyle}" Margin="0,0,0,8" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding Status}"
+                                                           Style="{StaticResource StatusBadgeTextStyle}"/>
+                                            </Border>
 
-                                        <ComboBox SelectedItem="{Binding EditableStatus, UpdateSourceTrigger=PropertyChanged}"
-                                                  ItemsSource="{Binding DataContext.EditStatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                                  Style="{StaticResource FormComboBoxStyle}"
-                                                  Width="140" Height="32"
-                                                  Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource InfoChipStyle}"
+                                                        Background="#ECFDF5"
+                                                        Margin="0,0,8,0"
+                                                        Visibility="{Binding HasPaidAmount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="ĐÃ THU" FontSize="10" Foreground="#047857" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding AmountPaid, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="SemiBold" Foreground="#065F46"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Style="{StaticResource InfoChipStyle}"
+                                                        Background="#FEF3C7"
+                                                        Visibility="{Binding HasRemainingAmount, Converter={StaticResource BoolToVisibilityConverter}}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="CÒN LẠI" FontSize="10" Foreground="#B45309" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding RemainingAmount, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="SemiBold" Foreground="#92400E"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
+
+                                        <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="Trạng thái thanh toán" FontSize="12" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                            <ComboBox SelectedItem="{Binding EditableStatus, UpdateSourceTrigger=PropertyChanged}"
+                                                      ItemsSource="{Binding DataContext.EditStatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                      Style="{StaticResource FormComboBoxStyle}"
+                                                      Width="200" Height="36" Margin="0,0,0,8"/>
+
+                                            <StackPanel Margin="0,0,0,0">
+                                                <StackPanel.Style>
+                                                    <Style TargetType="StackPanel">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <MultiDataTrigger>
+                                                                <MultiDataTrigger.Conditions>
+                                                                    <Condition Binding="{Binding IsEditing}" Value="True"/>
+                                                                    <Condition Binding="{Binding EditableStatus}" Value="Trả một phần"/>
+                                                                </MultiDataTrigger.Conditions>
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </MultiDataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </StackPanel.Style>
+                                                <TextBlock Text="Số tiền đã thanh toán (VND)" FontSize="11" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,4"/>
+                                                <Border CornerRadius="8" BorderBrush="{StaticResource SecondaryColor}" BorderThickness="1" Background="White">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="₫" FontWeight="Bold" Foreground="{StaticResource SecondaryDarkColor}" VerticalAlignment="Center" Margin="12,0"/>
+                                                        <TextBox Grid.Column="1"
+                                                                 Text="{Binding PartialPaymentInput, UpdateSourceTrigger=PropertyChanged}"
+                                                                 BorderThickness="0"
+                                                                 Padding="8,0,12,0"
+                                                                 Height="36"
+                                                                 VerticalContentAlignment="Center"
+                                                                 Background="Transparent"
+                                                                 FontSize="13"/>
+                                                    </Grid>
+                                                </Border>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>

@@ -38,6 +38,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TongTien { get; set; }
         public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
         public DateTime? NgayThanhToan { get; set; }
+        public decimal? SoTienDaTra { get; set; }
 
         // Navigation properties
         public string TenKhachHang { get; set; }
