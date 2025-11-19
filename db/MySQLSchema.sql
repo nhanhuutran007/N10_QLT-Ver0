@@ -173,3 +173,58 @@ CREATE TABLE IF NOT EXISTS `GoogleFormLog` (
 -- 3. DỮ LIỆU MẪU (DATA) - CHUẨN HÓA 5 PHÒNG
 -- =======================================================
 
+-- 3.1. Nhà & Admin
+INSERT INTO `Nha` (`DiaChi`, `TongSoPhong`, `GhiChu`) VALUES
+('15/2 Đường CMT8, Quận 10, TP.HCM', 5, 'Nhà trọ Happy House - Cổng vân tay');
+
+INSERT INTO `Admin` (`TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `MaNha`) VALUES
+('admin', '123456', 'admin@happyhouse.vn', '0909999888', 1);
+
+-- 3.2. Phòng (P.101 -> P.301)
+INSERT INTO `Phong` (`MaNha`, `TenPhong`, `DienTich`, `GiaCoBan`, `TrangThai`, `GhiChu`, `TrangThietBi`, `NgayCoTheChoThue`) VALUES
+(1, 'P.101', 25.0, 4000000, 'Đang thuê', 'Phòng tầng trệt, cửa sổ lớn', 'Máy lạnh, Tủ lạnh, Giường', NULL),
+(1, 'P.102', 22.0, 3500000, 'Trống', 'Khách cũ mới trả, cần dọn vệ sinh', 'Máy lạnh, Nóng lạnh', '2025-11-20'),
+(1, 'P.201', 28.0, 4500000, 'Đang thuê', 'Phòng VIP, ban công', 'Full nội thất', NULL),
+(1, 'P.202', 28.0, 4500000, 'Bảo trì', 'Đang chờ thợ sửa máy lạnh', 'Full nội thất', '2025-11-25'),
+(1, 'P.301', 35.0, 5500000, 'Đang thuê', 'Phòng đôi, ở ghép', '2 Giường, Tủ lớn, Bếp', NULL);
+
+-- 3.3. Người Thuê (Gán đúng vào phòng)
+INSERT INTO `NguoiThue` (`MaPhong`, `HoTen`, `SoDienThoai`, `CCCD`, `Email`, `GioiTinh`, `NgayBatDau`, `TrangThai`, `DiaChiThuongTru`) VALUES
+(1, 'Nguyễn Văn An', '0911222333', '079199000001', 'an.nguyen@mail.com', 'Nam', '2025-01-10', 'Đang ở', 'Hà Nội'),
+(3, 'Trần Thị Bình', '0922333444', '079199000002', 'binh.tran@mail.com', 'Nữ', '2025-03-15', 'Đang ở', 'Đà Nẵng'),
+(NULL, 'Lê Văn Cường', '0933444555', '079199000003', 'cuong.le@mail.com', 'Nam', '2024-12-01', 'Đã trả phòng', 'TP.HCM'),
+(5, 'Phạm Thị Dung', '0944555666', '079199000004', 'dung.pham@mail.com', 'Nữ', '2025-06-01', 'Đang ở', 'Cần Thơ'),
+(5, 'Hoàng Văn Em', '0955666777', '079199000005', 'em.hoang@mail.com', 'Nam', '2025-06-01', 'Đang ở', 'Vĩnh Long');
+
+-- 3.4. Hợp Đồng
+INSERT INTO `HopDong` (`MaNguoiThue`, `MaPhong`, `NgayBatDau`, `NgayKetThuc`, `TienCoc`, `TrangThai`) VALUES
+(1, 1, '2025-01-10', '2026-01-10', 4000000, 'Hiệu lực'),
+(3, 2, '2024-12-01', '2025-11-01', 3500000, 'Hết hạn'),
+(2, 3, '2025-03-15', '2026-03-15', 4500000, 'Hiệu lực'),
+(4, 5, '2025-06-01', '2026-06-01', 5500000, 'Hiệu lực');
+
+-- 3.5. Tài Sản
+INSERT INTO `TaiSanNguoiThue` (`MaNguoiThue`, `LoaiTaiSan`, `MoTa`, `PhiPhuThu`) VALUES
+(1, 'Xe', 'Honda AirBlade - 59C1-123.45', 100000),
+(2, 'Xe', 'Vision - 59E1-678.90', 100000),
+(2, 'Thú cưng', 'Mèo Anh lông ngắn', 50000),
+(4, 'Xe', 'SH Mode - 59T2-999.99', 150000),
+(5, 'Xe', 'Wave Alpha - 59X3-111.11', 100000);
+
+-- 3.6. Bảo trì
+INSERT INTO `BaoTri_SuCo` (`MaPhong`, `MoTaSuCo`, `NgayBaoCao`, `TrangThai`, `ChiPhi`) VALUES
+(4, 'Máy lạnh chảy nước, không lạnh', '2025-11-15', 'Đang xử lý', 0),
+(1, 'Thay bóng đèn toilet', '2025-10-10', 'Hoàn tất', 50000);
+
+-- 3.7. Thanh Toán (DEMO TÍNH TOÁN)
+-- Kịch bản 1: Đã trả đủ
+INSERT INTO `ThanhToan` (`MaHopDong`, `ThangNam`, `TienThue`, `TienDien`, `TienNuoc`, `TienInternet`, `TienVeSinh`, `TienGiuXe`, `SoTienDaTra`, `TrangThaiThanhToan`, `NgayThanhToan`) 
+VALUES (1, '11/2025', 4000000, 350000, 100000, 100000, 50000, 100000, 4700000, 'Đã trả', '2025-11-05');
+
+-- Kịch bản 2: Trả thiếu (Hệ thống tự tính nợ 2tr)
+INSERT INTO `ThanhToan` (`MaHopDong`, `ThangNam`, `TienThue`, `TienDien`, `TienNuoc`, `ChiPhiKhac`, `SoTienDaTra`, `TrangThaiThanhToan`, `GhiChu`) 
+VALUES (3, '11/2025', 4500000, 500000, 150000, 50000, 3500000, 'Trả một phần', 'Khất lại 2tr');
+
+-- Kịch bản 3: Chưa đóng
+INSERT INTO `ThanhToan` (`MaHopDong`, `ThangNam`, `TienThue`, `TienDien`, `TienNuoc`, `SoTienDaTra`, `TrangThaiThanhToan`) 
+VALUES (4, '11/2025', 5500000, 800000, 200000, 0, 'Chưa trả');
