@@ -1269,25 +1269,56 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         private FinancialRecordDto MapPaymentToFinancialRecord(PaymentDto payment)
         {
-            string loaiGiaoDich = "Tiền Thuê";
-            string chiTiet = $"Tiền thuê: {payment.TienThue:N0} VNĐ";
+            // Khởi tạo danh sách chi tiết chi phí
+            var chiPhiList = new List<string>();
+
+            // 1. Gán Tiền Thuê trước
+            chiPhiList.Add($"Tiền thuê: {payment.TienThue:N0} VNĐ");
+
+            // 2. Thêm Tiền Điện/Nước (nếu có)
+            if (payment.TienDien > 0)
+            {
+                chiPhiList.Add($"Điện: {payment.TienDien:N0} VNĐ");
+            }
+            if (payment.TienNuoc > 0)
+            {
+                chiPhiList.Add($"Nước: {payment.TienNuoc:N0} VNĐ");
+            }
+
+            // 3. Thêm các khoản cố định (Internet, Vệ sinh, Giữ xe, Khác)
+            if (payment.TienInternet > 0)
+            {
+                chiPhiList.Add($"Internet: {payment.TienInternet:N0} VNĐ");
+            }
+            if (payment.TienVeSinh > 0)
+            {
+                chiPhiList.Add($"Vệ sinh: {payment.TienVeSinh:N0} VNĐ");
+            }
+            if (payment.TienGiuXe > 0)
+            {
+                chiPhiList.Add($"Giữ xe: {payment.TienGiuXe:N0} VNĐ");
+            }
+            if (payment.ChiPhiKhac > 0)
+            {
+                chiPhiList.Add($"Khác: {payment.ChiPhiKhac:N0} VNĐ");
+            }
+
+            // 4. Xác định LoaiGiaoDich và ChiTietGiaoDich dựa trên các khoản có giá trị
+            string loaiGiaoDich = "Tiền Thuê"; // Mặc định là Tiền Thuê
 
             if (payment.TienDien > 0 || payment.TienNuoc > 0)
             {
-                loaiGiaoDich = "Chỉ Số Điện/Nước";
-                chiTiet = $"Điện: {payment.TienDien:N0} VNĐ, Nước: {payment.TienNuoc:N0} VNĐ";
+                loaiGiaoDich = "Thuê/Điện/Nước";
             }
-            else if (payment.ChiPhiKhac > 0 || payment.TienInternet > 0 || payment.TienVeSinh > 0 || payment.TienGiuXe > 0)
+            else if (payment.TienInternet > 0 || payment.TienVeSinh > 0 || payment.TienGiuXe > 0 || payment.ChiPhiKhac > 0)
             {
-                loaiGiaoDich = "Chi Phí";
-                var chiPhiList = new List<string>();
-                if (payment.TienInternet > 0) chiPhiList.Add($"Internet: {payment.TienInternet:N0}");
-                if (payment.TienVeSinh > 0) chiPhiList.Add($"Vệ sinh: {payment.TienVeSinh:N0}");
-                if (payment.TienGiuXe > 0) chiPhiList.Add($"Giữ xe: {payment.TienGiuXe:N0}");
-                if (payment.ChiPhiKhac > 0) chiPhiList.Add($"Khác: {payment.ChiPhiKhac:N0}");
-                chiTiet = string.Join(", ", chiPhiList);
+                loaiGiaoDich = "Thuê/Chi Phí";
             }
 
+            // Nối chi tiết
+            string chiTiet = string.Join(", ", chiPhiList);
+
+            // Xử lý logic trạng thái và ngày kỳ hạn (giữ nguyên logic của bạn)
             string trangThai = "BinhThuong";
             string trangThaiText = "Bình thường";
             string trangThaiColor = "#7D8FA9";
@@ -1344,9 +1375,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MaHopDong = payment.MaHopDong ?? 0,
                 TenPhong = payment.TenPhong ?? "Không xác định",
                 KyHan = kyHanDate,
-                LoaiGiaoDich = loaiGiaoDich,
+                LoaiGiaoDich = loaiGiaoDich, // Sử dụng loại mới
                 TongTien = payment.TongTien,
-                ChiTietGiaoDich = chiTiet,
+                ChiTietGiaoDich = chiTiet, // Sử dụng chi tiết mới
                 TrangThaiText = trangThaiText,
                 TrangThaiColor = trangThaiColor,
                 ProgressValue = progressValue,

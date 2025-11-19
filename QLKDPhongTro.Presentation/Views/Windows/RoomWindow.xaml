@@ -3,42 +3,167 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
-        Title="Quản lý phòng"
-        Height="768" Width="1366"
+        Title="Quản lý phòng - Quản Lý Phòng Trọ"
+        MinHeight="600"
+        MinWidth="900"
+        Height="720"
+        Width="1280"
         WindowStartupLocation="CenterScreen"
-        Background="#F3F4F6"
-        FontFamily="Segoe UI">
+        ResizeMode="CanResize"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        Icon="/Resources/Images/Logo.png">
 
     <Window.Resources>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
 
-        <Style x:Key="StatusCellStyle" TargetType="TextBlock">
-            <Setter Property="Padding" Value="10,4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="HorizontalAlignment" Value="Left"/>
-            <Setter Property="FontSize" Value="12"/>
+        <!-- Color palette -->
+        <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
+        <SolidColorBrush x:Key="PrimaryDarkColor" Color="#059669"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="SecondaryDarkColor" Color="#2563EB"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="WarningColor" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="ErrorColor" Color="#EF4444"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#1F2937"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="BackgroundLight" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BackgroundLighter" Color="#F9FAFB"/>
+        <SolidColorBrush x:Key="BackgroundCard" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="BorderLightColor" Color="#F3F4F6"/>
+
+        <!-- Gradients -->
+        <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#10B981" Offset="0"/>
+            <GradientStop Color="#059669" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="SecondaryGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#3B82F6" Offset="0"/>
+            <GradientStop Color="#2563EB" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Shadows -->
+        <DropShadowEffect x:Key="CardShadow" Color="#000000" Opacity="0.06" ShadowDepth="2" BlurRadius="12" Direction="270"/>
+        <DropShadowEffect x:Key="HoverShadow" Color="#000000" Opacity="0.12" ShadowDepth="4" BlurRadius="16" Direction="270"/>
+        <DropShadowEffect x:Key="ButtonShadow" Color="#000000" Opacity="0.1" ShadowDepth="1" BlurRadius="4" Direction="270"/>
+
+        <!-- Modern Button Style -->
+        <Style TargetType="{x:Type Button}" x:Key="ModernPrimaryButton">
+            <Setter Property="Background" Value="{StaticResource SecondaryGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="20,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Border" CornerRadius="8" Background="{TemplateBinding Background}" Effect="{StaticResource ButtonShadow}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Effect" Value="{StaticResource HoverShadow}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource SecondaryDarkColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DataGrid Styles -->
+        <Style TargetType="{x:Type DataGridColumnHeader}">
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundLighter}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridColumnHeader}">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridCell}">
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Height" Value="56"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type DataGridCell}">
+                        <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#F0F9FF"/>
+                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type DataGridRow}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderLightColor}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F9FAFB"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <Grid Background="{StaticResource BackgroundLighter}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="260" MinWidth="250"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <components:SidebarControl Grid.Column="0"/>
+        <!-- SIDEBAR -->
+        <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
-        <Grid Grid.Column="1" Margin="30">
+        <!-- MAIN CONTENT -->
+        <Grid Margin="20" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
+                <!-- Top Bar -->
                 <RowDefinition Height="Auto"/>
+                <!-- Title & Actions -->
                 <RowDefinition Height="*"/>
+                <!-- DataGrid -->
                 <RowDefinition Height="Auto"/>
+                <!-- Pagination -->
             </Grid.RowDefinitions>
 
-            <components:TopbarControl Grid.Row="0" Margin="0,0,0,30"/>
+            <!-- Top Bar -->
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" Margin="0,0,0,20"/>
 
+            <!-- Header Section -->
             <Grid Grid.Row="1" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -46,111 +171,103 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Danh sách phòng" FontSize="28" FontWeight="Bold" Foreground="#111827"/>
-                    <TextBlock Text="Quản lý tất cả phòng trọ của bạn" FontSize="14" Foreground="#6B7280" Margin="0,4,0,0"/>
+                    <TextBlock Text="Danh sách phòng" FontSize="28" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"/>
+                    <TextBlock Text="Quản lý tất cả phòng trọ của bạn" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Border Background="White" CornerRadius="8" Width="280" Height="44" Margin="0,0,12,0">
-                        <Border.Effect>
-                            <DropShadowEffect ShadowDepth="1" Color="Black" Opacity="0.05" BlurRadius="5"/>
-                        </Border.Effect>
+                    <!-- Search Box -->
+                    <Border Background="White" CornerRadius="8" BorderThickness="1" Width="280" Height="40" Margin="0,0,12,0">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=SearchBox}" Value="True">
+                                        <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid>
-                            <TextBlock Text="🔍 Tìm kiếm phòng..." Foreground="#9CA3AF" VerticalAlignment="Center" Margin="16,0,0,0"
+                            <TextBlock Text="🔍 Tìm kiếm phòng..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
                                        Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="16,0" FontSize="14"/>
+                                   Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
                         </Grid>
                     </Border>
 
+                    <!-- Add Room Button -->
                     <Button Command="{Binding ShowAddRoomPanelCommand}" 
-                            Background="#319DFF" Foreground="White" 
-                            Height="44" Padding="20,0" Cursor="Hand" BorderThickness="0" Click="Button_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Thêm phòng  " FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
+                            Style="{StaticResource ModernPrimaryButton}"
+                            Height="40" Cursor="Hand">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Thêm phòng" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </Button>
                 </StackPanel>
             </Grid>
 
-            <Border Grid.Row="2" Background="White" CornerRadius="12" Padding="0" ClipToBounds="True">
-                <Border.Effect>
-                    <DropShadowEffect ShadowDepth="2" Color="Black" Opacity="0.05" BlurRadius="10"/>
-                </Border.Effect>
-
+            <!-- DataGrid -->
+            <Border Grid.Row="2" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
                 <DataGrid ItemsSource="{Binding Rooms}" SelectedItem="{Binding SelectedRoom}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F3F4F6" VerticalGridLinesBrush="Transparent"
-                          HeadersVisibility="Column" BorderThickness="0" Background="White"
-                          RowHeight="56">
-
-                    <DataGrid.Resources>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="#F9FAFB"/>
-                            <Setter Property="Foreground" Value="#6B7280"/>
-                            <Setter Property="FontSize" Value="12"/>
-                            <Setter Property="FontWeight" Value="Bold"/>
-                            <Setter Property="Padding" Value="20,16"/>
-                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            <Setter Property="BorderBrush" Value="#E5E7EB"/>
-                        </Style>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="Padding" Value="20,0"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="DataGridCell">
-                                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Cursor" Value="Hand"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#F9FAFB"/>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#EFF6FF"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.Resources>
+                         AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                         GridLinesVisibility="None" HeadersVisibility="Column" BorderThickness="0" Background="White"
+                         RowHeight="56">
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="MÃ PHÒNG" Binding="{Binding MaPhong}" Width="120" FontWeight="SemiBold"/>
+                        <!-- MÃ PHÒNG -->
+                        <DataGridTextColumn Header="MÃ PHÒNG" Binding="{Binding MaPhong}" Width="120">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="16,0"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
+                        <!-- TÊN PHÒNG -->
                         <DataGridTemplateColumn Header="TÊN PHÒNG" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
                                         <Border Background="#E0E7FF" Width="32" Height="32" CornerRadius="6" Margin="0,0,12,0">
                                             <TextBlock Text="🏠" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                                         </Border>
-                                        <TextBlock Text="{Binding TenPhong}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#111827"/>
+                                        <TextBlock Text="{Binding TenPhong}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="DIỆN TÍCH" Binding="{Binding DienTich, StringFormat='{}{0} m²'}" Width="120"/>
-                        <DataGridTextColumn Header="GIÁ THUÊ" Binding="{Binding GiaCoBan, StringFormat='{}{0:N0} đ'}" Width="150" Foreground="#059669" FontWeight="SemiBold"/>
+                        <!-- DIỆN TÍCH -->
+                        <DataGridTextColumn Header="DIỆN TÍCH" Binding="{Binding DienTich, StringFormat='{}{0} m²'}" Width="120">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="16,0"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
 
+                        <!-- GIÁ THUÊ -->
+                        <DataGridTextColumn Header="GIÁ THUÊ" Binding="{Binding GiaCoBan, StringFormat='{}{0:N0} đ'}" Width="150">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="VerticalAlignment" Value="Center"/>
+                                    <Setter Property="Padding" Value="0,0"/>
+                                    <Setter Property="Foreground" Value="#059669"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- TRẠNG THÁI -->
                         <DataGridTemplateColumn Header="TRẠNG THÁI" Width="150">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border CornerRadius="6" Padding="10,4" HorizontalAlignment="Left">
+                                    <Border CornerRadius="6" Padding="10,4" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="16,0,0,0">
                                         <Border.Style>
                                             <Style TargetType="Border">
                                                 <Style.Triggers>
@@ -166,7 +283,7 @@
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
-                                        <TextBlock Text="{Binding TrangThai}" FontSize="12" FontWeight="SemiBold">
+                                        <TextBlock Text="{Binding TrangThai}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Style.Triggers>
@@ -188,21 +305,28 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
+                        <!-- THAO TÁC -->
                         <DataGridTemplateColumn Header="THAO TÁC" Width="140">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button Command="{Binding DataContext.ViewRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"
-                                                Background="Transparent" BorderThickness="0" Margin="0,0,4,0" ToolTip="Xem">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
+                                        <Button Command="{Binding DataContext.ViewRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" BorderThickness="0" Margin="0,0,8,0" 
+                                                ToolTip="Xem" Cursor="Hand">
                                             <TextBlock Text="👁️" FontSize="16"/>
                                         </Button>
-                                        <Button Command="{Binding DataContext.EditRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"
-                                                Background="Transparent" BorderThickness="0" Margin="0,0,4,0" ToolTip="Sửa">
+                                        <Button Command="{Binding DataContext.EditRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" BorderThickness="0" Margin="0,0,8,0" 
+                                                ToolTip="Sửa" Cursor="Hand">
                                             <TextBlock Text="✏️" FontSize="16"/>
                                         </Button>
-                                        <Button Command="{Binding DataContext.DeleteRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}"
-                                                Background="Transparent" BorderThickness="0" ToolTip="Xóa">
-                                            <TextBlock Text="🗑️" FontSize="16" Foreground="#EF4444"/>
+                                        <Button Command="{Binding DataContext.DeleteRoomRowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent" BorderThickness="0" 
+                                                ToolTip="Xóa" Cursor="Hand">
+                                            <TextBlock Text="🗑️" FontSize="16" Foreground="{StaticResource ErrorColor}"/>
                                         </Button>
                                     </StackPanel>
                                 </DataTemplate>
@@ -212,10 +336,11 @@
                 </DataGrid>
             </Border>
 
+            <!-- Pagination -->
             <Grid Grid.Row="3" Margin="0,20,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="{Binding PaginationText}" VerticalAlignment="Center" Foreground="#6B7280" Margin="0,0,16,0"/>
-                    <Button Command="{Binding PrevPageCommand}" Content="◀" Width="32" Height="32" Background="White" BorderBrush="#E5E7EB" BorderThickness="1">
+                    <TextBlock Text="{Binding PaginationText}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
+                    <Button Command="{Binding PrevPageCommand}" Content="◀" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
@@ -224,10 +349,10 @@
                             </ControlTemplate>
                         </Button.Template>
                     </Button>
-                    <Border Background="#319DFF" CornerRadius="4" Width="32" Height="32" Margin="8,0">
+                    <Border Background="{StaticResource SecondaryColor}" CornerRadius="4" Width="32" Height="32" Margin="8,0">
                         <TextBlock Text="{Binding PageIndex}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Button Command="{Binding NextPageCommand}" Content="▶" Width="32" Height="32" Background="White" BorderBrush="#E5E7EB" BorderThickness="1">
+                    <Button Command="{Binding NextPageCommand}" Content="▶" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">

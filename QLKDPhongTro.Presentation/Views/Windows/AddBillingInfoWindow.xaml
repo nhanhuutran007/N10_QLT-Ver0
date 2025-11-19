@@ -1,80 +1,179 @@
-<Window
-    x:Class="QLKDPhongTro.Presentation.Views.Windows.AddBillingInfoWindow"
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddBillingInfoWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Thêm thông tin thanh toán"
-    Height="580"
-    Width="650"
+    Title="Thêm thông tin thanh toán - Quản Lý Phòng Trọ"
+    Height="650" Width="700"
     WindowStartupLocation="CenterOwner"
     ResizeMode="NoResize"
     WindowStyle="None"
     AllowsTransparency="True"
     Background="Transparent"
+    FontFamily="Segoe UI"
+    TextOptions.TextFormattingMode="Display"
+    TextOptions.TextRenderingMode="ClearType"
     Icon="/Resources/Images/Logo.png"
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
-        <!-- Style chung cho các nhãn (TextBlock) -->
-        <Style x:Key="LabelStyle"
-                TargetType="TextBlock">
-            <Setter Property="FontWeight"
-                    Value="Medium"/>
-            <Setter Property="Foreground"
-                    Value="#3B4758"/>
-            <Setter Property="Margin"
-                    Value="0,12,0,5"/>
-        </Style>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
+        <SolidColorBrush x:Key="PrimaryDarkColor" Color="#059669"/>
+        <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="SecondaryDarkColor" Color="#2563EB"/>
+        <SolidColorBrush x:Key="AccentColor" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="WarningColor" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="ErrorColor" Color="#EF4444"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#1F2937"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="TextTertiary" Color="#9CA3AF"/>
+        <SolidColorBrush x:Key="BackgroundLight" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BackgroundLighter" Color="#F9FAFB"/>
+        <SolidColorBrush x:Key="BackgroundCard" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="BorderLightColor" Color="#F3F4F6"/>
 
-        <!-- Style chung cho các ô nhập liệu (TextBox) -->
-        <Style x:Key="InputFieldStyle"
-                TargetType="TextBox">
-            <Setter Property="Padding"
-                    Value="10"/>
-            <Setter Property="Background"
-                    Value="#F2F6FA"/>
-            <Setter Property="BorderThickness"
-                    Value="0"/>
-            <Setter Property="VerticalContentAlignment"
-                    Value="Center"/>
+        <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#10B981" Offset="0"/>
+            <GradientStop Color="#059669" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="SecondaryGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#3B82F6" Offset="0"/>
+            <GradientStop Color="#2563EB" Offset="1"/>
+        </LinearGradientBrush>
+
+        <DropShadowEffect x:Key="CardShadow" Color="#000000" Opacity="0.06" ShadowDepth="2" BlurRadius="12" Direction="270"/>
+        <DropShadowEffect x:Key="HoverShadow" Color="#000000" Opacity="0.12" ShadowDepth="4" BlurRadius="16" Direction="270"/>
+        <DropShadowEffect x:Key="ButtonShadow" Color="#000000" Opacity="0.1" ShadowDepth="1" BlurRadius="4" Direction="270"/>
+        <DropShadowEffect x:Key="WindowShadow" Color="#000000" Opacity="0.15" ShadowDepth="8" BlurRadius="20" Direction="270"/>
+
+        <Style TargetType="{x:Type Button}" x:Key="ModernPrimaryButton">
+            <Setter Property="Background" Value="{StaticResource SecondaryGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="20,0"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border CornerRadius="4"
-                                Background="{TemplateBinding Background}">
-                            <ScrollViewer x:Name="PART_ContentHost"/>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="Border" CornerRadius="8" Background="{TemplateBinding Background}" Effect="{StaticResource ButtonShadow}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Effect" Value="{StaticResource HoverShadow}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource SecondaryDarkColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <!-- Style chung cho các ô lựa chọn (ComboBox) -->
-        <Style x:Key="ComboBoxStyle"
-                TargetType="ComboBox">
-            <Setter Property="Padding"
-                    Value="8"/>
-            <Setter Property="Background"
-                    Value="#F2F6FA"/>
-            <Setter Property="BorderThickness"
-                    Value="0"/>
-            <Setter Property="VerticalContentAlignment"
-                    Value="Center"/>
+        <Style TargetType="Button" x:Key="CloseButtonStyle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource BackgroundLighter}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,16,0,8"/>
+        </Style>
+
+        <Style x:Key="InputFieldStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ReadOnlyInputFieldStyle" TargetType="TextBox" BasedOn="{StaticResource InputFieldStyle}">
+            <Setter Property="Background" Value="{StaticResource BackgroundLighter}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+
+        <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                </Trigger>
+                <Trigger Property="IsDropDownOpen" Value="True">
+                    <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+
+        <Style x:Key="CheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,20,0"/>
         </Style>
     </Window.Resources>
 
-    <!-- Border chính tạo nên giao diện cửa sổ với góc bo tròn và bóng đổ -->
     <Border CornerRadius="12"
-            Background="White"
-            Margin="10">
-        <Border.Effect>
-            <DropShadowEffect ShadowDepth="0"
-                    Color="#CCCCCC"
-                    Opacity="0.5"
-                    BlurRadius="10"/>
-        </Border.Effect>
+            Background="{StaticResource BackgroundLight}"
+            Margin="10"
+            Effect="{StaticResource WindowShadow}">
 
         <Grid>
             <Grid.RowDefinitions>
@@ -82,192 +181,186 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- PHẦN HEADER - CỐ ĐỊNH -->
-            <Grid Grid.Row="0" Margin="24,24,24,20">
-                <TextBlock Text="Thêm thông tin thanh toán"
-                        FontSize="18"
-                        FontWeight="Medium"
-                        Foreground="#3B4758"
-                        VerticalAlignment="Center"/>
-                <Button x:Name="CloseButton"
-                        Click="CloseButton_Click"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Width="32"
-                        Height="32"
-                        BorderThickness="0"
-                        Background="Transparent"
-                        Foreground="#586A84"
-                        ToolTip="Đóng">
-                    <TextBlock Text="✕"
-                            FontSize="16"
+            <Border Grid.Row="0" 
+                    Background="{StaticResource BackgroundLighter}"
+                    CornerRadius="12,12,0,0"
+                    BorderThickness="0,0,0,1"
+                    BorderBrush="{StaticResource BorderColor}"
+                    Padding="24,20">
+                <Grid>
+                    <TextBlock Text="Thêm thông tin thanh toán"
+                            FontSize="20"
+                            FontWeight="Bold"
+                            Foreground="{StaticResource TextPrimary}"
+                            VerticalAlignment="Center"/>
+                    <Button x:Name="CloseButton"
+                            Command="{Binding CancelCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Center"
-                            HorizontalAlignment="Center"/>
-                </Button>
-            </Grid>
+                            Style="{StaticResource CloseButtonStyle}"
+                            ToolTip="Đóng">
+                        <TextBlock Text="✕"
+                                FontSize="16"
+                                Foreground="{StaticResource TextSecondary}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"/>
+                    </Button>
+                </Grid>
+            </Border>
 
-            <!-- ScrollViewer để cuộn nội dung nếu không đủ chiều cao -->
             <ScrollViewer Grid.Row="1"
                     VerticalScrollBarVisibility="Auto"
-                    Margin="24,0,24,24">
+                    Padding="24">
                 <StackPanel>
-                    <!-- PHẦN THÔNG TIN CHUNG -->
-                    <TextBlock Text="Khách hàng"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Khách hàng" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="CustomerComboBox"
                             Style="{StaticResource ComboBoxStyle}"
-                            IsEditable="True"
-                            SelectionChanged="CustomerComboBox_SelectionChanged">
-                        <!-- ItemsSource sẽ được set trong code-behind -->
+                            IsEditable="True">
                     </ComboBox>
 
-                    <TextBlock Text="Mã hợp đồng"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Mã hợp đồng" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="ContractIdComboBox"
                             Style="{StaticResource ComboBoxStyle}"
-                            SelectionChanged="ContractIdComboBox_SelectionChanged">
-                        <!-- ItemsSource sẽ được set trong code-behind -->
+                            ItemsSource="{Binding Contracts}"
+                            SelectedItem="{Binding SelectedContract}"
+                            DisplayMemberPath="MaHopDong">
                     </ComboBox>
 
-                    <!-- Tên phòng tự động từ hợp đồng -->
-                    <TextBlock Text="Tên phòng"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Tên phòng" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="RoomNameTextBox"
-                            Style="{StaticResource InputFieldStyle}"
-                            IsReadOnly="True"
-                            Background="#F9FAFB"
-                            Foreground="#6B7280"
-                            ToolTip="Tên phòng được lấy tự động từ hợp đồng đã chọn"/>
+                             Text="{Binding RoomName}"
+                             Style="{StaticResource ReadOnlyInputFieldStyle}"
+                             IsReadOnly="True"
+                             ToolTip="Tên phòng được lấy tự động từ hợp đồng đã chọn"/>     
 
-                    <!-- PHẦN CHI PHÍ -->
-                    <TextBlock Text="Tiền thuê phòng"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Tiền thuê phòng" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienThueInput"
-                            Text="3500000"
+                            Text="{Binding Amount, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource InputFieldStyle}"/>
 
-                    <!-- Chỉ số và đơn giá điện -->
-                    <TextBlock Text="Chỉ số điện"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Chỉ số điện" Style="{StaticResource LabelStyle}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <TextBox x:Name="SoDienInput"
                                 Grid.Column="0"
+                                Text="{Binding SoDien, UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource InputFieldStyle}"
                                 ToolTip="Nhập chỉ số điện (kWh)"/>
                         <TextBlock Text="/"
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
-                                Foreground="#586A84"/>
+                                Foreground="{StaticResource TextTertiary}"
+                                Margin="8,0"/>
                         <TextBox x:Name="DonGiaDienInput"
                                 Grid.Column="2"
+                                Text="{Binding DonGiaDien, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource InputFieldStyle}"
                                 ToolTip="Nhập đơn giá điện (đồng/kWh)"/>
                     </Grid>
                     <TextBlock Text="(Ví dụ: 100 / 3500 = 350,000 đồng)"
-                            FontSize="11"
-                            Foreground="#888"
-                            Margin="0,2,0,0"/>
+                            FontSize="12"
+                            Foreground="{StaticResource TextTertiary}"
+                            Margin="0,4,0,0"/>
 
-                    <!-- Chỉ số và đơn giá nước -->
-                    <TextBlock Text="Chỉ số nước"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Chỉ số nước (Khoán)" Style="{StaticResource LabelStyle}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
+
                         <TextBox x:Name="SoNuocInput"
                                 Grid.Column="0"
-                                Style="{StaticResource InputFieldStyle}"
-                                ToolTip="Nhập chỉ số nước (m³)"/>
+                                Text="{Binding SoNuoc, UpdateSourceTrigger=PropertyChanged}"
+                                Style="{StaticResource ReadOnlyInputFieldStyle}"
+                                IsReadOnly="True"
+                                ToolTip="Mặc định theo phòng (1)"/>
+
                         <TextBlock Text="/"
                                 Grid.Column="1"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
-                                Foreground="#586A84"/>
+                                Foreground="{StaticResource TextTertiary}"
+                                Margin="8,0"/>
+
                         <TextBox x:Name="DonGiaNuocInput"
                                 Grid.Column="2"
-                                Style="{StaticResource InputFieldStyle}"
-                                ToolTip="Nhập đơn giá nước (đồng/m³)"/>
+                                Text="{Binding DonGiaNuoc, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
+                                Style="{StaticResource ReadOnlyInputFieldStyle}"
+                                IsReadOnly="True"
+                                ToolTip="Đơn giá khoán mặc định"/>
                     </Grid>
-                    <TextBlock Text="(Ví dụ: 10 / 15000 = 150,000 đồng)"
-                            FontSize="11"
-                            Foreground="#888"
-                            Margin="0,2,0,0"/>
+                    <TextBlock Text="(Cố định: 100,000 đồng/phòng)"
+                            FontSize="12"
+                            Foreground="{StaticResource TextTertiary}"
+                            Margin="0,4,0,0"/>
 
-                    <TextBlock Text="Tiền Internet"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Tiền Internet" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienInternetInput"
+                            Text="{Binding TienInternet, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource InputFieldStyle}"/>
 
-                    <TextBlock Text="Tiền vệ sinh"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Tiền vệ sinh" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienVeSinhInput"
+                            Text="{Binding TienVeSinh, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource InputFieldStyle}"/>
 
-                    <TextBlock Text="Tiền giữ xe"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Tiền giữ xe" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienGiuXeInput"
+                            Text="{Binding TienGiuXe, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource InputFieldStyle}"/>
 
-                    <TextBlock Text="Chi phí khác"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Chi phí khác" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="ChiPhiKhacInput"
+                            Text="{Binding ChiPhiKhac, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource InputFieldStyle}"/>
 
-                    <!-- PHẦN THIẾT LẬP -->
-                    <TextBlock Text="Ngày tạo"
-                            Style="{StaticResource LabelStyle}"/>
+                    <TextBlock Text="Ngày tạo" Style="{StaticResource LabelStyle}"/>
                     <DatePicker x:Name="CreatedDatePicker"
-                            Padding="8"
-                            Background="#F2F6FA"
-                            BorderThickness="0"/>
+                            SelectedDate="{Binding PaymentDate}"
+                            Style="{StaticResource DatePickerStyle}"/>
 
-                    <TextBlock Text="Thông báo qua"
+                    <TextBlock Text="Thông báo qua" 
                             Style="{StaticResource LabelStyle}"
-                            Margin="0,15,0,5"/>
+                            Margin="0,20,0,8"/>
                     <TextBlock Text="Khách hàng nhận thông báo thanh toán qua:"
-                            Foreground="#586A84"
-                            Margin="0,0,0,10"/>
+                            Foreground="{StaticResource TextSecondary}"
+                            FontSize="14"
+                            Margin="0,0,0,12"/>
                     <StackPanel Orientation="Horizontal">
                         <CheckBox Content="Trực tiếp"
                                 IsChecked="True"
-                                VerticalContentAlignment="Center"
-                                Margin="0,0,20,0"/>
+                                Style="{StaticResource CheckBoxStyle}"/>
                         <CheckBox Content="Email"
-                                VerticalContentAlignment="Center"/>
+                                Style="{StaticResource CheckBoxStyle}"/>
                     </StackPanel>
 
-                    <!-- Nút hành động -->
                     <Button x:Name="AddButton"
-                            Content="Thêm"
-                            Background="#319DFF"
-                            Foreground="White"
-                            Width="150"
-                            Height="45"
-                            FontSize="16"
-                            FontWeight="SemiBold"
-                            BorderThickness="0"
+                            Command="{Binding SavePaymentCommand}"
+                            Content="Thêm thông tin"
+                            Style="{StaticResource ModernPrimaryButton}"
+                            Width="160"
+                            Height="44"
+                            FontSize="14"
                             HorizontalAlignment="Right"
-                            Margin="0,25,0,0"
-                            Cursor="Hand"
-                            Click="AddButton_Click">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border CornerRadius="6"
-                                        Background="{TemplateBinding Background}">
-                                    <ContentPresenter VerticalAlignment="Center"
-                                            HorizontalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
+                            Margin="0,32,0,16"
+                            Cursor="Hand">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{StaticResource PrimaryDarkColor}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Resources>
                     </Button>
                 </StackPanel>
             </ScrollViewer>

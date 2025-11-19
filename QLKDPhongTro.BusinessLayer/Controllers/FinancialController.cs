@@ -20,9 +20,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         private readonly ITenantRepository _tenantRepository;
         private readonly GoogleFormService _googleFormService;
 
-        // Constants for electricity and water calculations
-        private const decimal DON_GIA_DIEN = 3500; // 3.500 VND/kWh
-        private const decimal DON_GIA_NUOC = 100000; // 100.000 VND/tháng
+        // Constants for fixed costs
+        private const decimal DON_GIA_DIEN = 3500;      // 3.500 VND/kWh
+        private const decimal DON_GIA_NUOC = 100000;    // 100.000 VND/tháng (Cố định)
+        private const decimal DON_GIA_INTERNET = 100000; // 100.000 VND/tháng (Cố định)
+        private const decimal DON_GIA_VE_SINH = 60000;   // 60.000 VND/tháng (Cố định)
+        private const decimal DON_GIA_GIU_XE = 120000;   // 120.000 VND/tháng (Cố định)
 
         public FinancialController(
             IPaymentRepository paymentRepository,
@@ -98,7 +101,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 if (contractsByHouse == null || contractsByHouse.Count == 0)
                     return null;
 
-                // Lọc các hợp đồng hiệu lực, nhóm theo MaNguoiThue, lấy HĐ mới nhất
                 var mostRecentPerTenant = contractsByHouse
                     .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
                     .GroupBy(c => c.MaNguoiThue)
@@ -121,7 +123,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 };
             }
 
-            // Nếu không có MaNha, dùng logic cũ (toàn bộ hệ thống)
             var result = await _contractRepository.GetMostRecentTenantWithDepositAsync();
             if (result == null) return null;
             return new RecentTenantInfoDto
@@ -137,7 +138,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         {
             var current = AuthController.CurrentUser;
 
-            // Nếu đang đăng nhập và có MaNha, chỉ lấy khách thuộc nhà đó
             if (current != null && current.MaNha > 0)
             {
                 var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
@@ -166,7 +166,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 }).ToList();
             }
 
-            // Nếu không có MaNha, dùng logic cũ (toàn bộ hệ thống)
             var list = await _contractRepository.GetMostRecentTenantsWithDepositAsync(count);
             return list.Select(x => new RecentTenantInfoDto
             {
@@ -194,11 +193,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 {
                     try
                     {
-                        // Tìm hợp đồng theo tên phòng
                         var contract = await FindContractByRoomNameAsync(debt.TenPhong);
                         if (contract == null)
                         {
-                            // Sửa lỗi: Tạo DebtCreationDto mới thay vì sử dụng debt hiện tại
                             errors.Add(new DebtCreationDto
                             {
                                 RoomName = debt.RoomName,
@@ -207,14 +204,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             continue;
                         }
 
-                        // Lấy chỉ số điện cũ từ payment gần nhất
                         var previousPayment = await GetLastPaymentByContractIdAsync(contract.MaHopDong);
                         var chiSoDienCu = previousPayment?.ChiSoDienMoi ?? 0;
 
-                        // Tính toán tiền điện theo logic mới
                         var tienDien = CalculateElectricityCost((double)chiSoDienCu, debt.ChiSoDienMoi);
 
-                        // Tạo payment mới
+                        // Tính tổng tiền với các khoản cố định
+                        var tongTien = contract.GiaThue + tienDien + DON_GIA_NUOC + DON_GIA_INTERNET + DON_GIA_VE_SINH + DON_GIA_GIU_XE;
+
                         var payment = new Payment
                         {
                             MaHopDong = contract.MaHopDong,
@@ -222,9 +219,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             ChiSoDienCu = chiSoDienCu,
                             ChiSoDienMoi = (decimal)debt.ChiSoDienMoi,
                             TienDien = tienDien,
-                            TienNuoc = DON_GIA_NUOC, // Nước cố định 100k
+                            TienNuoc = DON_GIA_NUOC,         // Cố định
+                            TienInternet = DON_GIA_INTERNET, // Cố định
+                            TienVeSinh = DON_GIA_VE_SINH,    // Cố định
+                            TienGiuXe = DON_GIA_GIU_XE,      // Cố định
+                            ChiPhiKhac = 0,
                             TienThue = contract.GiaThue,
-                            TongTien = contract.GiaThue + tienDien + DON_GIA_NUOC,
+                            TongTien = tongTien,
                             TrangThaiThanhToan = "Chưa trả",
                             NgayTao = DateTime.Now,
                             DonGiaDien = DON_GIA_DIEN,
@@ -276,18 +277,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
         }
 
-        /// <summary>
-        /// Tính tiền điện theo công thức: (chỉ số mới - chỉ số cũ) * 3.500 VND
-        /// </summary>
         public decimal CalculateElectricityCost(double chiSoCu, double chiSoMoi)
         {
             var mucTieuThu = Math.Max(0, chiSoMoi - chiSoCu);
             return (decimal)mucTieuThu * DON_GIA_DIEN;
         }
 
-        /// <summary>
-        /// Lấy tất cả thanh toán
-        /// </summary>
         public async Task<List<PaymentDto>> GetAllPaymentsAsync()
         {
             List<DataLayer.Models.Payment> payments;
@@ -307,10 +302,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ThangNam = p.ThangNam,
                 TienThue = p.TienThue ?? 0,
                 TienDien = p.TienDien ?? 0,
-                TienNuoc = p.TienNuoc ?? 0,
-                TienInternet = p.TienInternet ?? 0,
-                TienVeSinh = p.TienVeSinh ?? 0,
-                TienGiuXe = p.TienGiuXe ?? 0,
+                TienNuoc = p.TienNuoc ?? DON_GIA_NUOC,
+                TienInternet = p.TienInternet ?? DON_GIA_INTERNET, 
+                TienVeSinh = p.TienVeSinh ?? DON_GIA_VE_SINH,      
+                TienGiuXe = p.TienGiuXe ?? DON_GIA_GIU_XE,
                 ChiPhiKhac = p.ChiPhiKhac ?? 0,
                 TongTien = p.TongTien,
                 TrangThaiThanhToan = p.TrangThaiThanhToan,
@@ -319,9 +314,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }).ToList();
         }
 
-        /// <summary>
-        /// Lấy thanh toán theo ID
-        /// </summary>
         public async Task<PaymentDto?> GetPaymentByIdAsync(int maThanhToan)
         {
             var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
@@ -346,29 +338,26 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Ghi nhận tiền thuê hàng tháng với logic tính điện nước mới
+        /// Ghi nhận tiền thuê hàng tháng với logic tính điện nước và dịch vụ CỐ ĐỊNH
         /// </summary>
         public async Task<ValidationResult> CreatePaymentAsync(CreatePaymentDto dto)
         {
-            // Kiểm tra hợp đồng tồn tại
             var contract = await _contractRepository.GetByIdAsync(dto.MaHopDong);
             if (contract == null)
             {
                 return new ValidationResult(false, "Hợp đồng không tồn tại");
             }
 
-            // Kiểm tra đã có thanh toán cho tháng này chưa
             var existingPayments = await _paymentRepository.GetAllAsync();
             if (existingPayments.Any(p => p.MaHopDong == dto.MaHopDong && p.ThangNam == dto.ThangNam))
             {
                 return new ValidationResult(false, "Đã có thanh toán cho tháng này");
             }
 
-            // Tìm số điện tháng trước từ thanh toán gần nhất
             var previousPayment = await GetLastPaymentByContractIdAsync(dto.MaHopDong);
             decimal? soDienThangTruoc = previousPayment?.ChiSoDienMoi;
 
-            // === TÍNH TOÁN TIỀN ĐIỆN THEO LOGIC MỚI ===
+            // === TÍNH TOÁN TIỀN ĐIỆN ===
             decimal tienDien = 0;
             if (dto.SoDien > 0 && soDienThangTruoc.HasValue)
             {
@@ -377,12 +366,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 {
                     return new ValidationResult(false, "Số điện tháng này không thể nhỏ hơn số điện tháng trước");
                 }
-
                 tienDien = soDienTieuThu * DON_GIA_DIEN;
             }
 
-            // === TIỀN NƯỚC CỐ ĐỊNH ===
+            // === ÁP DỤNG CÁC KHOẢN PHÍ CỐ ĐỊNH ===
             decimal tienNuoc = DON_GIA_NUOC;
+            decimal tienInternet = DON_GIA_INTERNET;
+            decimal tienVeSinh = DON_GIA_VE_SINH;
+            decimal tienGiuXe = DON_GIA_GIU_XE;
 
             var payment = new Payment
             {
@@ -391,29 +382,28 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienThue = dto.TienThue,
                 TienDien = tienDien,
                 TienNuoc = tienNuoc,
-                TienInternet = dto.TienInternet,
-                TienVeSinh = dto.TienVeSinh,
-                TienGiuXe = dto.TienGiuXe,
+                TienInternet = tienInternet, // Sử dụng giá cố định
+                TienVeSinh = tienVeSinh,     // Sử dụng giá cố định
+                TienGiuXe = tienGiuXe,       // Sử dụng giá cố định
                 ChiPhiKhac = dto.ChiPhiKhac,
                 SoDien = dto.SoDien,
                 ChiSoDienCu = soDienThangTruoc,
                 ChiSoDienMoi = dto.SoDien,
-                SoNuoc = 1, // Đánh dấu đã tính tiền nước
+                SoNuoc = 1,
                 DonGiaDien = DON_GIA_DIEN,
                 DonGiaNuoc = DON_GIA_NUOC,
                 TrangThaiThanhToan = "Chưa trả",
-                NgayThanhToan = null,
-                TongTien = CalculateTotalAmount(dto, tienDien, tienNuoc)
+                NgayThanhToan = null
             };
+
+            // Tính tổng tiền dựa trên đối tượng payment đã gán giá trị cố định
+            payment.TongTien = CalculateTotalAmount(payment);
 
             var success = await _paymentRepository.CreateAsync(payment);
             return new ValidationResult(success,
                 success ? "Ghi nhận tiền thuê thành công" : "Ghi nhận tiền thuê thất bại");
         }
 
-        /// <summary>
-        /// Ghi nhận chi phí phát sinh
-        /// </summary>
         public async Task<ValidationResult> CreateExpenseAsync(ExpenseDto dto)
         {
             var payment = await _paymentRepository.GetByIdAsync(dto.MaThanhToan);
@@ -422,8 +412,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
-            // Tạo chi phí mới (cần có bảng Expenses riêng)
-            // Tạm thởi cập nhật vào payment
             switch (dto.LoaiChiPhi?.ToLower())
             {
                 case "điện":
@@ -446,7 +434,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     break;
             }
 
-            // Cập nhật tổng tiền
             payment.TongTien = CalculateTotalAmount(payment);
 
             var success = await _paymentRepository.UpdateAsync(payment);
@@ -454,9 +441,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 success ? "Ghi nhận chi phí thành công" : "Ghi nhận chi phí thất bại");
         }
 
-        /// <summary>
-        /// Thanh toán tiền thuê (sử dụng ở một số nơi cũ)
-        /// </summary>
         public async Task<ValidationResult> PayRentAsync(PayRentDto dto)
         {
             var payment = await _paymentRepository.GetByIdAsync(dto.MaThanhToan);
@@ -478,9 +462,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 success ? "Thanh toán thành công" : "Thanh toán thất bại");
         }
 
-        /// <summary>
-        /// Cập nhật trạng thái thanh toán (Đã trả/Chưa trả) và set lại tiền cọc nếu cần
-        /// </summary>
         public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
         {
             var normalized = (trangThaiChuan ?? string.Empty).Trim();
@@ -503,7 +484,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             decimal depositUsed = 0;
 
-            // Nếu đánh dấu Đã trả và có hợp đồng thì áp dụng tiền cọc một phần hoặc toàn bộ
             if (isPaid && payment.MaHopDong.HasValue)
             {
                 var contract = await _contractRepository.GetByIdAsync(payment.MaHopDong.Value);
@@ -513,17 +493,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     var currentDeposit = contract.TienCoc;
 
                     depositUsed = Math.Min(currentDeposit, tamTinh);
-
-                    // Cập nhật tổng tiền phải trả sau khi áp dụng cọc
                     payment.TongTien = tamTinh - depositUsed;
 
-                    // Giảm tiền cọc tương ứng, nếu còn dư thì giữ lại
                     contract.TienCoc = currentDeposit - depositUsed;
                     await _contractRepository.UpdateHopDongAsync(contract);
                 }
             }
 
-            // Nếu chưa trả hoặc không có hợp đồng, đảm bảo TongTien phản ánh tổng các khoản phí
             if (!isPaid)
             {
                 payment.TongTien = CalculateTotalAmount(payment);
@@ -535,9 +511,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 success ? "Cập nhật trạng thái thanh toán thành công" : "Cập nhật trạng thái thanh toán thất bại");
         }
 
-        /// <summary>
-        /// Xóa thanh toán theo ID
-        /// </summary>
         public async Task<ValidationResult> DeletePaymentAsync(int maThanhToan)
         {
             var success = await _paymentRepository.DeleteAsync(maThanhToan);
@@ -545,9 +518,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 success ? "Xóa thanh toán thành công" : "Xóa thanh toán thất bại");
         }
 
-        /// <summary>
-        /// Lấy thông tin chi tiết hóa đơn thanh toán
-        /// </summary>
         public async Task<InvoiceDetailDto?> GetInvoiceDetailAsync(int maThanhToan)
         {
             var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
@@ -561,7 +531,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ? await _tenantRepository.GetByIdAsync(contract.MaNguoiThue)
                 : null;
 
-            // Tạo DTO trước để dùng được thuộc tính TamTinh
             var dto = new InvoiceDetailDto
             {
                 MaThanhToan = payment.MaThanhToan,
@@ -577,39 +546,27 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienThue = payment.TienThue ?? 0,
                 TienDien = payment.TienDien ?? 0,
                 TienNuoc = payment.TienNuoc ?? 0,
-                TienInternet = payment.TienInternet ?? 0,
-                TienVeSinh = payment.TienVeSinh ?? 0,
-                TienGiuXe = payment.TienGiuXe ?? 0,
+                TienInternet = payment.TienInternet ?? DON_GIA_INTERNET,
+                TienVeSinh = payment.TienVeSinh ?? DON_GIA_VE_SINH,
+                TienGiuXe = payment.TienGiuXe ?? DON_GIA_GIU_XE,
                 ChiPhiKhac = payment.ChiPhiKhac ?? 0,
                 DonGiaDien = payment.DonGiaDien ?? DON_GIA_DIEN,
                 DonGiaNuoc = payment.DonGiaNuoc ?? DON_GIA_NUOC,
-                // Gán chỉ số điện tháng trước và tháng này
                 SoDienThangTruoc = payment.ChiSoDienCu,
                 SoDien = payment.SoDien,
                 SoNuoc = payment.SoNuoc
             };
 
-            // Tiền cọc hiện có để hiển thị
             var currentDeposit = contract?.TienCoc ?? 0;
             dto.TienCocHienCo = currentDeposit;
-
-            // Khấu trừ thực tế dùng để tính tổng: min(Tạm tính, tiền cọc hiện tại)
             dto.KhauTru = Math.Min(dto.TamTinh, currentDeposit);
-
-            // Tiền cọc còn dư sau khi trừ vào hóa đơn (không âm)
             dto.TienCocConDu = Math.Max(0, currentDeposit - dto.KhauTru);
 
             return dto;
         }
 
-        /// <summary>
-        /// Lấy báo cáo công nợ
-        /// </summary>
         public async Task<List<DebtReportDto>> GetDebtReportAsync(string? thangNam = null)
         {
-            /// <summary>
-            /// Lấy báo cáo công nợ
-            /// </summary>
             var current = AuthController.CurrentUser;
             var allPayments = (current != null && current.MaNha > 0)
                 ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
@@ -617,18 +574,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả" &&
                 (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam));
 
-            // Map từ model sang DTO
             var result = new List<DebtReportDto>();
             foreach (var debt in debts)
             {
-                // Lấy thông tin hợp đồng
                 var contract = await _contractRepository.GetByIdAsync(debt.MaHopDong ?? 0);
                 if (contract == null) continue;
 
-                // Lấy thông tin phòng
                 var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
-
-                // Lấy thông tin người thuê
                 var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
 
                 result.Add(new DebtReportDto
@@ -650,9 +602,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return result;
         }
 
-        /// <summary>
-        /// Tổng hợp công nợ tự động
-        /// </summary>
         public async Task<ValidationResult> AutoGenerateDebtsAsync()
         {
             try
@@ -688,15 +637,15 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             ThangNam = currentMonth,
                             TienThue = room?.GiaCoBan ?? 0,
                             TienDien = 0,
-                            TienNuoc = 0,
-                            TienInternet = 0,
-                            TienVeSinh = 0,
-                            TienGiuXe = 0,
+                            TienNuoc = DON_GIA_NUOC,       // Cố định
+                            TienInternet = DON_GIA_INTERNET, // Cố định
+                            TienVeSinh = DON_GIA_VE_SINH,    // Cố định
+                            TienGiuXe = DON_GIA_GIU_XE,      // Cố định
                             ChiPhiKhac = 0,
                             TrangThaiThanhToan = "Chưa trả",
-                            NgayThanhToan = null,
-                            TongTien = room?.GiaCoBan ?? 0
+                            NgayThanhToan = null
                         };
+                        payment.TongTien = CalculateTotalAmount(payment);
 
                         await _paymentRepository.CreateAsync(payment);
                         count++;
@@ -711,9 +660,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
         }
 
-        /// <summary>
-        /// Lấy thống kê tài chính tổng quan
-        /// </summary>
         public async Task<FinancialStatsDto> GetFinancialStatsAsync(int? nam = null)
         {
             var currentYear = nam ?? DateTime.Now.Year;
@@ -722,7 +668,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
                 : await _paymentRepository.GetAllAsync();
 
-            // Nếu có tham số năm, lọc theo năm, nếu không dùng toàn bộ dữ liệu
             IEnumerable<DataLayer.Models.Payment> scopePayments = allPayments;
             if (nam.HasValue)
             {
@@ -732,29 +677,24 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var stats = new FinancialStatsDto();
 
-            // Tổng thu nhập: tổng TongTien các khoản đã trả
             stats.TongThuNhap = scopePayments
                 .Where(p => string.Equals(p.TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
                 .Sum(p => p.TongTien);
 
-            // Tổng chi phí: cộng các khoản chi phí trong phạm vi
             stats.TongChiPhi = scopePayments.Sum(p => (p.TienDien ?? 0) + (p.TienNuoc ?? 0) +
                                                       (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) +
                                                       (p.TienGiuXe ?? 0) + (p.ChiPhiKhac ?? 0));
 
-            // Tổng công nợ: các khoản chưa trả
             stats.TongCongNo = scopePayments
                 .Where(p => string.Equals(p.TrangThaiThanhToan, "Chưa trả", StringComparison.OrdinalIgnoreCase))
                 .Sum(p => p.TongTien);
 
-            // Số phòng nợ: số hợp đồng có khoản nợ trong phạm vi
             stats.SoPhongNo = scopePayments
                 .Where(p => string.Equals(p.TrangThaiThanhToan, "Chưa trả", StringComparison.OrdinalIgnoreCase))
                 .Select(p => p.MaHopDong)
                 .Distinct()
                 .Count();
 
-            // Số khách đang thuê: đếm khách có hợp đồng TrangThai = "Hiệu lực" (một khách có nhiều HĐ vẫn tính 1)
             IEnumerable<DataLayer.Models.Contract> activeContracts;
             if (current != null && current.MaNha > 0)
             {
@@ -772,7 +712,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 .Count();
             stats.SoKhachDangThue = validActiveTenants;
 
-            // Số phòng đang thuê: đếm phòng có trạng thái "Đang thuê"
             var roomsAll = (current != null && current.MaNha > 0)
                 ? await _roomRepository.GetAllByMaNhaAsync(current.MaNha)
                 : await _roomRepository.GetAllAsync();
@@ -782,7 +721,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             stats.LoiNhuan = stats.TongThuNhap - stats.TongChiPhi;
             stats.TyLeLoiNhuan = stats.TongThuNhap > 0 ? (stats.LoiNhuan / stats.TongThuNhap) * 100 : 0;
 
-            // Thống kê theo tháng chỉ khi có tham số năm
             if (nam.HasValue)
             {
                 for (int month = 1; month <= 12; month++)
@@ -809,9 +747,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return stats;
         }
 
-        /// <summary>
-        /// Cập nhật đơn giá/các khoản phí với logic tính điện nước mới
-        /// </summary>
         public async Task<bool> UpdateInvoiceUnitPricesAsync(
             int maThanhToan,
             decimal? soDienThangTruoc,
@@ -826,7 +761,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
             if (payment == null) return false;
 
-            // === TÍNH TOÁN TIỀN ĐIỆN THEO LOGIC MỚI ===
             decimal tienDien = 0;
             if (soDienThangNay.HasValue && soDienThangTruoc.HasValue)
             {
@@ -843,8 +777,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 payment.ChiSoDienMoi = soDienThangNay;
             }
 
-            // === TIỀN NƯỚC CỐ ĐỊNH ===
-            decimal tienNuoc = DON_GIA_NUOC;
+            // Cập nhật các khoản cố định nếu cần thiết (hoặc giữ nguyên logic cho phép sửa tay)
+            // Ở đây giữ nguyên tham số truyền vào để cho phép điều chỉnh thủ công nếu có ngoại lệ
+            payment.TienNuoc = DON_GIA_NUOC;
             payment.DonGiaNuoc = DON_GIA_NUOC;
             payment.SoNuoc = 1;
 
@@ -854,27 +789,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             payment.TienGiuXe = tienGiuXe ?? payment.TienGiuXe;
             payment.ChiPhiKhac = chiPhiKhac ?? payment.ChiPhiKhac;
 
-            // Cập nhật tiền điện và nước đã tính toán
             payment.TienDien = tienDien;
-            payment.TienNuoc = tienNuoc;
 
-            var tamTinh = (payment.TienThue ?? 0)
-                          + tienDien
-                          + tienNuoc
-                          + (payment.TienInternet ?? 0)
-                          + (payment.TienVeSinh ?? 0)
-                          + (payment.TienGiuXe ?? 0)
-                          + (payment.ChiPhiKhac ?? 0);
-
-            // Lưu tổng tiền trước khi áp dụng cọc. Tiền cọc sẽ được trừ khi xác nhận đã thanh toán.
-            payment.TongTien = tamTinh;
+            payment.TongTien = CalculateTotalAmount(payment);
 
             return await _paymentRepository.UpdateAsync(payment);
         }
 
-        /// <summary>
-        /// Lấy lịch sử giao dịch
-        /// </summary>
         public async Task<List<TransactionHistoryDto>> GetTransactionHistoryAsync(
             DateTime? tuNgay = null, DateTime? denNgay = null)
         {
@@ -911,9 +832,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return result;
         }
 
-        /// <summary>
-        /// Lấy danh sách hợp đồng đang hiệu lực, trả về dạng DTO, có lọc theo MaNha nếu có
-        /// </summary>
         public async Task<List<ContractDto>> GetActiveContractDtosAsync()
         {
             var current = AuthController.CurrentUser;
@@ -964,13 +882,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 .Where(p => p.MaHopDong == maHopDong)
                 .OrderByDescending(p => p.ThangNam)
                 .FirstOrDefault();
-        }
-
-        // Overload method để tính tổng tiền với tiền điện và nước đã tính toán
-        private static decimal CalculateTotalAmount(CreatePaymentDto dto, decimal tienDien, decimal tienNuoc)
-        {
-            return dto.TienThue + tienDien + tienNuoc + dto.TienInternet +
-                   dto.TienVeSinh + dto.TienGiuXe + dto.ChiPhiKhac;
         }
 
         private static decimal CalculateTotalAmount(Payment payment)

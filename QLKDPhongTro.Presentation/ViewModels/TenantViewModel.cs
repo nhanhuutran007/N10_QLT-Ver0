@@ -80,7 +80,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             UpdatePagination(resetPageIndex: true);
         }
-        
+
         // Điều hướng trang
         [RelayCommand]
         private void NextPage()
