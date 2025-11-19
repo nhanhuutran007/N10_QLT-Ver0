@@ -17,19 +17,35 @@ CREATE TABLE IF NOT EXISTS `Nha` (
   PRIMARY KEY (`MaNha`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Bảng Admin
+-- Bảng Admin mở rộng
 CREATE TABLE IF NOT EXISTS `Admin` (
   `MaAdmin` int(11) NOT NULL AUTO_INCREMENT,
   `TenDangNhap` varchar(50) NOT NULL,
   `MatKhau` varchar(255) NOT NULL,
   `Email` varchar(100) DEFAULT NULL,
   `SoDienThoai` varchar(15) DEFAULT NULL,
+
+  -- Thông tin cá nhân bổ sung
+  `HoTen` varchar(100) DEFAULT NULL,
+  `NgaySinh` date DEFAULT NULL,
+  `CCCD` varchar(20) DEFAULT NULL,
+  `NgayCap` date DEFAULT NULL,
+  `NoiCap` varchar(100) DEFAULT NULL,
+  `DiaChi` varchar(255) DEFAULT NULL,
+
+  -- Quan hệ nhà
   `MaNha` int(11) NOT NULL,
+
   PRIMARY KEY (`MaAdmin`),
   UNIQUE KEY `TenDangNhap` (`TenDangNhap`),
+
+  -- Mỗi nhà chỉ có 1 admin phụ trách
   UNIQUE KEY `UK_Admin_MaNha` (`MaNha`),
-  CONSTRAINT `FK_Admin_Nha` FOREIGN KEY (`MaNha`) REFERENCES `Nha` (`MaNha`) ON DELETE RESTRICT
+
+  CONSTRAINT `FK_Admin_Nha` FOREIGN KEY (`MaNha`) 
+        REFERENCES `Nha` (`MaNha`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 -- Bảng Phòng
 CREATE TABLE IF NOT EXISTS `Phong` (
@@ -67,6 +83,22 @@ CREATE TABLE IF NOT EXISTS `NguoiThue` (
   CONSTRAINT `FK_NguoiThue_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Bảng Hợp Đồng
+CREATE TABLE IF NOT EXISTS `HopDong` (
+  `MaHopDong` int(11) NOT NULL AUTO_INCREMENT,
+  `MaNguoiThue` int(11) DEFAULT NULL,
+  `MaPhong` int(11) DEFAULT NULL,
+  `NgayBatDau` date NOT NULL,
+  `NgayKetThuc` date NOT NULL,
+  `TienCoc` decimal(18,0) DEFAULT 0 CHECK (`TienCoc` >= 0),
+  `FileHopDong` varchar(255) DEFAULT NULL,
+  `TrangThai` enum('Hiệu lực','Hết hạn','Hủy','Sắp hết hạn') DEFAULT 'Hiệu lực',
+  PRIMARY KEY (`MaHopDong`),
+  KEY `MaNguoiThue` (`MaNguoiThue`),
+  KEY `MaPhong` (`MaPhong`),
+  CONSTRAINT `FK_HopDong_NguoiThue` FOREIGN KEY (`MaNguoiThue`) REFERENCES `NguoiThue` (`MaNguoiThue`) ON DELETE CASCADE,
+  CONSTRAINT `FK_HopDong_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 -- Bảng Hợp Đồng
 CREATE TABLE IF NOT EXISTS `HopDong` (
   `MaHopDong` int(11) NOT NULL AUTO_INCREMENT,
