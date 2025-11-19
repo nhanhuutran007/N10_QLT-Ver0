@@ -189,6 +189,47 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public decimal TotalProfit { get; private set; }
         public decimal TotalDebt { get; private set; }
 
+        private decimal _waterFeeInput = 100_000m;
+        public decimal WaterFeeInput
+        {
+            get => _waterFeeInput;
+            set
+            {
+                var sanitized = Math.Max(0, value);
+                if (_waterFeeInput == sanitized) return;
+                _waterFeeInput = sanitized;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _internetFeeInput = 100_000m;
+        public decimal InternetFeeInput
+        {
+            get => _internetFeeInput;
+            set
+            {
+                var sanitized = Math.Max(0, value);
+                if (_internetFeeInput == sanitized) return;
+                _internetFeeInput = sanitized;
+                OnPropertyChanged();
+            }
+        }
+
+        private decimal _sanitationFeeInput = 60_000m;
+        public decimal SanitationFeeInput
+        {
+            get => _sanitationFeeInput;
+            set
+            {
+                var sanitized = Math.Max(0, value);
+                if (_sanitationFeeInput == sanitized) return;
+                _sanitationFeeInput = sanitized;
+                OnPropertyChanged();
+            }
+        }
+
+        private DebtFeeSettings? _lastFeeSettings;
+
         public List<int> PageNumbers
         {
             get
@@ -551,20 +592,27 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
 
+                var feeSettings = GetActiveFeeSettings();
                 // FIX: Dùng 'TenPhong'
-                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue);
+                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue, feeSettings);
                 if (result.IsSuccess)
                 {
                     ShowMessageRequested?.Invoke(this,
                         $"Đã giải quyết sự cố cho phòng {debt.TenPhong}. Giá trị xác nhận: {confirmedValue}");
 
-                    // Cập nhật UI
-                    debt.TrangThaiThanhToan = "Đã xác nhận";
-                    debt.GhiChu = $"Đã xác nhận: {confirmedValue}";
-                    debt.ComparisonInfo = $"Xác nhận: {confirmedValue}";
+                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
+                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == debt.TenPhong);
+                    if (itemToRemove != null)
+                    {
+                        Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            Debts.Remove(itemToRemove);
+                        });
+                    }
 
-                    // Refresh dữ liệu
-                    await LoadViewDataAsync();
+                    // Reload từ database để đảm bảo dữ liệu chính xác
+                    await Task.Delay(300); // Đợi một chút để database commit
+                    await ReloadDebtsAsync();
                 }
                 else
                 {
@@ -589,8 +637,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 IsLoading = true;
                 ShowMessageRequested?.Invoke(this, "Đang xử lý và đối chiếu dữ liệu từ Google Form...");
 
+                var feeSettings = CaptureFeeSettings();
+                _lastFeeSettings = feeSettings;
+
                 // Xử lý công nợ từ Google Form
-                var results = await _debtProcessingService.ProcessDebtsAsync();
+                var results = await _debtProcessingService.ProcessDebtsAsync(feeSettings);
 
                 // Phân loại kết quả
                 var validDebts = results.Where(r => r.IsProcessed && !r.IsDiscrepancy).ToList();
@@ -612,7 +663,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     reportList.Add(new DebtReportDto
                     {
                         TenPhong = item.RoomName,
-                        ThangNam = DateTime.Now.ToString("MM/yyyy"),
+                        ThangNam = item.Timestamp.ToString("MM/yyyy"),
                         TongTien = item.TotalDebt,
                         TrangThaiThanhToan = "Cảnh báo",
                         GhiChu = item.WarningNote,
@@ -627,7 +678,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     reportList.Add(new DebtReportDto
                     {
                         TenPhong = item.RoomName,
-                        ThangNam = DateTime.Now.ToString("MM/yyyy"),
+                        ThangNam = item.Timestamp.ToString("MM/yyyy"),
                         TongTien = item.TotalDebt,
                         TrangThaiThanhToan = "Chờ duyệt",
                         GhiChu = "Số liệu khớp",
@@ -647,12 +698,18 @@ namespace QLKDPhongTro.Presentation.ViewModels
                                  $"⚠️ {discrepancyDebts.Count} phòng có sai lệch (Cần kiểm tra)\n" +
                                  $"❌ {errorDebts.Count} lỗi xử lý";
 
+                if (errorDebts.Count > 0)
+                {
+                    var errorDetails = string.Join("\n", errorDebts.Select(e => $"  • {e.RoomName}: {e.ErrorMessage}"));
+                    summary += $"\n\nChi tiết lỗi:\n{errorDetails}";
+                }
+
                 ShowMessageRequested?.Invoke(this, summary);
 
                 // Tự động tạo payment records cho các bản ghi hợp lệ
                 if (validDebts.Count > 0)
                 {
-                    var createdCount = await _debtProcessingService.CreatePaymentRecordsFromDebtsAsync(validDebts);
+                    var createdCount = await _debtProcessingService.CreatePaymentRecordsFromDebtsAsync(validDebts, feeSettings);
                     ShowMessageRequested?.Invoke(this, $"Đã tự động tạo {createdCount} bản ghi thanh toán hợp lệ.");
                 }
 
@@ -737,20 +794,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 IsLoading = true;
 
                 // FIX: Dùng 'TenPhong'
-                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue);
+                var feeSettings = GetActiveFeeSettings();
+                var result = await _debtProcessingService.ResolveDiscrepancyAsync(debt.TenPhong, confirmedValue, feeSettings);
                 if (result.IsSuccess)
                 {
                     ShowMessageRequested?.Invoke(this, $"Đã giải quyết sự cố cho phòng {debt.TenPhong} với giá trị {confirmedValue}");
 
-                    // Cập nhật UI
-                    debt.TrangThaiThanhToan = "Đã xác nhận";
-                    debt.GhiChu = $"Đã xác nhận: {confirmedValue}";
-                    debt.ComparisonInfo = $"Xác nhận: {confirmedValue}";
+                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
+                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == debt.TenPhong);
+                    if (itemToRemove != null)
+                    {
+                        Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            Debts.Remove(itemToRemove);
+                        });
+                    }
 
-                    // Refresh data
-                    await LoadViewDataAsync();
-
+                    // Reset selected discrepancy trước khi reload
                     SelectedDebtDiscrepancy = null;
+
+                    // Reload từ database để đảm bảo dữ liệu chính xác
+                    await Task.Delay(300); // Đợi một chút để database commit
+                    await ReloadDebtsAsync();
                 }
                 else
                 {
@@ -772,6 +837,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             if (SelectedDebtDiscrepancy == null) return;
 
+            var roomNameToRemove = SelectedDebtDiscrepancy.RoomName;
+
             try
             {
                 IsLoading = true;
@@ -780,18 +847,30 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 decimal valueToUse = SelectedDebtDiscrepancy.ConfirmedValue > 0 ?
                     SelectedDebtDiscrepancy.ConfirmedValue : SelectedDebtDiscrepancy.ManualValue;
 
+                var feeSettings = GetActiveFeeSettings();
                 var result = await _debtProcessingService.ResolveDiscrepancyAsync(
-                    SelectedDebtDiscrepancy.RoomName, valueToUse);
+                    SelectedDebtDiscrepancy.RoomName, valueToUse, feeSettings);
 
                 if (result.IsSuccess)
                 {
                     ShowMessageRequested?.Invoke(this, "Đã giải quyết sự cố thành công!");
 
-                    // Cập nhật lại danh sách
-                    await LoadViewDataAsync();
+                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
+                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == roomNameToRemove);
+                    if (itemToRemove != null)
+                    {
+                        Application.Current?.Dispatcher.Invoke(() =>
+                        {
+                            Debts.Remove(itemToRemove);
+                        });
+                    }
 
-                    // Reset selected discrepancy
+                    // Reset selected discrepancy trước khi reload
                     SelectedDebtDiscrepancy = null;
+
+                    // Reload từ database để đảm bảo dữ liệu chính xác
+                    await Task.Delay(300); // Đợi một chút để database commit
+                    await ReloadDebtsAsync();
                 }
                 else
                 {
@@ -1210,6 +1289,34 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        // Phương thức reload debts từ database (không bị block bởi _isProcessingGoogleForm)
+        private async Task ReloadDebtsAsync()
+        {
+            try
+            {
+                if (_financialController != null)
+                {
+                    var debts = await _financialController.GetDebtReportAsync().ConfigureAwait(false);
+                    var dispatcher = Application.Current?.Dispatcher;
+                    if (dispatcher != null && !dispatcher.CheckAccess())
+                    {
+                        await dispatcher.InvokeAsync(() =>
+                        {
+                            Debts = new ObservableCollection<DebtReportDto>(debts);
+                        });
+                    }
+                    else
+                    {
+                        Debts = new ObservableCollection<DebtReportDto>(debts);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi tải lại dữ liệu: {ex.Message}");
+            }
+        }
+
         private async Task LoadViewDataAsync()
         {
             if (_isProcessingGoogleForm && _currentView == "Debts")
@@ -1266,6 +1373,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
         #endregion
 
         #region Private Helpers
+
+        private DebtFeeSettings CaptureFeeSettings()
+        {
+            return new DebtFeeSettings
+            {
+                WaterFee = WaterFeeInput,
+                InternetFee = InternetFeeInput,
+                SanitationFee = SanitationFeeInput
+            };
+        }
+
+        private DebtFeeSettings GetActiveFeeSettings()
+        {
+                return _lastFeeSettings ?? CaptureFeeSettings();
+        }
 
         private FinancialRecordDto MapPaymentToFinancialRecord(PaymentDto payment)
         {
@@ -1330,6 +1452,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 trangThaiText = "Hoàn thành";
                 trangThaiColor = "#319DFF";
                 progressValue = 100;
+            }
+            else if (payment.TrangThaiThanhToan == "Trả một phần")
+            {
+                trangThai = "Partial";
+                trangThaiText = "Trả một phần";
+                trangThaiColor = "#F59E0B";
+                progressValue = 60;
             }
             else if (payment.TrangThaiThanhToan == "Chưa trả")
             {
