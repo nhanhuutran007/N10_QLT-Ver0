@@ -348,6 +348,26 @@
                                  AcceptsReturn="True" 
                                  TextWrapping="Wrap"
                                  Text="{Binding GhiChu, Mode=TwoWay}"/>
+
+                        <TextBlock Text="Nơi lưu hợp đồng" Style="{StaticResource LabelStyle}"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0"
+                                     Style="{StaticResource InputFieldStyle}"
+                                     Height="44"
+                                     IsReadOnly="True"
+                                     Text="{Binding ContractSavePath, Mode=TwoWay}"/>
+                            <Button Grid.Column="1"
+                                    Content="Chọn nơi lưu"
+                                    Margin="12,0,0,0"
+                                    Height="44"
+                                    Padding="16,0"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SelectSavePathCommand}"/>
+                        </Grid>
                     </StackPanel>
                 </ScrollViewer>
 

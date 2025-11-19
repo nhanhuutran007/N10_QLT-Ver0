@@ -41,16 +41,14 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             // Phòng & hợp đồng
             string TenPhong, string DiaChiPhong, decimal DienTich, string TrangThietBi,
-            decimal GiaThue, string GiaBangChu, string NgayTraTien, int ThoiHanNam, DateTime NgayGiaoNha
+            decimal GiaThue, string GiaBangChu, string NgayTraTien, int ThoiHanNam, DateTime NgayGiaoNha,
+            string? preferredDocxPath = null
         )
         {
             if (!File.Exists(TemplatePath))
                 throw new FileNotFoundException($"Không tìm thấy file mẫu hợp đồng: {TemplatePath}");
 
-            Directory.CreateDirectory(OutputFolder);
-
-            var safeTenKhach = string.Concat(TenB.Split(Path.GetInvalidFileNameChars()));
-            var outputDocx = Path.Combine(OutputFolder, $"{safeTenKhach}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+            var outputDocx = ResolveOutputPath(preferredDocxPath, TenB);
 
             using (var doc = DocX.Load(TemplatePath))
             {
@@ -96,6 +94,37 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             var pdfPath = TryConvertDocxToPdf(outputDocx);
             return new ContractFileResult(outputDocx, pdfPath);
+        }
+
+        private static string ResolveOutputPath(string? preferredDocxPath, string tenantName)
+        {
+            if (string.IsNullOrWhiteSpace(preferredDocxPath))
+            {
+                Directory.CreateDirectory(OutputFolder);
+                var safeTenant = SanitizeSegment(tenantName);
+                return Path.Combine(OutputFolder, $"{safeTenant}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+            }
+
+            var docxPath = Path.ChangeExtension(preferredDocxPath, ".docx");
+            var directory = Path.GetDirectoryName(docxPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                throw new ArgumentException("Đường dẫn lưu hợp đồng không hợp lệ.", nameof(preferredDocxPath));
+            }
+
+            Directory.CreateDirectory(directory);
+            return docxPath;
+        }
+
+        private static string SanitizeSegment(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "HopDong";
+            }
+
+            var sanitized = string.Concat(value.Split(Path.GetInvalidFileNameChars()));
+            return string.IsNullOrWhiteSpace(sanitized) ? "HopDong" : sanitized;
         }
 
         private static string? TryConvertDocxToPdf(string docxPath)

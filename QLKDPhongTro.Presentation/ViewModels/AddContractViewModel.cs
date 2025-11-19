@@ -1,11 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -19,6 +21,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private readonly RentedRoomRepository _roomRepo;
 
         private readonly ContractDto _editingContract; // null = thêm mới, khác null = cập nhật
+        private readonly string _defaultContractFolder;
+        private bool _hasCustomSavePath;
 
         public event EventHandler<bool> RequestClose;
 
@@ -63,6 +67,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         private string _formTitle = "Thêm hợp đồng mới";
 
+        [ObservableProperty]
+        private string _contractSavePath;
+
         // ---- CONSTRUCTOR ----
         public AddContractViewModel(ContractController contractController, ContractDto editingContract = null)
         {
@@ -70,6 +77,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _tenantRepo = new TenantRepository();
             _roomRepo = new RentedRoomRepository();
             _editingContract = editingContract;
+            _defaultContractFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "HopDongPhongTro");
+
+            Directory.CreateDirectory(_defaultContractFolder);
+            _hasCustomSavePath = false;
+            ContractSavePath = GenerateDefaultSavePath();
 
             _ = LoadLookupsAsync();
         }
@@ -100,6 +114,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
                     TienCoc = _editingContract.TienCoc.ToString();
+                    if (!string.IsNullOrWhiteSpace(_editingContract.FileHopDong))
+                    {
+                        ContractSavePath = _editingContract.FileHopDong;
+                        _hasCustomSavePath = true;
+                    }
                 }
             }
             catch (Exception ex)
@@ -110,6 +129,33 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         [RelayCommand]
         private void Cancel() => RequestClose?.Invoke(this, false);
+
+        [RelayCommand]
+        private void SelectSavePath()
+        {
+            try
+            {
+                var dialog = new SaveFileDialog
+                {
+                    Title = "Chọn nơi lưu hợp đồng",
+                    Filter = "Word Document (*.docx)|*.docx",
+                    FileName = Path.GetFileName(ContractSavePath) ?? "HopDong.docx",
+                    InitialDirectory = Path.GetDirectoryName(ContractSavePath) ?? _defaultContractFolder,
+                    AddExtension = true,
+                    DefaultExt = ".docx"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    ContractSavePath = dialog.FileName;
+                    _hasCustomSavePath = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Không thể chọn nơi lưu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
 
         [RelayCommand]
         private async Task SaveAsync()
@@ -137,6 +183,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (!decimal.TryParse(TienCoc, out decimal tienCocValue))
             {
                 MessageBox.Show("⚠️ Tiền cọc không hợp lệ.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(ContractSavePath))
+            {
+                MessageBox.Show("⚠️ Vui lòng chọn nơi lưu hợp đồng.");
+                return;
+            }
+
+            var normalizedSavePath = Path.ChangeExtension(ContractSavePath, ".docx");
+            var saveDirectory = Path.GetDirectoryName(normalizedSavePath);
+            if (string.IsNullOrWhiteSpace(saveDirectory))
+            {
+                MessageBox.Show("⚠️ Đường dẫn lưu hợp đồng không hợp lệ.");
                 return;
             }
 
@@ -189,7 +248,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
                     tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
                     tenPhong, diaChiPhong, dienTich, trangThietBi,
-                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha
+                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha,
+                    normalizedSavePath
                 );
                 string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
 
@@ -297,6 +357,34 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
 
             return result.Trim();
+        }
+
+        partial void OnSelectedNguoiThueChanged(NguoiThueTmp value) => RefreshSuggestedSavePath();
+
+        partial void OnSelectedPhongChanged(PhongTmp value) => RefreshSuggestedSavePath();
+
+        private void RefreshSuggestedSavePath()
+        {
+            if (_hasCustomSavePath)
+                return;
+
+            ContractSavePath = GenerateDefaultSavePath();
+        }
+
+        private string GenerateDefaultSavePath()
+        {
+            var tenantPart = SanitizeFileSegment(SelectedNguoiThue?.HoTen, "NguoiThue");
+            var roomPart = SanitizeFileSegment(SelectedPhong?.TenPhong, "Phong");
+            var fileName = $"{tenantPart}_{roomPart}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+            return Path.Combine(_defaultContractFolder, fileName);
+        }
+
+        private static string SanitizeFileSegment(string value, string fallback)
+        {
+            var source = string.IsNullOrWhiteSpace(value) ? fallback : value;
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var cleaned = new string(source.Where(c => !invalidChars.Contains(c)).ToArray());
+            return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
         }
     }
 }
