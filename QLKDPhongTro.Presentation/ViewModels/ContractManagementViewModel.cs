@@ -27,7 +27,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(EditContractCommand))]
+        [NotifyCanExecuteChangedFor(nameof(DeleteContractCommand))]
         private ContractDto _selectedContract;
+
+        partial void OnSelectedContractChanged(ContractDto? value)
+        {
+            // Đảm bảo các command được cập nhật khi SelectedContract thay đổi
+            EditContractCommand.NotifyCanExecuteChanged();
+            DeleteContractCommand.NotifyCanExecuteChanged();
+        }
 
         // Sắp xếp: newest | oldest (bind từ ComboBox SelectedValue Tag)
         [ObservableProperty]
@@ -69,7 +78,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             Contracts = new ObservableCollection<ContractDto>(sorted);
         }
 
-        private void AddContract()
+        [RelayCommand]
+        private async Task AddContract()
         {
             try
             {
@@ -81,7 +91,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 bool? result = win.ShowDialog();
                 if (result == true)
-                    _ = LoadContractsAsync();
+                    await LoadContractsAsync();
             }
             catch (Exception ex)
             {
@@ -90,7 +100,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
-        private void EditContract()
+        private async Task EditContract()
         {
             if (SelectedContract == null)
             {
@@ -108,7 +118,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 bool? result = win.ShowDialog();
                 if (result == true)
-                    _ = LoadContractsAsync();
+                    await LoadContractsAsync();
             }
             catch (Exception ex)
             {
@@ -118,7 +128,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         // 🔹 Lệnh: Xóa hợp đồng
         [RelayCommand(CanExecute = nameof(CanEditOrDelete))]
-        private void DeleteContract()
+        private async Task DeleteContract()
         {
             if (SelectedContract == null) return;
 
@@ -132,9 +142,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 try
                 {
-                    _ = _contractController.DeleteHopDongAsync(SelectedContract.MaHopDong);
+                    await _contractController.DeleteHopDongAsync(SelectedContract.MaHopDong);
                     MessageBox.Show("✅ Hợp đồng đã được xóa thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
-                    _ = LoadContractsAsync();
+                    await LoadContractsAsync();
                 }
                 catch (Exception ex)
                 {

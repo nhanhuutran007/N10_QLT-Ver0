@@ -223,8 +223,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         tenantEmail = "ngochai1521@gmail.com";
                     }
 
-                    // Tính số ngày còn lại
-                    int daysRemaining = (contract.NgayKetThuc - DateTime.Now).Days;
+                    int daysRemaining = (contract.NgayKetThuc.Date - DateTime.Now.Date).Days;
+
+
 
                     // Tạo nội dung email cho người thuê
                     string tenantEmailBody = $@"Kính gửi {contract.TenNguoiThue ?? "Quý khách hàng"},

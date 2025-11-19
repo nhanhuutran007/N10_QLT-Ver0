@@ -221,6 +221,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     _editingContract.NgayBatDau = NgayBatDau.Value;
                     _editingContract.NgayKetThuc = NgayKetThuc.Value;
                     _editingContract.TienCoc = tienCocValue;
+                    _editingContract.FileHopDong = filePath;
 
                     await _contractController.UpdateHopDongAsync(_editingContract);
                     MessageBox.Show("✅ Hợp đồng đã được cập nhật thành công!");
