@@ -53,6 +53,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Chỉ hiển thị mã nhà, không kèm địa chỉ
             MaNhaTextBox.Text = house.MaNha.ToString();
             DiaChiTextBox.Text = house.DiaChi;
+            TinhThanhTextBox.Text = house.TinhThanh;
             TongSoPhongTextBox.Text = house.TongSoPhong.ToString();
             GhiChuTextBox.Text = house.GhiChu;
         }
@@ -65,6 +66,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 TongSoPhongTextBox.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
                 TongSoPhongTextBox.ClearValue(System.Windows.Controls.Control.BorderThicknessProperty);
                 TongSoPhongTextBox.ToolTip = null;
+                TinhThanhTextBox.ClearValue(System.Windows.Controls.Control.BorderBrushProperty);
+                TinhThanhTextBox.ClearValue(System.Windows.Controls.Control.BorderThicknessProperty);
 
                 if (!int.TryParse(TongSoPhongTextBox.Text, out var tongSoPhong))
                 {
@@ -72,6 +75,15 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     TongSoPhongTextBox.BorderThickness = new Thickness(1);
                     TongSoPhongTextBox.ToolTip = "Tổng số phòng phải là số nguyên từ 1 đến 10.";
                     MessageBox.Show("Tổng số phòng phải là số nguyên.", "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var tinhThanh = TinhThanhTextBox.Text?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(tinhThanh))
+                {
+                    MessageBox.Show("Vui lòng nhập Tỉnh/Thành phố.", "Lỗi dữ liệu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    TinhThanhTextBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                    TinhThanhTextBox.BorderThickness = new Thickness(1);
                     return;
                 }
 
@@ -104,6 +116,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 {
                     MaNha = _maNha,
                     DiaChi = DiaChiTextBox.Text?.Trim() ?? string.Empty,
+                    TinhThanh = tinhThanh,
                     TongSoPhong = tongSoPhong,
                     GhiChu = GhiChuTextBox.Text?.Trim() ?? string.Empty
                 };

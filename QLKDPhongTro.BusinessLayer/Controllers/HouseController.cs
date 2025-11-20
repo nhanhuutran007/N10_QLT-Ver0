@@ -24,6 +24,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             {
                 MaNha = h.MaNha,
                 DiaChi = h.DiaChi,
+                TinhThanh = h.TinhThanh,
                 TongSoPhong = h.TongSoPhong,
                 GhiChu = h.GhiChu
             }).ToList();
@@ -35,6 +36,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             {
                 MaNha = dto.MaNha,
                 DiaChi = dto.DiaChi,
+                TinhThanh = dto.TinhThanh,
                 TongSoPhong = dto.TongSoPhong,
                 GhiChu = dto.GhiChu
             };
@@ -47,6 +49,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             {
                 MaNha = dto.MaNha,
                 DiaChi = dto.DiaChi,
+                TinhThanh = dto.TinhThanh,
                 TongSoPhong = dto.TongSoPhong,
                 GhiChu = dto.GhiChu
             };

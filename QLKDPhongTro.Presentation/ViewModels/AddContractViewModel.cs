@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Services;
+using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
 using System.Collections.ObjectModel;
@@ -64,7 +65,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _tienCoc;
 
         [ObservableProperty]
-        private string _ghiChu;
+        private string _dieuKhoanRieng;
 
         [ObservableProperty]
         private string _formTitle = "Thêm hợp đồng mới";
@@ -105,7 +106,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 foreach (var t in tenants)
                     NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = t.MaKhachThue, HoTen = t.HoTen });
 
-                foreach (var r in rooms)
+                var availableRooms = rooms
+                    .Where(r => !IsRoomCurrentlyRented(r) ||
+                                (IsEditMode && _editingContract != null && r.MaPhong == _editingContract.MaPhong));
+
+                foreach (var r in availableRooms)
                     PhongList.Add(new PhongTmp { MaPhong = r.MaPhong, TenPhong = r.TenPhong });
 
                 // Nếu đang chỉnh sửa, gán lại dữ liệu
@@ -118,6 +123,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
                     TienCoc = _editingContract.TienCoc.ToString();
+                    DieuKhoanRieng = _editingContract.GhiChu;
                     if (!string.IsNullOrWhiteSpace(_editingContract.FileHopDong))
                     {
                         ContractSavePath = _editingContract.FileHopDong;
@@ -235,9 +241,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     ? admin.DiaChi
                     : (house?.DiaChi ?? "Đang cập nhật");
                 string dienThoaiA = string.IsNullOrWhiteSpace(admin.SoDienThoai) ? "Đang cập nhật" : admin.SoDienThoai;
-                string noiTaoHopDong = !string.IsNullOrWhiteSpace(house?.DiaChi)
-                    ? house.DiaChi
-                    : (admin.DiaChi ?? "TP.HCM");
+                string noiTaoHopDong = !string.IsNullOrWhiteSpace(house?.TinhThanh)
+                    ? house.TinhThanh
+                    : (!string.IsNullOrWhiteSpace(house?.DiaChi)
+                        ? house.DiaChi
+                        : (admin.DiaChi ?? "TP.HCM"));
 
                 // === Bên B (lấy từ người thuê) ===
                 string tenB = tenant.HoTen;
@@ -260,6 +268,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 string ngayTraTien = "Ngày 05 hàng tháng";
                 int thoiHanNam = Math.Max(1, NgayKetThuc.Value.Year - NgayBatDau.Value.Year);
                 DateTime ngayGiaoNha = NgayBatDau.Value;
+                string dieuKhoanRieng = string.IsNullOrWhiteSpace(DieuKhoanRieng) ? null : DieuKhoanRieng.Trim();
 
                 // === Tạo file hợp đồng DOCX + PDF ===
                 var contractFiles = ContractTemplateService.CreateContractFile(
@@ -267,7 +276,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
                     tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
                     tenPhong, diaChiPhong, dienTich, trangThietBi,
-                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha,
+                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha, dieuKhoanRieng,
                     normalizedSavePath
                 );
                 string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
@@ -283,7 +292,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         NgayKetThuc = NgayKetThuc.Value,
                         TienCoc = tienCocValue,
                         FileHopDong = filePath,
-                        TrangThai = "Hiệu lực"
+                        TrangThai = "Hiệu lực",
+                        GhiChu = dieuKhoanRieng
                     };
 
                     int maHopDong = await _contractController.CreateHopDongAsync(newContract);
@@ -301,6 +311,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     _editingContract.NgayKetThuc = NgayKetThuc.Value;
                     _editingContract.TienCoc = tienCocValue;
                     _editingContract.FileHopDong = filePath;
+                    _editingContract.GhiChu = dieuKhoanRieng;
 
                     await _contractController.UpdateHopDongAsync(_editingContract);
                     MessageBox.Show("✅ Hợp đồng đã được cập nhật thành công!");
@@ -404,6 +415,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             var invalidChars = Path.GetInvalidFileNameChars();
             var cleaned = new string(source.Where(c => !invalidChars.Contains(c)).ToArray());
             return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
+        }
+
+        private static bool IsRoomCurrentlyRented(RentedRoom room)
+        {
+            if (room == null)
+                return false;
+
+            var status = room.TrangThai?.Trim();
+            if (string.IsNullOrEmpty(status))
+                return false;
+
+            var normalized = status.ToLowerInvariant();
+            return normalized == "đang thuê" || normalized == "dang thue" || normalized == "bảo trì" || normalized == "bao tri";
         }
     }
 }

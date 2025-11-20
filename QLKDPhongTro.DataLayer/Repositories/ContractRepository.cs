@@ -25,9 +25,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SELECT 
                     hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
                     hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
+                    hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                     p.TenPhong, p.GiaCoBan, 
-                    nt.HoTen
+                    nt.HoTen AS TenNguoiThue
                 FROM HopDong hd
                 LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                 LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -49,8 +49,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using var connection = new MySqlConnection(_connectionString);
             var command = new MySqlCommand(
                 @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
-                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
-                         p.TenPhong, p.GiaCoBan, nt.HoTen
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai, hd.GhiChu,
+                         p.TenPhong, p.GiaCoBan, nt.HoTen AS TenNguoiThue
                   FROM HopDong hd
                   LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                   LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -72,8 +72,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             using var connection = new MySqlConnection(_connectionString);
             var sql = @"INSERT INTO HopDong 
-                  (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai) 
-                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai);
+                  (MaNguoiThue, MaPhong, NgayBatDau, NgayKetThuc, TienCoc, FileHopDong, TrangThai, GhiChu) 
+                  VALUES (@MaNguoiThue, @MaPhong, @NgayBatDau, @NgayKetThuc, @TienCoc, @FileHopDong, @TrangThai, @GhiChu);
                   SELECT LAST_INSERT_ID();";
 
             using var command = new MySqlCommand(sql, connection);
@@ -84,6 +84,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             command.Parameters.AddWithValue("@TienCoc", contract.TienCoc);
             command.Parameters.AddWithValue("@FileHopDong", contract.FileHopDong ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@TrangThai", contract.TrangThai ?? "Hiệu lực");
+            command.Parameters.AddWithValue("@GhiChu", string.IsNullOrWhiteSpace(contract.GhiChu) ? (object)DBNull.Value : contract.GhiChu);
 
             await connection.OpenAsync();
             var result = await command.ExecuteScalarAsync();
@@ -101,7 +102,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     NgayKetThuc = @NgayKetThuc,
                     TienCoc = @TienCoc,
                     FileHopDong = @FileHopDong,
-                    TrangThai = @TrangThai
+                    TrangThai = @TrangThai,
+                    GhiChu = @GhiChu
                 WHERE MaHopDong = @MaHopDong";
 
             using var command = new MySqlCommand(sql, connection);
@@ -113,6 +115,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             command.Parameters.AddWithValue("@TienCoc", contract.TienCoc);
             command.Parameters.AddWithValue("@FileHopDong", contract.FileHopDong ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@TrangThai", contract.TrangThai);
+            command.Parameters.AddWithValue("@GhiChu", string.IsNullOrWhiteSpace(contract.GhiChu) ? (object)DBNull.Value : contract.GhiChu);
 
             await connection.OpenAsync();
             await command.ExecuteNonQueryAsync();
@@ -141,9 +144,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SELECT 
                     hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
                     hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
+                    hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                     p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
+                    nt.HoTen AS TenNguoiThue
                 FROM HopDong hd
                 LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                 LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -169,9 +172,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SELECT 
                     hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
                     hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
+                    hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                     p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
+                    nt.HoTen AS TenNguoiThue
                 FROM HopDong hd
                 LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                 LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -197,9 +200,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SELECT 
                     hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
                     hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
+                    hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                     p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
+                    nt.HoTen AS TenNguoiThue
                 FROM HopDong hd
                 LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                 LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -224,8 +227,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using var connection = new MySqlConnection(_connectionString);
             var command = new MySqlCommand(
                 @"SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
-                         hd.TienCoc, hd.FileHopDong, hd.TrangThai,
-                         p.TenPhong, p.GiaCoBan, nt.HoTen
+                         hd.TienCoc, hd.FileHopDong, hd.TrangThai, hd.GhiChu,
+                         p.TenPhong, p.GiaCoBan, nt.HoTen AS TenNguoiThue
                   FROM HopDong hd
                   LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                   LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -253,9 +256,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SELECT 
                     hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, 
                     hd.NgayBatDau, hd.NgayKetThuc, hd.TienCoc, 
-                    hd.FileHopDong, hd.TrangThai,
+                    hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                     p.TenPhong, p.GiaCoBan,
-                    nt.HoTen
+                    nt.HoTen AS TenNguoiThue
                 FROM HopDong hd
                 LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                 LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -313,7 +316,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var sql = @"
                     SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
-                           hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                           hd.TienCoc, hd.FileHopDong, hd.TrangThai, hd.GhiChu,
                            nt.HoTen AS TenNguoiThue, p.TenPhong, p.GiaCoBan
                     FROM HopDong hd
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
@@ -353,6 +356,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
                                 FileHopDong = reader.IsDBNull(reader.GetOrdinal("FileHopDong")) ? null : reader.GetString("FileHopDong"),
                                 TrangThai = reader.IsDBNull(reader.GetOrdinal("TrangThai")) ? null : reader.GetString("TrangThai"),
+                                GhiChu = reader.IsDBNull(reader.GetOrdinal("GhiChu")) ? null : reader.GetString("GhiChu"),
 
                                 TenNguoiThue = reader.IsDBNull(reader.GetOrdinal("TenNguoiThue")) ? "" : reader.GetString("TenNguoiThue"),
                                 TenPhong = reader.IsDBNull(reader.GetOrdinal("TenPhong")) ? "" : reader.GetString("TenPhong")
@@ -368,26 +372,37 @@ namespace QLKDPhongTro.DataLayer.Repositories
         // HELPERS
         // ============================================================
 
-        private Contract ReadContractWithJoin(DbDataReader reader)
+        private static Contract ReadContractWithJoin(DbDataReader reader)
         {
-            // Lưu ý: Index phải khớp với câu SELECT ở các hàm trên (GetAll, GetById...)
-            // 0: MaHopDong, 1: MaNguoiThue, 2: MaPhong, 3: NgayBatDau, 4: NgayKetThuc, 
-            // 5: TienCoc, 6: FileHopDong, 7: TrangThai, 8: TenPhong, 9: GiaCoBan, 10: HoTen
+            int ordMaHopDong = reader.GetOrdinal("MaHopDong");
+            int ordMaNguoiThue = reader.GetOrdinal("MaNguoiThue");
+            int ordMaPhong = reader.GetOrdinal("MaPhong");
+            int ordNgayBatDau = reader.GetOrdinal("NgayBatDau");
+            int ordNgayKetThuc = reader.GetOrdinal("NgayKetThuc");
+            int ordTienCoc = reader.GetOrdinal("TienCoc");
+            int ordFileHopDong = reader.GetOrdinal("FileHopDong");
+            int ordTrangThai = reader.GetOrdinal("TrangThai");
+            int ordGhiChu = reader.GetOrdinal("GhiChu");
+            int ordTenPhong = reader.GetOrdinal("TenPhong");
+            int ordGiaCoBan = reader.GetOrdinal("GiaCoBan");
+            int ordTenNguoiThue = reader.GetOrdinal("TenNguoiThue");
+
             return new Contract
             {
-                MaHopDong = reader.GetInt32(0),
-                MaNguoiThue = reader.GetInt32(1),
-                MaPhong = reader.GetInt32(2),
-                NgayBatDau = reader.GetDateTime(3),
-                NgayKetThuc = reader.GetDateTime(4),
-                TienCoc = reader.GetDecimal(5),
-                FileHopDong = reader.IsDBNull(6) ? null : reader.GetString(6),
-                TrangThai = reader.IsDBNull(7) ? "Hiệu lực" : reader.GetString(7),
+                MaHopDong = reader.GetInt32(ordMaHopDong),
+                MaNguoiThue = reader.GetInt32(ordMaNguoiThue),
+                MaPhong = reader.GetInt32(ordMaPhong),
+                NgayBatDau = reader.GetDateTime(ordNgayBatDau),
+                NgayKetThuc = reader.GetDateTime(ordNgayKetThuc),
+                TienCoc = reader.GetDecimal(ordTienCoc),
+                FileHopDong = reader.IsDBNull(ordFileHopDong) ? null : reader.GetString(ordFileHopDong),
+                TrangThai = reader.IsDBNull(ordTrangThai) ? "Hiệu lực" : reader.GetString(ordTrangThai),
+                GhiChu = reader.IsDBNull(ordGhiChu) ? null : reader.GetString(ordGhiChu),
 
                 // Map các trường mở rộng từ JOIN
-                TenPhong = reader.IsDBNull(8) ? "" : reader.GetString(8),
-                GiaThue = reader.IsDBNull(9) ? 0 : reader.GetDecimal(9),
-                TenNguoiThue = reader.IsDBNull(10) ? "" : reader.GetString(10)
+                TenPhong = reader.IsDBNull(ordTenPhong) ? "" : reader.GetString(ordTenPhong),
+                GiaThue = reader.IsDBNull(ordGiaCoBan) ? 0 : reader.GetDecimal(ordGiaCoBan),
+                TenNguoiThue = reader.IsDBNull(ordTenNguoiThue) ? "" : reader.GetString(ordTenNguoiThue)
             };
         }
     }

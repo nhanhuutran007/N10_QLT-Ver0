@@ -117,16 +117,17 @@ INSERT INTO `NguoiThue` (`MaNguoiThue`, `HoTen`, `SoDienThoai`, `CCCD`, `NgayBat
 CREATE TABLE `Nha` (
   `MaNha` int(11) NOT NULL,
   `DiaChi` varchar(255) NOT NULL,
+  `TinhThanh` varchar(100) NOT NULL,
   `TongSoPhong` int(11) DEFAULT NULL CHECK (`TongSoPhong` between 1 and 10),
   `GhiChu` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `Nha` (`MaNha`, `DiaChi`, `TongSoPhong`, `GhiChu`) VALUES
-(1, '123 Đường A, Quận 1, TP.HCM', 5, 'Nhà trung tâm'),
-(2, '456 Đường B, Quận 7, TP.HCM', 6, 'Gần khu công nghệ'),
-(3, '789 Đường C, Bình Thạnh', 4, 'Khu yên tĩnh'),
-(4, '12 Nguyễn Văn Linh, Quận 7', 8, 'Gần siêu thị'),
-(5, '99 Lý Thường Kiệt, Quận 10', 10, 'Gần trường học');
+INSERT INTO `Nha` (`MaNha`, `DiaChi`, `TinhThanh`, `TongSoPhong`, `GhiChu`) VALUES
+(1, '123 Đường A, Quận 1, TP.HCM', 'TP.HCM', 5, 'Nhà trung tâm'),
+(2, '456 Đường B, Quận 7, TP.HCM', 'TP.HCM', 6, 'Gần khu công nghệ'),
+(3, '789 Đường C, Bình Thạnh', 'TP.HCM', 4, 'Khu yên tĩnh'),
+(4, '12 Nguyễn Văn Linh, Quận 7', 'TP.HCM', 8, 'Gần siêu thị'),
+(5, '99 Lý Thường Kiệt, Quận 10', 'TP.HCM', 10, 'Gần trường học');
 
 CREATE TABLE `Phong` (
   `MaPhong` int(11) NOT NULL,

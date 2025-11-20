@@ -17,11 +17,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Nha", connection);
+                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TinhThanh, TongSoPhong, GhiChu FROM Nha", connection);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     var maNhaOrdinal = reader.GetOrdinal("MaNha");
                     var diaChiOrdinal = reader.GetOrdinal("DiaChi");
+                    var tinhThanhOrdinal = reader.GetOrdinal("TinhThanh");
                     var tongSoPhongOrdinal = reader.GetOrdinal("TongSoPhong");
                     var ghiChuOrdinal = reader.GetOrdinal("GhiChu");
 
@@ -31,6 +32,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal),
                             DiaChi = reader.IsDBNull(diaChiOrdinal) ? string.Empty : reader.GetString(diaChiOrdinal),
+                            TinhThanh = reader.IsDBNull(tinhThanhOrdinal) ? string.Empty : reader.GetString(tinhThanhOrdinal),
                             TongSoPhong = reader.IsDBNull(tongSoPhongOrdinal) ? 0 : reader.GetInt32(tongSoPhongOrdinal),
                             GhiChu = reader.IsDBNull(ghiChuOrdinal) ? string.Empty : reader.GetString(ghiChuOrdinal)
                         };
@@ -48,12 +50,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TongSoPhong, GhiChu FROM Nha WHERE MaNha=@MaNha", connection);
+                var cmd = new MySqlCommand("SELECT MaNha, DiaChi, TinhThanh, TongSoPhong, GhiChu FROM Nha WHERE MaNha=@MaNha", connection);
                 cmd.Parameters.AddWithValue("@MaNha", maNha);
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     var maNhaOrdinal = reader.GetOrdinal("MaNha");
                     var diaChiOrdinal = reader.GetOrdinal("DiaChi");
+                    var tinhThanhOrdinal = reader.GetOrdinal("TinhThanh");
                     var tongSoPhongOrdinal = reader.GetOrdinal("TongSoPhong");
                     var ghiChuOrdinal = reader.GetOrdinal("GhiChu");
 
@@ -63,6 +66,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         {
                             MaNha = reader.IsDBNull(maNhaOrdinal) ? 0 : reader.GetInt32(maNhaOrdinal),
                             DiaChi = reader.IsDBNull(diaChiOrdinal) ? string.Empty : reader.GetString(diaChiOrdinal),
+                            TinhThanh = reader.IsDBNull(tinhThanhOrdinal) ? string.Empty : reader.GetString(tinhThanhOrdinal),
                             TongSoPhong = reader.IsDBNull(tongSoPhongOrdinal) ? 0 : reader.GetInt32(tongSoPhongOrdinal),
                             GhiChu = reader.IsDBNull(ghiChuOrdinal) ? string.Empty : reader.GetString(ghiChuOrdinal)
                         };
@@ -77,8 +81,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new MySqlCommand("INSERT INTO Nha(DiaChi, TongSoPhong, GhiChu) VALUES(@DiaChi, @TongSoPhong, @GhiChu)", connection);
+                var cmd = new MySqlCommand("INSERT INTO Nha(DiaChi, TinhThanh, TongSoPhong, GhiChu) VALUES(@DiaChi, @TinhThanh, @TongSoPhong, @GhiChu)", connection);
                 cmd.Parameters.AddWithValue("@DiaChi", house.DiaChi);
+                cmd.Parameters.AddWithValue("@TinhThanh", house.TinhThanh);
                 cmd.Parameters.AddWithValue("@TongSoPhong", house.TongSoPhong);
                 cmd.Parameters.AddWithValue("@GhiChu", house.GhiChu);
                 return await cmd.ExecuteNonQueryAsync() > 0;
@@ -90,8 +95,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
                 await connection.OpenAsync();
-                var cmd = new MySqlCommand("UPDATE Nha SET DiaChi=@DiaChi, TongSoPhong=@TongSoPhong, GhiChu=@GhiChu WHERE MaNha=@MaNha", connection);
+                var cmd = new MySqlCommand("UPDATE Nha SET DiaChi=@DiaChi, TinhThanh=@TinhThanh, TongSoPhong=@TongSoPhong, GhiChu=@GhiChu WHERE MaNha=@MaNha", connection);
                 cmd.Parameters.AddWithValue("@DiaChi", house.DiaChi);
+                cmd.Parameters.AddWithValue("@TinhThanh", house.TinhThanh);
                 cmd.Parameters.AddWithValue("@TongSoPhong", house.TongSoPhong);
                 cmd.Parameters.AddWithValue("@GhiChu", house.GhiChu);
                 cmd.Parameters.AddWithValue("@MaNha", house.MaNha);

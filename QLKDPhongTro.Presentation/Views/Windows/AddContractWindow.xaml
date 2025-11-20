@@ -342,12 +342,12 @@
                                  Height="44"
                                  Text="{Binding TienCoc, Mode=TwoWay}"/>
 
-                        <TextBlock Text="Ghi chú (tùy chọn)" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="Điều khoản riêng (tùy chọn)" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource InputFieldStyle}" 
                                  Height="100" 
                                  AcceptsReturn="True" 
                                  TextWrapping="Wrap"
-                                 Text="{Binding GhiChu, Mode=TwoWay}"/>
+                                 Text="{Binding DieuKhoanRieng, Mode=TwoWay}"/>
 
                         <TextBlock Text="Nơi lưu hợp đồng" Style="{StaticResource LabelStyle}"/>
                         <Grid>

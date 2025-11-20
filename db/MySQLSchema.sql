@@ -36,17 +36,18 @@ VALUES (
 CREATE TABLE IF NOT EXISTS Nha (
   MaNha INT AUTO_INCREMENT PRIMARY KEY,
   DiaChi VARCHAR(255) NOT NULL,
+  TinhThanh VARCHAR(100) NOT NULL,
   TongSoPhong INT CHECK (TongSoPhong BETWEEN 1 AND 10),
   GhiChu VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO Nha (DiaChi, TongSoPhong, GhiChu)
+INSERT IGNORE INTO Nha (DiaChi, TinhThanh, TongSoPhong, GhiChu)
 VALUES
-('123 Đường A, Quận 1, TP.HCM', 5, 'Nhà trung tâm'),
-('456 Đường B, Quận 7, TP.HCM', 6, 'Gần khu công nghệ'),
-('789 Đường C, Bình Thạnh', 4, 'Khu yên tĩnh'),
-('12 Nguyễn Văn Linh, Quận 7', 8, 'Gần siêu thị'),
-('99 Lý Thường Kiệt, Quận 10', 10, 'Gần trường học');
+('123 Đường A, Quận 1, TP.HCM', 'TP.HCM', 5, 'Nhà trung tâm'),
+('456 Đường B, Quận 7, TP.HCM', 'TP.HCM', 6, 'Gần khu công nghệ'),
+('789 Đường C, Bình Thạnh', 'TP.HCM', 4, 'Khu yên tĩnh'),
+('12 Nguyễn Văn Linh, Quận 7', 'TP.HCM', 8, 'Gần siêu thị'),
+('99 Lý Thường Kiệt, Quận 10', 'TP.HCM', 10, 'Gần trường học');
 
 -- Thêm khóa ngoại cho Admin sau khi bảng Nha đã tồn tại
 ALTER TABLE Admin

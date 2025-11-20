@@ -59,6 +59,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 // Lấy từ JOIN trong repository
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
@@ -80,6 +81,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
+                GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
             };
@@ -98,6 +100,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
             }).ToList();
@@ -113,7 +116,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai
+                TrangThai = dto.TrangThai,
+                GhiChu = dto.GhiChu
             };
             return await _repository.AddHopDongAsync(entity);
         }
@@ -129,7 +133,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai
+                TrangThai = dto.TrangThai,
+                GhiChu = dto.GhiChu
             };
             await _repository.UpdateHopDongAsync(entity);
         }
@@ -152,6 +157,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
             }).ToList();
@@ -182,6 +188,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
+                GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
             };
