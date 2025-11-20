@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
+using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories; // Đảm bảo bạn có using này
 using System;
 using System.Threading.Tasks;
@@ -21,6 +22,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         [ObservableProperty]
         private string _soDienThoai = string.Empty;
+
+        [ObservableProperty]
+        private string _hoTen = string.Empty;
+
+        [ObservableProperty]
+        private DateTime? _ngaySinh;
+
+        private string _cccd = string.Empty;
+
+        public string CCCD
+        {
+            get => _cccd;
+            set => SetProperty(ref _cccd, value);
+        }
+
+        [ObservableProperty]
+        private DateTime? _ngayCap;
+
+        [ObservableProperty]
+        private string _noiCap = string.Empty;
+
+        [ObservableProperty]
+        private string _diaChi = string.Empty;
 
         [ObservableProperty]
         private string _oldPassword = string.Empty;
@@ -165,11 +189,23 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     TenDangNhap = userFromDb.TenDangNhap ?? string.Empty;
                     Email = userFromDb.Email ?? string.Empty;
                     SoDienThoai = userFromDb.SoDienThoai ?? string.Empty;
+                    HoTen = userFromDb.HoTen ?? string.Empty;
+                    NgaySinh = userFromDb.NgaySinh;
+                    CCCD = userFromDb.CCCD ?? string.Empty;
+                    NgayCap = userFromDb.NgayCap;
+                    NoiCap = userFromDb.NoiCap ?? string.Empty;
+                    DiaChi = userFromDb.DiaChi ?? string.Empty;
 
                     // Đồng bộ lại AuthController.CurrentUser phòng trường hợp dữ liệu đã thay đổi
                     AuthController.CurrentUser.TenDangNhap = TenDangNhap;
                     AuthController.CurrentUser.Email = Email;
                     AuthController.CurrentUser.SoDienThoai = SoDienThoai;
+                    AuthController.CurrentUser.HoTen = HoTen;
+                    AuthController.CurrentUser.NgaySinh = NgaySinh;
+                    AuthController.CurrentUser.CCCD = CCCD;
+                    AuthController.CurrentUser.NgayCap = NgayCap;
+                    AuthController.CurrentUser.NoiCap = NoiCap;
+                    AuthController.CurrentUser.DiaChi = DiaChi;
                 }
                 else
                 {
@@ -194,6 +230,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             if (string.IsNullOrWhiteSpace(TenDangNhap))
             {
+                MessageBox.Show("Vui lòng nhập tên đăng nhập!", "Thông tin bắt buộc", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(HoTen))
+            {
                 MessageBox.Show("Vui lòng nhập họ và tên!", "Thông tin bắt buộc", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -202,8 +244,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = true;
 
+                var updatePayload = new User
+                {
+                    MaAdmin = _maAdmin,
+                    TenDangNhap = TenDangNhap,
+                    Email = Email,
+                    SoDienThoai = SoDienThoai,
+                    HoTen = HoTen,
+                    NgaySinh = NgaySinh,
+                    CCCD = CCCD,
+                    NgayCap = NgayCap,
+                    NoiCap = NoiCap,
+                    DiaChi = DiaChi
+                };
+
                 // 1. Cập nhật thông tin profile
-                var profileSuccess = await _userRepository.UpdateProfileAsync(_maAdmin, TenDangNhap, Email, SoDienThoai);
+                var profileSuccess = await _userRepository.UpdateProfileAsync(updatePayload);
 
                 if (!profileSuccess)
                 {
@@ -218,6 +274,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     AuthController.CurrentUser.TenDangNhap = TenDangNhap;
                     AuthController.CurrentUser.Email = Email;
                     AuthController.CurrentUser.SoDienThoai = SoDienThoai;
+                    AuthController.CurrentUser.HoTen = HoTen;
+                    AuthController.CurrentUser.NgaySinh = NgaySinh;
+                    AuthController.CurrentUser.CCCD = CCCD;
+                    AuthController.CurrentUser.NgayCap = NgayCap;
+                    AuthController.CurrentUser.NoiCap = NoiCap;
+                    AuthController.CurrentUser.DiaChi = DiaChi;
                 }
 
                 // 2. Cập nhật mật khẩu nếu người dùng có nhập

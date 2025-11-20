@@ -4,6 +4,7 @@ using Microsoft.Win32;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Services;
+using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
 using System.Collections.ObjectModel;
@@ -19,6 +20,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private readonly ContractController _contractController;
         private readonly TenantRepository _tenantRepo;
         private readonly RentedRoomRepository _roomRepo;
+        private readonly UserRepository _userRepo;
+        private readonly HouseRepository _houseRepo;
 
         private readonly ContractDto _editingContract; // null = thêm mới, khác null = cập nhật
         private readonly string _defaultContractFolder;
@@ -62,7 +65,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _tienCoc;
 
         [ObservableProperty]
-        private string _ghiChu;
+        private string _dieuKhoanRieng;
 
         [ObservableProperty]
         private string _formTitle = "Thêm hợp đồng mới";
@@ -76,6 +79,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _contractController = contractController;
             _tenantRepo = new TenantRepository();
             _roomRepo = new RentedRoomRepository();
+            _userRepo = new UserRepository();
+            _houseRepo = new HouseRepository();
             _editingContract = editingContract;
             _defaultContractFolder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
@@ -101,7 +106,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 foreach (var t in tenants)
                     NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = t.MaKhachThue, HoTen = t.HoTen });
 
-                foreach (var r in rooms)
+                var availableRooms = rooms
+                    .Where(r => !IsRoomCurrentlyRented(r) ||
+                                (IsEditMode && _editingContract != null && r.MaPhong == _editingContract.MaPhong));
+
+                foreach (var r in availableRooms)
                     PhongList.Add(new PhongTmp { MaPhong = r.MaPhong, TenPhong = r.TenPhong });
 
                 // Nếu đang chỉnh sửa, gán lại dữ liệu
@@ -114,6 +123,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
                     TienCoc = _editingContract.TienCoc.ToString();
+                    DieuKhoanRieng = _editingContract.GhiChu;
                     if (!string.IsNullOrWhiteSpace(_editingContract.FileHopDong))
                     {
                         ContractSavePath = _editingContract.FileHopDong;
@@ -211,14 +221,31 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     return;
                 }
 
-                // === Giả định thông tin bên A (chủ nhà) ===
-                string tenA = "Nguyễn Văn A";
-                string cccdA = "012345678901";
-                string noiCapA = "CA TP.HCM";
-                DateTime ngaySinhA = new DateTime(1980, 1, 1);
-                DateTime ngayCapA = new DateTime(2020, 1, 1);
-                string diaChiA = "123 Đường ABC, Quận 1, TP.HCM";
-                string dienThoaiA = "0909123456";
+                // === Lấy thông tin bên A (chủ nhà) từ admin hiện tại ===
+                var currentUser = AuthController.CurrentUser;
+                if (currentUser == null)
+                {
+                    MessageBox.Show("❌ Không xác định được tài khoản quản trị. Vui lòng đăng nhập lại.");
+                    return;
+                }
+
+                var admin = await _userRepo.GetByMaAdminAsync(currentUser.MaAdmin) ?? currentUser;
+                var house = room.MaNha != 0 ? await _houseRepo.GetByIdAsync(room.MaNha) : null;
+
+                string tenA = string.IsNullOrWhiteSpace(admin.HoTen) ? admin.TenDangNhap : admin.HoTen;
+                DateTime ngaySinhA = admin.NgaySinh ?? new DateTime(1980, 1, 1);
+                string cccdA = string.IsNullOrWhiteSpace(admin.CCCD) ? "Đang cập nhật" : admin.CCCD;
+                DateTime ngayCapA = admin.NgayCap ?? DateTime.Today;
+                string noiCapA = string.IsNullOrWhiteSpace(admin.NoiCap) ? "Đang cập nhật" : admin.NoiCap;
+                string diaChiA = !string.IsNullOrWhiteSpace(admin.DiaChi)
+                    ? admin.DiaChi
+                    : (house?.DiaChi ?? "Đang cập nhật");
+                string dienThoaiA = string.IsNullOrWhiteSpace(admin.SoDienThoai) ? "Đang cập nhật" : admin.SoDienThoai;
+                string noiTaoHopDong = !string.IsNullOrWhiteSpace(house?.TinhThanh)
+                    ? house.TinhThanh
+                    : (!string.IsNullOrWhiteSpace(house?.DiaChi)
+                        ? house.DiaChi
+                        : (admin.DiaChi ?? "TP.HCM"));
 
                 // === Bên B (lấy từ người thuê) ===
                 string tenB = tenant.HoTen;
@@ -231,7 +258,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 // === Thông tin phòng ===
                 string tenPhong = room.TenPhong;
-                string diaChiPhong = diaChiA ?? "";
+                string diaChiPhong = house?.DiaChi ?? diaChiA;
                 decimal dienTich = room.DienTich;
                 string trangThietBi = room.TrangThietBi ?? "";
 
@@ -241,14 +268,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 string ngayTraTien = "Ngày 05 hàng tháng";
                 int thoiHanNam = Math.Max(1, NgayKetThuc.Value.Year - NgayBatDau.Value.Year);
                 DateTime ngayGiaoNha = NgayBatDau.Value;
+                string dieuKhoanRieng = string.IsNullOrWhiteSpace(DieuKhoanRieng) ? null : DieuKhoanRieng.Trim();
 
                 // === Tạo file hợp đồng DOCX + PDF ===
                 var contractFiles = ContractTemplateService.CreateContractFile(
-                    "TP.HCM", DateTime.Now,       // Nơi tạo + Ngày tạo
+                    noiTaoHopDong, DateTime.Now,       // Nơi tạo + Ngày tạo
                     tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
                     tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
                     tenPhong, diaChiPhong, dienTich, trangThietBi,
-                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha,
+                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha, dieuKhoanRieng,
                     normalizedSavePath
                 );
                 string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
@@ -264,7 +292,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         NgayKetThuc = NgayKetThuc.Value,
                         TienCoc = tienCocValue,
                         FileHopDong = filePath,
-                        TrangThai = "Hiệu lực"
+                        TrangThai = "Hiệu lực",
+                        GhiChu = dieuKhoanRieng
                     };
 
                     int maHopDong = await _contractController.CreateHopDongAsync(newContract);
@@ -282,6 +311,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     _editingContract.NgayKetThuc = NgayKetThuc.Value;
                     _editingContract.TienCoc = tienCocValue;
                     _editingContract.FileHopDong = filePath;
+                    _editingContract.GhiChu = dieuKhoanRieng;
 
                     await _contractController.UpdateHopDongAsync(_editingContract);
                     MessageBox.Show("✅ Hợp đồng đã được cập nhật thành công!");
@@ -385,6 +415,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             var invalidChars = Path.GetInvalidFileNameChars();
             var cleaned = new string(source.Where(c => !invalidChars.Contains(c)).ToArray());
             return string.IsNullOrWhiteSpace(cleaned) ? fallback : cleaned;
+        }
+
+        private static bool IsRoomCurrentlyRented(RentedRoom room)
+        {
+            if (room == null)
+                return false;
+
+            var status = room.TrangThai?.Trim();
+            if (string.IsNullOrEmpty(status))
+                return false;
+
+            var normalized = status.ToLowerInvariant();
+            return normalized == "đang thuê" || normalized == "dang thue" || normalized == "bảo trì" || normalized == "bao tri";
         }
     }
 }

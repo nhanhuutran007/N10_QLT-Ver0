@@ -603,6 +603,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
             cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
             cmd.Parameters.AddWithValue("@SoTienDaTra", payment.SoTienDaTra ?? 0);
+            cmd.Parameters.AddWithValue("@SoTienDaTra", payment.SoTienDaTra ?? 0);
 
             string trangThai = GetTrangThaiThanhToan(payment.TrangThaiThanhToan);
             cmd.Parameters.AddWithValue("@TrangThaiThanhToan", trangThai);
@@ -634,6 +635,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                 ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                 TongTien = reader.GetDecimal(10),
+                SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
+                TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
+                NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
                 SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
                 TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
                 NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13),

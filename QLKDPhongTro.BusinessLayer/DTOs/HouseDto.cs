@@ -9,6 +9,9 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         [Required(ErrorMessage ="Địa chỉ không được bỏ trống")]
         public string DiaChi { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Tỉnh/Thành không được bỏ trống")]
+        public string TinhThanh { get; set; } = string.Empty;
+
         [Range(1,int.MaxValue, ErrorMessage = "Tổng số phòng phải lớn hơn 0")]
         public int TongSoPhong { get; set; }
 

@@ -12,7 +12,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<User?> GetByUsernameAsync(string username);
         Task<bool> CreateAsync(User user);
         Task<bool> UpdateAsync(User user);
-        Task<bool> UpdateProfileAsync(int maAdmin, string tenDangNhap, string email, string soDienThoai);
+        Task<bool> UpdateProfileAsync(User user);
         Task<bool> UpdatePasswordAsync(int maAdmin, string oldPassword, string newPassword);
         Task<bool> DeleteAsync(string id);
         Task<bool> IsUsernameExistsAsync(string username);

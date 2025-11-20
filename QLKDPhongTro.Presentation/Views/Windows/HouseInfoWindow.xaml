@@ -68,6 +68,9 @@
                     <TextBlock Text="Địa chỉ" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="DiaChiTextBox" Style="{StaticResource InputFieldStyle}"/>
 
+                    <TextBlock Text="Tỉnh / Thành phố" Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="TinhThanhTextBox" Style="{StaticResource InputFieldStyle}"/>
+
                     <TextBlock Text="Tổng số phòng" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TongSoPhongTextBox" Style="{StaticResource InputFieldStyle}"/>
                     <TextBlock Text="Tối đa 10 phòng" Margin="0,2,0,0" FontSize="11" Foreground="#888"/>
