@@ -133,51 +133,62 @@
                             Margin="0,5,0,0"/>
                 </StackPanel>
 
-                <Button Grid.Column="1"
-                        Width="32"
-                        Height="32"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        ToolTip="Xuất báo cáo">
-                    <TextBlock Text="⋯"
-                            FontSize="20"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"/>
-                    <Button.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem Header="Báo cáo Doanh thu tháng - PDF"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="RevenueMonthlyPdf"/>
-                            <MenuItem Header="Báo cáo Doanh thu tháng - Excel"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="RevenueMonthlyExcel"/>
-                            <Separator/>
-                            <MenuItem Header="Báo cáo Chi phí tháng - PDF"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="ExpenseMonthlyPdf"/>
-                            <MenuItem Header="Báo cáo Chi phí tháng - Excel"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="ExpenseMonthlyExcel"/>
-                            <Separator/>
-                            <MenuItem Header="Báo cáo Lợi nhuận tháng - PDF"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="ProfitMonthlyPdf"/>
-                            <MenuItem Header="Báo cáo Lợi nhuận tháng - Excel"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="ProfitMonthlyExcel"/>
-                            <Separator/>
-                            <MenuItem Header="Báo cáo Danh sách phòng (Trống / Đang thuê / Dự kiến) - PDF"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="RoomStatusPdf"/>
-                            <MenuItem Header="Báo cáo Danh sách phòng (Trống / Đang thuê / Dự kiến) - Excel"
-                                      Command="{Binding ExportReportCommand}"
-                                      CommandParameter="RoomStatusExcel"/>
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
+				<Grid Grid.Column="1">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+					<ToggleButton x:Name="ExportToggle"
+								  Width="32"
+								  Height="32"
+								  HorizontalAlignment="Right"
+								  VerticalAlignment="Top"
+								  Background="Transparent"
+								  BorderThickness="0"
+								  Cursor="Hand"
+								  ToolTip="Tùy chọn xuất báo cáo">
+						<TextBlock Text="⋯"
+								   FontSize="20"
+								   HorizontalAlignment="Center"
+								   VerticalAlignment="Center"/>
+					</ToggleButton>
+					<Popup PlacementTarget="{Binding ElementName=ExportToggle}"
+						   IsOpen="{Binding IsChecked, ElementName=ExportToggle}"
+						   Placement="Bottom"
+						   AllowsTransparency="True"
+						   StaysOpen="False">
+						<Border Background="White"
+								BorderBrush="{StaticResource BorderColor}"
+								BorderThickness="1"
+								CornerRadius="8"
+								Padding="12"
+								Effect="{StaticResource CardShadow}">
+							<StackPanel MinWidth="300">
+								<TextBlock Text="Tùy chọn xuất"
+										   FontWeight="Bold"
+										   Foreground="{StaticResource TextPrimary}"/>
+								<TextBlock Text="Loại báo cáo"
+										   Margin="0,10,0,4"
+										   Foreground="{StaticResource TextSecondary}"/>
+								<ComboBox ItemsSource="{Binding ExportTypeOptions}"
+										  SelectedItem="{Binding SelectedExportType}"/>
+								<TextBlock Text="Định dạng"
+										   Margin="0,10,0,4"
+										   Foreground="{StaticResource TextSecondary}"/>
+								<ComboBox ItemsSource="{Binding ExportFormatOptions}"
+										  SelectedItem="{Binding SelectedExportFormat}"/>
+								<Button Content="Xuất"
+										Margin="0,12,0,0"
+										HorizontalAlignment="Right"
+										Background="{StaticResource SecondaryColor}"
+										Foreground="White"
+										Padding="10,6"
+										Cursor="Hand"
+										Command="{Binding ExportReportCommand}"
+										CommandParameter="{x:Null}"/>
+							</StackPanel>
+						</Border>
+					</Popup>
+				</Grid>
             </Grid>
 
             <UniformGrid Grid.Row="2"

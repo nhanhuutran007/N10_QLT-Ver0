@@ -254,8 +254,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                             ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                             TongTien = reader.GetDecimal(10),
-                            TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
-                            NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12)
+                            SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
+                            TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
+                            NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13)
                         };
                     }
                 }
@@ -456,8 +457,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var sql = @"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayThanhToan, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -563,8 +564,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayThanhToan, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
