@@ -15,12 +15,29 @@ CREATE TABLE Admin (
   TenDangNhap VARCHAR(50) NOT NULL UNIQUE,
   MatKhau VARCHAR(255) NOT NULL,
   Email VARCHAR(100),
-  SoDienThoai VARCHAR(15)
+  SoDienThoai VARCHAR(15),
+  HoTen NVARCHAR(100),
+  NgaySinh DATE NULL,
+  CCCD VARCHAR(20),
+  NgayCap DATE NULL,
+  NoiCap NVARCHAR(100),
+  DiaChi NVARCHAR(255)
 );
 
 IF NOT EXISTS (SELECT 1 FROM Admin WHERE TenDangNhap = 'admin')
-INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai)
-VALUES ('admin', 'admin123', 'admin@example.com', '0901000001');
+INSERT INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi)
+VALUES (
+    'admin',
+    'admin123',
+    'admin@example.com',
+    '0901000001',
+    N'Nguyễn Văn A',
+    '1985-05-20',
+    '012345678901',
+    '2020-01-15',
+    N'Công an TP.HCM',
+    N'123 Đường A, Quận 1, TP.HCM'
+);
 GO
 
 -- ===================== Bảng Nha =====================

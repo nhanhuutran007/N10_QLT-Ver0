@@ -11,12 +11,18 @@ CREATE TABLE `Admin` (
   `MatKhau` varchar(255) NOT NULL,
   `Email` varchar(100) DEFAULT NULL,
   `SoDienThoai` varchar(15) DEFAULT NULL,
+  `HoTen` varchar(100) DEFAULT NULL,
+  `NgaySinh` date DEFAULT NULL,
+  `CCCD` varchar(20) DEFAULT NULL,
+  `NgayCap` date DEFAULT NULL,
+  `NoiCap` varchar(100) DEFAULT NULL,
+  `DiaChi` varchar(255) DEFAULT NULL,
   `MaNha` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT INTO `Admin` (`MaAdmin`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `MaNha`) VALUES
-(1, 'admin', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ngochai1521@gmai.com', '0901000001', 1),
-(2, 'test', 'admin123', 'test@example.com', '0901000001', 2);
+INSERT INTO `Admin` (`MaAdmin`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `HoTen`, `NgaySinh`, `CCCD`, `NgayCap`, `NoiCap`, `DiaChi`, `MaNha`) VALUES
+(1, 'admin', 'JAvlGPq9JyTdtvBO6x2llnRI1+gxwIyPqCKAn3THIKk=', 'ngochai1521@gmai.com', '0901000001', 'Nguyễn Văn A', '1985-05-20', '012345678901', '2020-01-15', 'CA TP.HCM', '123 Đường ABC, Quận 1, TP.HCM', 1),
+(2, 'test', 'admin123', 'test@example.com', '0901000001', 'Test Owner', NULL, NULL, NULL, NULL, '456 Đường DEF, Quận 3, TP.HCM', 2);
 
 CREATE TABLE `BaoTri_SuCo` (
   `MaSuCo` int(11) NOT NULL,

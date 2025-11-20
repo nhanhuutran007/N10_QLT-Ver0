@@ -60,7 +60,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 var currentUser = AuthController.CurrentUser;
                 if (currentUser != null)
                 {
-                    UserName = currentUser.TenDangNhap ?? string.Empty;
+                    var displayName = string.IsNullOrWhiteSpace(currentUser.HoTen)
+                        ? currentUser.TenDangNhap
+                        : currentUser.HoTen;
+                    UserName = displayName ?? string.Empty;
                     UserEmail = currentUser.Email ?? string.Empty;
                 }
                 else

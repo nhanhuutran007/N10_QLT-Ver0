@@ -466,7 +466,6 @@
 
                                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                                                 <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-
                                                         CommandParameter="{Binding}" 
                                                         Style="{StaticResource IconButtonStyle}" 
                                                         ToolTip="Chỉnh sửa"
