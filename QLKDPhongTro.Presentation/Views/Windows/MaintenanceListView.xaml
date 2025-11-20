@@ -292,10 +292,10 @@
                             </Style>
                         </Border.Style>
                         <Grid>
-                            <TextBlock Text="🔍 Tìm kiếm bảo trì..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
+                            <TextBlock Text="Tìm kiếm bảo trì..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
                                       Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                                  Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
+                                     Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
                         </Grid>
                     </Border>
 
@@ -315,7 +315,7 @@
                             Height="40" Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="Thêm bảo trì  " FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text="Thêm bảo trì" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>
@@ -334,9 +334,9 @@
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Hiển thị:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,8,0"/>
                             <ComboBox Width="120"
-                                    Style="{StaticResource ComboBoxStyle}"
-                                    SelectedValue="{Binding PageSize, Mode=TwoWay}"
-                                    SelectedValuePath="Tag">
+                                      Style="{StaticResource ComboBoxStyle}"
+                                      SelectedValue="{Binding PageSize, Mode=TwoWay}"
+                                      SelectedValuePath="Tag">
                                 <ComboBoxItem Tag="5">5 hàng</ComboBoxItem>
                                 <ComboBoxItem Tag="10">10 hàng</ComboBoxItem>
                                 <ComboBoxItem Tag="20">20 hàng</ComboBoxItem>
@@ -466,38 +466,39 @@
 
                                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                                                 <Button Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource IconButtonStyle}" 
-                                        ToolTip="Chỉnh sửa"
-                                        Margin="8,0,0,0">
-                                                    <TextBlock Text="✏️" FontSize="16"/>
+
+                                                        CommandParameter="{Binding}" 
+                                                        Style="{StaticResource IconButtonStyle}" 
+                                                        ToolTip="Chỉnh sửa"
+                                                        Margin="8,0,0,0">
+                                                    <TextBlock Text="Sửa" FontSize="12"/>
                                                 </Button>
 
                                                 <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource IconButtonStyle}" 
-                                        ToolTip="Xóa"
-                                        Margin="8,0,0,0">
-                                                    <TextBlock Text="🗑️" FontSize="16" Foreground="{StaticResource ErrorColor}"/>
+                                                        CommandParameter="{Binding}" 
+                                                        Style="{StaticResource IconButtonStyle}" 
+                                                        ToolTip="Xóa"
+                                                        Margin="8,0,0,0">
+                                                    <TextBlock Text="Xóa" FontSize="12" Foreground="{StaticResource ErrorColor}"/>
                                                 </Button>
                                             </StackPanel>
 
                                             <StackPanel Orientation="Horizontal" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
                                                 <Button Command="{Binding DataContext.SaveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource IconButtonStyle}" 
-                                        ToolTip="Lưu"
-                                        Background="#D1FAE5">
-                                                    <TextBlock Text="✓" FontSize="16" Foreground="#059669" FontWeight="Bold"/>
+                                                        CommandParameter="{Binding}" 
+                                                        Style="{StaticResource IconButtonStyle}" 
+                                                        ToolTip="Lưu"
+                                                        Background="#D1FAE5">
+                                                    <TextBlock Text="Lưu" FontSize="12" Foreground="#059669" FontWeight="Bold"/>
                                                 </Button>
 
                                                 <Button Command="{Binding DataContext.CancelCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                        CommandParameter="{Binding}" 
-                                        Style="{StaticResource IconButtonStyle}" 
-                                        ToolTip="Hủy bỏ"
-                                        Margin="8,0,0,0"
-                                        Background="#FEE2E2">
-                                                    <TextBlock Text="✕" FontSize="14" Foreground="#EF4444" FontWeight="Bold"/>
+                                                        CommandParameter="{Binding}" 
+                                                        Style="{StaticResource IconButtonStyle}" 
+                                                        ToolTip="Hủy bỏ"
+                                                        Margin="8,0,0,0"
+                                                        Background="#FEE2E2">
+                                                    <TextBlock Text="Hủy" FontSize="12" Foreground="#EF4444" FontWeight="Bold"/>
                                                 </Button>
                                             </StackPanel>
 
@@ -514,7 +515,7 @@
             <Grid Grid.Row="3" Margin="0,20,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <TextBlock Text="{Binding PaginationText}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
-                    <Button Command="{Binding PrevPageCommand}" Content="◀" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
+                    <Button Command="{Binding PrevPageCommand}" Content="&lt;" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
@@ -526,7 +527,7 @@
                     <Border Background="{StaticResource SecondaryColor}" CornerRadius="4" Width="32" Height="32" Margin="8,0">
                         <TextBlock Text="{Binding PageIndex}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-                    <Button Command="{Binding NextPageCommand}" Content="▶" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
+                    <Button Command="{Binding NextPageCommand}" Content="&gt;" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
