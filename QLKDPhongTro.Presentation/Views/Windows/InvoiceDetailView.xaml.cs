@@ -94,8 +94,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     InvoiceData.TienInternet,
                     InvoiceData.TienVeSinh,
                     InvoiceData.TienGiuXe,
-                    InvoiceData.ChiPhiKhac,
-                    InvoiceData.KhauTru
+                    InvoiceData.ChiPhiKhac
                 );
 
                 if (!success)
@@ -360,19 +359,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                                     <span>{InvoiceData.TamTinh:N0} đ</span>
                                 </div>
                                 <div class=""summary-row"">
-                                    <span>Khấu trừ:</span>
-                                    <span>- {InvoiceData.KhauTru:N0} đ</span>
+                                    <span>Đã trả trước:</span>
+                                    <span>{InvoiceData.SoTienDaTra:N0} đ</span>
                                 </div>
                                 <div style=""height: 1px; background: #e5e7eb; margin: 8px 0;""></div>
                                 <div class=""summary-row"">
-                                    <span>Cần thanh toán:</span>
+                                    <span>Còn lại:</span>
                                     <span class=""summary-value total"">{InvoiceData.TongTienTinhToan:N0} đ</span>
                                 </div>
                             </div>
 
                             <p style=""font-size: 12px; color: #6b7280;"">
                                 <strong>Lưu ý:</strong><br/>
-                                · Tiền cọc hiện có: {InvoiceData.TienCocHienCo:N0} đ.<br/>
                                 · Nếu bạn đã thanh toán, vui lòng bỏ qua email này.
                             </p>
                         </div>

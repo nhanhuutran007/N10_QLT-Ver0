@@ -311,16 +311,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
             using (var conn = new MySqlConnection(_connectionString))
             {
                 await conn.OpenAsync();
-                // FIX: Thêm 'hd.GiaThue' vào câu lệnh SELECT
                 var sql = @"
                     SELECT hd.MaHopDong, hd.MaNguoiThue, hd.MaPhong, hd.NgayBatDau, hd.NgayKetThuc, 
-                           hd.TienCoc, hd.GiaThue, hd.FileHopDong, hd.TrangThai,
-                           nt.HoTen AS TenNguoiThue, p.TenPhong
+                           hd.TienCoc, hd.FileHopDong, hd.TrangThai,
+                           nt.HoTen AS TenNguoiThue, p.TenPhong, p.GiaCoBan
                     FROM HopDong hd
                     LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
                     LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
                     WHERE hd.MaPhong = @MaPhong 
-                      AND hd.TrangThai = 'Hiệu lực'
+                      AND (
+                            hd.TrangThai IN ('Hiệu lực', 'Sắp hết hạn')
+                            OR (hd.TrangThai IN ('Hết hạn') AND hd.NgayKetThuc >= CURDATE())
+                          )
+                    ORDER BY 
+                        CASE 
+                            WHEN hd.TrangThai = 'Hiệu lực' THEN 0
+                            WHEN hd.TrangThai = 'Sắp hết hạn' THEN 1
+                            WHEN hd.TrangThai = 'Hết hạn' THEN 2
+                            ELSE 3
+                        END,
+                        hd.NgayKetThuc DESC
                     LIMIT 1";
 
                 using (var cmd = new MySqlCommand(sql, conn))
@@ -338,9 +348,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                 NgayBatDau = reader.GetDateTime("NgayBatDau"),
                                 NgayKetThuc = reader.GetDateTime("NgayKetThuc"),
 
-                                // Bây giờ cột GiaThue đã có trong SELECT, lệnh này sẽ chạy đúng
                                 TienCoc = reader.IsDBNull(reader.GetOrdinal("TienCoc")) ? 0 : reader.GetDecimal("TienCoc"),
-                                GiaThue = reader.IsDBNull(reader.GetOrdinal("GiaThue")) ? 0 : reader.GetDecimal("GiaThue"),
+                                GiaThue = reader.IsDBNull(reader.GetOrdinal("GiaCoBan")) ? 0 : reader.GetDecimal("GiaCoBan"),
 
                                 FileHopDong = reader.IsDBNull(reader.GetOrdinal("FileHopDong")) ? null : reader.GetString("FileHopDong"),
                                 TrangThai = reader.IsDBNull(reader.GetOrdinal("TrangThai")) ? null : reader.GetString("TrangThai"),

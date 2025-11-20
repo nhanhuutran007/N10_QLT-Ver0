@@ -758,13 +758,12 @@
                     <Grid Width="350"
                             HorizontalAlignment="Right"
                             Margin="0,20,40,40">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
@@ -784,43 +783,30 @@
 
                         <TextBlock Grid.Row="1"
                                 Grid.Column="0"
-                                Text="Khấu trừ tiền cọc"
+                                Text="Đã trả trước"
                                 Foreground="#666"
                                 Margin="0,5"/>
                         <TextBlock Grid.Row="1"
                                 Grid.Column="1"
-                                Text="{Binding TienCocHienCo, StringFormat='{}{0:N0} đ'}"
+                                Text="{Binding SoTienDaTra, StringFormat='{}{0:N0} đ'}"
                                 Foreground="#333"
                                 Margin="0,5"
                                 HorizontalAlignment="Right"/>
 
-                        <!-- Tiền cọc còn dư sau khi khấu trừ -->
-                        <TextBlock Grid.Row="2"
-                                Grid.Column="0"
-                                Text="Tiền còn dư"
-                                Foreground="#666"
-                                Margin="0,5"/>
-                        <TextBlock Grid.Row="2"
-                                Grid.Column="1"
-                                Text="{Binding TienCocConDu, StringFormat='{}{0:N0} đ'}"
-                                Foreground="#333"
-                                Margin="0,5"
-                                HorizontalAlignment="Right"/>
-
-                        <Separator Grid.Row="3"
+                        <Separator Grid.Row="2"
                                 Grid.ColumnSpan="2"
                                 Margin="0,10"/>
 
-                        <TextBlock Grid.Row="4"
+                        <TextBlock Grid.Row="3"
                                 Grid.Column="0"
-                                Text="Tổng"
+                                Text="Còn lại"
                                 FontWeight="Bold"
                                 Foreground="#333"
                                 FontSize="16"
                                 Margin="0,10,0,0"/>
-                        <TextBlock Grid.Row="4"
+                        <TextBlock Grid.Row="3"
                                 Grid.Column="1"
-                                Text="{Binding TongTienHienThi}"
+                                Text="{Binding TongTienTinhToan, StringFormat='{}{0:N0} đ'}"
                                 FontWeight="Bold"
                                 Foreground="#333"
                                 FontSize="16"

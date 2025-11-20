@@ -28,6 +28,7 @@ namespace QLKDPhongTro.Presentation.Services
         private readonly PaymentRepository _paymentRepository;
         private readonly ContractRepository _contractRepository;
         private readonly RentedRoomRepository _roomRepository;
+        private readonly TenantRepository _tenantRepository;
 
         // === FIX: Khởi tạo HttpClient một lần để tái sử dụng ===
         // Tốt hơn cho hiệu năng so với việc tạo mới WebClient mỗi lần
@@ -42,7 +43,6 @@ namespace QLKDPhongTro.Presentation.Services
         private const decimal DON_GIA_NUOC = 100000;     // ✅ Đã thêm (bằng với WATER_RATE)
         private const decimal DON_GIA_INTERNET = 100000; // Giá trị giả định
         private const decimal DON_GIA_VE_SINH = 60000;   // Giá trị giả định
-        private const decimal DON_GIA_GIU_XE = 120000;   // Giá trị giả định
 
         // Dictionary để lưu trữ thông tin sự cố tạm thời
         private readonly Dictionary<string, DebtDiscrepancyInfo> _discrepancyCache = new();
@@ -54,6 +54,7 @@ namespace QLKDPhongTro.Presentation.Services
             _paymentRepository = new PaymentRepository();
             _contractRepository = new ContractRepository();
             _roomRepository = new RentedRoomRepository();
+            _tenantRepository = new TenantRepository();
 
             // Thêm User-Agent cho HttpClient, một số dịch vụ (như Google) cần
             Directory.CreateDirectory(DEBUG_PATH);
@@ -61,9 +62,102 @@ namespace QLKDPhongTro.Presentation.Services
             _driveService = _googleFormService.DriveService;
         }
 
-        // Phương thức hiện có giữ nguyên
-        public async Task<List<DebtCalculationResult>> ProcessDebtsAsync()
+        private static DebtFeeSettings EnsureSettings(DebtFeeSettings? settings)
+            => settings ?? new DebtFeeSettings();
+
+        /// <summary>
+        /// Tính tiền giữ xe: Free 1 xe đầu, các xe tiếp theo tính 100.000 VNĐ/xe
+        /// Lấy tất cả xe của tất cả người thuê trong phòng
+        /// </summary>
+        private async Task<decimal> CalculateParkingFeeAsync(int contractId, DebtFeeSettings settings)
         {
+            var contract = await _contractRepository.GetByIdAsync(contractId);
+            if (contract == null)
+            {
+                return 0;
+            }
+
+            // Lấy tất cả người thuê trong phòng (bao gồm cả người đứng tên và người ở cùng)
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+            if (roomTenants == null || roomTenants.Count == 0)
+            {
+                return 0;
+            }
+
+            // Lấy assets của tất cả người thuê trong phòng
+            var allAssets = new List<DataLayer.Models.TenantAsset>();
+            foreach (var tenant in roomTenants)
+            {
+                var tenantAssets = await _tenantRepository.GetAssetsAsync(tenant.MaNguoiThue);
+                if (tenantAssets != null && tenantAssets.Count > 0)
+                {
+                    allAssets.AddRange(tenantAssets);
+                }
+            }
+
+            if (allAssets.Count == 0)
+            {
+                return 0;
+            }
+
+            // Đếm tổng số xe của tất cả người thuê trong phòng
+            var vehicleCount = allAssets.Count(a =>
+                a.LoaiTaiSan?.IndexOf("xe", StringComparison.OrdinalIgnoreCase) >= 0);
+
+            // Free 1 xe đầu, các xe tiếp theo tính phí
+            var extraVehicleCount = Math.Max(0, vehicleCount - settings.FreeVehicleCount);
+            var parkingFee = extraVehicleCount * settings.AdditionalVehicleFee;
+
+            return parkingFee;
+        }
+
+        /// <summary>
+        /// Tính các chi phí khác (không bao gồm tiền giữ xe)
+        /// Lấy tất cả assets của tất cả người thuê trong phòng
+        /// </summary>
+        private async Task<decimal> CalculateAdditionalCostsAsync(int contractId, DebtFeeSettings settings)
+        {
+            var contract = await _contractRepository.GetByIdAsync(contractId);
+            if (contract == null)
+            {
+                return 0;
+            }
+
+            // Lấy tất cả người thuê trong phòng (bao gồm cả người đứng tên và người ở cùng)
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+            if (roomTenants == null || roomTenants.Count == 0)
+            {
+                return 0;
+            }
+
+            // Lấy assets của tất cả người thuê trong phòng
+            var allAssets = new List<DataLayer.Models.TenantAsset>();
+            foreach (var tenant in roomTenants)
+            {
+                var tenantAssets = await _tenantRepository.GetAssetsAsync(tenant.MaNguoiThue);
+                if (tenantAssets != null && tenantAssets.Count > 0)
+                {
+                    allAssets.AddRange(tenantAssets);
+                }
+            }
+
+            if (allAssets.Count == 0)
+            {
+                return 0;
+            }
+
+            // Chỉ tính phí phụ thu từ tài sản (không tính xe vì đã tính riêng trong tiền giữ xe)
+            var assetSurcharge = allAssets
+                .Where(a => a.LoaiTaiSan?.IndexOf("xe", StringComparison.OrdinalIgnoreCase) < 0) // Loại bỏ xe
+                .Sum(a => a.PhiPhuThu);
+
+            return assetSurcharge;
+        }
+
+        // Phương thức hiện có giữ nguyên
+        public async Task<List<DebtCalculationResult>> ProcessDebtsAsync(DebtFeeSettings? settings = null)
+        {
+            settings = EnsureSettings(settings);
             var results = new List<DebtCalculationResult>();
             _discrepancyCache.Clear(); // Clear cache mỗi lần xử lý mới
 
@@ -73,7 +167,7 @@ namespace QLKDPhongTro.Presentation.Services
 
                 foreach (var formData in formDataList)
                 {
-                    var result = await ProcessSingleDebtAsync(formData);
+                    var result = await ProcessSingleDebtAsync(formData, settings);
                     if (result != null)
                     {
                         results.Add(result);
@@ -135,7 +229,7 @@ namespace QLKDPhongTro.Presentation.Services
                 return originalImagePath;
             }
         }
-        private async Task<DebtCalculationResult> ProcessSingleDebtAsync(DebtFormData formData)
+        private async Task<DebtCalculationResult> ProcessSingleDebtAsync(DebtFormData formData, DebtFeeSettings settings)
         {
             try
             {
@@ -158,6 +252,13 @@ namespace QLKDPhongTro.Presentation.Services
                 {
                     dbOldElectricValue = lastPayment.ChiSoDienMoi ?? 0;
                 }
+
+                var normalizedSettings = EnsureSettings(settings);
+                var waterCost = normalizedSettings.WaterFee;
+                var internetCost = normalizedSettings.InternetFee;
+                var sanitationCost = normalizedSettings.SanitationFee;
+                var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
+                var otherCost = await CalculateAdditionalCostsAsync(contractId.Value, normalizedSettings);
 
                 // 2. Xử lý so sánh: Form nhập tay vs OCR
                 decimal finalElectricValue = 0;
@@ -272,19 +373,22 @@ namespace QLKDPhongTro.Presentation.Services
                 // 4. Tính toán
                 decimal electricityUsage = finalElectricValue - dbOldElectricValue;
                 decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
-                decimal totalDebt = electricityCost + WATER_RATE;
+                decimal totalDebt = electricityCost + waterCost + internetCost + sanitationCost + parkingFee + otherCost;
 
                 return new DebtCalculationResult
                 {
                     RoomName = formData.RoomName,
                     Email = formData.Email,
-                    Timestamp = Convert.ToDateTime(formData.Timestamp),
+                    Timestamp = ParseTimestamp(formData.Timestamp),
                     OldElectricValue = dbOldElectricValue,
                     CurrentElectricValue = finalElectricValue,
                     ElectricityUsage = electricityUsage,
                     ElectricityCost = electricityCost,
-                    WaterCost = WATER_RATE,
-                    TotalDebt = totalDebt,
+                    WaterCost = waterCost,
+                    InternetCost = internetCost,
+                    SanitationCost = sanitationCost,
+                    OtherCost = otherCost, // Chỉ tính các chi phí khác (không bao gồm tiền giữ xe)
+                    TotalDebt = totalDebt, // TotalDebt đã bao gồm parkingFee
                     OcrStatus = ocrStatus,
                     ElectricImageUrl = formData.ElectricImageUrl,
                     IsProcessed = true,
@@ -358,10 +462,11 @@ namespace QLKDPhongTro.Presentation.Services
         /// <summary>
         /// Giải quyết sự cố với giá trị đã xác nhận
         /// </summary>
-        public async Task<ProcessingResult> ResolveDiscrepancyAsync(string roomName, decimal confirmedValue)
+        public async Task<ProcessingResult> ResolveDiscrepancyAsync(string roomName, decimal confirmedValue, DebtFeeSettings? settings = null)
         {
             try
             {
+                var normalizedSettings = EnsureSettings(settings);
                 // 1. Tìm contractId
                 var contractId = await GetContractIdByRoomNameAsync(roomName);
                 if (!contractId.HasValue)
@@ -382,19 +487,44 @@ namespace QLKDPhongTro.Presentation.Services
                 // 4. Tính toán
                 decimal electricityUsage = confirmedValue - oldElectricValue;
                 decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
+                var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
+                var additionalCosts = await CalculateAdditionalCostsAsync(contractId.Value, normalizedSettings);
 
-                // 5. Tạo payment record mới
-                var currentMonth = DateTime.Now.ToString("MM/yyyy");
-                var existing = await GetPaymentByMonthAsync(contractId.Value, currentMonth);
+                // 5. Lấy tháng từ Google Form data (nếu có) hoặc dùng tháng hiện tại
+                string monthYear;
+                try
+                {
+                    var formDataList = await _googleFormService.GetFormDataAsync();
+                    var formData = formDataList.FirstOrDefault(f => 
+                        string.Equals(f.RoomName?.Trim().Replace(".", "").Replace(" ", ""), 
+                                     roomName?.Trim().Replace(".", "").Replace(" ", ""), 
+                                     StringComparison.OrdinalIgnoreCase));
+                    if (formData != null && !string.IsNullOrEmpty(formData.Timestamp))
+                    {
+                        var timestamp = ParseTimestamp(formData.Timestamp);
+                        monthYear = timestamp.ToString("MM/yyyy");
+                    }
+                    else
+                    {
+                        monthYear = DateTime.Now.ToString("MM/yyyy");
+                    }
+                }
+                catch
+                {
+                    monthYear = DateTime.Now.ToString("MM/yyyy");
+                }
+
+                // 6. Tạo payment record mới
+                var existing = await GetPaymentByMonthAsync(contractId.Value, monthYear);
                 if (existing != null)
                 {
-                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Đã tồn tại thanh toán cho tháng {currentMonth}" };
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Đã tồn tại thanh toán cho tháng {monthYear}" };
                 }
 
                 var payment = new Payment
                 {
                     MaHopDong = contractId.Value,
-                    ThangNam = currentMonth,
+                    ThangNam = monthYear,
                     TienThue = await GetRentPriceAsync(contractId.Value),
                     ChiSoDienCu = oldElectricValue,
                     ChiSoDienMoi = confirmedValue,
@@ -402,14 +532,14 @@ namespace QLKDPhongTro.Presentation.Services
                     DonGiaDien = ELECTRICITY_RATE,
                     TienDien = electricityCost,
                     SoNuoc = 1,
-                    DonGiaNuoc = WATER_RATE,
-                    TienNuoc = WATER_RATE,
+                    DonGiaNuoc = normalizedSettings.WaterFee,
+                    TienNuoc = normalizedSettings.WaterFee,
                     // Gán giá trị cố định
-                    TienInternet = DON_GIA_INTERNET,
-                    TienVeSinh = DON_GIA_VE_SINH,
-                    TienGiuXe = DON_GIA_GIU_XE,
+                    TienInternet = normalizedSettings.InternetFee,
+                    TienVeSinh = normalizedSettings.SanitationFee,
+                    TienGiuXe = parkingFee, // Tính dựa trên số lượng xe (free 1 xe, các xe sau tính 100.000/xe)
+                    ChiPhiKhac = additionalCosts,
                     TrangThaiThanhToan = "Chưa trả",
-                    NgayTao = DateTime.Now,
                     GhiChu = $"Đã xác nhận sau kiểm tra sự cố. Giá trị: {confirmedValue}"
                 };
 
@@ -420,7 +550,8 @@ namespace QLKDPhongTro.Presentation.Services
                                  + (payment.TienNuoc ?? 0)
                                  + (payment.TienInternet ?? 0) // Thêm ?? 0
                                  + (payment.TienVeSinh ?? 0)    // Thêm ?? 0
-                                 + (payment.TienGiuXe ?? 0);    // Thêm ?? 0
+                                 + (payment.TienGiuXe ?? 0)
+                                 + (payment.ChiPhiKhac ?? 0);    // Thêm ?? 0
 
                 // 6. Lưu vào database
                 var success = await _paymentRepository.CreateAsync(payment);
@@ -530,8 +661,9 @@ namespace QLKDPhongTro.Presentation.Services
             }
         }
 
-        public async Task<int> CreatePaymentRecordsFromDebtsAsync(List<DebtCalculationResult> debts)
+        public async Task<int> CreatePaymentRecordsFromDebtsAsync(List<DebtCalculationResult> debts, DebtFeeSettings? settings = null)
         {
+            var normalizedSettings = EnsureSettings(settings);
             int createdCount = 0;
             foreach (var debt in debts.Where(d => d.IsProcessed && !d.IsDiscrepancy))
             {
@@ -540,14 +672,18 @@ namespace QLKDPhongTro.Presentation.Services
                     var contractId = await GetContractIdByRoomNameAsync(debt.RoomName);
                     if (contractId.HasValue)
                     {
-                        var currentMonth = DateTime.Now.ToString("MM/yyyy");
-                        var existing = await GetPaymentByMonthAsync(contractId.Value, currentMonth);
+                        // Sử dụng tháng từ timestamp của Google Form thay vì tháng hiện tại
+                        var monthYear = debt.Timestamp.ToString("MM/yyyy");
+                        var existing = await GetPaymentByMonthAsync(contractId.Value, monthYear);
                         if (existing != null) continue;
+
+                        // Tính tiền giữ xe dựa trên số lượng xe (free 1 xe, các xe sau tính 100.000/xe)
+                        var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
 
                         var payment = new Payment
                         {
                             MaHopDong = contractId.Value,
-                            ThangNam = currentMonth,
+                            ThangNam = monthYear,
                             TienThue = await GetRentPriceAsync(contractId.Value),
                             ChiSoDienCu = debt.OldElectricValue,
                             ChiSoDienMoi = debt.CurrentElectricValue,
@@ -555,14 +691,14 @@ namespace QLKDPhongTro.Presentation.Services
                             DonGiaDien = ELECTRICITY_RATE,
                             TienDien = debt.ElectricityCost,
                             SoNuoc = 1,
-                            DonGiaNuoc = WATER_RATE,
-                            TienNuoc = debt.WaterCost,
+                            DonGiaNuoc = normalizedSettings.WaterFee,
+                            TienNuoc = debt.WaterCost > 0 ? debt.WaterCost : normalizedSettings.WaterFee,
                             // Gán giá trị cố định
-                            TienInternet = DON_GIA_INTERNET,
-                            TienVeSinh = DON_GIA_VE_SINH,
-                            TienGiuXe = DON_GIA_GIU_XE,
+                            TienInternet = debt.InternetCost > 0 ? debt.InternetCost : normalizedSettings.InternetFee,
+                            TienVeSinh = debt.SanitationCost > 0 ? debt.SanitationCost : normalizedSettings.SanitationFee,
+                            TienGiuXe = parkingFee, // Tính dựa trên số lượng xe (free 1 xe, các xe sau tính 100.000/xe)
+                            ChiPhiKhac = debt.OtherCost, // Các chi phí khác (không bao gồm tiền giữ xe)
                             TrangThaiThanhToan = "Chưa trả",
-                            NgayTao = DateTime.Now,
                             GhiChu = $"Auto Google Form. {debt.OcrStatus}"
                         };
 
@@ -573,7 +709,8 @@ namespace QLKDPhongTro.Presentation.Services
                                          + (payment.TienNuoc ?? 0)
                                          + (payment.TienInternet ?? 0) // Thêm ?? 0
                                          + (payment.TienVeSinh ?? 0)    // Thêm ?? 0
-                                         + (payment.TienGiuXe ?? 0);    // Thêm ?? 0
+                                         + (payment.TienGiuXe ?? 0)
+                                         + (payment.ChiPhiKhac ?? 0);    // Thêm ?? 0
 
                         var success = await _paymentRepository.CreateAsync(payment);
                         if (success) createdCount++;
@@ -586,8 +723,23 @@ namespace QLKDPhongTro.Presentation.Services
         private async Task<int?> GetContractIdByRoomNameAsync(string roomName)
         {
             var rooms = await _roomRepository.GetAllAsync();
-            var room = rooms.FirstOrDefault(r => r.TenPhong.Trim().Equals(roomName.Trim(), StringComparison.OrdinalIgnoreCase));
+            
+            // Chuẩn hóa tên phòng: loại bỏ dấu chấm, khoảng trắng và chuyển thành chữ hoa
+            string NormalizeRoomName(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name)) return string.Empty;
+                return name.Trim()
+                    .Replace(".", "")
+                    .Replace(" ", "")
+                    .Replace("-", "")
+                    .ToUpperInvariant();
+            }
+
+            var normalizedRoomName = NormalizeRoomName(roomName);
+            var room = rooms.FirstOrDefault(r => NormalizeRoomName(r.TenPhong) == normalizedRoomName);
+            
             if (room == null) return null;
+            
             var contracts = await _contractRepository.GetActiveContractsAsync();
             return contracts.FirstOrDefault(c => c.MaPhong == room.MaPhong)?.MaHopDong;
         }
@@ -618,6 +770,48 @@ namespace QLKDPhongTro.Presentation.Services
         {
             var payments = await _paymentRepository.GetAllAsync();
             return payments.FirstOrDefault(p => p.MaHopDong == contractId && p.ThangNam == monthYear);
+        }
+
+        /// <summary>
+        /// Parse timestamp từ Google Form với format dd/MM/yyyy (ví dụ: 06/12/2025 = ngày 6 tháng 12 năm 2025)
+        /// </summary>
+        private DateTime ParseTimestamp(string timestamp)
+        {
+            if (string.IsNullOrWhiteSpace(timestamp))
+            {
+                return DateTime.Now;
+            }
+
+            // Thử các format phổ biến của Google Form
+            string[] formats = {
+                "dd/MM/yyyy",           // 06/12/2025
+                "dd/MM/yyyy HH:mm:ss",  // 06/12/2025 10:30:00
+                "d/M/yyyy",             // 6/12/2025
+                "d/M/yyyy HH:mm:ss",     // 6/12/2025 10:30:00
+                "MM/dd/yyyy",            // Fallback cho format Mỹ
+                "yyyy-MM-dd",            // ISO format
+                "yyyy-MM-dd HH:mm:ss"    // ISO format với time
+            };
+
+            // Thử parse với các format trên
+            foreach (var format in formats)
+            {
+                if (DateTime.TryParseExact(timestamp.Trim(), format, 
+                    System.Globalization.CultureInfo.InvariantCulture, 
+                    System.Globalization.DateTimeStyles.None, out DateTime result))
+                {
+                    return result;
+                }
+            }
+
+            // Nếu không parse được, thử parse với culture mặc định
+            if (DateTime.TryParse(timestamp, out DateTime defaultResult))
+            {
+                return defaultResult;
+            }
+
+            // Fallback: trả về thời gian hiện tại
+            return DateTime.Now;
         }
     }
 

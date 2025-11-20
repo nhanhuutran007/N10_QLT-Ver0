@@ -27,8 +27,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -60,8 +60,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -91,8 +91,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -122,8 +122,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -154,16 +154,15 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     INSERT INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienDien, TienNuoc, TienInternet, 
-                                           TienVeSinh, TienGiuXe, ChiPhiKhac, TrangThaiThanhToan, NgayThanhToan,
+                                           TienVeSinh, TienGiuXe, ChiPhiKhac, SoTienDaTra, TrangThaiThanhToan, NgayThanhToan,
                                            DonGiaDien, DonGiaNuoc, SoDien, ChiSoDienCu, ChiSoDienMoi, SoNuoc,
-                                           NgayTao, GhiChu, TongTien)
+                                           GhiChu, TongTien)
                     VALUES (@MaHopDong, @ThangNam, @TienThue, @TienDien, @TienNuoc, @TienInternet, 
-                            @TienVeSinh, @TienGiuXe, @ChiPhiKhac, @TrangThaiThanhToan, @NgayThanhToan,
+                            @TienVeSinh, @TienGiuXe, @ChiPhiKhac, @SoTienDaTra, @TrangThaiThanhToan, @NgayThanhToan,
                             @DonGiaDien, @DonGiaNuoc, @SoDien, @ChiSoDienCu, @ChiSoDienMoi, @SoNuoc,
-                            @NgayTao, @GhiChu, @TongTien)", conn);
+                            @GhiChu, @TongTien)", conn);
 
                 AddParameters(cmd, payment);
-                cmd.Parameters.AddWithValue("@NgayTao", payment.NgayTao ?? DateTime.Now);
 
                 return await cmd.ExecuteNonQueryAsync() > 0;
             }
@@ -181,8 +180,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         SET MaHopDong = @MaHopDong, ThangNam = @ThangNam, TienThue = @TienThue, 
                             TienDien = @TienDien, TienNuoc = @TienNuoc, TienInternet = @TienInternet,
                             TienVeSinh = @TienVeSinh, TienGiuXe = @TienGiuXe, ChiPhiKhac = @ChiPhiKhac,
+                            SoTienDaTra = @SoTienDaTra,
                             TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan,
-                            DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc
+                            DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc,
+                            TongTien = @TongTien
                         WHERE MaThanhToan = @MaThanhToan", conn);
 
                     cmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);
@@ -228,8 +229,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
                     WHERE tt.MaHopDong = @MaHopDong AND tt.ThangNam = @ThangNam", conn);
@@ -270,8 +271,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var sql = @"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -312,8 +313,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 await conn.OpenAsync();
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
-                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -456,7 +457,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 var sql = @"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -563,7 +564,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 var cmd = new MySqlCommand(@"
                     SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
                            tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, 
-                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayTao, tt.GhiChu,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.NgayThanhToan, tt.GhiChu,
                            nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
                            tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
                     FROM ThanhToan tt
@@ -600,6 +601,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             cmd.Parameters.AddWithValue("@TienVeSinh", payment.TienVeSinh ?? 0);
             cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
             cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
+            cmd.Parameters.AddWithValue("@SoTienDaTra", payment.SoTienDaTra ?? 0);
 
             string trangThai = GetTrangThaiThanhToan(payment.TrangThaiThanhToan);
             cmd.Parameters.AddWithValue("@TrangThaiThanhToan", trangThai);
@@ -631,9 +633,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 TienGiuXe = reader.IsDBNull(8) ? null : reader.GetDecimal(8),
                 ChiPhiKhac = reader.IsDBNull(9) ? null : reader.GetDecimal(9),
                 TongTien = reader.GetDecimal(10),
-                TrangThaiThanhToan = reader.IsDBNull(11) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(11)),
-                NgayThanhToan = reader.IsDBNull(12) ? null : reader.GetDateTime(12),
-                NgayTao = !reader.IsDBNull(13) ? reader.GetDateTime(13) : DateTime.Now,
+                SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
+                TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
+                NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
                 GhiChu = !reader.IsDBNull(14) ? reader.GetString(14) : string.Empty,
                 // Join columns
                 TenKhachHang = !reader.IsDBNull(15) ? reader.GetString(15) : string.Empty,

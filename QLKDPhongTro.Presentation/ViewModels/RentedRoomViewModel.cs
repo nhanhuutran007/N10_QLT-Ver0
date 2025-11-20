@@ -22,6 +22,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private readonly RentedRoomController _rentedRoomController;
         private readonly MaintenanceController _maintenanceController;
         private readonly ContractController _contractController; // Controller mới để lấy dữ liệu tài chính
+        private readonly TenantController _tenantController;
 
         private readonly DispatcherTimer _statusTimer;
         private List<RentedRoomDto> _allRooms = new();
@@ -37,6 +38,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             // Contract Controller (Quan trọng cho phần Tài chính)
             _contractController = new ContractController(new ContractRepository());
+            _tenantController = new TenantController(new TenantRepository(), roomRepo);
 
             _statusTimer = new DispatcherTimer
             {
@@ -75,9 +77,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private string _tongTienHienThi = string.Empty;
         [ObservableProperty] private ObservableCollection<string> _selectedRoomAmenities = new();
         [ObservableProperty] private ObservableCollection<MaintenanceIncident> _selectedRoomMaintenance = new();
+        [ObservableProperty] private string _currentTenantName = "Chưa có người thuê";
+        [ObservableProperty] private string _currentTenantPhone = string.Empty;
+        [ObservableProperty] private string _currentTenantStatus = "Trống";
+        [ObservableProperty] private string _currentContractRange = string.Empty;
+        [ObservableProperty] private string _tenantStatusNote = string.Empty;
+        [ObservableProperty] private bool _hasActiveTenant;
+        [ObservableProperty] private ObservableCollection<RoomTenantDto> _currentTenants = new();
         [ObservableProperty] private int _openMaintenanceCount;
 
         public bool HasMaintenanceIssues => SelectedRoomMaintenance?.Count > 0;
+        public bool HasCurrentTenants => CurrentTenants?.Count > 0;
+
+        partial void OnCurrentTenantsChanged(ObservableCollection<RoomTenantDto> value)
+        {
+            OnPropertyChanged(nameof(HasCurrentTenants));
+        }
 
         [ObservableProperty] private bool _isLoading;
         [ObservableProperty] private string _statusMessage = string.Empty;
@@ -138,6 +153,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             SelectedRoomAmenities = new ObservableCollection<string>();
             SelectedRoomMaintenance = new ObservableCollection<MaintenanceIncident>();
             OpenMaintenanceCount = 0;
+            CurrentTenantName = "Chưa có người thuê";
+            CurrentTenantPhone = string.Empty;
+            CurrentTenantStatus = "Trống";
+            CurrentContractRange = string.Empty;
+            TenantStatusNote = string.Empty;
+            HasActiveTenant = false;
+            CurrentTenants = new ObservableCollection<RoomTenantDto>();
         }
 
         // Hàm tải dữ liệu thật từ Database
@@ -157,9 +179,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 // B. Tải dữ liệu Tài chính (Hợp đồng)
                 var activeContract = await _contractController.GetActiveContractByRoomIdAsync(maPhong);
+                TenantDetailDto? tenantDetail = null;
+                if (activeContract != null)
+                {
+                    tenantDetail = await _tenantController.GetTenantDetailAsync(activeContract.MaNguoiThue);
+                }
+                var roomTenants = await _tenantController.GetTenantsByRoomIdAsync(maPhong);
 
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    CurrentTenants = new ObservableCollection<RoomTenantDto>(roomTenants);
+                    var displayTenant = CurrentTenants.FirstOrDefault(t => t.IsContractHolder)
+                        ?? CurrentTenants.FirstOrDefault();
+
                     if (activeContract != null)
                     {
                         // === SỬA LỖI Ở ĐÂY ===
@@ -179,20 +211,44 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         TienCocHienCo = 0;
                     }
 
-                    // Tính toán logic hiển thị
-                    TongTienTinhToan = TamTinh - TienCocHienCo;
+                    // Tính toán logic hiển thị (tiền cọc không tự trừ)
+                    TongTienTinhToan = TamTinh;
 
                     // Format hiển thị
                     if (activeContract != null)
                     {
-                        // Nếu đang thuê: Hiển thị số tiền cần thu (hoặc dư)
-                        TongTienHienThi = $"{TongTienTinhToan:N0} VNĐ";
+                        // Nếu đang thuê: hiển thị tổng số tiền phải thu theo hóa đơn
+                        TongTienHienThi = $"{TamTinh:N0} VNĐ";
                     }
                     else
                     {
                         // Nếu trống: Chỉ hiển thị giá phòng
                         TongTienHienThi = $"{TamTinh:N0} VNĐ (Giá niêm yết)";
                     }
+
+                    if (displayTenant != null)
+                    {
+                        HasActiveTenant = displayTenant.IsContractHolder;
+                        CurrentTenantName = displayTenant.HoTen;
+                        CurrentTenantPhone = displayTenant.SoDienThoai ?? string.Empty;
+                        CurrentTenantStatus = displayTenant.TrangThaiNguoiThue;
+                        CurrentContractRange = displayTenant.ContractRangeDisplay;
+                    }
+                    else
+                    {
+                        HasActiveTenant = false;
+                        CurrentTenantName = "Chưa có người thuê";
+                        CurrentTenantPhone = string.Empty;
+                        CurrentTenantStatus = "Trống";
+                        CurrentContractRange = string.Empty;
+                    }
+
+                    TenantStatusNote = tenantDetail?.StayInfo?.ConsistencyMessage
+                        ?? (displayTenant != null
+                            ? (displayTenant.IsContractHolder
+                                ? "Người đứng tên đang cư trú."
+                                : "Khách thuê lịch sử gần nhất.")
+                            : "Phòng sẵn sàng cho khách mới.");
                 });
             }
             catch (Exception ex)

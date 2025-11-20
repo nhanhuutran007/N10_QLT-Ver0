@@ -18,8 +18,12 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal ElectricityUsage { get; set; }
         public decimal ElectricityCost { get; set; }
 
-        // Nước & tổng tiền
+        // Các khoản phí cố định
         public decimal WaterCost { get; set; }
+        public decimal InternetCost { get; set; }
+        public decimal SanitationCost { get; set; }
+        public decimal OtherCost { get; set; }
+
         public decimal TotalDebt { get; set; }
 
         // Thông tin OCR & trạng thái xử lý

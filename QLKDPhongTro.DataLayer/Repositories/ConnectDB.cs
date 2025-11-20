@@ -17,16 +17,25 @@ namespace QLKDPhongTro.DataLayer.Repositories
             if (_connectionString != null)
                 return _connectionString;
 
-            // ===== CẤU HÌNH KẾT NỐI MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
+            //// ===== CẤU HÌNH KẾT NỐI MYSQL =====
+            //string server = "host80.vietnix.vn";
+            //string database = "githubio_QLT_Ver1";
+            //string username = "githubio_admin";
+            //string password = "nhanhuutran007";
+            //string port = "3306";
 
-            // Thêm charset=utf8mb4 để đảm bảo MySQL nhận diện đúng ký tự tiếng Việt trong ENUM
-            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;";
-            
+            //// Thêm charset=utf8mb4 để đảm bảo MySQL nhận diện đúng ký tự tiếng Việt trong ENUM
+            //_connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;";
+            // Cấu hình cho Localhost (XAMPP/WAMP/MySQL Workbench)
+            string server = "localhost";          // Hoặc dùng "127.0.0.1" đều được
+            string database = "githubio_QLT_Ver2"; // Tên database mới theo script Ver2
+            string username = "root";             // Mặc định của Localhost là 'root', không phải 'admin'
+            string password = "";                 // Mặc định thường để trống (chuỗi rỗng)
+            string port = "3306";                 // Cổng mặc định
+
+            // Tạo chuỗi kết nối đầy đủ (Connection String)
+            _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};Charset=utf8mb4;";
+
             return _connectionString;
         }
 

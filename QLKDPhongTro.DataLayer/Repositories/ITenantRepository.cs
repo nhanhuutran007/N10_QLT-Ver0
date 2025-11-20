@@ -47,5 +47,25 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// Kiểm tra CCCD đã tồn tại chưa
         /// </summary>
         Task<bool> IsCCCDExistsAsync(string cccd, int excludeId = 0);
+
+        /// <summary>
+        /// Lấy danh sách tài sản người thuê đang sở hữu
+        /// </summary>
+        Task<List<TenantAsset>> GetAssetsAsync(int maNguoiThue);
+
+        /// <summary>
+        /// Lấy thông tin lưu trú hiện tại (phòng, hợp đồng, trạng thái)
+        /// </summary>
+        Task<TenantStayInfo?> GetCurrentStayInfoAsync(int maNguoiThue);
+
+        /// <summary>
+        /// Lấy danh sách người thuê đang/chuẩn bị ở một phòng cụ thể
+        /// </summary>
+        Task<List<RoomTenantInfo>> GetTenantsByRoomIdAsync(int maPhong);
+
+        /// <summary>
+        /// Cập nhật nhanh trạng thái người thuê
+        /// </summary>
+        Task<bool> UpdateTenantStatusAsync(int maNguoiThue, string trangThai);
     }
 }
