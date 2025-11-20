@@ -22,8 +22,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
 
         // Thông tin hợp đồng
         public int MaHopDong { get; set; }
-        public decimal TienCocHienCo { get; set; }
-        public decimal TienCocConDu { get; set; }
+        public decimal SoTienDaTra { get; set; }
 
         // Chi tiết các khoản phí
         public decimal TienThue { get; set; }
@@ -54,9 +53,11 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public decimal TamTinhVeSinh => TienVeSinh;
         public decimal TamTinhGiuXe => TienGiuXe;
         public decimal TamTinhKhac => ChiPhiKhac;
-        public decimal TamTinh => TamTinhThue + TamTinhDien + TamTinhNuoc + TamTinhInternet + TamTinhVeSinh + TamTinhGiuXe + TamTinhKhac;
-        public decimal KhauTru { get; set; } = 0;
-        public decimal TongTienTinhToan => TamTinh - KhauTru;
+        
+        // TamTinhOverride: Nếu có giá trị, sử dụng nó; nếu không, tính từ các thành phần
+        public decimal? TamTinhOverride { get; set; }
+        public decimal TamTinh => TamTinhOverride ?? (TamTinhThue + TamTinhDien + TamTinhNuoc + TamTinhInternet + TamTinhVeSinh + TamTinhGiuXe + TamTinhKhac);
+        public decimal TongTienTinhToan => Math.Max(0, TamTinh - SoTienDaTra);
 
         /// <summary>
         /// Chuỗi hiển thị tổng tiền: nếu đã trả thì hiển thị "Đã thanh toán",
@@ -71,7 +72,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
                     return "Đã thanh toán";
                 }
 
-                return string.Format("{0:N0} đ", TongTienTinhToan);
+                return string.Format("{0:N0} đ", TamTinh);
             }
         }
     }

@@ -28,9 +28,9 @@ namespace QLKDPhongTro.DataLayer.Models
         public decimal? SoNuoc { get; set; }
 
         public decimal TongTien { get; set; }
+        public decimal? SoTienDaTra { get; set; }
         public string TrangThaiThanhToan { get; set; } = "Chưa thanh toán";
         public DateTime? NgayThanhToan { get; set; }
-        public DateTime? NgayTao { get; set; } = DateTime.Now;
         public string? GhiChu { get; set; }
 
         // Các trường không có trong database nhưng cần cho UI

@@ -227,7 +227,6 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             TienThue = contract.GiaThue,
                             TongTien = tongTien,
                             TrangThaiThanhToan = "Chưa trả",
-                            NgayTao = DateTime.Now,
                             DonGiaDien = DON_GIA_DIEN,
                             DonGiaNuoc = DON_GIA_NUOC,
                             SoDien = (decimal)debt.ChiSoDienMoi,
@@ -310,6 +309,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TongTien = p.TongTien,
                 TrangThaiThanhToan = p.TrangThaiThanhToan,
                 NgayThanhToan = p.NgayThanhToan,
+                SoTienDaTra = p.SoTienDaTra,
                 TenPhong = p.TenPhong
             }).ToList();
         }
@@ -333,7 +333,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ChiPhiKhac = payment.ChiPhiKhac ?? 0,
                 TongTien = payment.TongTien,
                 TrangThaiThanhToan = payment.TrangThaiThanhToan,
-                NgayThanhToan = payment.NgayThanhToan
+                NgayThanhToan = payment.NgayThanhToan,
+                SoTienDaTra = payment.SoTienDaTra
             };
         }
 
@@ -462,14 +463,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 success ? "Thanh toán thành công" : "Thanh toán thất bại");
         }
 
-        public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan)
+        public async Task<ValidationResult> UpdatePaymentStatusAsync(int maThanhToan, string trangThaiChuan, decimal? soTienDaTra = null)
         {
             var normalized = (trangThaiChuan ?? string.Empty).Trim();
+            var validStatuses = new[] { "Đã trả", "Chưa trả", "Trả một phần" };
 
-            if (!string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(normalized, "Chưa trả", StringComparison.OrdinalIgnoreCase))
+            if (!validStatuses.Any(status => status.Equals(normalized, StringComparison.OrdinalIgnoreCase)))
             {
-                return new ValidationResult(false, "Trạng thái không hợp lệ. Chỉ chấp nhận 'Đã trả' hoặc 'Chưa trả'.");
+                return new ValidationResult(false, "Trạng thái không hợp lệ. Vui lòng chọn 'Chưa trả', 'Trả một phần' hoặc 'Đã trả'.");
             }
 
             var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
@@ -478,32 +479,38 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult(false, "Thanh toán không tồn tại");
             }
 
-            var isPaid = string.Equals(normalized, "Đã trả", StringComparison.OrdinalIgnoreCase);
-            payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
-            payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
+            var totalDue = CalculateTotalAmount(payment);
 
-            decimal depositUsed = 0;
-
-            if (isPaid && payment.MaHopDong.HasValue)
+            // Handle partial payment
+            if (normalized.Equals("Trả một phần", StringComparison.OrdinalIgnoreCase))
             {
-                var contract = await _contractRepository.GetByIdAsync(payment.MaHopDong.Value);
-                if (contract != null)
+                if (!soTienDaTra.HasValue || soTienDaTra <= 0)
                 {
-                    var tamTinh = CalculateTotalAmount(payment);
-                    var currentDeposit = contract.TienCoc;
+                    return new ValidationResult(false, "Vui lòng nhập số tiền đã trả hợp lệ (> 0).");
+                }
 
-                    depositUsed = Math.Min(currentDeposit, tamTinh);
-                    payment.TongTien = tamTinh - depositUsed;
+                if (soTienDaTra >= totalDue)
+                {
+                    normalized = "Đã trả";
+                }
+                else
+                {
+                    payment.TrangThaiThanhToan = "Trả một phần";
+                    payment.SoTienDaTra = soTienDaTra;
+                    payment.NgayThanhToan = DateTime.Now;
+                    payment.TongTien = totalDue;
 
-                    contract.TienCoc = currentDeposit - depositUsed;
-                    await _contractRepository.UpdateHopDongAsync(contract);
+                    var successPartial = await _paymentRepository.UpdateAsync(payment);
+                    return new ValidationResult(successPartial,
+                        successPartial ? "Đã cập nhật trạng thái 'Trả một phần'" : "Cập nhật trạng thái thất bại");
                 }
             }
 
-            if (!isPaid)
-            {
-                payment.TongTien = CalculateTotalAmount(payment);
-            }
+            var isPaid = normalized.Equals("Đã trả", StringComparison.OrdinalIgnoreCase);
+            payment.TrangThaiThanhToan = isPaid ? "Đã trả" : "Chưa trả";
+            payment.TongTien = totalDue;
+            payment.NgayThanhToan = isPaid ? DateTime.Now.Date : null;
+            payment.SoTienDaTra = isPaid ? totalDue : 0;
 
             var success = await _paymentRepository.UpdateAsync(payment);
 
@@ -554,13 +561,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 DonGiaNuoc = payment.DonGiaNuoc ?? DON_GIA_NUOC,
                 SoDienThangTruoc = payment.ChiSoDienCu,
                 SoDien = payment.SoDien,
-                SoNuoc = payment.SoNuoc
+                SoNuoc = payment.SoNuoc,
+                // Sử dụng TongTien từ payment làm TamTinh để đảm bảo tính nhất quán
+                // Điều này đảm bảo TamTinh khớp với giá trị đã được tính và lưu trong database
+                TamTinhOverride = payment.TongTien
             };
 
-            var currentDeposit = contract?.TienCoc ?? 0;
-            dto.TienCocHienCo = currentDeposit;
-            dto.KhauTru = Math.Min(dto.TamTinh, currentDeposit);
-            dto.TienCocConDu = Math.Max(0, currentDeposit - dto.KhauTru);
+            dto.SoTienDaTra = payment.SoTienDaTra ?? 0;
 
             return dto;
         }
@@ -755,8 +762,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             decimal? tienInternet,
             decimal? tienVeSinh,
             decimal? tienGiuXe,
-            decimal? chiPhiKhac,
-            decimal khauTru)
+            decimal? chiPhiKhac)
         {
             var payment = await _paymentRepository.GetByIdAsync(maThanhToan);
             if (payment == null) return false;

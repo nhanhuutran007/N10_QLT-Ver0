@@ -345,8 +345,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            MessageBox.Show($"Chi tiết khách thuê: {SelectedTenant.HoTen}\nCCCD: {SelectedTenant.CCCD}\nSĐT: {SelectedTenant.SoDienThoai}",
-                "Chi tiết khách thuê", MessageBoxButton.OK, MessageBoxImage.Information);
+            var detailVm = new TenantDetailViewModel(_tenantController);
+            var detailWindow = new TenantDetailWindow(SelectedTenant.MaKhachThue, detailVm)
+            {
+                Owner = Application.Current.MainWindow
+            };
+            detailWindow.ShowDialog();
         }
 
         // === Row-level Commands khớp với XAML ===

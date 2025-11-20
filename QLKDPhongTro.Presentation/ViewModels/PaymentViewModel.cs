@@ -98,8 +98,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public ICommand DeleteCommand { get; }
         public ICommand ShowAddPaymentCommand { get; }
 
-        // Danh sách lựa chọn trạng thái khi chỉnh sửa: Đã trả/Chưa trả
-        public IReadOnlyList<string> EditStatusChoices { get; } = new List<string> { "Chưa trả", "Đã trả" };
+        // Danh sách lựa chọn trạng thái khi chỉnh sửa
+        public IList<string> EditStatusChoices { get; } = new List<string> { "Chưa trả", "Trả một phần", "Đã trả" };
 
         public PaymentViewModel()
         {
@@ -275,14 +275,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 TotalAmount = dto.TongTien,
                 Status = MapStatus(dto.TrangThaiThanhToan),
                 RoomName = dto.TenPhong ?? string.Empty,
-                PaymentMethod = string.Empty
+                PaymentMethod = string.Empty,
+                AmountPaid = dto.SoTienDaTra ?? 0,
+                PartialPaymentInput = dto.SoTienDaTra.HasValue && dto.SoTienDaTra > 0 ? dto.SoTienDaTra : null
             };
         }
 
         private static string MapStatus(string? trangThai)
         {
-            // Đồng bộ với CHECK constraint trong DB: (N'Chưa trả' OR N'Đã trả')
+            // Đồng bộ với các trạng thái hợp lệ
             if (string.Equals(trangThai, "Đã trả", StringComparison.OrdinalIgnoreCase)) return "Đã trả";
+            if (string.Equals(trangThai, "Trả một phần", StringComparison.OrdinalIgnoreCase)) return "Trả một phần";
             if (string.Equals(trangThai, "Chưa trả", StringComparison.OrdinalIgnoreCase)) return "Chưa trả";
             return "Chưa trả";
         }
@@ -320,13 +323,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 _originalItem = new PaymentItem
                 {
                     Id = payment.Id,
-                    // ... copy các thuộc tính khác
+                    TotalAmount = payment.TotalAmount,
+                    AmountPaid = payment.AmountPaid,
+                    PartialPaymentInput = payment.PartialPaymentInput,
+                    PaymentMethod = payment.PaymentMethod,
                     Status = payment.Status,
                     EditableStatus = initialStatus
                 };
 
                 // Kích hoạt chế độ sửa
                 payment.EditableStatus = initialStatus;
+                payment.PartialPaymentInput = payment.AmountPaid > 0 ? payment.AmountPaid : (decimal?)null;
                 payment.IsEditing = true; // Property này sẽ kích hoạt Trigger ẩn hiện nút bấm
             }
         }
@@ -348,15 +355,26 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     var id = int.Parse(payment.Id);
                     // Đảm bảo giá trị EditableStatus không null hoặc empty
                     var desired = payment.EditableStatus?.Trim() ?? payment.Status;
-                    
-                    // Validate giá trị hợp lệ
-                    if (desired != "Đã trả" && desired != "Chưa trả")
+                    decimal? partialAmount = null;
+
+                    var isValidStatus = EditStatusChoices.Any(status => status.Equals(desired, StringComparison.OrdinalIgnoreCase));
+                    if (!isValidStatus)
                     {
-                        MessageBox.Show("Trạng thái không hợp lệ. Vui lòng chọn 'Đã trả' hoặc 'Chưa trả'.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Trạng thái không hợp lệ. Vui lòng chọn trong danh sách cho phép.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
-                    
-                    var result = await _financialController.UpdatePaymentStatusAsync(id, desired);
+
+                    if (string.Equals(desired, "Trả một phần", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!payment.PartialPaymentInput.HasValue || payment.PartialPaymentInput <= 0)
+                        {
+                            MessageBox.Show("Vui lòng nhập số tiền đã thanh toán khi chọn 'Trả một phần'.", "Thiếu thông tin", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+                        partialAmount = payment.PartialPaymentInput;
+                    }
+
+                    var result = await _financialController.UpdatePaymentStatusAsync(id, desired, partialAmount);
                     if (!result.IsValid)
                     {
                         MessageBox.Show(result.Message, "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -402,6 +420,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 payment.TotalAmount = _originalItem.TotalAmount;
                 payment.Status = _originalItem.Status;
                 payment.PaymentMethod = _originalItem.PaymentMethod;
+                payment.AmountPaid = _originalItem.AmountPaid;
+                payment.PartialPaymentInput = _originalItem.PartialPaymentInput;
                 // Khôi phục EditableStatus về giá trị ban đầu
                 payment.EditableStatus = _originalItem.Status;
                 payment.IsEditing = false;
@@ -462,6 +482,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _paymentMethod = string.Empty;
         private bool _isEditing;
         private string _roomName = string.Empty;
+        private decimal _amountPaid;
+        private decimal? _partialPaymentInput;
 
         public string Id 
         { 
@@ -490,6 +512,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             { 
                 _totalAmount = value; 
                 OnPropertyChanged(nameof(TotalAmount)); 
+                OnPropertyChanged(nameof(RemainingAmount));
+                OnPropertyChanged(nameof(HasRemainingAmount));
             } 
         }
         
@@ -500,6 +524,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             { 
                 _status = value; 
                 OnPropertyChanged(nameof(Status)); 
+                OnPropertyChanged(nameof(IsPartialStatus));
             } 
         }
 
@@ -509,8 +534,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             get => _editableStatus;
             set
             {
+                if (_editableStatus == value) return;
                 _editableStatus = value;
                 OnPropertyChanged(nameof(EditableStatus));
+
+                if (!string.Equals(_editableStatus, "Trả một phần", StringComparison.OrdinalIgnoreCase))
+                {
+                    PartialPaymentInput = null;
+                }
             }
         }
         
@@ -533,6 +564,35 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 OnPropertyChanged(nameof(RoomName));
             }
         }
+
+        public decimal AmountPaid
+        {
+            get => _amountPaid;
+            set
+            {
+                _amountPaid = value;
+                OnPropertyChanged(nameof(AmountPaid));
+                OnPropertyChanged(nameof(RemainingAmount));
+                OnPropertyChanged(nameof(HasPaidAmount));
+                OnPropertyChanged(nameof(HasRemainingAmount));
+            }
+        }
+
+        public decimal RemainingAmount => Math.Max(0, TotalAmount - AmountPaid);
+        public bool HasPaidAmount => AmountPaid > 0;
+        public bool HasRemainingAmount => RemainingAmount > 0;
+
+        public decimal? PartialPaymentInput
+        {
+            get => _partialPaymentInput;
+            set
+            {
+                _partialPaymentInput = value;
+                OnPropertyChanged(nameof(PartialPaymentInput));
+            }
+        }
+
+        public bool IsPartialStatus => string.Equals(Status, "Trả một phần", StringComparison.OrdinalIgnoreCase);
 
         public bool IsEditing 
         { 
