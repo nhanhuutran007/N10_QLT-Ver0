@@ -638,9 +638,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
                 TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
                 NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
-                SoTienDaTra = reader.IsDBNull(11) ? null : reader.GetDecimal(11),
-                TrangThaiThanhToan = reader.IsDBNull(12) ? "Chưa trả" : GetTrangThaiThanhToan(reader.GetString(12)),
-                NgayThanhToan = reader.IsDBNull(13) ? null : reader.GetDateTime(13),
                 GhiChu = !reader.IsDBNull(14) ? reader.GetString(14) : string.Empty,
                 // Join columns
                 TenKhachHang = !reader.IsDBNull(15) ? reader.GetString(15) : string.Empty,
