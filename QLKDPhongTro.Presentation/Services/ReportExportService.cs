@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
+using ClosedXML.Excel;
 
 namespace QLKDPhongTro.Presentation.Services
 {
@@ -50,7 +52,7 @@ namespace QLKDPhongTro.Presentation.Services
 		public static void ExportRevenueMonthlyCsv(IEnumerable<PaymentDto> payments, string thangNam, string filePath)
 		{
 			var vi = CultureInfo.GetCultureInfo("vi-VN");
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Doanh thu tháng,{thangNam}");
 			sw.WriteLine("Phòng,Người thuê,Tiền thuê,Tình trạng thanh toán");
 			foreach (var p in payments.OrderBy(p => p.TenPhong))
@@ -209,11 +211,146 @@ namespace QLKDPhongTro.Presentation.Services
 			doc.Dispose();
 		}
 
+		public static void ExportRevenueMonthlyXlsx(IEnumerable<PaymentDto> payments, string thangNam, string filePath)
+		{
+			using var wb = new XLWorkbook();
+			var ws = wb.AddWorksheet("Báo cáo");
+
+			// Default font
+			ws.Style.Font.FontName = "Times New Roman";
+			ws.Style.Font.FontSize = 10;
+
+			int colCount = 6; // STT, Ngày TT, Phòng, Người thuê, Tiền thuê, Tình trạng
+			int row = 1;
+
+			// Company header (left like PDF)
+			ws.Range(row, 1, row, colCount).Merge().Value = "HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "ĐỊA CHỈ: 19, NGUYỄN HỮU THỌ, TÂN HƯNG, TP.HCM";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			// add a small spacer row
+			ws.Row(row).Height = 8;
+			row++;
+
+			// Title
+			ws.Range(row, 1, row, colCount).Merge().Value = "BÁO CÁO DOANH THU THEO THÁNG";
+			ws.Row(row).Style.Font.SetBold().Font.SetFontSize(16);
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			row++;
+
+			// Period + time
+			ws.Range(row, 1, row, colCount).Merge()
+				.Value = $"THÁNG {thangNam}    |    Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm}";
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Row(row).Style.Font.SetFontSize(9);
+			row += 2;
+
+			// Header
+			var headers = new[] { "STT", "NGÀY TT", "PHÒNG", "KHÁCH HÀNG", "TIỀN THUÊ", "TÌNH TRẠNG" };
+			for (int c = 0; c < headers.Length; c++) ws.Cell(row, c + 1).Value = headers[c];
+			var headerRange = ws.Range(row, 1, row, colCount);
+			headerRange.Style.Font.SetBold();
+			headerRange.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#F2F2F2"));
+			headerRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Rows(row, row).Height = 20;
+			row++;
+
+			// Filter same as PDF: include Đã trả or Trả một phần
+			var filtered = payments.Where(p =>
+			{
+				var status = NormalizeStatus(p.TrangThaiThanhToan);
+				return status == "da tra" || status == "tra mot phan";
+			}).ToList();
+
+			// Body
+			int stt = 1;
+			var vi = CultureInfo.GetCultureInfo("vi-VN");
+			foreach (var p in filtered.OrderBy(p => p.TenPhong).ThenBy(p => p.NgayThanhToan))
+			{
+				ws.Cell(row, 1).Value = stt++;
+				ws.Cell(row, 2).Value = p.NgayThanhToan?.ToString("dd/MM/yyyy") ?? "";
+				ws.Cell(row, 3).Value = p.TenPhong ?? "";
+				ws.Cell(row, 4).Value = p.TenKhachHang ?? "";
+				ws.Cell(row, 5).Value = (p.TienThue ?? 0m);
+				ws.Cell(row, 6).Value = p.TrangThaiThanhToan ?? "";
+
+				var rowRange = ws.Range(row, 1, row, colCount);
+				rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+				// Center all cells in row, vertical + horizontal
+				rowRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				rowRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+				// Number format for money column
+				ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0";
+				row++;
+			}
+
+			// Totals (SUM on col 5)
+			ws.Range(row, 1, row, 4).Merge().Value = "TỔNG CỘNG:";
+			ws.Range(row, 1, row, 4).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, 4).Style.Font.SetBold();
+			ws.Cell(row, 5).FormulaA1 = $"SUM(E{(row - (stt - 1))}:E{row - 1})";
+			ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0";
+			ws.Cell(row, 5).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Cell(row, 5).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, 1, row, colCount).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			row += 1; // khoảng cách nhỏ trước phần chữ ký
+
+			// Signatures (2 dòng): căn đối xứng 2 bên mép bảng
+			int leftStartCol = 1, leftEndCol = 3;
+			int rightStartCol = colCount - 2, rightEndCol = colCount; // 4..6
+
+			// Dòng nhãn
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "NGƯỜI LẬP BIỂU";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "KẾ TOÁN TRƯỞNG";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(10).Font.SetBold();
+			ws.Row(row).Height = 18;
+
+			// Dòng (Ký, họ tên)
+			row++;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(9);
+			ws.Row(row).Height = 24;
+
+			// Column widths and wrap
+			ws.Columns(1, colCount).AdjustToContents();
+			ws.Column(4).Width = Math.Max(ws.Column(4).Width, 28);
+			ws.Column(6).Width = Math.Max(ws.Column(6).Width, 18);
+			ws.Range(1, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Column(4).Style.Alignment.WrapText = true;
+
+			// Freeze header
+			ws.SheetView.FreezeRows((headers.Length > 0) ? (headerRange.FirstRow().RowNumber()) : 4);
+
+			// Page setup for printing
+			ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+			ws.PageSetup.Margins.Top = 0.5; ws.PageSetup.Margins.Bottom = 0.5;
+			ws.PageSetup.Margins.Left = 0.4; ws.PageSetup.Margins.Right = 0.4;
+			ws.PageSetup.CenterHorizontally = true;
+
+			wb.SaveAs(filePath);
+		}
+
 		// ========== EXPENSE (MONTHLY) ==========
 		public static void ExportExpenseMonthlyCsv(IEnumerable<PaymentDto> payments, string thangNam, string filePath)
 		{
 			var totals = CalcExpenseTotals(payments);
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Chi phí tháng,{thangNam}");
 			sw.WriteLine("Khoản mục,Số tiền");
 			foreach (var kv in totals)
@@ -271,7 +408,7 @@ namespace QLKDPhongTro.Presentation.Services
 		public static void ExportExpenseMonthlyCsv(IEnumerable<ExpenseRow> rows, string thangNam, string filePath)
 		{
 			var vi = CultureInfo.GetCultureInfo("vi-VN");
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Chi phí tháng (chi tiết),{thangNam}");
 			sw.WriteLine("STT,Phòng,CS điện cũ,CS điện mới,Số điện,ĐG điện,Tiền điện,Số nước,ĐG nước,Tiền nước,Internet,Vệ sinh,Giữ xe,Sửa chữa/T. khác,Tổng");
 
@@ -506,6 +643,161 @@ namespace QLKDPhongTro.Presentation.Services
 			doc.Dispose();
 		}
 
+		public static void ExportExpenseMonthlyXlsx(IEnumerable<ExpenseRow> rows, string thangNam, string filePath)
+		{
+			using var wb = new XLWorkbook();
+			var ws = wb.AddWorksheet("Báo cáo");
+
+			ws.Style.Font.FontName = "Times New Roman";
+			ws.Style.Font.FontSize = 10;
+
+			int colCount = 15; // STT, Phòng, CSĐ cũ, CSĐ mới, Số điện, ĐG điện, Tiền điện, Số nước, ĐG nước, Tiền nước, Internet, Vệ sinh, Giữ xe, Sửa chữa, Tổng
+			int row = 1;
+
+			// Company header
+			ws.Range(row, 1, row, colCount).Merge().Value = "HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "ĐỊA CHỈ: 19, NGUYỄN HỮU THỌ, TÂN HƯNG, TP.HCM";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Row(row).Height = 8;
+			row++;
+
+			// Title
+			ws.Range(row, 1, row, colCount).Merge().Value = "BÁO CÁO CHI PHÍ THEO THÁNG";
+			ws.Row(row).Style.Font.SetBold().Font.SetFontSize(16);
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			row++;
+
+			// Period + time
+			DateTime startOfMonth, endOfMonth;
+			try
+			{
+				var dt = DateTime.ParseExact(thangNam, "MM/yyyy", CultureInfo.InvariantCulture);
+				startOfMonth = new DateTime(dt.Year, dt.Month, 1);
+				endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+			}
+			catch
+			{
+				startOfMonth = DateTime.Now.Date;
+				endOfMonth = DateTime.Now.Date;
+			}
+			ws.Range(row, 1, row, colCount).Merge()
+				.Value = $"TỪ NGÀY: {startOfMonth:dd/MM/yyyy} ĐẾN NGÀY: {endOfMonth:dd/MM/yyyy}    |    Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm}";
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Row(row).Style.Font.SetFontSize(9);
+			row += 2;
+
+			// Header
+			var headers = new[] { "STT", "Phòng", "CSĐ cũ", "CSĐ mới", "Số điện", "ĐG điện", "Tiền điện", "Số nước", "ĐG nước", "Tiền nước", "Internet", "Vệ sinh", "Giữ xe", "Sửa chữa", "Tổng" };
+			for (int c = 0; c < headers.Length; c++) ws.Cell(row, c + 1).Value = headers[c];
+			var headerRange = ws.Range(row, 1, row, colCount);
+			headerRange.Style.Font.SetBold();
+			headerRange.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#F2F2F2"));
+			headerRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Rows(row, row).Height = 20;
+			row++;
+
+			// Body
+			int stt = 1;
+			var vi = CultureInfo.GetCultureInfo("vi-VN");
+			foreach (var r in rows.OrderBy(r => r.TenPhong).ThenBy(r => r.NgayThanhToan ?? DateTime.MaxValue))
+			{
+				ws.Cell(row, 1).Value = stt++;
+				ws.Cell(row, 2).Value = r.TenPhong ?? "";
+				ws.Cell(row, 3).Value = (r.ChiSoDienCu ?? 0);
+				ws.Cell(row, 4).Value = (r.ChiSoDienMoi ?? 0);
+				ws.Cell(row, 5).Value = (r.SoDien ?? 0);
+				ws.Cell(row, 6).Value = (r.DonGiaDien ?? 0);
+				ws.Cell(row, 7).Value = (r.TienDien ?? 0);
+				ws.Cell(row, 8).Value = (r.SoNuoc ?? 0);
+				ws.Cell(row, 9).Value = (r.DonGiaNuoc ?? 0);
+				ws.Cell(row, 10).Value = (r.TienNuoc ?? 0);
+				ws.Cell(row, 11).Value = (r.TienInternet ?? 0);
+				ws.Cell(row, 12).Value = (r.TienVeSinh ?? 0);
+				ws.Cell(row, 13).Value = (r.TienGiuXe ?? 0);
+				ws.Cell(row, 14).Value = (r.ChiPhiSuaChua ?? 0);
+				ws.Cell(row, 15).Value = r.Tong;
+
+				var rowRange = ws.Range(row, 1, row, colCount);
+				rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				rowRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+				// Number formats for money columns
+				ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 11).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 12).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 13).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 14).Style.NumberFormat.Format = "#,##0";
+				ws.Cell(row, 15).Style.NumberFormat.Format = "#,##0";
+				row++;
+			}
+
+			// Totals row
+			ws.Range(row, 1, row, 2).Merge().Value = "TỔNG CỘNG:";
+			ws.Range(row, 1, row, 2).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, 2).Style.Font.SetBold();
+			// Empty cells for 3-5, 8-9
+			ws.Cell(row, 7).FormulaA1 = $"SUM(G{(row - (stt - 1))}:G{row - 1})";
+			ws.Cell(row, 10).FormulaA1 = $"SUM(J{(row - (stt - 1))}:J{row - 1})";
+			ws.Cell(row, 11).FormulaA1 = $"SUM(K{(row - (stt - 1))}:K{row - 1})";
+			ws.Cell(row, 12).FormulaA1 = $"SUM(L{(row - (stt - 1))}:L{row - 1})";
+			ws.Cell(row, 13).FormulaA1 = $"SUM(M{(row - (stt - 1))}:M{row - 1})";
+			ws.Cell(row, 14).FormulaA1 = $"SUM(N{(row - (stt - 1))}:N{row - 1})";
+			ws.Cell(row, 15).FormulaA1 = $"SUM(O{(row - (stt - 1))}:O{row - 1})";
+			ws.Range(row, 7, row, 15).Style.NumberFormat.Format = "#,##0";
+			ws.Range(row, 1, row, colCount).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			row += 1;
+
+			// Signatures
+			int leftStartCol = 1, leftEndCol = 7;
+			int rightStartCol = 8, rightEndCol = colCount;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "NGƯỜI LẬP BIỂU";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "KẾ TOÁN TRƯỞNG";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(10).Font.SetBold();
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(9);
+			ws.Row(row).Height = 24;
+
+			// Column widths
+			ws.Columns(1, colCount).AdjustToContents();
+			ws.Column(2).Width = Math.Max(ws.Column(2).Width, 12);
+			ws.Range(1, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+			// Freeze header
+			ws.SheetView.FreezeRows(headerRange.FirstRow().RowNumber());
+
+			// Page setup
+			ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+			ws.PageSetup.Margins.Top = 0.5; ws.PageSetup.Margins.Bottom = 0.5;
+			ws.PageSetup.Margins.Left = 0.4; ws.PageSetup.Margins.Right = 0.4;
+			ws.PageSetup.CenterHorizontally = true;
+
+			wb.SaveAs(filePath);
+		}
+
 		// ========== PROFIT (MONTHLY) ==========
 		public static void ExportProfitMonthlyCsv(IEnumerable<PaymentDto> payments, string thangNam, string filePath, string partialMode = "None")
 		{
@@ -519,7 +811,7 @@ namespace QLKDPhongTro.Presentation.Services
 				.OrderBy(p => p.TenPhong)
 				.ToList();
 
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Lợi nhuận tháng,{thangNam}");
 			sw.WriteLine("STT,Phòng,Tiền thuê,Chi phí,Tổng tiền,Doanh thu,Lợi nhuận");
 
@@ -765,10 +1057,192 @@ namespace QLKDPhongTro.Presentation.Services
 			doc.Dispose();
 		}
 
+		public static void ExportProfitMonthlyXlsx(IEnumerable<PaymentDto> payments, string thangNam, string filePath, string partialMode = "None")
+		{
+			using var wb = new XLWorkbook();
+			var ws = wb.AddWorksheet("Báo cáo");
+
+			ws.Style.Font.FontName = "Times New Roman";
+			ws.Style.Font.FontSize = 10;
+
+			int colCount = 8; // STT, Ngày TT, Phòng, Tiền thuê, Chi phí, Tổng tiền, Doanh thu, Lợi nhuận
+			int row = 1;
+
+			// Company header
+			ws.Range(row, 1, row, colCount).Merge().Value = "HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "ĐỊA CHỈ: 19, NGUYỄN HỮU THỌ, TÂN HƯNG, TP.HCM";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Row(row).Height = 8;
+			row++;
+
+			// Title
+			ws.Range(row, 1, row, colCount).Merge().Value = "BÁO CÁO LỢI NHUẬN THEO THÁNG";
+			ws.Row(row).Style.Font.SetBold().Font.SetFontSize(16);
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			row++;
+
+			// Period + time
+			DateTime startOfMonth, endOfMonth;
+			try
+			{
+				var dt = DateTime.ParseExact(thangNam, "MM/yyyy", CultureInfo.InvariantCulture);
+				startOfMonth = new DateTime(dt.Year, dt.Month, 1);
+				endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+			}
+			catch
+			{
+				startOfMonth = DateTime.Now.Date;
+				endOfMonth = DateTime.Now.Date;
+			}
+			ws.Range(row, 1, row, colCount).Merge()
+				.Value = $"TỪ NGÀY: {startOfMonth:dd/MM/yyyy} ĐẾN NGÀY: {endOfMonth:dd/MM/yyyy}    |    Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm}";
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Row(row).Style.Font.SetFontSize(9);
+			row += 2;
+
+			// Header
+			var headers = new[] { "STT", "Ngày TT", "Phòng", "Tiền thuê", "Chi phí", "Tổng tiền", "Doanh thu", "Lợi nhuận" };
+			for (int c = 0; c < headers.Length; c++) ws.Cell(row, c + 1).Value = headers[c];
+			var headerRange = ws.Range(row, 1, row, colCount);
+			headerRange.Style.Font.SetBold();
+			headerRange.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#F2F2F2"));
+			headerRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Rows(row, row).Height = 20;
+			row++;
+
+			// Filter: all statuses (same as PDF)
+			var filtered = payments.ToList();
+
+			// Body
+			int stt = 1;
+			var vi = CultureInfo.GetCultureInfo("vi-VN");
+			decimal totalRent = 0, totalRevenue = 0, totalCost = 0, totalTongTien = 0, totalProfit = 0;
+			foreach (var p in filtered.OrderBy(p => p.TenPhong).ThenBy(p => p.NgayThanhToan))
+			{
+				var status = NormalizeStatus(p.TrangThaiThanhToan);
+				decimal baseCosts = (p.TienDien ?? 0) + (p.TienNuoc ?? 0) + (p.TienInternet ?? 0) + (p.TienVeSinh ?? 0) + (p.ChiPhiKhac ?? 0);
+				decimal doanhThu = (p.SoTienDaTra ?? 0);
+				decimal chiPhi = baseCosts;
+				decimal tienThue = (p.TienThue ?? 0);
+				decimal tongTien = p.TongTien;
+
+				decimal loiNhuan;
+				if (status == "da tra")
+				{
+					loiNhuan = doanhThu - chiPhi;
+				}
+				else
+				{
+					loiNhuan = (p.SoTienDaTra ?? 0) - p.TongTien;
+				}
+
+				totalRent += tienThue;
+				totalRevenue += doanhThu;
+				totalCost += chiPhi;
+				totalTongTien += tongTien;
+				totalProfit += loiNhuan;
+
+				ws.Cell(row, 1).Value = stt++;
+				ws.Cell(row, 2).Value = p.NgayThanhToan?.ToString("dd/MM/yyyy") ?? "";
+				ws.Cell(row, 3).Value = p.TenPhong ?? "";
+				ws.Cell(row, 4).Value = tienThue;
+				ws.Cell(row, 5).Value = chiPhi;
+				ws.Cell(row, 6).Value = tongTien;
+				ws.Cell(row, 7).Value = doanhThu;
+				ws.Cell(row, 8).Value = loiNhuan;
+
+				var rowRange = ws.Range(row, 1, row, colCount);
+				rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				rowRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+				ws.Range(row, 4, row, 8).Style.NumberFormat.Format = "#,##0";
+				row++;
+			}
+
+			// Totals row
+			ws.Range(row, 1, row, 3).Merge().Value = "TỔNG CỘNG:";
+			ws.Range(row, 1, row, 3).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, 3).Style.Font.SetBold();
+			ws.Cell(row, 4).Value = totalRent;
+			ws.Cell(row, 5).Value = totalCost;
+			ws.Cell(row, 6).Value = totalTongTien;
+			ws.Cell(row, 7).Value = totalRevenue;
+			ws.Cell(row, 8).Value = totalProfit;
+			ws.Range(row, 4, row, 8).Style.NumberFormat.Format = "#,##0";
+			ws.Range(row, 1, row, colCount).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			row += 1;
+
+			// Notes
+			ws.Range(row, 1, row, colCount).Merge().Value = "Lưu ý:";
+			ws.Range(row, 1, row, colCount).Style.Font.SetBold();
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "• Đã trả: Doanh thu = Số tiền đã trả; Chi phí = Điện + Nước + Internet + Vệ sinh + Chi phí khác; Lợi nhuận = Doanh thu − Chi phí.";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "• Trả một phần: Lợi nhuận = Số tiền đã trả − Tổng tiền (có thể âm, thể hiện phần còn thiếu).";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "• Trạng thái khác: xử lý như Trả một phần (lợi nhuận có thể âm).";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			row += 1;
+
+			// Signatures
+			int leftStartCol = 1, leftEndCol = 4;
+			int rightStartCol = 5, rightEndCol = colCount;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "NGƯỜI LẬP BIỂU";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "KẾ TOÁN TRƯỞNG";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(10).Font.SetBold();
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(9);
+			ws.Row(row).Height = 24;
+
+			// Column widths
+			ws.Columns(1, colCount).AdjustToContents();
+			ws.Column(3).Width = Math.Max(ws.Column(3).Width, 14);
+			ws.Range(1, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+			// Freeze header
+			ws.SheetView.FreezeRows(headerRange.FirstRow().RowNumber());
+
+			// Page setup
+			ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+			ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+			ws.PageSetup.Margins.Top = 0.5; ws.PageSetup.Margins.Bottom = 0.5;
+			ws.PageSetup.Margins.Left = 0.4; ws.PageSetup.Margins.Right = 0.4;
+			ws.PageSetup.CenterHorizontally = true;
+
+			wb.SaveAs(filePath);
+		}
+
 		// ========== ROOM STATUS ==========
 		public static void ExportRoomStatusCsv(IEnumerable<QLKDPhongTro.DataLayer.Models.RentedRoom> rooms, string thangNam, string filePath)
 		{
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Danh sách phòng,{thangNam}");
 			sw.WriteLine("STT,Phòng,Diện tích (m²),Giá cơ bản,Trạng thái,Trang thiết bị,Ghi chú");
 			var vi = CultureInfo.GetCultureInfo("vi-VN");
@@ -891,11 +1365,120 @@ namespace QLKDPhongTro.Presentation.Services
 			doc.Dispose();
 		}
 
+		public static void ExportRoomStatusXlsx(IEnumerable<QLKDPhongTro.DataLayer.Models.RentedRoom> rooms, string thangNam, string filePath)
+		{
+			using var wb = new XLWorkbook();
+			var ws = wb.AddWorksheet("Báo cáo");
+
+			ws.Style.Font.FontName = "Times New Roman";
+			ws.Style.Font.FontSize = 10;
+
+			int colCount = 7; // STT, Phòng, Diện tích, Giá cơ bản, Trạng thái, Trang thiết bị, Ghi chú
+			int row = 1;
+
+			// Company header
+			ws.Range(row, 1, row, colCount).Merge().Value = "HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "ĐỊA CHỈ: 19, NGUYỄN HỮU THỌ, TÂN HƯNG, TP.HCM";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Row(row).Height = 8;
+			row++;
+
+			// Title
+			ws.Range(row, 1, row, colCount).Merge().Value = "BÁO CÁO DANH SÁCH PHÒNG";
+			ws.Row(row).Style.Font.SetBold().Font.SetFontSize(16);
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = $"Tháng {thangNam}    |    Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm}";
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Row(row).Style.Font.SetFontSize(9);
+			row += 2;
+
+			// Header
+			var headers = new[] { "STT", "Phòng", "Diện tích (m²)", "Giá cơ bản", "Trạng thái", "Trang thiết bị", "Ghi chú" };
+			for (int c = 0; c < headers.Length; c++) ws.Cell(row, c + 1).Value = headers[c];
+			var headerRange = ws.Range(row, 1, row, colCount);
+			headerRange.Style.Font.SetBold();
+			headerRange.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#F2F2F2"));
+			headerRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Rows(row, row).Height = 20;
+			row++;
+
+			// Body
+			int stt = 1;
+			var vi = CultureInfo.GetCultureInfo("vi-VN");
+			foreach (var r in rooms.OrderBy(r => r.TenPhong))
+			{
+				ws.Cell(row, 1).Value = stt++;
+				ws.Cell(row, 2).Value = r.TenPhong ?? "";
+				ws.Cell(row, 3).Value = (int)Math.Round(r.DienTich);
+				ws.Cell(row, 4).Value = r.GiaCoBan;
+				ws.Cell(row, 5).Value = r.TrangThai ?? "";
+				ws.Cell(row, 6).Value = r.TrangThietBi ?? "";
+				ws.Cell(row, 7).Value = r.GhiChu ?? "";
+
+				var rowRange = ws.Range(row, 1, row, colCount);
+				rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				rowRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+				ws.Cell(row, 4).Style.NumberFormat.Format = "#,##0";
+				ws.Column(6).Style.Alignment.WrapText = true;
+				ws.Column(7).Style.Alignment.WrapText = true;
+				row++;
+			}
+
+			// Signatures
+			int leftStartCol = 1, leftEndCol = 3;
+			int rightStartCol = 4, rightEndCol = colCount;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "NGƯỜI LẬP BIỂU";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "KẾ TOÁN TRƯỞNG";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(10).Font.SetBold();
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(9);
+			ws.Row(row).Height = 24;
+
+			// Column widths
+			ws.Columns(1, colCount).AdjustToContents();
+			ws.Column(2).Width = Math.Max(ws.Column(2).Width, 12);
+			ws.Column(6).Width = Math.Max(ws.Column(6).Width, 25);
+			ws.Column(7).Width = Math.Max(ws.Column(7).Width, 25);
+			ws.Range(1, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+			// Freeze header
+			ws.SheetView.FreezeRows(headerRange.FirstRow().RowNumber());
+
+			// Page setup
+			ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+			ws.PageSetup.PageOrientation = XLPageOrientation.Landscape;
+			ws.PageSetup.Margins.Top = 0.5; ws.PageSetup.Margins.Bottom = 0.5;
+			ws.PageSetup.Margins.Left = 0.4; ws.PageSetup.Margins.Right = 0.4;
+			ws.PageSetup.CenterHorizontally = true;
+
+			wb.SaveAs(filePath);
+		}
+
 		// ========== DEBT (MONTHLY) ==========
 		public static void ExportDebtMonthlyCsv(IEnumerable<DebtReportDto> debts, string thangNam, string filePath)
 		{
 			var vi = CultureInfo.GetCultureInfo("vi-VN");
-			using var sw = new StreamWriter(filePath);
+			using var sw = new StreamWriter(filePath, false, new UTF8Encoding(true));
 			sw.WriteLine($"Báo cáo Công nợ tháng,{thangNam}");
 			sw.WriteLine("STT,Mã TT,Phòng,Khách hàng,Số tiền nợ (VNĐ)");
 			int stt = 1;
@@ -1020,6 +1603,127 @@ namespace QLKDPhongTro.Presentation.Services
 
 			doc.Save(filePath);
 			doc.Dispose();
+		}
+
+		public static void ExportDebtMonthlyXlsx(IEnumerable<DebtReportDto> debts, string thangNam, string filePath)
+		{
+			using var wb = new XLWorkbook();
+			var ws = wb.AddWorksheet("Báo cáo");
+
+			ws.Style.Font.FontName = "Times New Roman";
+			ws.Style.Font.FontSize = 10;
+
+			int colCount = 5; // STT, Mã TT, Phòng, Khách hàng, Số tiền nợ
+			int row = 1;
+
+			// Company header
+			ws.Range(row, 1, row, colCount).Merge().Value = "HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = "ĐỊA CHỈ: 19, NGUYỄN HỮU THỌ, TÂN HƯNG, TP.HCM";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Row(row).Height = 8;
+			row++;
+
+			// Title
+			ws.Range(row, 1, row, colCount).Merge().Value = "BÁO CÁO CÔNG NỢ";
+			ws.Row(row).Style.Font.SetBold().Font.SetFontSize(16);
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			row++;
+			ws.Range(row, 1, row, colCount).Merge().Value = $"Tháng {thangNam}    |    Xuất lúc: {DateTime.Now:dd/MM/yyyy HH:mm}";
+			ws.Row(row).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Row(row).Style.Font.SetFontSize(9);
+			row += 2;
+
+			// Header
+			var headers = new[] { "STT", "Mã TT", "Phòng", "Khách hàng", "Số tiền nợ (VNĐ)" };
+			for (int c = 0; c < headers.Length; c++) ws.Cell(row, c + 1).Value = headers[c];
+			var headerRange = ws.Range(row, 1, row, colCount);
+			headerRange.Style.Font.SetBold();
+			headerRange.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#F2F2F2"));
+			headerRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			headerRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			headerRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			headerRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			ws.Rows(row, row).Height = 20;
+			row++;
+
+			// Body
+			int stt = 1;
+			var vi = CultureInfo.GetCultureInfo("vi-VN");
+			foreach (var d in debts.OrderBy(d => d.TenPhong).ThenBy(d => d.TenKhachHang))
+			{
+				ws.Cell(row, 1).Value = stt++;
+				ws.Cell(row, 2).Value = d.MaThanhToan;
+				ws.Cell(row, 3).Value = d.TenPhong ?? "";
+				ws.Cell(row, 4).Value = d.TenKhachHang ?? "";
+				ws.Cell(row, 5).Value = d.TongTien;
+
+				var rowRange = ws.Range(row, 1, row, colCount);
+				rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+				rowRange.Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+				rowRange.Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+				ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0";
+				row++;
+			}
+
+			// Totals row
+			ws.Range(row, 1, row, 3).Merge().Value = "TỔNG CỘNG:";
+			ws.Range(row, 1, row, 3).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, 1, row, 3).Style.Font.SetBold();
+			ws.Cell(row, 5).FormulaA1 = $"SUM(E{(row - (stt - 1))}:E{row - 1})";
+			ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0";
+			ws.Cell(row, 5).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Cell(row, 5).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, 1, row, colCount).Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+			ws.Range(row, 1, row, colCount).Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+			row += 1;
+
+			// Note
+			ws.Range(row, 1, row, colCount).Merge().Value = "Lưu ý: Danh sách công nợ gồm khách hàng chưa trả hoặc trả một phần nhưng vẫn còn thiếu tiền.";
+			ws.Range(row, 1, row, colCount).Style.Font.SetFontSize(9);
+			ws.Range(row, 1, row, colCount).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Left);
+			row += 1;
+
+			// Signatures
+			int leftStartCol = 1, leftEndCol = 2;
+			int rightStartCol = 3, rightEndCol = colCount;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "NGƯỜI LẬP BIỂU";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "KẾ TOÁN TRƯỞNG";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(10).Font.SetBold();
+			ws.Row(row).Height = 18;
+			row++;
+			ws.Range(row, leftStartCol, row, leftEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, rightStartCol, row, rightEndCol).Merge().Value = "(Ký, họ tên)";
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+			ws.Range(row, leftStartCol, row, rightEndCol).Style.Font.SetFontSize(9);
+			ws.Row(row).Height = 24;
+
+			// Column widths
+			ws.Columns(1, colCount).AdjustToContents();
+			ws.Column(4).Width = Math.Max(ws.Column(4).Width, 28);
+			ws.Column(4).Style.Alignment.WrapText = true;
+			ws.Range(1, 1, row, colCount).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);
+
+			// Freeze header
+			ws.SheetView.FreezeRows(headerRange.FirstRow().RowNumber());
+
+			// Page setup
+			ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+			ws.PageSetup.Margins.Top = 0.5; ws.PageSetup.Margins.Bottom = 0.5;
+			ws.PageSetup.Margins.Left = 0.4; ws.PageSetup.Margins.Right = 0.4;
+			ws.PageSetup.CenterHorizontally = true;
+
+			wb.SaveAs(filePath);
 		}
 
 		// ========== Helpers ==========

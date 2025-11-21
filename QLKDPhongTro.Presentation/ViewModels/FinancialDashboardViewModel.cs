@@ -534,8 +534,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 				var sfd = new SaveFileDialog
 				{
 					Title = "Chọn nơi lưu báo cáo",
-					FileName = $"{SanitizeFileName(exportType)}_{SanitizeFileName(monthLabel)}.{(exportFormat == "PDF" ? "pdf" : "csv")}",
-					Filter = exportFormat == "PDF" ? "PDF file (*.pdf)|*.pdf" : "CSV file (*.csv)|*.csv",
+					FileName = $"{SanitizeFileName(exportType)}_{SanitizeFileName(monthLabel)}.{(exportFormat == "PDF" ? "pdf" : "xlsx")}",
+					Filter = exportFormat == "PDF" ? "PDF file (*.pdf)|*.pdf" : "Excel file (*.xlsx)|*.xlsx",
 					AddExtension = true,
 					OverwritePrompt = true
 				};
@@ -591,7 +591,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 						if (exportFormat == "PDF")
 							ReportExportService.ExportRevenueMonthlyPdf(paymentsThisMonth, monthLabel, sfd.FileName);
 						else
-							ReportExportService.ExportRevenueMonthlyCsv(paymentsThisMonth, monthLabel, sfd.FileName);
+							ReportExportService.ExportRevenueMonthlyXlsx(paymentsThisMonth, monthLabel, sfd.FileName);
 						break;
 
 					case "Báo cáo Chi phí tháng":
@@ -636,14 +636,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
 						if (exportFormat == "PDF")
 							ReportExportService.ExportExpenseMonthlyPdf(expenseRows, monthLabel, sfd.FileName);
 						else
-							ReportExportService.ExportExpenseMonthlyCsv(expenseRows, monthLabel, sfd.FileName);
+							ReportExportService.ExportExpenseMonthlyXlsx(expenseRows, monthLabel, sfd.FileName);
 						break;
 
 					case "Báo cáo Lợi nhuận tháng":
 						if (exportFormat == "PDF")
 							ReportExportService.ExportProfitMonthlyPdf(paymentsThisMonth, monthLabel, sfd.FileName, "Hybrid");
 						else
-							ReportExportService.ExportProfitMonthlyCsv(paymentsThisMonth, monthLabel, sfd.FileName, "Hybrid");
+							ReportExportService.ExportProfitMonthlyXlsx(paymentsThisMonth, monthLabel, sfd.FileName, "Hybrid");
 						break;
 
 					case "Báo cáo Danh sách phòng":
@@ -653,7 +653,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 						if (exportFormat == "PDF")
 							ReportExportService.ExportRoomStatusPdf(rooms, monthLabel, sfd.FileName);
 						else
-							ReportExportService.ExportRoomStatusCsv(rooms, monthLabel, sfd.FileName);
+							ReportExportService.ExportRoomStatusXlsx(rooms, monthLabel, sfd.FileName);
 						break;
 
 					case "Báo cáo Công nợ":
@@ -678,7 +678,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 							if (exportFormat == "PDF")
 								ReportExportService.ExportDebtMonthlyPdf(debts, monthLabel, sfd.FileName);
 							else
-								ReportExportService.ExportDebtMonthlyCsv(debts, monthLabel, sfd.FileName);
+								ReportExportService.ExportDebtMonthlyXlsx(debts, monthLabel, sfd.FileName);
 						}
 						break;
 
