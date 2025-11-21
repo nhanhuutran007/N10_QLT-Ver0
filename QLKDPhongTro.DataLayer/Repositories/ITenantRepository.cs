@@ -54,6 +54,21 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<List<TenantAsset>> GetAssetsAsync(int maNguoiThue);
 
         /// <summary>
+        /// Tạo tài sản mới cho người thuê
+        /// </summary>
+        Task<bool> CreateAssetAsync(TenantAsset asset);
+
+        /// <summary>
+        /// Cập nhật thông tin tài sản
+        /// </summary>
+        Task<bool> UpdateAssetAsync(TenantAsset asset);
+
+        /// <summary>
+        /// Xóa tài sản
+        /// </summary>
+        Task<bool> DeleteAssetAsync(int maTaiSan);
+
+        /// <summary>
         /// Lấy thông tin lưu trú hiện tại (phòng, hợp đồng, trạng thái)
         /// </summary>
         Task<TenantStayInfo?> GetCurrentStayInfoAsync(int maNguoiThue);

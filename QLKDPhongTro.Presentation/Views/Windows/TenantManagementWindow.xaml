@@ -377,23 +377,9 @@
                                     <!-- Họ tên -->
                                     <DataGridTextColumn Header="HỌ TÊN" 
                                                         Binding="{Binding HoTen}" 
-                                                        Width="1.2*" 
+                                                        Width="1*" 
                                                         MinWidth="150" 
                                                         MaxWidth="250">
-                                        <DataGridTextColumn.ElementStyle>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="VerticalAlignment" Value="Center"/>
-                                                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
-                                            </Style>
-                                        </DataGridTextColumn.ElementStyle>
-                                    </DataGridTextColumn>
-
-                                    <!-- CCCD -->
-                                    <DataGridTextColumn Header="CCCD" 
-                                                        Binding="{Binding CCCD}" 
-                                                        Width="1.2*" 
-                                                        MinWidth="120" 
-                                                        MaxWidth="180">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
@@ -405,7 +391,7 @@
                                     <!-- Số điện thoại -->
                                     <DataGridTextColumn Header="SỐ ĐIỆN THOẠI" 
                                                         Binding="{Binding SoDienThoai}" 
-                                                        Width="1.5*" 
+                                                        Width="1.8*" 
                                                         MinWidth="120" 
                                                         MaxWidth="180">
                                         <DataGridTextColumn.ElementStyle>
@@ -419,7 +405,7 @@
                                     <!-- Ngày sinh -->
                                     <DataGridTextColumn Header="NGÀY SINH" 
                                                         Binding="{Binding NgaySinh, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                                        Width="1.2*" 
+                                                        Width="1*" 
                                                         MinWidth="120" 
                                                         MaxWidth="150">
                                         <DataGridTextColumn.ElementStyle>
@@ -441,6 +427,56 @@
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
+
+                                    <!-- Trạng thái -->
+                                    <DataGridTemplateColumn Header="TRẠNG THÁI" Width="1.2*" MinWidth="140">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="10,4" CornerRadius="12" HorizontalAlignment="Left">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#E5E7EB"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding TrangThai}" Value="Đang ở">
+                                                                    <Setter Property="Background" Value="#D1FAE5"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TrangThai}" Value="Đặt cọc">
+                                                                    <Setter Property="Background" Value="#DBEAFE"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TrangThai}" Value="Sắp trả phòng">
+                                                                    <Setter Property="Background" Value="#FEF3C7"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding TrangThai}" Value="Đã trả phòng">
+                                                                    <Setter Property="Background" Value="#E5E7EB"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding TrangThai}" FontWeight="SemiBold" FontSize="12">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Foreground" Value="#374151"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Đang ở">
+                                                                        <Setter Property="Foreground" Value="#065F46"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Đặt cọc">
+                                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Sắp trả phòng">
+                                                                        <Setter Property="Foreground" Value="#92400E"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Đã trả phòng">
+                                                                        <Setter Property="Foreground" Value="#4B5563"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
 
                                     <!-- Thao tác -->
                                     <DataGridTemplateColumn Header="THAO TÁC" Width="Auto" MinWidth="140" MaxWidth="160">

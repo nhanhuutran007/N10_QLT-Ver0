@@ -84,6 +84,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GioiTinh = dto.GioiTinh,
                 NgheNghiep = dto.NgheNghiep,
                 GhiChu = dto.GhiChu,
+                TrangThai = string.IsNullOrWhiteSpace(dto.TrangThai) ? "Đang ở" : dto.TrangThai,
                 NgaySinh = dto.NgaySinh,
                 NgayCap = dto.NgayCap,
                 NoiCap = dto.NoiCap,
@@ -113,6 +114,26 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return new ValidationResult { IsValid = false, Message = "❌ Không tìm thấy khách thuê để cập nhật!" };
             }
 
+            // Lấy thông tin lưu trú hiện tại để kiểm tra hợp đồng/phòng
+            var stayInfo = await _tenantRepository.GetCurrentStayInfoAsync(dto.MaKhachThue);
+            var hasContract = stayInfo?.MaHopDong != null &&
+                              !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
+            var contractStillActive = hasContract &&
+                ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
+                 (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
+
+            // Nếu người thuê đang đứng tên hợp đồng còn hiệu lực thì không cho phép chuyển sang "Đã trả phòng"
+            if (contractStillActive &&
+                !string.IsNullOrWhiteSpace(dto.TrangThai) &&
+                string.Equals(dto.TrangThai, "Đã trả phòng", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ValidationResult
+                {
+                    IsValid = false,
+                    Message = "❌ Không thể chuyển trạng thái sang 'Đã trả phòng' khi hợp đồng vẫn còn hiệu lực. Vui lòng kết thúc/hủy hợp đồng trước."
+                };
+            }
+
             existingTenant.HoTen = dto.HoTen;
             existingTenant.CCCD = dto.CCCD;
             existingTenant.SoDienThoai = dto.SoDienThoai;
@@ -120,6 +141,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             existingTenant.GioiTinh = dto.GioiTinh;
             existingTenant.NgheNghiep = dto.NgheNghiep;
             existingTenant.GhiChu = dto.GhiChu;
+            if (!string.IsNullOrWhiteSpace(dto.TrangThai))
+            {
+                existingTenant.TrangThai = dto.TrangThai;
+            }
             existingTenant.MaPhong = dto.MaPhong;
             existingTenant.NgaySinh = dto.NgaySinh;
             existingTenant.NgayCap = dto.NgayCap;
@@ -128,6 +153,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             existingTenant.NgayCapNhat = DateTime.Now;
 
             var success = await _tenantRepository.UpdateAsync(existingTenant);
+
+            // Sau khi cập nhật trạng thái người thuê, đồng bộ trạng thái phòng (không ép hợp đồng)
+            if (success)
+            {
+                await UpdateRoomStatusAfterTenantChangeAsync(existingTenant, stayInfo);
+            }
 
             return new ValidationResult
             {
@@ -175,6 +206,52 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
         }
 
+        public async Task<ValidationResult> CreateAssetAsync(TenantAssetDto dto, int maNguoiThue)
+        {
+            var asset = new TenantAsset
+            {
+                MaNguoiThue = maNguoiThue,
+                LoaiTaiSan = dto.LoaiTaiSan,
+                MoTa = dto.MoTa,
+                PhiPhuThu = dto.PhiPhuThu
+            };
+
+            var success = await _tenantRepository.CreateAssetAsync(asset);
+            return new ValidationResult
+            {
+                IsValid = success,
+                Message = success ? "✅ Thêm tài sản thành công!" : "❌ Thêm tài sản thất bại!"
+            };
+        }
+
+        public async Task<ValidationResult> UpdateAssetAsync(TenantAssetDto dto)
+        {
+            var asset = new TenantAsset
+            {
+                MaTaiSan = dto.MaTaiSan,
+                LoaiTaiSan = dto.LoaiTaiSan,
+                MoTa = dto.MoTa,
+                PhiPhuThu = dto.PhiPhuThu
+            };
+
+            var success = await _tenantRepository.UpdateAssetAsync(asset);
+            return new ValidationResult
+            {
+                IsValid = success,
+                Message = success ? "✅ Cập nhật tài sản thành công!" : "❌ Cập nhật tài sản thất bại!"
+            };
+        }
+
+        public async Task<ValidationResult> DeleteAssetAsync(int maTaiSan)
+        {
+            var success = await _tenantRepository.DeleteAssetAsync(maTaiSan);
+            return new ValidationResult
+            {
+                IsValid = success,
+                Message = success ? "🗑️ Đã xóa tài sản thành công!" : "❌ Xóa tài sản thất bại!"
+            };
+        }
+
         private static TenantAssetDto MapAsset(TenantAsset asset)
             => new TenantAssetDto
             {
@@ -210,6 +287,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         private async Task<TenantStayInfoDto> BuildStayInfoAsync(Tenant tenant, TenantStayInfo stayInfo)
         {
+            if (tenant.MaPhong.HasValue)
+            {
+                stayInfo.MaPhong = tenant.MaPhong;
+                var room = await _roomRepository.GetByIdAsync(tenant.MaPhong.Value);
+                stayInfo.TenPhong = room?.TenPhong ?? stayInfo.TenPhong;
+                stayInfo.TrangThaiPhong = room?.TrangThai ?? stayInfo.TrangThaiPhong;
+            }
+
             var consistency = await EnsureStatusConsistencyAsync(tenant, stayInfo);
 
             return new TenantStayInfoDto
@@ -231,13 +316,60 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
         }
 
-        private async Task<StatusConsistencyResult> EnsureStatusConsistencyAsync(Tenant tenant, TenantStayInfo? stayInfo)
+        /// <summary>
+        /// Đồng bộ trạng thái phòng sau khi trạng thái người thuê thay đổi.
+        /// Đảm bảo: 
+        /// - Không set phòng Trống nếu vẫn còn hợp đồng còn hiệu lực.
+        /// - Khi tất cả khách thuê trong phòng đã trả phòng và không còn hợp đồng active thì set phòng Trống.
+        /// </summary>
+        private async Task UpdateRoomStatusAfterTenantChangeAsync(Tenant tenant, TenantStayInfo? stayInfo)
+        {
+            if (!tenant.MaPhong.HasValue)
+            {
+                return;
+            }
+
+            var maPhong = tenant.MaPhong.Value;
+
+            // Nếu còn hợp đồng còn hiệu lực cho người này thì giữ phòng ở trạng thái đang thuê
+            var hasContract = stayInfo?.MaHopDong != null &&
+                              !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
+            var contractStillActive = hasContract &&
+                ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
+                 (string.Equals(stayInfo.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
+                 (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
+
+            if (contractStillActive)
+            {
+                // Phòng có hợp đồng còn hiệu lực => luôn là Đang thuê
+                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+                return;
+            }
+
+            // Không còn hợp đồng active cho người này:
+            // Kiểm tra còn khách thuê "Đang ở" trong phòng không
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
+            var hasActiveTenant = roomTenants.Any(t =>
+                !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase));
+
+            if (hasActiveTenant)
+            {
+                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+            }
+            else
+            {
+                await _roomRepository.UpdateStatusAsync(maPhong, "Trống");
+            }
+        }
+
+        private Task<StatusConsistencyResult> EnsureStatusConsistencyAsync(Tenant tenant, TenantStayInfo? stayInfo)
         {
             var hasContract = stayInfo?.MaHopDong != null &&
                               !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
 
             var contractStillActive = hasContract &&
                 ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
+                 (string.Equals(stayInfo.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
                  (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
 
             string expectedTenantStatus;
@@ -259,45 +391,34 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
             else
             {
-                expectedTenantStatus = "Đã trả phòng";
+                expectedTenantStatus = tenant.TrangThai;
                 expectedRoomStatus = "Trống";
             }
 
-            var tenantUpdated = false;
-            if (!string.Equals(tenant.TrangThai, expectedTenantStatus, StringComparison.OrdinalIgnoreCase))
-            {
-                await _tenantRepository.UpdateTenantStatusAsync(tenant.MaKhachThue, expectedTenantStatus);
-                tenant.TrangThai = expectedTenantStatus;
-                tenantUpdated = true;
-            }
+            // Không tự động overwrite trạng thái người thuê/phòng ở đây – chỉ tính toán và gợi ý
+            var tenantUpdated = !string.Equals(tenant.TrangThai, expectedTenantStatus, StringComparison.OrdinalIgnoreCase);
 
-            var roomUpdated = false;
+            bool roomUpdated = false;
             if (stayInfo?.MaPhong != null && !string.IsNullOrEmpty(expectedRoomStatus))
             {
-                if (string.IsNullOrWhiteSpace(stayInfo.TrangThaiPhong) ||
-                    !string.Equals(stayInfo.TrangThaiPhong, expectedRoomStatus, StringComparison.OrdinalIgnoreCase))
-                {
-                    await _roomRepository.UpdateStatusAsync(stayInfo.MaPhong.Value, expectedRoomStatus);
-                    stayInfo.TrangThaiPhong = expectedRoomStatus;
-                    roomUpdated = true;
-                }
+                roomUpdated = !string.Equals(stayInfo.TrangThaiPhong, expectedRoomStatus, StringComparison.OrdinalIgnoreCase);
             }
 
             var messageParts = new List<string>();
             if (tenantUpdated)
             {
-                messageParts.Add($"Đồng bộ trạng thái khách thuê thành \"{expectedTenantStatus}\".");
+                messageParts.Add($"Đề xuất trạng thái khách thuê nên là \"{expectedTenantStatus}\".");
             }
             if (roomUpdated && stayInfo?.TenPhong != null)
             {
-                messageParts.Add($"Cập nhật phòng {stayInfo.TenPhong} thành \"{expectedRoomStatus}\".");
+                messageParts.Add($"Đề xuất phòng {stayInfo.TenPhong} nên ở trạng thái \"{expectedRoomStatus}\".");
             }
             if (!messageParts.Any())
             {
-                messageParts.Add("Trạng thái người thuê và phòng đã được đồng bộ.");
+                messageParts.Add("Trạng thái người thuê và phòng đang đồng bộ.");
             }
 
-            return new StatusConsistencyResult
+            var result = new StatusConsistencyResult
             {
                 ExpectedTenantStatus = expectedTenantStatus,
                 ExpectedRoomStatus = expectedRoomStatus,
@@ -305,6 +426,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 RoomUpdated = roomUpdated,
                 Message = string.Join(" ", messageParts)
             };
+
+            return Task.FromResult(result);
         }
 
         private sealed class StatusConsistencyResult

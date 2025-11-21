@@ -17,6 +17,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
     public partial class TenantViewModel : ObservableObject
     {
         private readonly TenantController _tenantController;
+        private readonly RentedRoomController _roomController;
         private readonly DispatcherTimer _statusTimer;
         private ObservableCollection<TenantDto> _allTenants = new();
         private List<TenantDto> _filteredTenants = new();
@@ -27,6 +28,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             // và TenantController.cs trong các thư mục tương ứng
             var repo = new TenantRepository();
             _tenantController = new TenantController(repo);
+            _roomController = new RentedRoomController(new RentedRoomRepository());
 
             _statusTimer = new DispatcherTimer
             {
@@ -43,6 +45,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _saveCommand = SaveTenantCommand;
 
             LoadTenantsCommand.Execute(null);
+            LoadRoomsCommand.Execute(null);
         }
 
         [ObservableProperty] private ObservableCollection<TenantDto> _tenants = new();
@@ -61,7 +64,12 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private string _buttonContent = "Thêm khách thuê";
         [ObservableProperty] private IAsyncRelayCommand _saveCommand = null!;
 
+        // Danh sách phòng để chọn
+        [ObservableProperty] private ObservableCollection<RentedRoomDto> _rooms = new();
+        [ObservableProperty] private RentedRoomDto? _selectedRoom;
+
         public string[] GenderOptions { get; } = new[] { "Nam", "Nữ", "Khác" };
+        public string[] TenantStatuses { get; } = new[] { "Đang ở", "Đặt cọc", "Sắp trả phòng", "Đã trả phòng" };
 
         // === Pagination & Sorting ===
         [ObservableProperty] private string _sortOrder = "newest"; // newest | oldest
@@ -143,8 +151,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 GioiTinh = "Nam",
                 NgaySinh = DateTime.Today,
-                NgayCap = DateTime.Today // Khởi tạo giá trị ngày cấp
+                NgayCap = DateTime.Today,
+                TrangThai = TenantStatuses.First()
             };
+            SelectedRoom = null; // Reset phòng được chọn
 
             Title = "Thêm khách thuê mới";
             ButtonContent = "Thêm khách thuê";
@@ -155,6 +165,24 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 Owner = Application.Current.Windows.OfType<Window>().FirstOrDefault(x => x.IsActive) ?? Application.Current.MainWindow
             };
             window.ShowDialog();
+        }
+
+        [RelayCommand]
+        private async Task LoadRooms()
+        {
+            try
+            {
+                var rooms = await _roomController.GetAllRoomsAsync();
+                Rooms.Clear();
+                foreach (var room in rooms)
+                {
+                    Rooms.Add(room);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Lỗi khi tải danh sách phòng: {ex.Message}";
+            }
         }
 
         [RelayCommand]
@@ -180,12 +208,24 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 GioiTinh = tenant.GioiTinh,
                 NgheNghiep = tenant.NgheNghiep,
                 GhiChu = tenant.GhiChu,
+                MaPhong = tenant.MaPhong,
+                TrangThai = tenant.TrangThai,
 
                 // ✅ ĐÃ BỔ SUNG 2 DÒNG CÒN THIẾU
                 NoiCap = tenant.NoiCap,
                 NgayCap = tenant.NgayCap
             };
             // ⭐⭐⭐ KẾT THÚC SỬA LỖI ⭐⭐⭐
+
+            // Chọn phòng tương ứng với MaPhong của tenant
+            if (tenant.MaPhong.HasValue)
+            {
+                SelectedRoom = Rooms.FirstOrDefault(r => r.MaPhong == tenant.MaPhong.Value);
+            }
+            else
+            {
+                SelectedRoom = null;
+            }
 
             Title = "Chỉnh sửa khách thuê";
             ButtonContent = "Cập nhật";
@@ -206,6 +246,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // Gán MaPhong từ phòng được chọn
+                if (SelectedRoom != null)
+                {
+                    NewTenant.MaPhong = SelectedRoom.MaPhong;
+                }
+                if (string.IsNullOrWhiteSpace(NewTenant.TrangThai))
+                {
+                    NewTenant.TrangThai = TenantStatuses.First();
+                }
+
                 var result = await _tenantController.CreateTenantAsync(NewTenant);
 
                 if (result.IsValid)
@@ -239,6 +290,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // Gán MaPhong từ phòng được chọn
+                if (SelectedRoom != null)
+                {
+                    NewTenant.MaPhong = SelectedRoom.MaPhong;
+                }
+                if (string.IsNullOrWhiteSpace(NewTenant.TrangThai))
+                {
+                    NewTenant.TrangThai = TenantStatuses.First();
+                }
+
                 var result = await _tenantController.UpdateTenantAsync(NewTenant);
 
                 if (result.IsValid)

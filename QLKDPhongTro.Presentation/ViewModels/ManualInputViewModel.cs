@@ -252,7 +252,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 if (result.IsValid)
                 {
                     ShowMessageRequested?.Invoke(this, result.Message ?? "Ghi nhận thành công!");
-                    CloseRequested?.Invoke(this, true);
+                    // Không đóng dialog ngay, cho phép tiếp tục chỉnh phòng khác
+                    // Reset form để chuẩn bị cho phòng tiếp theo
+                    ResetFormForNextRoom();
                 }
                 else
                 {
@@ -306,6 +308,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 TrangThai = "Hiệu lực"
             });
             SelectedContractId = 1;
+        }
+
+        private void ResetFormForNextRoom()
+        {
+            // Reset các giá trị nhưng giữ lại danh sách hợp đồng
+            ElectricityQuantity = 0;
+            WaterQuantity = 0;
+            AmountPaid = 0;
+            // Không reset SelectedContractId để có thể chọn phòng tiếp theo dễ dàng
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -134,7 +134,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     cmd.Parameters.AddWithValue("@SoDienThoai", (object?)tenant.SoDienThoai ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@CCCD", (object?)tenant.CCCD ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgayBatDau", DateTime.Now);
-                    cmd.Parameters.AddWithValue("@TrangThai", "Đang ở");
+                    var trangThai = string.IsNullOrWhiteSpace(tenant.TrangThai) ? "Đang ở" : tenant.TrangThai;
+                    cmd.Parameters.AddWithValue("@TrangThai", trangThai);
                     cmd.Parameters.AddWithValue("@GhiChu", (object?)tenant.GhiChu ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgaySinh", (object?)tenant.NgaySinh ?? DBNull.Value);
 
@@ -165,6 +166,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         CCCD = @CCCD,
                         GioiTinh = @GioiTinh,
                         NgheNghiep = @NgheNghiep,
+                        TrangThai = @TrangThai,
                         GhiChu = @GhiChu,
                         NgaySinh = @NgaySinh,
                         NgayCap = @NgayCap,
@@ -183,6 +185,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
                     cmd.Parameters.AddWithValue("@GioiTinh", (object?)tenant.GioiTinh ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgheNghiep", (object?)tenant.NgheNghiep ?? DBNull.Value);
+                    var trangThai = string.IsNullOrWhiteSpace(tenant.TrangThai) ? "Đang ở" : tenant.TrangThai;
+                    cmd.Parameters.AddWithValue("@TrangThai", trangThai);
 
                     cmd.Parameters.AddWithValue("@GhiChu", (object?)tenant.GhiChu ?? DBNull.Value);
                     cmd.Parameters.AddWithValue("@NgaySinh", (object?)tenant.NgaySinh ?? DBNull.Value);
@@ -314,6 +318,53 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return assets;
         }
 
+        public async Task<bool> CreateAssetAsync(TenantAsset asset)
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = @"
+                INSERT INTO TaiSanNguoiThue (MaNguoiThue, LoaiTaiSan, MoTa, PhiPhuThu)
+                VALUES (@MaNguoiThue, @LoaiTaiSan, @MoTa, @PhiPhuThu)";
+            
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaNguoiThue", asset.MaNguoiThue);
+            cmd.Parameters.AddWithValue("@LoaiTaiSan", asset.LoaiTaiSan);
+            cmd.Parameters.AddWithValue("@MoTa", asset.MoTa ?? string.Empty);
+            cmd.Parameters.AddWithValue("@PhiPhuThu", asset.PhiPhuThu);
+            
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> UpdateAssetAsync(TenantAsset asset)
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = @"
+                UPDATE TaiSanNguoiThue
+                SET LoaiTaiSan = @LoaiTaiSan, MoTa = @MoTa, PhiPhuThu = @PhiPhuThu
+                WHERE MaTaiSan = @MaTaiSan";
+            
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaTaiSan", asset.MaTaiSan);
+            cmd.Parameters.AddWithValue("@LoaiTaiSan", asset.LoaiTaiSan);
+            cmd.Parameters.AddWithValue("@MoTa", asset.MoTa ?? string.Empty);
+            cmd.Parameters.AddWithValue("@PhiPhuThu", asset.PhiPhuThu);
+            
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
+        public async Task<bool> DeleteAssetAsync(int maTaiSan)
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = "DELETE FROM TaiSanNguoiThue WHERE MaTaiSan = @MaTaiSan";
+            
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@MaTaiSan", maTaiSan);
+            
+            return await cmd.ExecuteNonQueryAsync() > 0;
+        }
+
         public async Task<TenantStayInfo?> GetCurrentStayInfoAsync(int maNguoiThue)
         {
             using var conn = new MySqlConnection(connectionString);
@@ -373,6 +424,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var roomTenants = new List<RoomTenantInfo>();
             using var conn = new MySqlConnection(connectionString);
             await conn.OpenAsync();
+            // ✅ SỬA: Chỉ lấy người thuê ĐANG Ở trong phòng (không lấy người đã trả phòng)
+            // Filter theo TrangThaiNguoiThue = 'Đang ở' và MaPhong = @MaPhong
             var sql = @"
                 SELECT 
                     nt.MaNguoiThue,
@@ -401,6 +454,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LIMIT 1
                 )
                 WHERE nt.MaPhong = @MaPhong
+                  AND nt.TrangThai = 'Đang ở'
                 ORDER BY 
                     CASE 
                         WHEN hd.TrangThai = 'Hiệu lực' THEN 0
@@ -408,7 +462,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         WHEN hd.TrangThai = 'Hết hạn' THEN 2
                         ELSE 3
                     END,
-                    hd.NgayKetThuc DESC";
+                    hd.NgayKetThuc DESC,
+                    nt.MaNguoiThue";
 
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@MaPhong", maPhong);

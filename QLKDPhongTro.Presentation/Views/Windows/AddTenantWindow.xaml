@@ -254,6 +254,16 @@
             <!-- Body Content -->
             <ScrollViewer Grid.Row="1" Padding="24" VerticalScrollBarVisibility="Auto">
                 <StackPanel>
+                    <!-- Row 0: Chọn phòng -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Phòng" Style="{StaticResource LabelTextStyle}"/>
+                        <ComboBox Style="{StaticResource InputComboBoxStyle}" 
+                                  ItemsSource="{Binding Rooms}"
+                                  DisplayMemberPath="TenPhong"
+                                  SelectedItem="{Binding SelectedRoom, Mode=TwoWay}"
+                                  SelectedValuePath="MaPhong"/>
+                    </StackPanel>
+
                     <!-- Row 1: Họ tên & CCCD -->
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>
@@ -315,6 +325,14 @@
                             <TextBox Style="{StaticResource InputTextBoxStyle}" Text="{Binding NewTenant.NgheNghiep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                     </Grid>
+
+                    <!-- Row 3.5: Trạng thái -->
+                    <StackPanel Margin="0,0,0,20">
+                        <TextBlock Text="Trạng thái người thuê" Style="{StaticResource LabelTextStyle}"/>
+                        <ComboBox Style="{StaticResource InputComboBoxStyle}"
+                                  ItemsSource="{Binding TenantStatuses}"
+                                  SelectedItem="{Binding NewTenant.TrangThai, Mode=TwoWay}"/>
+                    </StackPanel>
 
                     <!-- Row 4: Nơi cấp & Ngày cấp -->
                     <Grid Margin="0,0,0,20">

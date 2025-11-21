@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
@@ -209,8 +210,16 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                         var tienDien = CalculateElectricityCost((double)chiSoDienCu, debt.ChiSoDienMoi);
 
-                        // Tính tổng tiền với các khoản cố định
-                        var tongTien = contract.GiaThue + tienDien + DON_GIA_NUOC + DON_GIA_INTERNET + DON_GIA_VE_SINH + DON_GIA_GIU_XE;
+                        // === TÍNH TOÁN TIỀN NƯỚC THEO ĐẦU NGƯỜI ===
+                        var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                        int soNguoiTrongPhong = roomTenants?.Count(t =>
+                            string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                        if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+                        decimal tienNuocDauNguoi = DON_GIA_NUOC;
+                        decimal tienNuocTong = tienNuocDauNguoi * soNguoiTrongPhong;
+
+                        // Tính tổng tiền với các khoản cố định (tiền nước đã nhân theo số người)
+                        var tongTien = contract.GiaThue + tienDien + tienNuocTong + DON_GIA_INTERNET + DON_GIA_VE_SINH + DON_GIA_GIU_XE;
 
                         var payment = new Payment
                         {
@@ -219,7 +228,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             ChiSoDienCu = chiSoDienCu,
                             ChiSoDienMoi = (decimal)debt.ChiSoDienMoi,
                             TienDien = tienDien,
-                            TienNuoc = DON_GIA_NUOC,         // Cố định
+                            TienNuoc = tienNuocTong,         // Tổng tiền nước = tiền nước/đầu người × số người
                             TienInternet = DON_GIA_INTERNET, // Cố định
                             TienVeSinh = DON_GIA_VE_SINH,    // Cố định
                             TienGiuXe = DON_GIA_GIU_XE,      // Cố định
@@ -228,9 +237,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                             TongTien = tongTien,
                             TrangThaiThanhToan = "Chưa trả",
                             DonGiaDien = DON_GIA_DIEN,
-                            DonGiaNuoc = DON_GIA_NUOC,
+                            DonGiaNuoc = tienNuocDauNguoi,   // Lưu đơn giá/đầu người
                             SoDien = (decimal)debt.ChiSoDienMoi,
-                            SoNuoc = 1,
+                            SoNuoc = soNguoiTrongPhong,
                             GhiChu = $"Tạo tự động từ Google Form. Confidence: {debt.Confidence:P1}. {debt.GhiChu}"
                         };
 
@@ -310,7 +319,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TrangThaiThanhToan = p.TrangThaiThanhToan,
                 NgayThanhToan = p.NgayThanhToan,
                 SoTienDaTra = p.SoTienDaTra,
-                TenPhong = p.TenPhong
+                TenPhong = p.TenPhong,
+                GhiChu = p.GhiChu
             }).ToList();
         }
 
@@ -340,6 +350,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         /// <summary>
         /// Ghi nhận tiền thuê hàng tháng với logic tính điện nước và dịch vụ CỐ ĐỊNH
+        /// Tiền nước sẽ được nhân với số người trong phòng (tiền nước/đầu người × số người)
         /// </summary>
         public async Task<ValidationResult> CreatePaymentAsync(CreatePaymentDto dto)
         {
@@ -370,8 +381,21 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 tienDien = soDienTieuThu * DON_GIA_DIEN;
             }
 
+            // === TÍNH TOÁN TIỀN NƯỚC: NHÂN TIỀN NƯỚC/ĐẦU NGƯỜI VỚI SỐ NGƯỜI TRONG PHÒNG ===
+            // Lấy số người đang ở trong phòng
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+            int soNguoiTrongPhong = roomTenants?.Count(t => 
+                string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+            
+            // Đảm bảo ít nhất 1 người để tránh lỗi
+            if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+            
+            // Tiền nước từ DTO là tiền nước/đầu người, nhân với số người để ra tổng tiền nước
+            // Nếu dto.TienNuoc = 0, sử dụng giá mặc định
+            decimal tienNuocDauNguoi = dto.TienNuoc > 0 ? dto.TienNuoc : DON_GIA_NUOC;
+            decimal tienNuocTong = tienNuocDauNguoi * soNguoiTrongPhong;
+
             // === ÁP DỤNG CÁC KHOẢN PHÍ CỐ ĐỊNH ===
-            decimal tienNuoc = DON_GIA_NUOC;
             decimal tienInternet = DON_GIA_INTERNET;
             decimal tienVeSinh = DON_GIA_VE_SINH;
             decimal tienGiuXe = DON_GIA_GIU_XE;
@@ -382,7 +406,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ThangNam = dto.ThangNam,
                 TienThue = dto.TienThue,
                 TienDien = tienDien,
-                TienNuoc = tienNuoc,
+                TienNuoc = tienNuocTong, // Tổng tiền nước = tiền nước/đầu người × số người
                 TienInternet = tienInternet, // Sử dụng giá cố định
                 TienVeSinh = tienVeSinh,     // Sử dụng giá cố định
                 TienGiuXe = tienGiuXe,       // Sử dụng giá cố định
@@ -392,7 +416,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 ChiSoDienMoi = dto.SoDien,
                 SoNuoc = 1,
                 DonGiaDien = DON_GIA_DIEN,
-                DonGiaNuoc = DON_GIA_NUOC,
+                DonGiaNuoc = tienNuocDauNguoi, // Lưu tiền nước/đầu người vào DonGiaNuoc để tham khảo
                 TrangThaiThanhToan = "Chưa trả",
                 NgayThanhToan = null
             };
@@ -590,6 +614,30 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
                 var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
 
+                // Kiểm tra xem có thông tin DISCREPANCY trong GhiChu không
+                bool hasDiscrepancy = !string.IsNullOrEmpty(debt.GhiChu) && 
+                                      debt.GhiChu.Contains("DISCREPANCY:") && 
+                                      debt.GhiChu.Contains("Status=PENDING");
+                
+                string trangThai = hasDiscrepancy ? "Cảnh báo" : debt.TrangThaiThanhToan;
+                
+                // Parse thông tin DISCREPANCY nếu có
+                string comparisonInfo = "";
+                string ghiChu = debt.GhiChu ?? "";
+                if (hasDiscrepancy)
+                {
+                    var manualMatch = Regex.Match(ghiChu, @"Manual=([\d.]+)");
+                    var ocrMatch = Regex.Match(ghiChu, @"OCR=([\d.]+)");
+                    
+                    decimal manualValue = 0;
+                    decimal ocrValue = 0;
+                    if (manualMatch.Success) decimal.TryParse(manualMatch.Groups[1].Value, out manualValue);
+                    if (ocrMatch.Success) decimal.TryParse(ocrMatch.Groups[1].Value, out ocrValue);
+                    
+                    comparisonInfo = $"Nhập tay: {manualValue} | OCR: {ocrValue}";
+                    ghiChu = $"CẢNH BÁO: Khách nhập {manualValue} nhưng Ảnh đọc được {ocrValue}";
+                }
+
                 result.Add(new DebtReportDto
                 {
                     MaThanhToan = debt.MaThanhToan,
@@ -599,10 +647,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     SoDienThoai = tenant?.SoDienThoai ?? "Không xác định",
                     ThangNam = debt.ThangNam,
                     TongTien = debt.TongTien,
-                    TrangThaiThanhToan = debt.TrangThaiThanhToan,
+                    TrangThaiThanhToan = trangThai,
                     SoThangNo = CalculateMonthsOverdue(debt.ThangNam),
                     NgayThanhToan = debt.NgayThanhToan,
-                    DiaChi = tenant?.DiaChi ?? "Không xác định"
+                    DiaChi = tenant?.DiaChi ?? "Không xác định",
+                    GhiChu = hasDiscrepancy ? ghiChu : debt.GhiChu,
+                    ComparisonInfo = hasDiscrepancy ? comparisonInfo : null
                 });
             }
 

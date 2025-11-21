@@ -261,6 +261,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     OnPropertyChanged(nameof(IsAllRecordsView));
                     OnPropertyChanged(nameof(IsDebtsView));
                     OnPropertyChanged(nameof(IsReportsView));
+                    // Notify UI để cập nhật tab button
+                    ViewChangedRequested?.Invoke(this, value);
                     _ = Task.Run(async () =>
                     {
                         try
@@ -275,6 +277,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
             }
         }
+
+        // Event để notify UI cập nhật tab button khi CurrentView thay đổi từ code
+        public event EventHandler<string>? ViewChangedRequested;
 
         public bool IsAllRecordsView => _currentView == "AllRecords";
         public bool IsDebtsView => _currentView == "Debts";
@@ -600,17 +605,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     ShowMessageRequested?.Invoke(this,
                         $"Đã giải quyết sự cố cho phòng {debt.TenPhong}. Giá trị xác nhận: {confirmedValue}");
 
-                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
-                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == debt.TenPhong);
-                    if (itemToRemove != null)
-                    {
-                        Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            Debts.Remove(itemToRemove);
-                        });
-                    }
-
+                    // KHÔNG xóa item ngay lập tức - để ReloadDebtsAsync xử lý
+                    // Điều này đảm bảo các phòng còn lại trong cache không bị mất
+                    
                     // Reload từ database để đảm bảo dữ liệu chính xác
+                    // ReloadDebtsAsync sẽ tự động loại bỏ phòng đã resolve và giữ lại các phòng còn lại
                     await Task.Delay(300); // Đợi một chút để database commit
                     await ReloadDebtsAsync();
                 }
@@ -690,7 +689,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 // Cập nhật UI
                 Debts = reportList;
-                CurrentView = "Debts";
+                // Set CurrentView và notify UI để cập nhật tab button
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.CheckAccess())
+                {
+                    await dispatcher.InvokeAsync(() =>
+                    {
+                        CurrentView = "Debts";
+                    });
+                }
+                else
+                {
+                    CurrentView = "Debts";
+                }
 
                 // Thông báo kết quả
                 string summary = $"Xử lý xong Google Form:\n" +
@@ -800,20 +811,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     ShowMessageRequested?.Invoke(this, $"Đã giải quyết sự cố cho phòng {debt.TenPhong} với giá trị {confirmedValue}");
 
-                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
-                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == debt.TenPhong);
-                    if (itemToRemove != null)
-                    {
-                        Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            Debts.Remove(itemToRemove);
-                        });
-                    }
-
+                    // KHÔNG xóa item ngay lập tức - để ReloadDebtsAsync xử lý
+                    // Điều này đảm bảo các phòng còn lại trong cache không bị mất
+                    
                     // Reset selected discrepancy trước khi reload
                     SelectedDebtDiscrepancy = null;
 
                     // Reload từ database để đảm bảo dữ liệu chính xác
+                    // ReloadDebtsAsync sẽ tự động loại bỏ phòng đã resolve và giữ lại các phòng còn lại
                     await Task.Delay(300); // Đợi một chút để database commit
                     await ReloadDebtsAsync();
                 }
@@ -855,16 +860,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     ShowMessageRequested?.Invoke(this, "Đã giải quyết sự cố thành công!");
 
-                    // Xóa item đã resolve khỏi danh sách ngay lập tức (UI update nhanh)
-                    var itemToRemove = Debts.FirstOrDefault(d => d.TenPhong == roomNameToRemove);
-                    if (itemToRemove != null)
-                    {
-                        Application.Current?.Dispatcher.Invoke(() =>
-                        {
-                            Debts.Remove(itemToRemove);
-                        });
-                    }
-
+                    // KHÔNG xóa item ngay lập tức - để ReloadDebtsAsync xử lý
+                    // Điều này đảm bảo các phòng còn lại trong cache không bị mất
+                    
                     // Reset selected discrepancy trước khi reload
                     SelectedDebtDiscrepancy = null;
 
@@ -1092,7 +1090,18 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     if (validationResult.IsValid)
                     {
                         ShowMessageRequested?.Invoke(this, validationResult.Message);
+                        // Giữ nguyên CurrentView khi refresh data
+                        string savedView = _currentView;
                         await LoadDataAsync().ConfigureAwait(false);
+                        if (_currentView != savedView)
+                        {
+                            _currentView = savedView;
+                            OnPropertyChanged(nameof(CurrentView));
+                            OnPropertyChanged(nameof(IsAllRecordsView));
+                            OnPropertyChanged(nameof(IsDebtsView));
+                            OnPropertyChanged(nameof(IsReportsView));
+                        }
+                        await LoadViewDataAsync().ConfigureAwait(false);
                     }
                     else
                     {
@@ -1148,7 +1157,18 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     if (validationResult.IsValid)
                     {
                         ShowMessageRequested?.Invoke(this, validationResult.Message);
+                        // Giữ nguyên CurrentView khi refresh data
+                        string savedView = _currentView;
                         await LoadDataAsync().ConfigureAwait(false);
+                        if (_currentView != savedView)
+                        {
+                            _currentView = savedView;
+                            OnPropertyChanged(nameof(CurrentView));
+                            OnPropertyChanged(nameof(IsAllRecordsView));
+                            OnPropertyChanged(nameof(IsDebtsView));
+                            OnPropertyChanged(nameof(IsReportsView));
+                        }
+                        await LoadViewDataAsync().ConfigureAwait(false);
                     }
                     else
                     {
@@ -1206,7 +1226,20 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                     if (dialogResult == true)
                     {
+                        // Giữ nguyên CurrentView khi refresh data
+                        string savedView = _currentView;
                         await LoadDataAsync().ConfigureAwait(false);
+                        // Đảm bảo CurrentView không bị thay đổi sau khi load
+                        if (_currentView != savedView)
+                        {
+                            _currentView = savedView;
+                            OnPropertyChanged(nameof(CurrentView));
+                            OnPropertyChanged(nameof(IsAllRecordsView));
+                            OnPropertyChanged(nameof(IsDebtsView));
+                            OnPropertyChanged(nameof(IsReportsView));
+                        }
+                        // Load lại data cho view hiện tại
+                        await LoadViewDataAsync().ConfigureAwait(false);
                     }
                 }
                 else
@@ -1294,21 +1327,54 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             try
             {
+                var debtsList = new List<DebtReportDto>();
+                
+                // 1. Load các payment chưa trả từ database
                 if (_financialController != null)
                 {
-                    var debts = await _financialController.GetDebtReportAsync().ConfigureAwait(false);
-                    var dispatcher = Application.Current?.Dispatcher;
-                    if (dispatcher != null && !dispatcher.CheckAccess())
+                    var dbDebts = await _financialController.GetDebtReportAsync().ConfigureAwait(false);
+                    debtsList.AddRange(dbDebts);
+                }
+
+                // 2. GetDebtReportAsync() đã tự động detect và set trạng thái "Cảnh báo" cho các payment có DISCREPANCY
+                // Không cần load riêng nữa vì đã được xử lý trong GetDebtReportAsync()
+
+                // 3. Merge các phòng còn lại trong discrepancy cache (fallback nếu chưa có trong DB)
+                var roomsWithDiscrepancies = _debtProcessingService.GetRoomsWithDiscrepancies();
+                foreach (var roomName in roomsWithDiscrepancies)
+                {
+                    // Kiểm tra xem phòng này đã có trong danh sách chưa (tránh trùng lặp)
+                    if (!debtsList.Any(d => d.TenPhong == roomName))
                     {
-                        await dispatcher.InvokeAsync(() =>
+                        var discrepancyInfo = await _debtProcessingService.GetDiscrepancyInfoAsync(roomName);
+                        if (discrepancyInfo != null)
                         {
-                            Debts = new ObservableCollection<DebtReportDto>(debts);
-                        });
+                            // Tạo DebtReportDto từ discrepancy info
+                            debtsList.Add(new DebtReportDto
+                            {
+                                TenPhong = roomName,
+                                ThangNam = discrepancyInfo.DetectionTime.ToString("MM/yyyy"),
+                                TongTien = 0, // Sẽ được tính sau khi resolve
+                                TrangThaiThanhToan = "Cảnh báo",
+                                GhiChu = discrepancyInfo.WarningNote ?? "Cần kiểm tra chỉ số đồng hồ",
+                                ComparisonInfo = $"Nhập tay: {discrepancyInfo.ManualValue} | OCR: {discrepancyInfo.OcrValue}"
+                            });
+                        }
                     }
-                    else
+                }
+
+                // 4. Cập nhật UI
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher != null && !dispatcher.CheckAccess())
+                {
+                    await dispatcher.InvokeAsync(() =>
                     {
-                        Debts = new ObservableCollection<DebtReportDto>(debts);
-                    }
+                        Debts = new ObservableCollection<DebtReportDto>(debtsList);
+                    });
+                }
+                else
+                {
+                    Debts = new ObservableCollection<DebtReportDto>(debtsList);
                 }
             }
             catch (Exception ex)
@@ -1325,39 +1391,26 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
             try
             {
-                if (_currentView == "Debts")
+                if (_currentView == "AllRecords")
                 {
-                    if (_financialController != null)
+                    // Tab "Tất cả bản ghi" - luôn load lại để đảm bảo data mới nhất
+                    await LoadDataAsync().ConfigureAwait(false);
+                    // Đảm bảo UI được cập nhật trên UI thread
+                    var dispatcher = Application.Current?.Dispatcher;
+                    if (dispatcher != null && !dispatcher.CheckAccess())
                     {
-                        var debts = await _financialController.GetDebtReportAsync().ConfigureAwait(false);
-                        var dispatcher = Application.Current?.Dispatcher;
-                        if (dispatcher != null && !dispatcher.CheckAccess())
+                        await dispatcher.InvokeAsync(() =>
                         {
-                            await dispatcher.InvokeAsync(() =>
-                            {
-                                Debts = new ObservableCollection<DebtReportDto>(debts);
-                            });
-                        }
-                        else
-                        {
-                            Debts = new ObservableCollection<DebtReportDto>(debts);
-                        }
+                            OnPropertyChanged(nameof(FinancialRecords));
+                            OnPropertyChanged(nameof(TotalPages));
+                            OnPropertyChanged(nameof(PageInfo));
+                        });
                     }
-                    else
-                    {
-                        var dispatcher = Application.Current?.Dispatcher;
-                        if (dispatcher != null && !dispatcher.CheckAccess())
-                        {
-                            await dispatcher.InvokeAsync(() =>
-                            {
-                                Debts = new ObservableCollection<DebtReportDto>();
-                            });
-                        }
-                        else
-                        {
-                            Debts = new ObservableCollection<DebtReportDto>();
-                        }
-                    }
+                }
+                else if (_currentView == "Debts")
+                {
+                    // Sử dụng ReloadDebtsAsync để đảm bảo load cả các payment có DISCREPANCY từ database
+                    await ReloadDebtsAsync().ConfigureAwait(false);
                 }
                 else if (_currentView == "Reports")
                 {

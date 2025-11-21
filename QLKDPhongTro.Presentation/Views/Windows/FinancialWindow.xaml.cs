@@ -38,6 +38,32 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
                 InitializeComponent();
 
+                // Subscribe to view changed event để cập nhật tab button khi CurrentView thay đổi từ code
+                _viewModel.ViewChangedRequested += (s, viewName) =>
+                {
+                    try
+                    {
+                        Dispatcher?.Invoke(() =>
+                        {
+                            Button? activeButton = viewName switch
+                            {
+                                "AllRecords" => ViewAllRecordsButton,
+                                "Debts" => ViewDebtsButton,
+                                //"Reports" => ViewReportsButton,
+                                _ => null
+                            };
+                            if (activeButton != null)
+                            {
+                                UpdateViewButtons(activeButton);
+                            }
+                        });
+                    }
+                    catch
+                    {
+                        // Ignore nếu dispatcher không sẵn sàng
+                    }
+                };
+
                 // Load data sau khi window đã load xong
                 Loaded += async (s, e) =>
                 {

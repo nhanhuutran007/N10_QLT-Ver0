@@ -183,7 +183,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
                             SoTienDaTra = @SoTienDaTra,
                             TrangThaiThanhToan = @TrangThaiThanhToan, NgayThanhToan = @NgayThanhToan,
                             DonGiaDien = @DonGiaDien, DonGiaNuoc = @DonGiaNuoc, SoDien = @SoDien, SoNuoc = @SoNuoc,
-                            TongTien = @TongTien
+                            ChiSoDienCu = @ChiSoDienCu, ChiSoDienMoi = @ChiSoDienMoi,
+                            GhiChu = @GhiChu, TongTien = @TongTien
                         WHERE MaThanhToan = @MaThanhToan", conn);
 
                     cmd.Parameters.AddWithValue("@MaThanhToan", payment.MaThanhToan);

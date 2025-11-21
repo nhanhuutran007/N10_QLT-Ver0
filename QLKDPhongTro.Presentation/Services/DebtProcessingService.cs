@@ -17,6 +17,7 @@ using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Services;
 // Thêm thư viện HttpClient (hiện đại hơn WebClient)
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 
 namespace QLKDPhongTro.Presentation.Services
@@ -77,16 +78,24 @@ namespace QLKDPhongTro.Presentation.Services
                 return 0;
             }
 
-            // Lấy tất cả người thuê trong phòng (bao gồm cả người đứng tên và người ở cùng)
+            // Lấy tất cả người thuê trong phòng (chỉ lấy người đang ở - filter theo "Đang ở")
             var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
             if (roomTenants == null || roomTenants.Count == 0)
             {
                 return 0;
             }
 
-            // Lấy assets của tất cả người thuê trong phòng
+            // ✅ FIX: Chỉ lấy người đang ở (filter theo TrangThaiNguoiThue = "Đang ở")
+            var activeTenants = roomTenants.Where(t =>
+                string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (activeTenants.Count == 0)
+            {
+                return 0;
+            }
+
+            // Lấy assets của tất cả người thuê đang ở trong phòng
             var allAssets = new List<DataLayer.Models.TenantAsset>();
-            foreach (var tenant in roomTenants)
+            foreach (var tenant in activeTenants)
             {
                 var tenantAssets = await _tenantRepository.GetAssetsAsync(tenant.MaNguoiThue);
                 if (tenantAssets != null && tenantAssets.Count > 0)
@@ -123,16 +132,24 @@ namespace QLKDPhongTro.Presentation.Services
                 return 0;
             }
 
-            // Lấy tất cả người thuê trong phòng (bao gồm cả người đứng tên và người ở cùng)
+            // Lấy tất cả người thuê trong phòng (chỉ lấy người đang ở - filter theo "Đang ở")
             var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
             if (roomTenants == null || roomTenants.Count == 0)
             {
                 return 0;
             }
 
-            // Lấy assets của tất cả người thuê trong phòng
+            // ✅ FIX: Chỉ lấy người đang ở (filter theo TrangThaiNguoiThue = "Đang ở")
+            var activeTenants = roomTenants.Where(t =>
+                string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)).ToList();
+            if (activeTenants.Count == 0)
+            {
+                return 0;
+            }
+
+            // Lấy assets của tất cả người thuê đang ở trong phòng
             var allAssets = new List<DataLayer.Models.TenantAsset>();
-            foreach (var tenant in roomTenants)
+            foreach (var tenant in activeTenants)
             {
                 var tenantAssets = await _tenantRepository.GetAssetsAsync(tenant.MaNguoiThue);
                 if (tenantAssets != null && tenantAssets.Count > 0)
@@ -254,7 +271,25 @@ namespace QLKDPhongTro.Presentation.Services
                 }
 
                 var normalizedSettings = EnsureSettings(settings);
-                var waterCost = normalizedSettings.WaterFee;
+                
+                // === TÍNH TOÁN TIỀN NƯỚC: NHÂN VỚI SỐ NGƯỜI TRONG PHÒNG ===
+                var contract = await _contractRepository.GetByIdAsync(contractId.Value);
+                if (contract == null)
+                {
+                    return new DebtCalculationResult
+                    {
+                        RoomName = formData.RoomName,
+                        IsProcessed = false,
+                        ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {formData.RoomName}"
+                    };
+                }
+                var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                int soNguoiTrongPhong = roomTenants?.Count(t =>
+                    string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+                decimal tienNuocDauNguoi = normalizedSettings.WaterFee;
+                decimal waterCost = tienNuocDauNguoi * soNguoiTrongPhong; // Tổng tiền nước = tiền nước/đầu người × số người
+                
                 var internetCost = normalizedSettings.InternetFee;
                 var sanitationCost = normalizedSettings.SanitationFee;
                 var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
@@ -375,6 +410,21 @@ namespace QLKDPhongTro.Presentation.Services
                 decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
                 decimal totalDebt = electricityCost + waterCost + internetCost + sanitationCost + parkingFee + otherCost;
 
+                // ✅ LƯU NGAY VÀO DATABASE KHI DETECT DISCREPANCY (sau khi đã tính toán xong)
+                if (isDiscrepancy && contractId.HasValue)
+                {
+                    try
+                    {
+                        await SaveDiscrepancyToDatabaseAsync(contractId.Value, formData, manualValue, ocrValue, 
+                            dbOldElectricValue, finalElectricValue, electricityUsage, electricityCost,
+                            waterCost, internetCost, sanitationCost, parkingFee, otherCost, normalizedSettings);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Lỗi khi lưu discrepancy vào database: {ex.Message}");
+                    }
+                }
+
                 return new DebtCalculationResult
                 {
                     RoomName = formData.RoomName,
@@ -460,7 +510,90 @@ namespace QLKDPhongTro.Presentation.Services
         }
 
         /// <summary>
-        /// Giải quyết sự cố với giá trị đã xác nhận
+        /// Lưu thông tin discrepancy vào database ngay khi detect
+        /// </summary>
+        private async Task SaveDiscrepancyToDatabaseAsync(int contractId, DebtFormData formData, 
+            decimal manualValue, decimal ocrValue, decimal oldElectricValue, decimal finalElectricValue,
+            decimal electricityUsage, decimal electricityCost, decimal waterCost, decimal internetCost,
+            decimal sanitationCost, decimal parkingFee, decimal otherCost, DebtFeeSettings settings)
+        {
+            try
+            {
+                // Lấy tháng từ timestamp
+                string monthYear = DateTime.Now.ToString("MM/yyyy");
+                if (!string.IsNullOrEmpty(formData.Timestamp))
+                {
+                    var timestamp = ParseTimestamp(formData.Timestamp);
+                    monthYear = timestamp.ToString("MM/yyyy");
+                }
+
+                // Kiểm tra xem đã có payment cho tháng này chưa (có thể đã được tạo trước đó)
+                var existing = await GetPaymentByMonthAsync(contractId, monthYear);
+                if (existing != null)
+                {
+                    // Nếu đã có và có chứa thông tin discrepancy, không tạo lại
+                    if (existing.GhiChu != null && existing.GhiChu.Contains("DISCREPANCY:"))
+                    {
+                        return; // Đã có rồi, không tạo lại
+                    }
+                }
+
+                // === TÍNH TOÁN TIỀN NƯỚC: NHÂN VỚI SỐ NGƯỜI TRONG PHÒNG ===
+                var contract = await _contractRepository.GetByIdAsync(contractId);
+                if (contract == null) return; // Không thể tính nếu không có contract
+                var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                int soNguoiTrongPhong = roomTenants?.Count(t =>
+                        string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+
+                if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+
+                // === THÊM DÒNG NÀY ĐỂ KIỂM TRA ===
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Phòng: {contract.MaPhong} - Số người đếm được: {soNguoiTrongPhong}");
+
+                decimal tienNuocDauNguoi = settings.WaterFee;
+                decimal tienNuocTong = tienNuocDauNguoi * soNguoiTrongPhong;
+
+                // Tạo payment với thông tin discrepancy
+                var payment = new Payment
+                {
+                    MaHopDong = contractId,
+                    ThangNam = monthYear,
+                    TienThue = await GetRentPriceAsync(contractId),
+                    ChiSoDienCu = oldElectricValue,
+                    ChiSoDienMoi = finalElectricValue, // Tạm dùng giá trị nhập tay
+                    SoDien = electricityUsage,
+                    DonGiaDien = ELECTRICITY_RATE,
+                    TienDien = electricityCost,
+                    SoNuoc = soNguoiTrongPhong,
+                    DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người
+                    TienNuoc = tienNuocTong, // Tổng tiền nước = tiền nước/đầu người × số người
+                    TienInternet = settings.InternetFee,
+                    TienVeSinh = settings.SanitationFee,
+                    TienGiuXe = parkingFee,
+                    ChiPhiKhac = otherCost,
+                    TrangThaiThanhToan = "Chưa trả",
+                    // Lưu thông tin discrepancy vào GhiChu với format đặc biệt
+                    GhiChu = $"DISCREPANCY: Manual={manualValue}|OCR={ocrValue}|Status=PENDING"
+                };
+
+                payment.TongTien = (payment.TienThue ?? 0)
+                                 + (payment.TienDien ?? 0)
+                                 + (payment.TienNuoc ?? 0)
+                                 + (payment.TienInternet ?? 0)
+                                 + (payment.TienVeSinh ?? 0)
+                                 + (payment.TienGiuXe ?? 0)
+                                 + (payment.ChiPhiKhac ?? 0);
+
+                await _paymentRepository.CreateAsync(payment);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi lưu discrepancy vào database: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Giải quyết sự cố với giá trị đã xác nhận - CẬP NHẬT payment đã có thay vì tạo mới
         /// </summary>
         public async Task<ProcessingResult> ResolveDiscrepancyAsync(string roomName, decimal confirmedValue, DebtFeeSettings? settings = null)
         {
@@ -474,24 +607,8 @@ namespace QLKDPhongTro.Presentation.Services
                     return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {roomName}" };
                 }
 
-                // 2. Lấy chỉ số cũ
-                var lastPayment = await GetLastPaymentByContractIdAsync(contractId.Value);
-                decimal oldElectricValue = lastPayment?.ChiSoDienMoi ?? 0;
-
-                // 3. Validation
-                if (confirmedValue < oldElectricValue)
-                {
-                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Số mới ({confirmedValue}) không thể nhỏ hơn số cũ ({oldElectricValue})" };
-                }
-
-                // 4. Tính toán
-                decimal electricityUsage = confirmedValue - oldElectricValue;
-                decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
-                var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
-                var additionalCosts = await CalculateAdditionalCostsAsync(contractId.Value, normalizedSettings);
-
-                // 5. Lấy tháng từ Google Form data (nếu có) hoặc dùng tháng hiện tại
-                string monthYear;
+                // 2. Tìm payment đã có (có GhiChu chứa "DISCREPANCY:")
+                string monthYear = DateTime.Now.ToString("MM/yyyy");
                 try
                 {
                     var formDataList = await _googleFormService.GetFormDataAsync();
@@ -504,65 +621,131 @@ namespace QLKDPhongTro.Presentation.Services
                         var timestamp = ParseTimestamp(formData.Timestamp);
                         monthYear = timestamp.ToString("MM/yyyy");
                     }
-                    else
-                    {
-                        monthYear = DateTime.Now.ToString("MM/yyyy");
-                    }
                 }
                 catch
                 {
                     monthYear = DateTime.Now.ToString("MM/yyyy");
                 }
 
-                // 6. Tạo payment record mới
-                var existing = await GetPaymentByMonthAsync(contractId.Value, monthYear);
-                if (existing != null)
+                var existingPayment = await GetPaymentByMonthAsync(contractId.Value, monthYear);
+                
+                // 3. Lấy chỉ số cũ
+                decimal oldElectricValue = 0;
+                if (existingPayment != null && existingPayment.ChiSoDienCu.HasValue)
                 {
-                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Đã tồn tại thanh toán cho tháng {monthYear}" };
-                }
-
-                var payment = new Payment
-                {
-                    MaHopDong = contractId.Value,
-                    ThangNam = monthYear,
-                    TienThue = await GetRentPriceAsync(contractId.Value),
-                    ChiSoDienCu = oldElectricValue,
-                    ChiSoDienMoi = confirmedValue,
-                    SoDien = electricityUsage,
-                    DonGiaDien = ELECTRICITY_RATE,
-                    TienDien = electricityCost,
-                    SoNuoc = 1,
-                    DonGiaNuoc = normalizedSettings.WaterFee,
-                    TienNuoc = normalizedSettings.WaterFee,
-                    // Gán giá trị cố định
-                    TienInternet = normalizedSettings.InternetFee,
-                    TienVeSinh = normalizedSettings.SanitationFee,
-                    TienGiuXe = parkingFee, // Tính dựa trên số lượng xe (free 1 xe, các xe sau tính 100.000/xe)
-                    ChiPhiKhac = additionalCosts,
-                    TrangThaiThanhToan = "Chưa trả",
-                    GhiChu = $"Đã xác nhận sau kiểm tra sự cố. Giá trị: {confirmedValue}"
-                };
-
-                // === FIX LỖI CONVERT TYPE TẠI ĐÂY ===
-                // Sử dụng (?? 0) cho TẤT CẢ các trường nullable
-                payment.TongTien = (payment.TienThue ?? 0)
-                                 + (payment.TienDien ?? 0)
-                                 + (payment.TienNuoc ?? 0)
-                                 + (payment.TienInternet ?? 0) // Thêm ?? 0
-                                 + (payment.TienVeSinh ?? 0)    // Thêm ?? 0
-                                 + (payment.TienGiuXe ?? 0)
-                                 + (payment.ChiPhiKhac ?? 0);    // Thêm ?? 0
-
-                // 6. Lưu vào database
-                var success = await _paymentRepository.CreateAsync(payment);
-                if (success)
-                {
-                    _discrepancyCache.Remove(roomName);
-                    return new ProcessingResult { IsSuccess = true };
+                    oldElectricValue = existingPayment.ChiSoDienCu.Value;
                 }
                 else
                 {
-                    return new ProcessingResult { IsSuccess = false, ErrorMessage = "Lỗi khi lưu vào database" };
+                    var lastPayment = await GetLastPaymentByContractIdAsync(contractId.Value);
+                    oldElectricValue = lastPayment?.ChiSoDienMoi ?? 0;
+                }
+
+                // 4. Validation
+                if (confirmedValue < oldElectricValue)
+                {
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = $"Số mới ({confirmedValue}) không thể nhỏ hơn số cũ ({oldElectricValue})" };
+                }
+
+                // 5. Tính toán lại
+                decimal electricityUsage = confirmedValue - oldElectricValue;
+                decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
+                var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
+                var additionalCosts = await CalculateAdditionalCostsAsync(contractId.Value, normalizedSettings);
+
+                // === TÍNH TOÁN TIỀN NƯỚC: NHÂN VỚI SỐ NGƯỜI TRONG PHÒNG ===
+                var contract = await _contractRepository.GetByIdAsync(contractId.Value);
+                if (contract == null)
+                {
+                    return new ProcessingResult { IsSuccess = false, ErrorMessage = "Không tìm thấy hợp đồng" };
+                }
+                var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                int soNguoiTrongPhong = roomTenants?.Count(t =>
+                    string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+                decimal tienNuocDauNguoi = normalizedSettings.WaterFee;
+                decimal tienNuocTong = tienNuocDauNguoi * soNguoiTrongPhong;
+
+                // 6. Cập nhật payment đã có hoặc tạo mới nếu chưa có
+                if (existingPayment != null && existingPayment.GhiChu != null && existingPayment.GhiChu.Contains("DISCREPANCY:"))
+                {
+                    // Cập nhật payment đã có
+                    existingPayment.ChiSoDienMoi = confirmedValue;
+                    existingPayment.SoDien = electricityUsage;
+                    existingPayment.TienDien = electricityCost;
+                    existingPayment.DonGiaDien = ELECTRICITY_RATE;
+                    existingPayment.SoNuoc = soNguoiTrongPhong;
+                    existingPayment.TienNuoc = tienNuocTong; // Tổng tiền nước = tiền nước/đầu người × số người
+                    existingPayment.DonGiaNuoc = tienNuocDauNguoi; // Lưu tiền nước/đầu người
+                    existingPayment.TienInternet = normalizedSettings.InternetFee;
+                    existingPayment.TienVeSinh = normalizedSettings.SanitationFee;
+                    existingPayment.TienGiuXe = parkingFee;
+                    existingPayment.ChiPhiKhac = additionalCosts;
+                    // Reset GhiChu - xóa thông tin discrepancy
+                    existingPayment.GhiChu = $"Đã xác nhận sau kiểm tra sự cố. Giá trị: {confirmedValue}";
+
+                    existingPayment.TongTien = (existingPayment.TienThue ?? 0)
+                                             + (existingPayment.TienDien ?? 0)
+                                             + (existingPayment.TienNuoc ?? 0)
+                                             + (existingPayment.TienInternet ?? 0)
+                                             + (existingPayment.TienVeSinh ?? 0)
+                                             + (existingPayment.TienGiuXe ?? 0)
+                                             + (existingPayment.ChiPhiKhac ?? 0);
+
+                    var success = await _paymentRepository.UpdateAsync(existingPayment);
+                    if (success)
+                    {
+                        _discrepancyCache.Remove(roomName);
+                        return new ProcessingResult { IsSuccess = true };
+                    }
+                    else
+                    {
+                        return new ProcessingResult { IsSuccess = false, ErrorMessage = "Lỗi khi cập nhật database" };
+                    }
+                }
+                else
+                {
+                    // Tạo mới nếu chưa có
+                    // Tính tiền nước (đã tính ở trên)
+                    var payment = new Payment
+                    {
+                        MaHopDong = contractId.Value,
+                        ThangNam = monthYear,
+                        TienThue = await GetRentPriceAsync(contractId.Value),
+                        ChiSoDienCu = oldElectricValue,
+                        ChiSoDienMoi = confirmedValue,
+                        SoDien = electricityUsage,
+                        DonGiaDien = ELECTRICITY_RATE,
+                        TienDien = electricityCost,
+                        SoNuoc = 1,
+                        DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người
+                        TienNuoc = tienNuocTong, // Tổng tiền nước = tiền nước/đầu người × số người
+                        TienInternet = normalizedSettings.InternetFee,
+                        TienVeSinh = normalizedSettings.SanitationFee,
+                        TienGiuXe = parkingFee,
+                        ChiPhiKhac = additionalCosts,
+                        TrangThaiThanhToan = "Chưa trả",
+                        GhiChu = $"Đã xác nhận sau kiểm tra sự cố. Giá trị: {confirmedValue}"
+                    };
+
+                    payment.TongTien = (payment.TienThue ?? 0)
+                                     + (payment.TienDien ?? 0)
+                                     + (payment.TienNuoc ?? 0)
+                                     + (payment.TienInternet ?? 0)
+                                     + (payment.TienVeSinh ?? 0)
+                                     + (payment.TienGiuXe ?? 0)
+                                     + (payment.ChiPhiKhac ?? 0);
+
+                    var success = await _paymentRepository.CreateAsync(payment);
+                    if (success)
+                    {
+                        _discrepancyCache.Remove(roomName);
+                        return new ProcessingResult { IsSuccess = true };
+                    }
+                    else
+                    {
+                        return new ProcessingResult { IsSuccess = false, ErrorMessage = "Lỗi khi lưu vào database" };
+                    }
                 }
             }
             catch (Exception ex)
@@ -680,6 +863,16 @@ namespace QLKDPhongTro.Presentation.Services
                         // Tính tiền giữ xe dựa trên số lượng xe (free 1 xe, các xe sau tính 100.000/xe)
                         var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
 
+                        // === TÍNH TOÁN TIỀN NƯỚC: NHÂN VỚI SỐ NGƯỜI TRONG PHÒNG ===
+                        var contract = await _contractRepository.GetByIdAsync(contractId.Value);
+                        if (contract == null) continue; // Bỏ qua nếu không tìm thấy contract
+                        var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                        int soNguoiTrongPhong = roomTenants?.Count(t =>
+                            string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                        if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+                        decimal tienNuocDauNguoi = normalizedSettings.WaterFee;
+                        decimal tienNuocTong = tienNuocDauNguoi * soNguoiTrongPhong; // Tổng tiền nước = tiền nước/đầu người × số người
+
                         var payment = new Payment
                         {
                             MaHopDong = contractId.Value,
@@ -691,8 +884,8 @@ namespace QLKDPhongTro.Presentation.Services
                             DonGiaDien = ELECTRICITY_RATE,
                             TienDien = debt.ElectricityCost,
                             SoNuoc = 1,
-                            DonGiaNuoc = normalizedSettings.WaterFee,
-                            TienNuoc = debt.WaterCost > 0 ? debt.WaterCost : normalizedSettings.WaterFee,
+                            DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người
+                            TienNuoc = tienNuocTong, // Tổng tiền nước = tiền nước/đầu người × số người
                             // Gán giá trị cố định
                             TienInternet = debt.InternetCost > 0 ? debt.InternetCost : normalizedSettings.InternetFee,
                             TienVeSinh = debt.SanitationCost > 0 ? debt.SanitationCost : normalizedSettings.SanitationFee,
@@ -722,26 +915,72 @@ namespace QLKDPhongTro.Presentation.Services
         }
         private async Task<int?> GetContractIdByRoomNameAsync(string roomName)
         {
+            if (string.IsNullOrWhiteSpace(roomName)) return null;
+            
             var rooms = await _roomRepository.GetAllAsync();
             
-            // Chuẩn hóa tên phòng: loại bỏ dấu chấm, khoảng trắng và chuyển thành chữ hoa
+            // Chuẩn hóa tên phòng: loại bỏ dấu chấm, khoảng trắng, dấu gạch ngang và chuyển thành chữ hoa
+            // Cũng xử lý các trường hợp như "Phòng 101", "P101", "P.101", "P-101" -> "P101"
             string NormalizeRoomName(string name)
             {
                 if (string.IsNullOrWhiteSpace(name)) return string.Empty;
-                return name.Trim()
+                var normalized = name.Trim()
                     .Replace(".", "")
                     .Replace(" ", "")
                     .Replace("-", "")
+                    .Replace("_", "")
                     .ToUpperInvariant();
+                
+                // Xử lý trường hợp "PHÒNG101" hoặc "PHONG101" -> "P101"
+                if (normalized.StartsWith("PHÒNG", StringComparison.OrdinalIgnoreCase) || 
+                    normalized.StartsWith("PHONG", StringComparison.OrdinalIgnoreCase))
+                {
+                    normalized = "P" + normalized.Substring(5); // Bỏ "PHÒNG" hoặc "PHONG", thêm "P"
+                }
+                // Xử lý trường hợp chỉ có số "101" -> "P101"
+                else if (System.Text.RegularExpressions.Regex.IsMatch(normalized, @"^\d+$"))
+                {
+                    normalized = "P" + normalized;
+                }
+                
+                return normalized;
             }
 
             var normalizedRoomName = NormalizeRoomName(roomName);
-            var room = rooms.FirstOrDefault(r => NormalizeRoomName(r.TenPhong) == normalizedRoomName);
             
-            if (room == null) return null;
+            // Tìm phòng với nhiều cách match
+            var room = rooms.FirstOrDefault(r => 
+            {
+                var normalizedDbName = NormalizeRoomName(r.TenPhong);
+                // Match chính xác
+                if (normalizedDbName == normalizedRoomName) return true;
+                // Match nếu chỉ khác prefix (ví dụ: "P101" vs "101")
+                if (normalizedDbName.EndsWith(normalizedRoomName) || normalizedRoomName.EndsWith(normalizedDbName))
+                {
+                    // Kiểm tra xem phần còn lại có phải là prefix hợp lệ không
+                    var longer = normalizedDbName.Length > normalizedRoomName.Length ? normalizedDbName : normalizedRoomName;
+                    var shorter = normalizedDbName.Length <= normalizedRoomName.Length ? normalizedDbName : normalizedRoomName;
+                    if (longer.StartsWith("P") && longer.Substring(1) == shorter)
+                        return true;
+                }
+                return false;
+            });
+            
+            if (room == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Không tìm thấy phòng với tên '{roomName}' (normalized: '{normalizedRoomName}')");
+                return null;
+            }
             
             var contracts = await _contractRepository.GetActiveContractsAsync();
-            return contracts.FirstOrDefault(c => c.MaPhong == room.MaPhong)?.MaHopDong;
+            var contract = contracts.FirstOrDefault(c => c.MaPhong == room.MaPhong);
+            if (contract == null)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Không tìm thấy hợp đồng cho phòng '{room.TenPhong}' (MaPhong: {room.MaPhong})");
+                return null;
+            }
+            
+            return contract.MaHopDong;
         }
 
         private async Task<decimal> GetRentPriceAsync(int contractId)

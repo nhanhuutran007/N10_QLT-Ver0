@@ -347,7 +347,7 @@
                                             VerticalAlignment="Center"
                                             HorizontalAlignment="Right"/>
                                     <TextBlock Grid.Column="3"
-                                            Text="Số Kwh / Số Khối"
+                                            Text="Số Kwh / Người"
                                             Foreground="#7D8FA9"
                                             VerticalAlignment="Center"
                                             HorizontalAlignment="Right"/>

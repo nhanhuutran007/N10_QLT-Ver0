@@ -356,25 +356,15 @@
                                                            Style="{StaticResource StatusBadgeTextStyle}"/>
                                             </Border>
 
-                                            <StackPanel Orientation="Horizontal">
-                                                <Border Style="{StaticResource InfoChipStyle}"
-                                                        Background="#ECFDF5"
-                                                        Margin="0,0,8,0"
-                                                        Visibility="{Binding HasPaidAmount, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                    <StackPanel>
-                                                        <TextBlock Text="ĐÃ THU" FontSize="10" Foreground="#047857" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding AmountPaid, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="SemiBold" Foreground="#065F46"/>
-                                                    </StackPanel>
-                                                </Border>
-                                                <Border Style="{StaticResource InfoChipStyle}"
-                                                        Background="#FEF3C7"
-                                                        Visibility="{Binding HasRemainingAmount, Converter={StaticResource BoolToVisibilityConverter}}">
-                                                    <StackPanel>
-                                                        <TextBlock Text="CÒN LẠI" FontSize="10" Foreground="#B45309" FontWeight="SemiBold"/>
-                                                        <TextBlock Text="{Binding RemainingAmount, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="SemiBold" Foreground="#92400E"/>
-                                                    </StackPanel>
-                                                </Border>
-                                            </StackPanel>
+                                            <Border Style="{StaticResource InfoChipStyle}"
+                                                    Background="#FEF3C7"
+                                                    Visibility="{Binding HasRemainingAmount, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                    HorizontalAlignment="Left">
+                                                <StackPanel>
+                                                    <TextBlock Text="CÒN LẠI" FontSize="10" Foreground="#B45309" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding RemainingAmount, StringFormat='{}{0:N0} đ'}" FontSize="13" FontWeight="SemiBold" Foreground="#92400E"/>
+                                                </StackPanel>
+                                            </Border>
                                         </StackPanel>
 
                                         <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">

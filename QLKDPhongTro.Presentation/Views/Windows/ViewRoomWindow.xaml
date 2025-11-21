@@ -171,7 +171,7 @@
 
                             <Border Background="White" CornerRadius="12" Padding="20" Margin="0,0,0,20" BorderBrush="#E5E7EB" BorderThickness="1">
                                 <StackPanel>
-                                    <TextBlock Text="NGƯỜI ĐANG Ở" FontSize="12" FontWeight="Bold" Foreground="#4B5563" Margin="0,0,0,12"/>
+                                    <TextBlock Text="NGƯỜI THUÊ" FontSize="12" FontWeight="Bold" Foreground="#4B5563" Margin="0,0,0,12"/>
 
                                     <ItemsControl ItemsSource="{Binding CurrentTenants}" Margin="0,0,0,0"
                                                   Visibility="{Binding HasCurrentTenants, Converter={StaticResource BoolToVisibilityConverter}}">
