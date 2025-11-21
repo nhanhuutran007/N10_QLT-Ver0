@@ -289,12 +289,7 @@
                                 Height="36"
                                 Style="{StaticResource IconButtonStyle}"
                                 ToolTip="Đóng"
-                                Command="{Binding CancelCommand}">
-                            <TextBlock Text="✕"
-                                       FontSize="18"
-                                       VerticalAlignment="Center"
-                                       HorizontalAlignment="Center"/>
-                        </Button>
+                                Command="{Binding CancelCommand}"/>
                     </Grid>
                 </Border>
 
@@ -337,10 +332,13 @@
                             </StackPanel>
                         </Grid>
 
-                        <TextBlock Text="Tiền cọc *" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="Tiền cọc (tự động = 1 tháng tiền nhà)" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource InputFieldStyle}" 
                                  Height="44"
-                                 Text="{Binding TienCoc, Mode=TwoWay}"/>
+                                 IsReadOnly="True"
+                                 Background="#F9FAFB"
+                                 Foreground="#6B7280"
+                                 Text="{Binding TienCoc, Mode=OneWay}"/>
 
                         <TextBlock Text="Điều khoản riêng (tùy chọn)" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource InputFieldStyle}" 

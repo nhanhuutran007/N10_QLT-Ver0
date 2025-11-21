@@ -62,7 +62,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private DateTime? _ngayKetThuc = DateTime.Today.AddMonths(12);
 
         [ObservableProperty]
-        private string _tienCoc;
+        private string _tienCoc = "0";
 
         [ObservableProperty]
         private string _dieuKhoanRieng;
@@ -122,7 +122,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     SelectedPhong = PhongList.FirstOrDefault(x => x.MaPhong == _editingContract.MaPhong);
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
-                    TienCoc = _editingContract.TienCoc.ToString();
+                    // Khi chỉnh sửa, giữ nguyên tiền cọc cũ hoặc tính lại nếu phòng thay đổi
+                    if (_editingContract.TienCoc > 0)
+                    {
+                        TienCoc = _editingContract.TienCoc.ToString("N0");
+                    }
+                    else
+                    {
+                        _ = UpdateTienCocFromRoomAsync();
+                    }
                     DieuKhoanRieng = _editingContract.GhiChu;
                     if (!string.IsNullOrWhiteSpace(_editingContract.FileHopDong))
                     {
@@ -157,8 +165,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 if (dialog.ShowDialog() == true)
                 {
-                    ContractSavePath = dialog.FileName;
+                    var selectedPath = dialog.FileName;
+                    ContractSavePath = selectedPath;
                     _hasCustomSavePath = true;
+                    OnPropertyChanged(nameof(ContractSavePath));
                 }
             }
             catch (Exception ex)
@@ -190,9 +200,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show("⚠️ Ngày kết thúc phải lớn hơn Ngày bắt đầu.");
                 return;
             }
-            if (!decimal.TryParse(TienCoc, out decimal tienCocValue))
+            // Tiền cọc tự động = 1 tháng tiền nhà (đã được tính khi chọn phòng)
+            if (!decimal.TryParse(TienCoc, out decimal tienCocValue) || tienCocValue <= 0)
             {
-                MessageBox.Show("⚠️ Tiền cọc không hợp lệ.");
+                MessageBox.Show("⚠️ Tiền cọc không hợp lệ. Vui lòng chọn phòng.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(ContractSavePath))
@@ -391,7 +402,38 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         partial void OnSelectedNguoiThueChanged(NguoiThueTmp value) => RefreshSuggestedSavePath();
 
-        partial void OnSelectedPhongChanged(PhongTmp value) => RefreshSuggestedSavePath();
+        partial void OnSelectedPhongChanged(PhongTmp value)
+        {
+            RefreshSuggestedSavePath();
+            _ = UpdateTienCocFromRoomAsync();
+        }
+
+        private async Task UpdateTienCocFromRoomAsync()
+        {
+            if (SelectedPhong == null)
+            {
+                TienCoc = "0";
+                return;
+            }
+
+            try
+            {
+                var room = await _roomRepo.GetByIdAsync(SelectedPhong.MaPhong);
+                if (room != null && room.GiaCoBan > 0)
+                {
+                    // Tiền cọc = 1 tháng tiền nhà
+                    TienCoc = room.GiaCoBan.ToString("N0");
+                }
+                else
+                {
+                    TienCoc = "0";
+                }
+            }
+            catch
+            {
+                TienCoc = "0";
+            }
+        }
 
         private void RefreshSuggestedSavePath()
         {
