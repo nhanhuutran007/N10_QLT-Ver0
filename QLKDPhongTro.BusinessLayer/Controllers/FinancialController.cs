@@ -578,8 +578,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var allPayments = (current != null && current.MaNha > 0)
                 ? await _paymentRepository.GetAllByMaNhaAsync(current.MaNha)
                 : await _paymentRepository.GetAllAsync();
-            var debts = allPayments.Where(p => p.TrangThaiThanhToan == "Chưa trả" &&
-                (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam));
+
+            // Tính số tiền còn lại (ConLai) = TongTien - SoTienDaTra; chỉ lấy những khoản còn nợ > 0
+            var debts = allPayments.Where(p =>
+                (string.IsNullOrEmpty(thangNam) || p.ThangNam == thangNam) &&
+                (p.TongTien - (p.SoTienDaTra ?? 0m)) > 0m);
 
             var result = new List<DebtReportDto>();
             foreach (var debt in debts)
@@ -590,6 +593,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
                 var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
 
+                var conLai = debt.TongTien - (debt.SoTienDaTra ?? 0m);
+
                 result.Add(new DebtReportDto
                 {
                     MaThanhToan = debt.MaThanhToan,
@@ -598,7 +603,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     TenKhachHang = tenant?.HoTen ?? "Không xác định",
                     SoDienThoai = tenant?.SoDienThoai ?? "Không xác định",
                     ThangNam = debt.ThangNam,
-                    TongTien = debt.TongTien,
+                    TongTien = conLai,
                     TrangThaiThanhToan = debt.TrangThaiThanhToan,
                     SoThangNo = CalculateMonthsOverdue(debt.ThangNam),
                     NgayThanhToan = debt.NgayThanhToan,

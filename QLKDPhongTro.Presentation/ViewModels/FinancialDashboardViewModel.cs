@@ -264,7 +264,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 			"Báo cáo Doanh thu tháng",
 			"Báo cáo Chi phí tháng",
 			"Báo cáo Lợi nhuận tháng",
-			"Báo cáo Danh sách phòng"
+			"Báo cáo Danh sách phòng",
+			"Báo cáo Công nợ"
 		};
 		public IReadOnlyList<string> ExportTypeOptions => _exportTypeOptions;
 
@@ -521,6 +522,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 						exportType = "Báo cáo Lợi nhuận tháng";
 					else if (p.StartsWith("RoomStatus", StringComparison.OrdinalIgnoreCase))
 						exportType = "Báo cáo Danh sách phòng";
+					else if (p.StartsWith("Debt", StringComparison.OrdinalIgnoreCase))
+						exportType = "Báo cáo Công nợ";
 
 					exportFormat = p.EndsWith("Excel", StringComparison.OrdinalIgnoreCase) ? "Excel" : "PDF";
 				}
@@ -541,9 +544,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
 					return;
 
 				// Load required data from controller
-				var payments = _financialController != null
-					? await _financialController.GetAllPaymentsAsync()
-					: new List<PaymentDto>();
+				List<PaymentDto> payments;
+				try
+				{
+					payments = _financialController != null
+						? await _financialController.GetAllPaymentsAsync()
+						: new List<PaymentDto>();
+				}
+				catch (Exception ex)
+				{
+					ShowMessageRequested?.Invoke(this, $"Lỗi khi tải dữ liệu: {ex.Message}. Đang sử dụng dữ liệu mẫu.");
+					payments = new List<PaymentDto>
+					{
+						new PaymentDto { TenPhong = "P.101", ThangNam = DateTime.Now.ToString("MM/yyyy"), TienThue = 4000000, TienDien = 350000, TienNuoc = 100000, TienInternet = 100000, TienVeSinh = 50000, TienGiuXe = 100000, ChiPhiKhac = 0, TongTien = 4700000, TrangThaiThanhToan = "Chưa trả", TenKhachHang = "Khách A" },
+						new PaymentDto { TenPhong = "P.102", ThangNam = DateTime.Now.ToString("MM/yyyy"), TienThue = 3500000, TienDien = 500000, TienNuoc = 150000, TienInternet = 0, TienVeSinh = 0, TienGiuXe = 0, ChiPhiKhac = 50000, TongTien = 5200000, TrangThaiThanhToan = "Trả một phần", SoTienDaTra = 3500000, TenKhachHang = "Khách B" }
+					};
+				}
 
 				static string NormalizeMonth(string? s) => (s ?? string.Empty).Trim();
 
@@ -579,17 +595,55 @@ namespace QLKDPhongTro.Presentation.ViewModels
 						break;
 
 					case "Báo cáo Chi phí tháng":
+						// Xây dựng dữ liệu chi tiết theo phòng với đầy đủ cột từ ThanhToan
+						var expenseRows = new List<ReportExportService.ExpenseRow>();
+						if (_financialController != null)
+						{
+							foreach (var p in paymentsThisMonth)
+							{
+								var detail = await _financialController.GetInvoiceDetailAsync(p.MaThanhToan);
+
+								decimal? soDienCu = detail?.SoDienThangTruoc ?? 0;
+								decimal? soDien = detail?.SoDien ?? 0;
+								decimal? soDienMoi = (soDienCu ?? 0) + (soDien ?? 0);
+								decimal? donGiaDien = detail?.DonGiaDien ?? 0;
+								decimal? tienDien = (p.TienDien ?? (soDien * (donGiaDien ?? 0))) ?? 0;
+
+								decimal? soNuoc = detail?.SoNuoc ?? 0;
+								decimal? donGiaNuoc = detail?.DonGiaNuoc ?? 0;
+								decimal? tienNuoc = (p.TienNuoc ?? (soNuoc * (donGiaNuoc ?? 0))) ?? 0;
+
+								expenseRows.Add(new ReportExportService.ExpenseRow
+								{
+									TenPhong = p.TenPhong ?? string.Empty,
+									NgayThanhToan = p.NgayThanhToan,
+									ChiSoDienCu = soDienCu,
+									ChiSoDienMoi = soDienMoi,
+									SoDien = soDien,
+									DonGiaDien = donGiaDien,
+									TienDien = tienDien,
+									SoNuoc = soNuoc,
+									DonGiaNuoc = donGiaNuoc,
+									TienNuoc = tienNuoc,
+									TienInternet = p.TienInternet ?? 0,
+									TienVeSinh = p.TienVeSinh ?? 0,
+									TienGiuXe = p.TienGiuXe ?? 0,
+									ChiPhiSuaChua = p.ChiPhiKhac ?? 0
+								});
+							}
+						}
+
 						if (exportFormat == "PDF")
-							ReportExportService.ExportExpenseMonthlyPdf(paymentsThisMonth, monthLabel, sfd.FileName);
+							ReportExportService.ExportExpenseMonthlyPdf(expenseRows, monthLabel, sfd.FileName);
 						else
-							ReportExportService.ExportExpenseMonthlyCsv(paymentsThisMonth, monthLabel, sfd.FileName);
+							ReportExportService.ExportExpenseMonthlyCsv(expenseRows, monthLabel, sfd.FileName);
 						break;
 
 					case "Báo cáo Lợi nhuận tháng":
 						if (exportFormat == "PDF")
-							ReportExportService.ExportProfitMonthlyPdf(paymentsThisMonth, monthLabel, sfd.FileName);
+							ReportExportService.ExportProfitMonthlyPdf(paymentsThisMonth, monthLabel, sfd.FileName, "Hybrid");
 						else
-							ReportExportService.ExportProfitMonthlyCsv(paymentsThisMonth, monthLabel, sfd.FileName);
+							ReportExportService.ExportProfitMonthlyCsv(paymentsThisMonth, monthLabel, sfd.FileName, "Hybrid");
 						break;
 
 					case "Báo cáo Danh sách phòng":
@@ -600,6 +654,32 @@ namespace QLKDPhongTro.Presentation.ViewModels
 							ReportExportService.ExportRoomStatusPdf(rooms, monthLabel, sfd.FileName);
 						else
 							ReportExportService.ExportRoomStatusCsv(rooms, monthLabel, sfd.FileName);
+						break;
+
+					case "Báo cáo Công nợ":
+						{
+							List<DebtReportDto> debts;
+							try
+							{
+								debts = _financialController != null
+									? await _financialController.GetDebtReportAsync(monthLabel)
+									: new List<DebtReportDto>();
+							}
+							catch (Exception ex)
+							{
+								ShowMessageRequested?.Invoke(this, $"Lỗi khi tải dữ liệu: {ex.Message}. Đang sử dụng dữ liệu mẫu.");
+								debts = new List<DebtReportDto>
+								{
+									new DebtReportDto{ TenPhong = "P.101", TenKhachHang = "Khách A", TongTien = 4700000, ThangNam = monthLabel },
+									new DebtReportDto{ TenPhong = "P.102", TenKhachHang = "Khách B", TongTien = 1700000, ThangNam = monthLabel }
+								};
+							}
+
+							if (exportFormat == "PDF")
+								ReportExportService.ExportDebtMonthlyPdf(debts, monthLabel, sfd.FileName);
+							else
+								ReportExportService.ExportDebtMonthlyCsv(debts, monthLabel, sfd.FileName);
+						}
 						break;
 
 					default:
