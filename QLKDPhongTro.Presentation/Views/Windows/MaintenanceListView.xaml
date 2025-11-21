@@ -470,7 +470,7 @@
                                                         Style="{StaticResource IconButtonStyle}" 
                                                         ToolTip="Chỉnh sửa"
                                                         Margin="8,0,0,0">
-                                                    <TextBlock Text="Sửa" FontSize="12"/>
+                                                    <TextBlock Text="✏️" FontSize="12"/>
                                                 </Button>
 
                                                 <Button Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
@@ -478,7 +478,7 @@
                                                         Style="{StaticResource IconButtonStyle}" 
                                                         ToolTip="Xóa"
                                                         Margin="8,0,0,0">
-                                                    <TextBlock Text="Xóa" FontSize="12" Foreground="{StaticResource ErrorColor}"/>
+                                                    <TextBlock Text="🗑️" FontSize="12" Foreground="{StaticResource ErrorColor}"/>
                                                 </Button>
                                             </StackPanel>
 
