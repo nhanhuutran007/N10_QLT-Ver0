@@ -5,6 +5,7 @@ using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -17,6 +18,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
     public partial class ContractManagementViewModel : ObservableObject
     {
         private readonly ContractController _contractController;
+        private List<ContractDto> _allContracts = new();
+        private List<ContractDto> _filteredContracts = new();
 
         // 1. KHAI BÁO TƯỜNG MINH PROPERTY "Contracts"
         private ObservableCollection<ContractDto> _contracts;
@@ -42,9 +45,43 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         private string _sortOrder = "newest";
 
+        // Search
+        [ObservableProperty]
+        private string _searchText = string.Empty;
+
+        partial void OnSearchTextChanged(string value)
+        {
+            SearchContractsCommand.Execute(null);
+        }
+
+        // Pagination
+        [ObservableProperty]
+        private string _pageSize = "5"; // bind từ ComboBox Tag (string)
+
+        [ObservableProperty]
+        private int _pageIndex = 1;
+
+        [ObservableProperty]
+        private int _totalPages = 1;
+
+        [ObservableProperty]
+        private string _paginationText = string.Empty;
+
+        partial void OnSortOrderChanged(string value)
+        {
+            ApplySort();
+            UpdatePagination(resetPageIndex: true);
+        }
+
+        partial void OnPageSizeChanged(string value)
+        {
+            UpdatePagination(resetPageIndex: true);
+        }
+
         public ContractManagementViewModel()
         {
             _contractController = new ContractController(new ContractRepository());
+            Contracts = new ObservableCollection<ContractDto>();
             _ = LoadContractsAsync();
         }
 
@@ -54,7 +91,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 var contractList = await _contractController.GetAllHopDongAsync();
-                Contracts = new ObservableCollection<ContractDto>(ApplySorting(contractList));
+                _allContracts = contractList.ToList();
+                
+                // Đồng bộ filtered + áp dụng sắp xếp & phân trang
+                _filteredContracts = _allContracts.ToList();
+                ApplySort();
+                PageIndex = 1;
+                UpdatePagination(resetPageIndex: false);
             }
             catch (Exception ex)
             {
@@ -63,19 +106,97 @@ namespace QLKDPhongTro.Presentation.ViewModels
         }
 
         // Áp dụng sắp xếp theo SortOrder
-        private IEnumerable<ContractDto> ApplySorting(IEnumerable<ContractDto> items)
+        private void ApplySort()
         {
-            if (items == null) return Enumerable.Empty<ContractDto>();
-            return SortOrder == "oldest"
-                ? items.OrderBy(x => x.NgayBatDau)
-                : items.OrderByDescending(x => x.NgayBatDau);
+            IEnumerable<ContractDto> src = _filteredContracts;
+            if (string.Equals(SortOrder, "oldest", StringComparison.OrdinalIgnoreCase))
+            {
+                src = src.OrderBy(x => x.NgayBatDau);
+            }
+            else
+            {
+                src = src.OrderByDescending(x => x.NgayBatDau);
+            }
+            _filteredContracts = src.ToList();
         }
 
-        partial void OnSortOrderChanged(string value)
+        // Tìm kiếm hợp đồng
+        [RelayCommand]
+        private void SearchContracts()
         {
-            if (Contracts == null) return;
-            var sorted = ApplySorting(Contracts.ToList());
-            Contracts = new ObservableCollection<ContractDto>(sorted);
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                _filteredContracts = _allContracts.ToList();
+            }
+            else
+            {
+                var searchLower = SearchText.ToLowerInvariant();
+                _filteredContracts = _allContracts.Where(c =>
+                    (c.MaHopDong.ToString().Contains(searchLower)) ||
+                    (c.TenNguoiThue != null && c.TenNguoiThue.ToLowerInvariant().Contains(searchLower)) ||
+                    (c.TenPhong != null && c.TenPhong.ToLowerInvariant().Contains(searchLower)) ||
+                    (c.TrangThai != null && c.TrangThai.ToLowerInvariant().Contains(searchLower))
+                ).ToList();
+            }
+
+            ApplySort();
+            PageIndex = 1;
+            UpdatePagination(resetPageIndex: false);
+        }
+
+        // Phân trang
+        private void UpdatePagination(bool resetPageIndex)
+        {
+            int size = 5;
+            if (!int.TryParse(PageSize, out size) || size <= 0) size = 5;
+
+            TotalPages = Math.Max(1, (int)Math.Ceiling((_filteredContracts.Count) / (double)size));
+            if (resetPageIndex) PageIndex = 1;
+            if (PageIndex > TotalPages) PageIndex = TotalPages;
+            if (PageIndex < 1) PageIndex = 1;
+
+            Contracts?.Clear();
+            if (Contracts == null)
+            {
+                Contracts = new ObservableCollection<ContractDto>();
+            }
+
+            if (_filteredContracts.Count > 0)
+            {
+                int start = (PageIndex - 1) * size;
+                var pageItems = _filteredContracts.Skip(start).Take(size);
+                foreach (var item in pageItems)
+                {
+                    Contracts.Add(item);
+                }
+                int end = Math.Min(start + size, _filteredContracts.Count);
+                PaginationText = $"Hiển thị {start + 1}-{end} của {_filteredContracts.Count}";
+            }
+            else
+            {
+                PaginationText = "Không có dữ liệu";
+            }
+        }
+
+        // Điều hướng trang
+        [RelayCommand]
+        private void NextPage()
+        {
+            if (PageIndex < TotalPages)
+            {
+                PageIndex++;
+                UpdatePagination(resetPageIndex: false);
+            }
+        }
+
+        [RelayCommand]
+        private void PrevPage()
+        {
+            if (PageIndex > 1)
+            {
+                PageIndex--;
+                UpdatePagination(resetPageIndex: false);
+            }
         }
 
         [RelayCommand]
@@ -170,7 +291,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     return;
                 }
 
-                Contracts = new ObservableCollection<ContractDto>(expiringContracts);
+                // Cập nhật _allContracts và _filteredContracts
+                _allContracts = expiringContracts.ToList();
+                _filteredContracts = _allContracts.ToList();
+                
+                // Áp dụng sắp xếp & phân trang
+                ApplySort();
+                PageIndex = 1;
+                UpdatePagination(resetPageIndex: false);
 
                 MessageBox.Show($"Đã tải {expiringContracts.Count} hợp đồng sắp hết hạn trong {days} ngày tới.",
                                 "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
