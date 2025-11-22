@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Collections.Generic;
+using System.IO;
+using System.Diagnostics;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -358,7 +360,37 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 if (result.IsValid)
                 {
-                    StatusMessage = result.Message;
+                    // Nếu cần tạo hợp đồng mới
+                    if (result.RequiresNewContract && result.RemainingTenants.Any() && result.OldContract != null)
+                    {
+                        // Hiển thị dialog chọn người thuê mới
+                        var selectWindow = new SelectNewContractHolderWindow(result.RemainingTenants)
+                        {
+                            Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current.MainWindow
+                        };
+
+                        bool? selectResult = selectWindow.ShowDialog();
+
+                        if (selectResult == true && selectWindow.SelectedTenant != null)
+                        {
+                            // Tạo hợp đồng mới với người thuê được chọn
+                            await CreateNewContractForRoomAsync(
+                                selectWindow.SelectedTenant.MaKhachThue,
+                                result.MaPhong.Value,
+                                result.OldContract);
+                            
+                            StatusMessage = result.Message + " Đã tạo hợp đồng mới với người thuê được chọn.";
+                        }
+                        else
+                        {
+                            StatusMessage = result.Message + " Lưu ý: Cần tạo hợp đồng mới cho phòng này.";
+                        }
+                    }
+                    else
+                    {
+                        StatusMessage = result.Message;
+                    }
+
                     await LoadTenants();
                 }
                 else
@@ -374,6 +406,262 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private async Task CreateNewContractForRoomAsync(int maNguoiThue, int maPhong, ContractDto oldContract)
+        {
+            try
+            {
+                // Lấy thông tin người thuê mới
+                var tenant = await _tenantController.GetTenantByIdAsync(maNguoiThue);
+                if (tenant == null)
+                {
+                    MessageBox.Show("Không tìm thấy thông tin người thuê.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Lấy thông tin phòng
+                var rooms = await _roomController.GetAllRoomsAsync();
+                var roomInfo = rooms.FirstOrDefault(r => r.MaPhong == maPhong);
+                if (roomInfo == null)
+                {
+                    MessageBox.Show("Không tìm thấy thông tin phòng.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                // Lấy thông tin admin và nhà
+                var currentUser = BusinessLayer.Controllers.AuthController.CurrentUser;
+                if (currentUser == null)
+                {
+                    MessageBox.Show("Không xác định được tài khoản quản trị.", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var userRepo = new DataLayer.Repositories.UserRepository();
+                var houseRepo = new DataLayer.Repositories.HouseRepository();
+                var admin = await userRepo.GetByMaAdminAsync(currentUser.MaAdmin) ?? currentUser;
+                var house = roomInfo.MaNha > 0 ? await houseRepo.GetByIdAsync(roomInfo.MaNha) : null;
+
+                // Thông tin bên A (chủ nhà)
+                string tenA = string.IsNullOrWhiteSpace(admin.HoTen) ? admin.TenDangNhap : admin.HoTen;
+                DateTime ngaySinhA = admin.NgaySinh ?? new DateTime(1980, 1, 1);
+                string cccdA = string.IsNullOrWhiteSpace(admin.CCCD) ? "Đang cập nhật" : admin.CCCD;
+                DateTime ngayCapA = admin.NgayCap ?? DateTime.Today;
+                string noiCapA = string.IsNullOrWhiteSpace(admin.NoiCap) ? "Đang cập nhật" : admin.NoiCap;
+                string diaChiA = !string.IsNullOrWhiteSpace(admin.DiaChi)
+                    ? admin.DiaChi
+                    : (house?.DiaChi ?? "Đang cập nhật");
+                string dienThoaiA = string.IsNullOrWhiteSpace(admin.SoDienThoai) ? "Đang cập nhật" : admin.SoDienThoai;
+                string noiTaoHopDong = !string.IsNullOrWhiteSpace(house?.TinhThanh)
+                    ? house.TinhThanh
+                    : (!string.IsNullOrWhiteSpace(house?.DiaChi)
+                        ? house.DiaChi
+                        : (admin.DiaChi ?? "TP.HCM"));
+
+                // Thông tin bên B (người thuê mới)
+                string tenB = tenant.HoTen;
+                DateTime ngaySinhB = tenant.NgaySinh ?? DateTime.Now;
+                string cccdB = tenant.CCCD ?? "";
+                DateTime ngayCapB = tenant.NgayCap ?? DateTime.Now;
+                string noiCapB = tenant.NoiCap ?? "";
+                string diaChiB = tenant.DiaChi ?? "";
+                string dienThoaiB = tenant.SoDienThoai ?? "";
+
+                // Thông tin phòng
+                string tenPhong = roomInfo.TenPhong;
+                string diaChiPhong = house?.DiaChi ?? diaChiA;
+                decimal dienTich = (decimal)roomInfo.DienTich;
+                string trangThietBi = roomInfo.TrangThietBi ?? "";
+
+                // Giá thuê & thời hạn
+                decimal giaThue = oldContract.GiaThue > 0 ? oldContract.GiaThue : roomInfo.GiaCoBan;
+                string giaBangChu = NumberToVietnameseText((long)giaThue);
+                string ngayTraTien = "Ngày 05 hàng tháng";
+                DateTime ngayBatDau = DateTime.Today;
+                DateTime ngayKetThuc = oldContract.NgayKetThuc > DateTime.Today 
+                    ? oldContract.NgayKetThuc 
+                    : DateTime.Today.AddYears(1);
+                int thoiHanNam = Math.Max(1, ngayKetThuc.Year - ngayBatDau.Year);
+                DateTime ngayGiaoNha = ngayBatDau;
+                string dieuKhoanRieng = $"Hợp đồng mới được tạo sau khi xóa người thuê cũ (HD#{oldContract.MaHopDong})";
+
+                // Tạo đường dẫn file hợp đồng mới - sử dụng thư mục của hợp đồng cũ
+                string contractFilePath;
+                if (!string.IsNullOrWhiteSpace(oldContract.FileHopDong) && File.Exists(oldContract.FileHopDong))
+                {
+                    // Lấy thư mục từ file hợp đồng cũ
+                    string oldContractFolder = Path.GetDirectoryName(oldContract.FileHopDong);
+                    if (!string.IsNullOrWhiteSpace(oldContractFolder) && Directory.Exists(oldContractFolder))
+                    {
+                        // Tạo file mới trong cùng thư mục với file cũ
+                        string safeTenant = new string(tenB.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                        string safeRoom = new string(tenPhong.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                        string fileName = $"{safeTenant}_{safeRoom}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                        contractFilePath = Path.Combine(oldContractFolder, fileName);
+                    }
+                    else
+                    {
+                        // Nếu thư mục cũ không tồn tại, dùng thư mục mặc định
+                        string defaultFolder = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                            "HopDongPhongTro");
+                        Directory.CreateDirectory(defaultFolder);
+                        string safeTenant = new string(tenB.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                        string safeRoom = new string(tenPhong.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                        string fileName = $"{safeTenant}_{safeRoom}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                        contractFilePath = Path.Combine(defaultFolder, fileName);
+                    }
+                }
+                else
+                {
+                    // Nếu không có file hợp đồng cũ, dùng thư mục mặc định
+                    string defaultFolder = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                        "HopDongPhongTro");
+                    Directory.CreateDirectory(defaultFolder);
+                    string safeTenant = new string(tenB.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                    string safeRoom = new string(tenPhong.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                    string fileName = $"{safeTenant}_{safeRoom}_{DateTime.Now:yyyyMMdd_HHmmss}.docx";
+                    contractFilePath = Path.Combine(defaultFolder, fileName);
+                }
+
+                // Tạo file hợp đồng DOCX + PDF
+                var contractFiles = BusinessLayer.Services.ContractTemplateService.CreateContractFile(
+                    noiTaoHopDong, DateTime.Now,
+                    tenA, ngaySinhA, cccdA, ngayCapA, noiCapA, diaChiA, dienThoaiA,
+                    tenB, ngaySinhB, cccdB, ngayCapB, noiCapB, diaChiB, dienThoaiB,
+                    tenPhong, diaChiPhong, dienTich, trangThietBi,
+                    giaThue, giaBangChu, ngayTraTien, thoiHanNam, ngayGiaoNha, dieuKhoanRieng,
+                    contractFilePath
+                );
+                string filePath = contractFiles.PdfPath ?? contractFiles.DocxPath;
+
+                // Tạo hợp đồng mới trong database
+                var contractController = new BusinessLayer.Controllers.ContractController(
+                    new DataLayer.Repositories.ContractRepository());
+                
+                var newContract = new ContractDto
+                {
+                    MaNguoiThue = maNguoiThue,
+                    MaPhong = maPhong,
+                    NgayBatDau = ngayBatDau,
+                    NgayKetThuc = ngayKetThuc,
+                    TienCoc = oldContract.TienCoc,
+                    GiaThue = giaThue,
+                    FileHopDong = filePath,
+                    TrangThai = "Hiệu lực",
+                    GhiChu = dieuKhoanRieng
+                };
+
+                await contractController.CreateHopDongAsync(newContract);
+                
+                // Tự động mở thư mục chứa file hợp đồng
+                try
+                {
+                    string folderPath = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrWhiteSpace(folderPath) && Directory.Exists(folderPath))
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = folderPath,
+                            UseShellExecute = true
+                        });
+                        
+                        MessageBox.Show(
+                            $"✅ Đã tạo hợp đồng mới và file hợp đồng thành công!\n\nĐã mở thư mục chứa file.\n\nĐường dẫn: {filePath}",
+                            "Thông báo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information
+                        );
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            $"✅ Đã tạo hợp đồng mới và file hợp đồng thành công!\n\nĐường dẫn: {filePath}",
+                            "Thông báo",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information
+                        );
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show(
+                        $"✅ Đã tạo hợp đồng mới và file hợp đồng thành công!\n\nĐường dẫn: {filePath}",
+                        "Thông báo",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tạo hợp đồng mới: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // Hàm phụ: Chuyển số thành chữ tiếng Việt
+        private static string NumberToVietnameseText(long number)
+        {
+            if (number == 0) return "Không đồng";
+
+            string[] dv = { "", "nghìn", "triệu", "tỷ" };
+            string[] cs = { "không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín" };
+
+            string result = "";
+            int i = 0;
+
+            while (number > 0)
+            {
+                int threeDigits = (int)(number % 1000);
+                number /= 1000;
+
+                string block = DocBaChuSo(threeDigits, cs);
+                if (block != "")
+                {
+                    result = $"{block} {dv[i]} {result}".Trim();
+                }
+                i++;
+            }
+
+            result = char.ToUpper(result[0]) + result.Substring(1) + " đồng";
+            return result;
+        }
+
+        private static string DocBaChuSo(int number, string[] cs)
+        {
+            int tram = number / 100;
+            int chuc = (number % 100) / 10;
+            int donvi = number % 10;
+            string result = "";
+
+            if (tram > 0)
+            {
+                result += $"{cs[tram]} trăm ";
+                if (chuc == 0 && donvi > 0)
+                    result += "lẻ ";
+            }
+
+            if (chuc > 1)
+            {
+                result += $"{cs[chuc]} mươi ";
+                if (donvi == 1) result += "mốt ";
+                else if (donvi == 5) result += "lăm ";
+                else if (donvi > 0) result += $"{cs[donvi]} ";
+            }
+            else if (chuc == 1)
+            {
+                result += "mười ";
+                if (donvi == 1) result += "một ";
+                else if (donvi == 5) result += "lăm ";
+                else if (donvi > 0) result += $"{cs[donvi]} ";
+            }
+            else if (chuc == 0 && donvi > 0)
+            {
+                result += $"{cs[donvi]} ";
+            }
+
+            return result.Trim();
         }
 
 

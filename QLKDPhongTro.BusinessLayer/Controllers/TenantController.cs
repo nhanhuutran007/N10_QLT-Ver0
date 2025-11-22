@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
@@ -94,6 +95,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
 
             var success = await _tenantRepository.CreateAsync(tenant);
+            
+            // Sau khi tạo người thuê thành công, cập nhật trạng thái phòng sang "Đang thuê" nếu có phòng
+            if (success && dto.MaPhong.HasValue)
+            {
+                await _roomRepository.UpdateStatusAsync(dto.MaPhong.Value, "Đang thuê");
+            }
+            
             return new ValidationResult
             {
                 IsValid = success,
@@ -167,14 +175,89 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
         }
 
-        public async Task<ValidationResult> DeleteTenantAsync(int maKhachThue)
+        public async Task<DeleteTenantResult> DeleteTenantAsync(int maKhachThue)
         {
-            var success = await _tenantRepository.DeleteAsync(maKhachThue);
-            return new ValidationResult
+            // Lấy thông tin người thuê trước khi xóa
+            var tenant = await _tenantRepository.GetByIdAsync(maKhachThue);
+            if (tenant == null)
             {
-                IsValid = success,
-                Message = success ? "🗑️ Đã xóa khách thuê thành công!" : "❌ Xóa khách thuê thất bại!"
+                return new DeleteTenantResult
+                {
+                    IsValid = false,
+                    Message = "❌ Không tìm thấy khách thuê để xóa!"
+                };
+            }
+
+            var maPhong = tenant.MaPhong;
+            var result = new DeleteTenantResult
+            {
+                MaPhong = maPhong
             };
+
+            // Kiểm tra xem người thuê có phải là người đứng tên hợp đồng không
+            ContractDto? activeContract = null;
+            if (maPhong.HasValue)
+            {
+                var contractController = new ContractController(new DataLayer.Repositories.ContractRepository());
+                activeContract = await contractController.GetActiveContractByRoomIdAsync(maPhong.Value);
+                
+                // Kiểm tra xem người thuê có phải là người đứng tên hợp đồng không
+                if (activeContract != null && activeContract.MaNguoiThue == maKhachThue)
+                {
+                    // Lấy danh sách người thuê còn lại trong phòng (trước khi xóa)
+                    var allRoomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong.Value);
+                    var remainingTenants = allRoomTenants
+                        .Where(t => t.MaNguoiThue != maKhachThue && 
+                                   string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase))
+                        .Select(MapRoomTenant)
+                        .ToList();
+
+                    // Nếu còn người thuê khác, cần tạo hợp đồng mới
+                    if (remainingTenants.Any())
+                    {
+                        result.RequiresNewContract = true;
+                        result.RemainingTenants = remainingTenants;
+                        result.OldContract = activeContract;
+                    }
+                }
+            }
+
+            // Thực hiện xóa người thuê
+            var success = await _tenantRepository.DeleteAsync(maKhachThue);
+            
+            if (!success)
+            {
+                result.IsValid = false;
+                result.Message = "❌ Xóa khách thuê thất bại!";
+                return result;
+            }
+
+            // Sau khi xóa thành công, kiểm tra và cập nhật trạng thái phòng
+            if (maPhong.HasValue)
+            {
+                // Kiểm tra phòng còn người thuê không
+                var remainingTenantsAfterDelete = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong.Value);
+                var hasActiveTenants = remainingTenantsAfterDelete.Any(t =>
+                    !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase));
+
+                if (!hasActiveTenants)
+                {
+                    // Không còn người thuê, chuyển phòng sang trạng thái "Trống"
+                    await _roomRepository.UpdateStatusAsync(maPhong.Value, "Trống");
+                    result.Message = "🗑️ Đã xóa khách thuê thành công! Phòng đã được chuyển sang trạng thái Trống.";
+                }
+                else
+                {
+                    result.Message = "🗑️ Đã xóa khách thuê thành công!";
+                }
+            }
+            else
+            {
+                result.Message = "🗑️ Đã xóa khách thuê thành công!";
+            }
+
+            result.IsValid = true;
+            return result;
         }
 
         public async Task<List<TenantDto>> SearchTenantsByNameAsync(string keyword)

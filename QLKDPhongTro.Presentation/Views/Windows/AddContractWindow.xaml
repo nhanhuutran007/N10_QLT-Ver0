@@ -1,4 +1,3 @@
-<!-- Presentation/Views/Windows/AddContractWindow.xaml -->
 <Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddContractWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -13,7 +12,6 @@
         TextOptions.TextRenderingMode="ClearType"
         Icon="/Resources/Images/Logo.png">
     <Window.Resources>
-        <!-- Color palette -->
         <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
         <SolidColorBrush x:Key="PrimaryDarkColor" Color="#059669"/>
         <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
@@ -27,12 +25,10 @@
         <SolidColorBrush x:Key="BorderLightColor" Color="#F3F4F6"/>
         <SolidColorBrush x:Key="ErrorColor" Color="#EF4444"/>
 
-        <!-- Shadows -->
         <DropShadowEffect x:Key="CardShadow" Color="#000000" Opacity="0.06" ShadowDepth="2" BlurRadius="12" Direction="270"/>
         <DropShadowEffect x:Key="HoverShadow" Color="#000000" Opacity="0.12" ShadowDepth="4" BlurRadius="16" Direction="270"/>
         <DropShadowEffect x:Key="ButtonShadow" Color="#000000" Opacity="0.1" ShadowDepth="1" BlurRadius="4" Direction="270"/>
 
-        <!-- Style chung cho các nhãn (TextBlock) -->
         <Style x:Key="LabelStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
@@ -40,9 +36,8 @@
             <Setter Property="Margin" Value="0,16,0,8"/>
         </Style>
 
-        <!-- Style chung cho các ô nhập liệu (TextBox) -->
         <Style x:Key="InputFieldStyle" TargetType="TextBox">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="12,0"/>
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
@@ -58,8 +53,8 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <ScrollViewer x:Name="PART_ContentHost" 
-                                        Margin="{TemplateBinding Padding}"
-                                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                                            Margin="{TemplateBinding Padding}"
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
@@ -75,7 +70,6 @@
             </Setter>
         </Style>
 
-        <!-- Style chung cho các ô lựa chọn (ComboBox) -->
         <Style x:Key="ComboBoxStyle" TargetType="ComboBox">
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Background" Value="White"/>
@@ -144,7 +138,6 @@
             </Setter>
         </Style>
 
-        <!-- Helper for ComboBox Toggle Button -->
         <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -156,7 +149,6 @@
             </Grid>
         </ControlTemplate>
 
-        <!-- Style cho ComboBoxItem -->
         <Style TargetType="{x:Type ComboBoxItem}">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -178,7 +170,6 @@
             </Setter>
         </Style>
 
-        <!-- Style cho DatePicker -->
         <Style TargetType="DatePicker">
             <Setter Property="Padding" Value="12,10"/>
             <Setter Property="Background" Value="White"/>
@@ -188,7 +179,6 @@
             <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
         </Style>
 
-        <!-- Primary Button Style -->
         <Style TargetType="Button" x:Key="PrimaryButtonStyle">
             <Setter Property="Background" Value="{StaticResource SecondaryColor}"/>
             <Setter Property="Foreground" Value="White"/>
@@ -221,7 +211,6 @@
             </Setter>
         </Style>
 
-        <!-- Secondary Button Style -->
         <Style TargetType="Button" x:Key="SecondaryButtonStyle">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
@@ -231,15 +220,23 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="42"/>
             <Setter Property="Padding" Value="16,0"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
-                    <Setter Property="Background" Value="{StaticResource BackgroundLighter}"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource BackgroundLighter}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
-        <!-- Icon Button Style -->
         <Style TargetType="Button" x:Key="IconButtonStyle">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -266,7 +263,6 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header -->
                 <Border Grid.Row="0" 
                         Background="{StaticResource BackgroundLighter}" 
                         BorderThickness="0,0,0,1" 
@@ -298,7 +294,6 @@
                     </Grid>
                 </Border>
 
-                <!-- Content -->
                 <ScrollViewer Grid.Row="1" 
                               VerticalScrollBarVisibility="Auto" 
                               Padding="24,20">
@@ -347,6 +342,8 @@
                                  Height="100" 
                                  AcceptsReturn="True" 
                                  TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 Padding="12,10"
                                  Text="{Binding DieuKhoanRieng, Mode=TwoWay}"/>
 
                         <TextBlock Text="Nơi lưu hợp đồng" Style="{StaticResource LabelStyle}"/>
@@ -359,7 +356,15 @@
                                      Style="{StaticResource InputFieldStyle}"
                                      Height="44"
                                      IsReadOnly="True"
-                                     Text="{Binding ContractSavePath, Mode=TwoWay}"/>
+                                     Text="{Binding ContractSavePath, Mode=TwoWay}"
+                                     ToolTip="{Binding ContractSavePath}">
+                                <TextBox.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Sao chép đường dẫn" 
+                                                  Click="CopyPathMenuItem_Click"/>
+                                    </ContextMenu>
+                                </TextBox.ContextMenu>
+                            </TextBox>
                             <Button Grid.Column="1"
                                     Content="Chọn nơi lưu"
                                     Margin="12,0,0,0"
@@ -371,7 +376,6 @@
                     </StackPanel>
                 </ScrollViewer>
 
-                <!-- Footer Actions -->
                 <Border Grid.Row="2" 
                         Background="{StaticResource BackgroundLighter}" 
                         BorderThickness="0,1,0,0" 

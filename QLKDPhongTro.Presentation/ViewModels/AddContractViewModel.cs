@@ -106,12 +106,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 foreach (var t in tenants)
                     NguoiThueList.Add(new NguoiThueTmp { MaNguoiThue = t.MaKhachThue, HoTen = t.HoTen });
 
-                var availableRooms = rooms
-                    .Where(r => !IsRoomCurrentlyRented(r) ||
-                                (IsEditMode && _editingContract != null && r.MaPhong == _editingContract.MaPhong));
-
-                foreach (var r in availableRooms)
-                    PhongList.Add(new PhongTmp { MaPhong = r.MaPhong, TenPhong = r.TenPhong });
+                // Hiển thị tất cả phòng (không lọc phòng đang thuê) để có thể chọn phòng của người thuê
+                foreach (var r in rooms)
+                {
+                    // Chỉ thêm nếu chưa có trong danh sách
+                    if (!PhongList.Any(p => p.MaPhong == r.MaPhong))
+                    {
+                        PhongList.Add(new PhongTmp { MaPhong = r.MaPhong, TenPhong = r.TenPhong });
+                    }
+                }
 
                 // Nếu đang chỉnh sửa, gán lại dữ liệu
                 if (IsEditMode)
@@ -389,7 +392,47 @@ namespace QLKDPhongTro.Presentation.ViewModels
             return result.Trim();
         }
 
-        partial void OnSelectedNguoiThueChanged(NguoiThueTmp value) => RefreshSuggestedSavePath();
+        partial void OnSelectedNguoiThueChanged(NguoiThueTmp value)
+        {
+            RefreshSuggestedSavePath();
+            
+            // Khi chọn người thuê, tự động chọn phòng của người thuê đó nếu có
+            if (value != null && !IsEditMode)
+            {
+                _ = UpdateRoomListForSelectedTenantAsync(value.MaNguoiThue);
+            }
+        }
+
+        private async Task UpdateRoomListForSelectedTenantAsync(int maNguoiThue)
+        {
+            try
+            {
+                // Lấy thông tin người thuê để biết phòng họ đang ở
+                var tenant = await _tenantRepo.GetByIdAsync(maNguoiThue);
+                if (tenant != null && tenant.MaPhong.HasValue)
+                {
+                    // Lấy thông tin phòng
+                    var room = await _roomRepo.GetByIdAsync(tenant.MaPhong.Value);
+                    if (room != null)
+                    {
+                        // Đảm bảo phòng có trong danh sách
+                        var existingRoom = PhongList.FirstOrDefault(p => p.MaPhong == room.MaPhong);
+                        if (existingRoom == null)
+                        {
+                            PhongList.Add(new PhongTmp { MaPhong = room.MaPhong, TenPhong = room.TenPhong });
+                        }
+                        
+                        // Tự động chọn phòng của người thuê
+                        SelectedPhong = PhongList.FirstOrDefault(p => p.MaPhong == room.MaPhong);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Không hiển thị lỗi nếu không tìm thấy phòng, chỉ log
+                System.Diagnostics.Debug.WriteLine($"Không thể tự động chọn phòng: {ex.Message}");
+            }
+        }
 
         partial void OnSelectedPhongChanged(PhongTmp value) => RefreshSuggestedSavePath();
 

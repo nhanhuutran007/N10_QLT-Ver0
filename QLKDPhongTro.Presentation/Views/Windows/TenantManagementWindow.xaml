@@ -362,7 +362,7 @@
                                     <!-- Mã khách -->
                                     <DataGridTextColumn Header="MÃ KHÁCH" 
                                                         Binding="{Binding MaKhachThue}" 
-                                                        Width="1*" 
+                                                        Width="0.2*" 
                                                         MinWidth="120" 
                                                         MaxWidth="150">
                                         <DataGridTextColumn.ElementStyle>
@@ -377,13 +377,14 @@
                                     <!-- Họ tên -->
                                     <DataGridTextColumn Header="HỌ TÊN" 
                                                         Binding="{Binding HoTen}" 
-                                                        Width="1*" 
+                                                        Width="2*" 
                                                         MinWidth="150" 
-                                                        MaxWidth="250">
+                                                        MaxWidth="300">
                                         <DataGridTextColumn.ElementStyle>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="VerticalAlignment" Value="Center"/>
                                                 <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                                                <Setter Property="Margin" Value="0,0,20,0"/>
                                             </Style>
                                         </DataGridTextColumn.ElementStyle>
                                     </DataGridTextColumn>
