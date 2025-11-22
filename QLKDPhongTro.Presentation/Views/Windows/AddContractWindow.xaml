@@ -1,6 +1,7 @@
 <Window x:Class="QLKDPhongTro.Presentation.Views.Windows.AddContractWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
         Title="Thêm hợp đồng"
         Height="650"
         Width="700"
@@ -12,6 +13,7 @@
         TextOptions.TextRenderingMode="ClearType"
         Icon="/Resources/Images/Logo.png">
     <Window.Resources>
+        <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
         <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
         <SolidColorBrush x:Key="PrimaryDarkColor" Color="#059669"/>
         <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
@@ -285,7 +287,12 @@
                                 Height="36"
                                 Style="{StaticResource IconButtonStyle}"
                                 ToolTip="Đóng"
-                                Command="{Binding CancelCommand}"/>
+                                Command="{Binding CancelCommand}">
+                            <TextBlock Text="✕"
+                                       FontSize="18"
+                                       VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"/>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -327,13 +334,11 @@
                             </StackPanel>
                         </Grid>
 
-                        <TextBlock Text="Tiền cọc (tự động = 1 tháng tiền nhà)" Style="{StaticResource LabelStyle}"/>
+                        <TextBlock Text="Tiền cọc" Style="{StaticResource LabelStyle}"/>
+
                         <TextBox Style="{StaticResource InputFieldStyle}" 
                                  Height="44"
-                                 IsReadOnly="True"
-                                 Background="#F9FAFB"
-                                 Foreground="#6B7280"
-                                 Text="{Binding TienCoc, Mode=OneWay}"/>
+                                 Text="{Binding TienCoc, Mode=TwoWay, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <TextBlock Text="Điều khoản riêng (tùy chọn)" Style="{StaticResource LabelStyle}"/>
                         <TextBox Style="{StaticResource InputFieldStyle}" 

@@ -22,6 +22,7 @@
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
 
         <!-- Color palette -->
         <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
@@ -228,7 +229,8 @@
                            Margin="0,0,15,15"/>
                 <TextBox Grid.Row="2" Grid.Column="1"
                          Style="{StaticResource FormTextBoxStyle}"
-                         Text="{Binding Amount, StringFormat=N0}"
+                         Text="{Binding Amount, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                         TextAlignment="Right"
                          Margin="0,0,0,15"/>
 
                 <!-- Ngày thanh toán -->

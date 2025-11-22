@@ -125,15 +125,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     SelectedPhong = PhongList.FirstOrDefault(x => x.MaPhong == _editingContract.MaPhong);
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
-                    // Khi chỉnh sửa, giữ nguyên tiền cọc cũ hoặc tính lại nếu phòng thay đổi
+
+                    // Khi chỉnh sửa, giữ nguyên tiền cọc cũ
                     if (_editingContract.TienCoc > 0)
                     {
-                        TienCoc = _editingContract.TienCoc.ToString("N0");
+                        TienCoc = _editingContract.TienCoc.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
                     }
                     else
                     {
                         _ = UpdateTienCocFromRoomAsync();
                     }
+
                     DieuKhoanRieng = _editingContract.GhiChu;
                     if (!string.IsNullOrWhiteSpace(_editingContract.FileHopDong))
                     {
@@ -203,10 +205,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show("⚠️ Ngày kết thúc phải lớn hơn Ngày bắt đầu.");
                 return;
             }
-            // Tiền cọc tự động = 1 tháng tiền nhà (đã được tính khi chọn phòng)
-            if (!decimal.TryParse(TienCoc, out decimal tienCocValue) || tienCocValue <= 0)
+            // Parse tiền cọc (loại bỏ dấu phẩy nếu có)
+            string cleanTienCoc = TienCoc?.Replace(",", "").Trim() ?? "0";
+            if (!decimal.TryParse(cleanTienCoc, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out decimal tienCocValue) || tienCocValue <= 0)
             {
-                MessageBox.Show("⚠️ Tiền cọc không hợp lệ. Vui lòng chọn phòng.");
+                MessageBox.Show("⚠️ Tiền cọc không hợp lệ. Vui lòng nhập số tiền hợp lệ.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(ContractSavePath))
@@ -312,9 +315,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                     int maHopDong = await _contractController.CreateHopDongAsync(newContract);
                     MessageBox.Show("✅ Hợp đồng đã được thêm và tạo file thành công!");
-
-
-
                 }
                 else
                 {
@@ -406,11 +406,23 @@ namespace QLKDPhongTro.Presentation.ViewModels
         partial void OnSelectedNguoiThueChanged(NguoiThueTmp value)
         {
             RefreshSuggestedSavePath();
-            
+
             // Khi chọn người thuê, tự động chọn phòng của người thuê đó nếu có
             if (value != null && !IsEditMode)
             {
                 _ = UpdateRoomListForSelectedTenantAsync(value.MaNguoiThue);
+            }
+        }
+
+        // ĐÃ SỬA: Chỉ giữ lại 1 hàm OnSelectedPhongChanged duy nhất
+        partial void OnSelectedPhongChanged(PhongTmp value)
+        {
+            RefreshSuggestedSavePath();
+
+            // Khi chọn phòng, tự động set tiền cọc = giá thuê phòng
+            if (value != null && !IsEditMode)
+            {
+                _ = UpdateTienCocFromRoomAsync();
             }
         }
 
@@ -432,7 +444,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         {
                             PhongList.Add(new PhongTmp { MaPhong = room.MaPhong, TenPhong = room.TenPhong });
                         }
-                        
+
                         // Tự động chọn phòng của người thuê
                         SelectedPhong = PhongList.FirstOrDefault(p => p.MaPhong == room.MaPhong);
                     }
@@ -445,12 +457,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        partial void OnSelectedPhongChanged(PhongTmp value)
-        {
-            RefreshSuggestedSavePath();
-            _ = UpdateTienCocFromRoomAsync();
-        }
-
+        // ĐÃ SỬA: Chỉ giữ lại 1 hàm UpdateTienCocFromRoomAsync duy nhất (phiên bản đầy đủ nhất)
         private async Task UpdateTienCocFromRoomAsync()
         {
             if (SelectedPhong == null)
@@ -464,16 +471,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var room = await _roomRepo.GetByIdAsync(SelectedPhong.MaPhong);
                 if (room != null && room.GiaCoBan > 0)
                 {
-                    // Tiền cọc = 1 tháng tiền nhà
-                    TienCoc = room.GiaCoBan.ToString("N0");
+                    // Tiền cọc mặc định = giá thuê phòng
+                    TienCoc = room.GiaCoBan.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
                 }
                 else
                 {
                     TienCoc = "0";
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Lỗi cập nhật tiền cọc: {ex.Message}");
                 TienCoc = "0";
             }
         }

@@ -22,6 +22,7 @@
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:PageNumberEqualsMultiConverter x:Key="PageNumberEqualsMultiConverter"/>
+        <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
 
         <!-- === STYLES CẢI TIẾN HIỆN ĐẠI === -->
 
@@ -405,39 +406,42 @@
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
                                         <TextBlock Text="Tiền nước (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding WaterFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding WaterFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
-                                                 Background="White"/>
+                                                 Background="White"
+                                                 TextAlignment="Right"/>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
                                         <TextBlock Text="Tiền internet (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding InternetFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding InternetFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
-                                                 Background="White"/>
+                                                 Background="White"
+                                                 TextAlignment="Right"/>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
                                         <TextBlock Text="Tiền vệ sinh (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding SanitationFeeInput, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding SanitationFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
-                                                 Background="White"/>
+                                                 Background="White"
+                                                 TextAlignment="Right"/>
                                     </StackPanel>
                                 </Border>
                             </UniformGrid>

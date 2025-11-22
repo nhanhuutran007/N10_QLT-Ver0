@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
     mc:Ignorable="d"
     Title="Thêm thông tin thanh toán - Quản Lý Phòng Trọ"
     Height="650" Width="700"
@@ -18,6 +19,8 @@
     MouseLeftButtonDown="Window_MouseLeftButtonDown">
 
     <Window.Resources>
+        <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
+        
         <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
         <SolidColorBrush x:Key="PrimaryDarkColor" Color="#059669"/>
         <SolidColorBrush x:Key="SecondaryColor" Color="#3B82F6"/>
@@ -236,8 +239,9 @@
 
                     <TextBlock Text="Tiền thuê phòng" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienThueInput"
-                            Text="{Binding Amount, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
-                            Style="{StaticResource InputFieldStyle}"/>
+                            Text="{Binding Amount, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource InputFieldStyle}"
+                            TextAlignment="Right"/>
 
                     <TextBlock Text="Chỉ số điện" Style="{StaticResource LabelStyle}"/>
                     <Grid>
@@ -259,8 +263,9 @@
                                 Margin="8,0"/>
                         <TextBox x:Name="DonGiaDienInput"
                                 Grid.Column="2"
-                                Text="{Binding DonGiaDien, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding DonGiaDien, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource InputFieldStyle}"
+                                TextAlignment="Right"
                                 ToolTip="Nhập đơn giá điện (đồng/kWh)"/>
                     </Grid>
                     <TextBlock Text="(Ví dụ: 100 / 3500 = 350,000 đồng)"
@@ -292,9 +297,10 @@
 
                         <TextBox x:Name="DonGiaNuocInput"
                                 Grid.Column="2"
-                                Text="{Binding DonGiaNuoc, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
+                                Text="{Binding DonGiaNuoc, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
                                 Style="{StaticResource ReadOnlyInputFieldStyle}"
                                 IsReadOnly="True"
+                                TextAlignment="Right"
                                 ToolTip="Đơn giá khoán mặc định"/>
                     </Grid>
                     <TextBlock Text="(Cố định: 100,000 đồng/phòng)"
@@ -304,23 +310,27 @@
 
                     <TextBlock Text="Tiền Internet" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienInternetInput"
-                            Text="{Binding TienInternet, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
-                            Style="{StaticResource InputFieldStyle}"/>
+                            Text="{Binding TienInternet, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource InputFieldStyle}"
+                            TextAlignment="Right"/>
 
                     <TextBlock Text="Tiền vệ sinh" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienVeSinhInput"
-                            Text="{Binding TienVeSinh, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
-                            Style="{StaticResource InputFieldStyle}"/>
+                            Text="{Binding TienVeSinh, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource InputFieldStyle}"
+                            TextAlignment="Right"/>
 
                     <TextBlock Text="Tiền giữ xe" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="TienGiuXeInput"
-                            Text="{Binding TienGiuXe, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
-                            Style="{StaticResource InputFieldStyle}"/>
+                            Text="{Binding TienGiuXe, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource InputFieldStyle}"
+                            TextAlignment="Right"/>
 
                     <TextBlock Text="Chi phí khác" Style="{StaticResource LabelStyle}"/>
                     <TextBox x:Name="ChiPhiKhacInput"
-                            Text="{Binding ChiPhiKhac, StringFormat=N0, UpdateSourceTrigger=PropertyChanged}"
-                            Style="{StaticResource InputFieldStyle}"/>
+                            Text="{Binding ChiPhiKhac, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource InputFieldStyle}"
+                            TextAlignment="Right"/>
 
                     <TextBlock Text="Ngày tạo" Style="{StaticResource LabelStyle}"/>
                     <DatePicker x:Name="CreatedDatePicker"
