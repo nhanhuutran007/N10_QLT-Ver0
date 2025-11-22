@@ -383,6 +383,18 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
+                
+                // Kiểm tra nếu trạng thái thay đổi, validate trước
+                if (SelectedRoom != null && SelectedRoom.TrangThai != NewRoom.TrangThai)
+                {
+                    var (success, errorMessage) = await _rentedRoomController.UpdateRoomStatusAsync(NewRoom.MaPhong, NewRoom.TrangThai);
+                    if (!success)
+                    {
+                        MessageBox.Show(errorMessage ?? "Không thể cập nhật trạng thái phòng", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                }
+                
                 var ok = await _rentedRoomController.UpdateRoomAsync(NewRoom);
                 if (ok)
                 {

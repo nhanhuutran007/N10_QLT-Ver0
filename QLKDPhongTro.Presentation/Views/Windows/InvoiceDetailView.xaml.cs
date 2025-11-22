@@ -8,6 +8,7 @@ using System.IO;
 using System.Windows.Input;
 using Microsoft.Win32;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using QLKDPhongTro.Presentation.Utils; // Chứa InvoiceMappingExtensions
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -126,34 +127,89 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
             try
             {
+                // Hiển thị menu chọn loại PDF
+                var contextMenu = new System.Windows.Controls.ContextMenu();
+                
+                var menuItem1 = new System.Windows.Controls.MenuItem
+                {
+                    Header = "Hóa đơn thanh toán",
+                    Tag = "invoice"
+                };
+                menuItem1.Click += async (s, args) => await DownloadPdfAsync("invoice");
+                
+                var menuItem2 = new System.Windows.Controls.MenuItem
+                {
+                    Header = "Bảng chi tiết chỉ số điện",
+                    Tag = "electricity"
+                };
+                menuItem2.Click += async (s, args) => await DownloadPdfAsync("electricity");
+                
+                contextMenu.Items.Add(menuItem1);
+                contextMenu.Items.Add(menuItem2);
+                
+                if (sender is System.Windows.Controls.Button button)
+                {
+                    contextMenu.PlacementTarget = button;
+                    contextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                    contextMenu.IsOpen = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Lỗi khi tạo file PDF: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task DownloadPdfAsync(string pdfType)
+        {
+            if (InvoiceData == null) return;
+
+            try
+            {
+                var extendedInfo = await GetInvoiceExtendedInfoAsync();
+                var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
+                    extendedInfo.contract,
+                    InvoiceData.Email,
+                    extendedInfo.tenPhong,
+                    1
+                );
+                string logoPath = FindLogoPath();
+
+                string defaultFileName;
+                string dialogTitle;
+
+                if (pdfType == "electricity")
+                {
+                    defaultFileName = $"BangChiTietDien_{InvoiceData.MaThanhToan}_{InvoiceData.ThangNam.Replace("/", "_")}.pdf";
+                    dialogTitle = "Lưu bảng chi tiết chỉ số điện PDF";
+                }
+                else
+                {
+                    defaultFileName = $"HoaDon_{InvoiceData.MaThanhToan}_{InvoiceData.ThangNam.Replace("/", "_")}.pdf";
+                    dialogTitle = "Lưu hóa đơn PDF";
+                }
+
                 var saveDialog = new SaveFileDialog
                 {
                     Filter = "PDF files (*.pdf)|*.pdf",
-                    FileName = $"HoaDon_{InvoiceData.MaThanhToan}_{InvoiceData.ThangNam.Replace("/", "_")}.pdf",
-                    Title = "Lưu hóa đơn PDF"
+                    FileName = defaultFileName,
+                    Title = dialogTitle
                 };
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    // Lấy thông tin mở rộng (Hợp đồng, Phòng...)
-                    var extendedInfo = await GetInvoiceExtendedInfoAsync();
+                    if (pdfType == "electricity")
+                    {
+                        ElectricityDetailPdfService.CreateElectricityDetailPdf(plumeriaInvoice, saveDialog.FileName, logoPath);
+                    }
+                    else
+                    {
+                        PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, saveDialog.FileName, logoPath);
+                    }
 
-                    // Chuyển đổi sang DTO in ấn
-                    var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
-                        extendedInfo.contract,
-                        InvoiceData.Email,
-                        extendedInfo.tenPhong,
-                        1 // Số người lưu trú (mặc định hoặc lấy từ DB)
-                    );
-
-                    // Tạo PDF
-                    string logoPath = FindLogoPath();
-                    PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, saveDialog.FileName, logoPath);
-
-                    MessageBox.Show($"Đã tải hóa đơn thành công!\nĐường dẫn: {saveDialog.FileName}",
+                    MessageBox.Show($"Đã tải file PDF thành công!\nĐường dẫn: {saveDialog.FileName}",
                         "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    // Mở file
                     try
                     {
                         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -162,7 +218,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                             UseShellExecute = true
                         });
                     }
-                    catch { /* Bỏ qua lỗi không mở được file */ }
+                    catch { }
                 }
             }
             catch (Exception ex)
@@ -194,21 +250,35 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     1
                 );
 
-                // Tạo file PDF tạm
-                string tempFileName = $"HoaDon_Temp_{Guid.NewGuid()}.pdf";
-                string tempFilePath = Path.Combine(Path.GetTempPath(), tempFileName);
                 string logoPath = FindLogoPath();
 
-                PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, tempFilePath, logoPath);
+                // Tạo cả 2 file PDF tạm
+                string tempInvoiceFileName = $"HoaDon_Temp_{Guid.NewGuid()}.pdf";
+                string tempInvoiceFilePath = Path.Combine(Path.GetTempPath(), tempInvoiceFileName);
+                PlumeriaInvoicePdfService.CreateInvoicePdf(plumeriaInvoice, tempInvoiceFilePath, logoPath);
+
+                string tempElectricityFileName = $"BangChiTietDien_Temp_{Guid.NewGuid()}.pdf";
+                string tempElectricityFilePath = Path.Combine(Path.GetTempPath(), tempElectricityFileName);
+                ElectricityDetailPdfService.CreateElectricityDetailPdf(plumeriaInvoice, tempElectricityFilePath, logoPath);
 
                 // Tạo nội dung Email
                 string subject = $"Thông báo thanh toán tháng {InvoiceData.ThangNam} - #{InvoiceData.MaThanhToan}";
-                string body = GenerateEmailBody(); // Tách HTML ra hàm riêng cho gọn
+                string body = GenerateEmailBody();
 
-                // Gửi mail
-                await EmailService.SendEmailWithAttachmentAsync(InvoiceData.Email, subject, body, tempFilePath);
+                // Gửi mail với cả 2 file đính kèm
+                var attachments = new List<string> { tempInvoiceFilePath, tempElectricityFilePath };
+                await EmailService.SendEmailWithAttachmentsAsync(InvoiceData.Email, subject, body, attachments);
 
-                MessageBox.Show("Đã gửi hóa đơn đến khách hàng thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Xóa file tạm sau khi gửi
+                try
+                {
+                    if (File.Exists(tempInvoiceFilePath)) File.Delete(tempInvoiceFilePath);
+                    if (File.Exists(tempElectricityFilePath)) File.Delete(tempElectricityFilePath);
+                }
+                catch { }
+
+                MessageBox.Show("Đã gửi hóa đơn và bảng chi tiết chỉ số điện đến khách hàng thành công!", 
+                    "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {

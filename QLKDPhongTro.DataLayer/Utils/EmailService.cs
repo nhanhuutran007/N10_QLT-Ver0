@@ -51,5 +51,37 @@ namespace QLKDPhongTro.Presentation.Utils
                 await client.SendMailAsync(mailMessage);
             }
         }
+
+        /// <summary>
+        /// Gửi email bất đồng bộ qua Gmail SMTP với nhiều file đính kèm
+        /// </summary>
+        public static async Task SendEmailWithAttachmentsAsync(string toEmail, string subject, string body, System.Collections.Generic.List<string> attachmentFilePaths)
+        {
+            using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
+            {
+                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
+                client.EnableSsl = true;
+
+                var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
+                {
+                    IsBodyHtml = true
+                };
+
+                // Thêm tất cả file đính kèm
+                if (attachmentFilePaths != null)
+                {
+                    foreach (var attachmentFilePath in attachmentFilePaths)
+                    {
+                        if (!string.IsNullOrEmpty(attachmentFilePath) && File.Exists(attachmentFilePath))
+                        {
+                            var attachment = new Attachment(attachmentFilePath);
+                            mailMessage.Attachments.Add(attachment);
+                        }
+                    }
+                }
+
+                await client.SendMailAsync(mailMessage);
+            }
+        }
     }
 }
