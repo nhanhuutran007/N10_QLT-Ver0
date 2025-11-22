@@ -604,7 +604,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
             cmd.Parameters.AddWithValue("@TienGiuXe", payment.TienGiuXe ?? 0);
             cmd.Parameters.AddWithValue("@ChiPhiKhac", payment.ChiPhiKhac ?? 0);
             cmd.Parameters.AddWithValue("@SoTienDaTra", payment.SoTienDaTra ?? 0);
-            cmd.Parameters.AddWithValue("@SoTienDaTra", payment.SoTienDaTra ?? 0);
 
             string trangThai = GetTrangThaiThanhToan(payment.TrangThaiThanhToan);
             cmd.Parameters.AddWithValue("@TrangThaiThanhToan", trangThai);
