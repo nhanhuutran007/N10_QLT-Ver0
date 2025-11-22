@@ -59,6 +59,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 // Lấy từ JOIN trong repository
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
@@ -80,6 +81,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
+                GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
             };
@@ -98,6 +100,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
             }).ToList();
@@ -113,7 +116,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai
+                TrangThai = dto.TrangThai,
+                GhiChu = dto.GhiChu
             };
             return await _repository.AddHopDongAsync(entity);
         }
@@ -129,7 +133,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai
+                TrangThai = dto.TrangThai,
+                GhiChu = dto.GhiChu
             };
             await _repository.UpdateHopDongAsync(entity);
         }
@@ -152,6 +157,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
                 TrangThai = e.TrangThai,
+                GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
             }).ToList();
@@ -182,6 +188,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                 FileHopDong = entity.FileHopDong,
                 TrangThai = entity.TrangThai,
+                GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
             };
@@ -195,6 +202,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             int success = 0, failed = 0;
             var errors = new List<string>();
+            var sentEmailTracker = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Lấy danh sách tất cả admin để gửi email
             var allAdmins = await _userRepository.GetAllAsync();
@@ -223,8 +231,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         tenantEmail = "ngochai1521@gmail.com";
                     }
 
-                    // Tính số ngày còn lại
-                    int daysRemaining = (contract.NgayKetThuc - DateTime.Now).Days;
+                    int daysRemaining = (contract.NgayKetThuc.Date - DateTime.Now.Date).Days;
+
+
 
                     // Tạo nội dung email cho người thuê
                     string tenantEmailBody = $@"Kính gửi {contract.TenNguoiThue ?? "Quý khách hàng"},
@@ -244,24 +253,16 @@ Quản lý Phòng Trọ";
 
                     // Gửi email cho người thuê với file hợp đồng đính kèm (nếu có)
                     string attachmentPath = contract.FileHopDong;
-                    if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
-                    {
-                        await EmailService.SendEmailWithAttachmentAsync(
+                    if (await TrySendEmailOnceAsync(
+                            sentEmailTracker,
+                            contract.MaHopDong,
                             tenantEmail,
                             $"Thông báo sắp hết hạn hợp đồng - Còn {daysRemaining} ngày",
                             tenantEmailBody,
-                            attachmentPath
-                        );
-                    }
-                    else
+                            attachmentPath))
                     {
-                        await EmailService.SendEmailAsync(
-                            tenantEmail,
-                            $"Thông báo sắp hết hạn hợp đồng - Còn {daysRemaining} ngày",
-                            tenantEmailBody
-                        );
+                        success++;
                     }
-                    success++;
 
                     // === GỬI EMAIL CHO TẤT CẢ ADMIN ===
                     string adminEmailBody = $@"Kính gửi Quản trị viên,
@@ -288,24 +289,16 @@ Hệ thống Quản lý Phòng Trọ";
                             if (!string.IsNullOrWhiteSpace(adminEmail))
                             {
                                 // Gửi email cho admin với file hợp đồng đính kèm (nếu có)
-                                if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
-                                {
-                                    await EmailService.SendEmailWithAttachmentAsync(
+                                if (await TrySendEmailOnceAsync(
+                                        sentEmailTracker,
+                                        contract.MaHopDong,
                                         adminEmail,
                                         $"Cảnh báo: Hợp đồng sắp hết hạn - Còn {daysRemaining} ngày (HD#{contract.MaHopDong})",
                                         adminEmailBody,
-                                        attachmentPath
-                                    );
-                                }
-                                else
+                                        attachmentPath))
                                 {
-                                    await EmailService.SendEmailAsync(
-                                        adminEmail,
-                                        $"Cảnh báo: Hợp đồng sắp hết hạn - Còn {daysRemaining} ngày (HD#{contract.MaHopDong})",
-                                        adminEmailBody
-                                    );
+                                    success++;
                                 }
-                                success++;
                             }
                         }
                         catch (Exception adminEx)
@@ -335,6 +328,7 @@ Hệ thống Quản lý Phòng Trọ";
 
             int success = 0, failed = 0;
             var errors = new List<string>();
+            var sentEmailTracker = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Lấy danh sách tất cả admin để gửi email
             var allAdmins = await _userRepository.GetAllAsync();
@@ -381,24 +375,16 @@ Quản lý Phòng Trọ";
 
                     // Gửi email cho người thuê với file hợp đồng đính kèm (nếu có)
                     string attachmentPath = contract.FileHopDong;
-                    if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
-                    {
-                        await EmailService.SendEmailWithAttachmentAsync(
+                    if (await TrySendEmailOnceAsync(
+                            sentEmailTracker,
+                            contract.MaHopDong,
                             tenantEmail,
                             $"Thông báo sắp hết hạn hợp đồng - Còn {exactDays} ngày",
                             tenantEmailBody,
-                            attachmentPath
-                        );
-                    }
-                    else
+                            attachmentPath))
                     {
-                        await EmailService.SendEmailAsync(
-                            tenantEmail,
-                            $"Thông báo sắp hết hạn hợp đồng - Còn {exactDays} ngày",
-                            tenantEmailBody
-                        );
+                        success++;
                     }
-                    success++;
 
                     // === GỬI EMAIL CHO TẤT CẢ ADMIN ===
                     string adminEmailBody = $@"Kính gửi Quản trị viên,
@@ -425,24 +411,16 @@ Hệ thống Quản lý Phòng Trọ";
                             if (!string.IsNullOrWhiteSpace(adminEmail))
                             {
                                 // Gửi email cho admin với file hợp đồng đính kèm (nếu có)
-                                if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
-                                {
-                                    await EmailService.SendEmailWithAttachmentAsync(
+                                if (await TrySendEmailOnceAsync(
+                                        sentEmailTracker,
+                                        contract.MaHopDong,
                                         adminEmail,
                                         $"Cảnh báo: Hợp đồng sắp hết hạn - Còn {exactDays} ngày (HD#{contract.MaHopDong})",
                                         adminEmailBody,
-                                        attachmentPath
-                                    );
-                                }
-                                else
+                                        attachmentPath))
                                 {
-                                    await EmailService.SendEmailAsync(
-                                        adminEmail,
-                                        $"Cảnh báo: Hợp đồng sắp hết hạn - Còn {exactDays} ngày (HD#{contract.MaHopDong})",
-                                        adminEmailBody
-                                    );
+                                    success++;
                                 }
-                                success++;
                             }
                         }
                         catch (Exception adminEx)
@@ -463,6 +441,46 @@ Hệ thống Quản lý Phòng Trọ";
         }
 
 
+
+        private static async Task<bool> TrySendEmailOnceAsync(
+            HashSet<string> sentEmailTracker,
+            int contractId,
+            string? recipientEmail,
+            string subject,
+            string body,
+            string? attachmentPath)
+        {
+            if (string.IsNullOrWhiteSpace(recipientEmail))
+            {
+                return false;
+            }
+
+            string normalizedEmail = recipientEmail.Trim();
+            string dedupKey = $"{contractId}:{normalizedEmail.ToLowerInvariant()}";
+
+            if (!sentEmailTracker.Add(dedupKey))
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(attachmentPath) && System.IO.File.Exists(attachmentPath))
+            {
+                await EmailService.SendEmailWithAttachmentAsync(
+                    normalizedEmail,
+                    subject,
+                    body,
+                    attachmentPath);
+            }
+            else
+            {
+                await EmailService.SendEmailAsync(
+                    normalizedEmail,
+                    subject,
+                    body);
+            }
+
+            return true;
+        }
 
     }
 }

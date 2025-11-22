@@ -337,9 +337,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            var confirm = MessageBox.Show($"Bạn có chắc muốn xóa khách thuê '{tenant.HoTen}' không?",
-                                          "Xác nhận xóa", MessageBoxButton.YesNo, MessageBoxImage.Question);
-            if (confirm != MessageBoxResult.Yes) return;
+            // Hiển thị dialog xác nhận với thông báo nhắc nhở về việc xóa dấu vân tay
+            var confirmWindow = new DeleteTenantConfirmWindow(tenant)
+            {
+                Owner = Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive) ?? Application.Current.MainWindow
+            };
+
+            bool? dialogResult = confirmWindow.ShowDialog();
+
+            // Chỉ xóa khi admin đã tích checkbox xác nhận và bấm "Xác nhận xóa"
+            if (dialogResult != true || !confirmWindow.IsConfirmed)
+            {
+                return;
+            }
 
             try
             {

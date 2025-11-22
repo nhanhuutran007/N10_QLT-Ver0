@@ -17,6 +17,7 @@ namespace QLKDPhongTro.Presentation.Services
         private DispatcherTimer _timer;
         private bool _isRunning = false;
         private DateTime _lastCheckDate = DateTime.MinValue;
+        private const int DefaultReminderWindowInDays = 30;
 
         public ContractExpiryEmailService()
         {
@@ -78,8 +79,8 @@ namespace QLKDPhongTro.Presentation.Services
 
                 _lastCheckDate = today;
 
-                // Gửi email cho hợp đồng còn đúng 30 ngày
-                var result = await _contractController.SendExpiryWarningEmailsForExactDaysAsync(30);
+                // Chỉ gửi email tự động cho hợp đồng còn đúng 30 ngày
+                var result = await _contractController.SendExpiryWarningEmailsForExactDaysAsync(DefaultReminderWindowInDays);
 
                 // Log kết quả (có thể mở rộng để ghi vào file log)
                 if (result.Success > 0 || result.Failed > 0)
@@ -98,11 +99,11 @@ namespace QLKDPhongTro.Presentation.Services
         }
 
         /// <summary>
-        /// Kiểm tra thủ công (có thể gọi từ UI để test)
+        /// Kiểm tra thủ công (gửi cho toàn bộ khoảng nhắc nhở thông qua UI)
         /// </summary>
         public async Task<(int Success, int Failed, List<string> Errors)> CheckAndSendEmailsManuallyAsync()
         {
-            return await _contractController.SendExpiryWarningEmailsForExactDaysAsync(30);
+            return await _contractController.SendExpiryWarningEmailsAsync(DefaultReminderWindowInDays);
         }
     }
 }

@@ -1,0 +1,184 @@
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.DeleteTenantConfirmWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Xác nhận xóa người thuê" 
+        Height="450" 
+        Width="550"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        FontFamily="Segoe UI">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="TextPrimary" Color="#111827"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#6B7280"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="BackgroundCard" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="PrimaryDarkColor" Color="#2563EB"/>
+        <SolidColorBrush x:Key="ErrorColor" Color="#EF4444"/>
+        <SolidColorBrush x:Key="ErrorDarkColor" Color="#DC2626"/>
+        <SolidColorBrush x:Key="WarningBackground" Color="#FEF3C7"/>
+        <SolidColorBrush x:Key="WarningBorder" Color="#F59E0B"/>
+        <DropShadowEffect x:Key="CardShadow" Color="#000000" Direction="270" ShadowDepth="5" Opacity="0.12" BlurRadius="18"/>
+
+        <Style x:Key="RoundedButtonStyle" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Margin="20">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="4" Opacity="0.18" BlurRadius="30"/>
+        </Border.Effect>
+        <Border Background="White" CornerRadius="18" ClipToBounds="True">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Background="#FEF2F2" Padding="24,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠️" FontSize="24" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Xác nhận xóa người thuê" 
+                                       FontSize="20" FontWeight="Bold" 
+                                       Foreground="{StaticResource ErrorColor}" 
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button Content="✕" Width="32" Height="32" Background="Transparent" 
+                                BorderBrush="Transparent" FontSize="16" Cursor="Hand" 
+                                Click="CloseButton_Click" Grid.Column="1"
+                                Style="{StaticResource RoundedButtonStyle}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="24">
+                        <!-- Thông tin người thuê -->
+                        <Border Background="#F9FAFB" CornerRadius="8" Padding="16" Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="Thông tin người thuê:" 
+                                           FontSize="14" FontWeight="SemiBold" 
+                                           Foreground="{StaticResource TextPrimary}" 
+                                           Margin="0,0,0,12"/>
+                                <TextBlock x:Name="TenantNameTextBlock" 
+                                           FontSize="16" FontWeight="Bold" 
+                                           Foreground="{StaticResource TextPrimary}" 
+                                           Margin="0,0,0,8"/>
+                                <TextBlock x:Name="TenantInfoTextBlock" 
+                                           FontSize="14" 
+                                           Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Cảnh báo quan trọng -->
+                        <Border Background="{StaticResource WarningBackground}" 
+                                BorderBrush="{StaticResource WarningBorder}" 
+                                BorderThickness="2" 
+                                CornerRadius="8" 
+                                Padding="16" 
+                                Margin="0,0,0,20">
+                            <StackPanel>
+                                <TextBlock Text="⚠️ LƯU Ý QUAN TRỌNG" 
+                                           FontSize="16" FontWeight="Bold" 
+                                           Foreground="#92400E" 
+                                           Margin="0,0,0,12"/>
+                                <TextBlock TextWrapping="Wrap" 
+                                           FontSize="14" 
+                                           Foreground="#78350F" 
+                                           LineHeight="22">
+                                    <Run Text="Trước khi xóa người thuê khỏi hệ thống, bạn cần:" FontWeight="SemiBold"/>
+                                    <LineBreak/>
+                                    <LineBreak/>
+                                    <Run Text="1. "/><Run Text="Xóa dấu vân tay của người thuê trên hệ thống quản lý vân tay" FontWeight="SemiBold"/>
+                                    <LineBreak/>
+                                    <Run Text="2. "/><Run Text="Kiểm tra và xóa các hợp đồng liên quan (nếu có)"/>
+                                    <LineBreak/>
+                                    <Run Text="3. "/><Run Text="Kiểm tra các khoản thanh toán chưa hoàn tất"/>
+                                    <LineBreak/>
+                                    <LineBreak/>
+                                    <Run Text="Sau khi đã hoàn tất các bước trên, vui lòng tích vào ô xác nhận bên dưới để tiếp tục." FontWeight="SemiBold"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Checkbox xác nhận -->
+                        <Border Background="#F3F4F6" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                            <CheckBox x:Name="ConfirmCheckBox" 
+                                      Content="Tôi đã xóa dấu vân tay và kiểm tra các thông tin liên quan. Tôi xác nhận muốn xóa người thuê này."
+                                      FontSize="14" 
+                                      Foreground="{StaticResource TextPrimary}"
+                                      IsChecked="False"
+                                      Checked="ConfirmCheckBox_Checked"
+                                      Unchecked="ConfirmCheckBox_Unchecked"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2" Background="#F9FAFB" Padding="24,16">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Hủy" Width="120" Height="40" 
+                                Background="White" Foreground="{StaticResource TextPrimary}" 
+                                BorderBrush="{StaticResource BorderColor}" BorderThickness="1"
+                                Cursor="Hand" Click="CancelButton_Click"
+                                Margin="0,0,12,0"
+                                Style="{StaticResource RoundedButtonStyle}"/>
+
+                        <Button x:Name="ConfirmButton" 
+                                Content="Xác nhận xóa" Width="140" Height="40" 
+                                Background="{StaticResource ErrorColor}" 
+                                Foreground="White"
+                                Cursor="Hand" Click="ConfirmButton_Click"
+                                BorderThickness="0"
+                                IsEnabled="False">
+                            <!-- ĐÃ XÓA DÒNG: Style="{StaticResource RoundedButtonStyle}" TẠI ĐÂY -->
+
+                            <Button.Style>
+                                <!-- Style này đã kế thừa RoundedButtonStyle thông qua BasedOn -->
+                                <Style TargetType="Button" BasedOn="{StaticResource RoundedButtonStyle}">
+                                    <Setter Property="Background" Value="{StaticResource ErrorColor}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Background" Value="#D1D5DB"/>
+                                            <Setter Property="Foreground" Value="#9CA3AF"/>
+                                            <Setter Property="Cursor" Value="No"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource ErrorDarkColor}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Border>
+</Window>
+

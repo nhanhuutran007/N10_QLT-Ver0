@@ -41,16 +41,16 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             // Phòng & hợp đồng
             string TenPhong, string DiaChiPhong, decimal DienTich, string TrangThietBi,
-            decimal GiaThue, string GiaBangChu, string NgayTraTien, int ThoiHanNam, DateTime NgayGiaoNha
+            decimal GiaThue, string GiaBangChu, string NgayTraTien, int ThoiHanNam, DateTime NgayGiaoNha, string GhiChu,
+            string? preferredDocxPath = null
         )
         {
             if (!File.Exists(TemplatePath))
                 throw new FileNotFoundException($"Không tìm thấy file mẫu hợp đồng: {TemplatePath}");
 
-            Directory.CreateDirectory(OutputFolder);
-
-            var safeTenKhach = string.Concat(TenB.Split(Path.GetInvalidFileNameChars()));
-            var outputDocx = Path.Combine(OutputFolder, $"{safeTenKhach}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+            var outputDocx = ResolveOutputPath(preferredDocxPath, TenB);
+            SafeDeleteFile(outputDocx);
+            SafeDeleteFile(Path.ChangeExtension(outputDocx, ".pdf"));
 
             using (var doc = DocX.Load(TemplatePath))
             {
@@ -91,11 +91,49 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 doc.ReplaceText("{THOIHAN}", ThoiHanNam.ToString());
                 doc.ReplaceText("{NGAYGIAONHA}", NgayGiaoNha.ToString("dd/MM/yyyy"));
 
+                // ====== Điều khoản riêng ======
+                string clauseContent = string.IsNullOrWhiteSpace(GhiChu)
+                    ? "Không có điều khoản riêng bổ sung."
+                    : GhiChu;
+                doc.ReplaceText("{GHICHU}", clauseContent);
+                doc.ReplaceText("{DIEUKHOANRIENG}", clauseContent);
+
                 doc.SaveAs(outputDocx);
             }
 
             var pdfPath = TryConvertDocxToPdf(outputDocx);
             return new ContractFileResult(outputDocx, pdfPath);
+        }
+
+        private static string ResolveOutputPath(string? preferredDocxPath, string tenantName)
+        {
+            if (string.IsNullOrWhiteSpace(preferredDocxPath))
+            {
+                Directory.CreateDirectory(OutputFolder);
+                var safeTenant = SanitizeSegment(tenantName);
+                return Path.Combine(OutputFolder, $"{safeTenant}_{DateTime.Now:yyyyMMdd_HHmmss}.docx");
+            }
+
+            var docxPath = Path.ChangeExtension(preferredDocxPath, ".docx");
+            var directory = Path.GetDirectoryName(docxPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                throw new ArgumentException("Đường dẫn lưu hợp đồng không hợp lệ.", nameof(preferredDocxPath));
+            }
+
+            Directory.CreateDirectory(directory);
+            return docxPath;
+        }
+
+        private static string SanitizeSegment(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "HopDong";
+            }
+
+            var sanitized = string.Concat(value.Split(Path.GetInvalidFileNameChars()));
+            return string.IsNullOrWhiteSpace(sanitized) ? "HopDong" : sanitized;
         }
 
         private static string? TryConvertDocxToPdf(string docxPath)
@@ -110,6 +148,7 @@ namespace QLKDPhongTro.BusinessLayer.Services
             try
             {
                 var pdfOutputPath = Path.ChangeExtension(docxPath, ".pdf");
+                SafeDeleteFile(pdfOutputPath);
                 using var document = new Document();
                 document.LoadFromFile(docxPath);
                 document.SaveToFile(pdfOutputPath, FileFormat.PDF);
@@ -133,6 +172,8 @@ namespace QLKDPhongTro.BusinessLayer.Services
             try
             {
                 var outputDir = Path.GetDirectoryName(docxPath)!;
+                var targetPdf = Path.ChangeExtension(docxPath, ".pdf");
+                SafeDeleteFile(targetPdf);
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = sofficePath,
@@ -188,6 +229,24 @@ namespace QLKDPhongTro.BusinessLayer.Services
             }
 
             return null;
+        }
+
+        private static void SafeDeleteFile(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return;
+
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // Bỏ qua nếu không xóa được để tránh gián đoạn luồng xử lý
+            }
         }
     }
 }

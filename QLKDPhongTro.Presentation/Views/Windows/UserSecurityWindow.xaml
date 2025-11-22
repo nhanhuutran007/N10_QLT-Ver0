@@ -20,7 +20,7 @@
         Icon="/Resources/Images/Logo.png">
     
     <Window.DataContext>
-        <vm:UserSecurityViewModel />
+        <vm:UserSecurityViewModel/>
     </Window.DataContext>
 
     <Window.Resources>
@@ -204,6 +204,24 @@
                                  Height="42" 
                                  Margin="0,0,0,15"/>
 
+                        <!-- Trường Họ và tên -->
+                        <TextBlock Text="Họ và tên" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding HoTen, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường Ngày sinh -->
+                        <TextBlock Text="Ngày sinh" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <DatePicker SelectedDate="{Binding NgaySinh, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Height="42"
+                                    Margin="0,0,0,15"
+                                    Background="#F2F6FA"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"/>
+
                         <!-- Trường Email -->
                         <TextBlock Text="Email" 
                                    Style="{StaticResource LabelStyle}"/>
@@ -218,6 +236,42 @@
                         <TextBox Text="{Binding SoDienThoai, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                  Style="{StaticResource InputTextBoxStyle}"
                                  Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường CCCD -->
+                        <TextBlock Text="CCCD" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding CCCD, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường Ngày cấp -->
+                        <TextBlock Text="Ngày cấp" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <DatePicker SelectedDate="{Binding NgayCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Height="42"
+                                    Margin="0,0,0,15"
+                                    Background="#F2F6FA"
+                                    BorderBrush="#E5E7EB"
+                                    BorderThickness="1"/>
+
+                        <!-- Trường Nơi cấp -->
+                        <TextBlock Text="Nơi cấp" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding NoiCap, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường Địa chỉ -->
+                        <TextBlock Text="Địa chỉ" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding DiaChi, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="80" 
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
                                  Margin="0,0,0,30"/>
 
                         <!-- Section: Thay đổi mật khẩu -->
