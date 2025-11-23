@@ -300,19 +300,20 @@
                               VerticalScrollBarVisibility="Auto" 
                               Padding="24,20">
                     <StackPanel>
-                        <TextBlock Text="Người thuê *" Style="{StaticResource LabelStyle}"/>
-                        <ComboBox Style="{StaticResource ComboBoxStyle}"
-                                  Height="44"
-                                  ItemsSource="{Binding NguoiThueList}"
-                                  DisplayMemberPath="HoTen"
-                                  SelectedItem="{Binding SelectedNguoiThue, Mode=TwoWay}"/>
-
                         <TextBlock Text="Phòng *" Style="{StaticResource LabelStyle}"/>
                         <ComboBox Style="{StaticResource ComboBoxStyle}"
                                   Height="44"
                                   ItemsSource="{Binding PhongList}"
                                   DisplayMemberPath="TenPhong"
                                   SelectedItem="{Binding SelectedPhong, Mode=TwoWay}"/>
+
+                        <TextBlock Text="Người thuê *" Style="{StaticResource LabelStyle}"/>
+                        <ComboBox Style="{StaticResource ComboBoxStyle}"
+                                  Height="44"
+                                  ItemsSource="{Binding NguoiThueList}"
+                                  DisplayMemberPath="HoTen"
+                                  SelectedItem="{Binding SelectedNguoiThue, Mode=TwoWay}"
+                                  IsEnabled="{Binding HasSelectedRoom}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
