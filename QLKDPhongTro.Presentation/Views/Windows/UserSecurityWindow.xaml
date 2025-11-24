@@ -176,13 +176,15 @@
             <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" 
                                      MenuButtonClicked="TopbarControl_MenuButtonClicked"
                                      SearchTextChanged="TopbarControl_SearchTextChanged"
-                                     SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
+                                     SettingsButtonClicked="TopbarControl_SettingsButtonClicked"
+                                     VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
 
             <!-- Nội dung chính - Form cập nhật thông tin -->
             <ScrollViewer Grid.Row="1" 
                           VerticalScrollBarVisibility="Auto" 
                           HorizontalScrollBarVisibility="Disabled"
-                          Margin="10,10,10,10">
+                          Margin="10,10,10,10"
+                          VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>
                         <!-- Tiêu đề -->

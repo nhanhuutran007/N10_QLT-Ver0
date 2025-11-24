@@ -251,23 +251,30 @@
         <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
         <!-- MAIN CONTENT -->
-        <Grid Margin="20" Grid.Column="1">
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <!-- Top Bar -->
-                <RowDefinition Height="Auto"/>
-                <!-- Title & Actions -->
                 <RowDefinition Height="*"/>
-                <!-- DataGrid -->
-                <RowDefinition Height="Auto"/>
-                <!-- Pagination -->
+                <!-- Content Area -->
             </Grid.RowDefinitions>
 
             <!-- Top Bar -->
-            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" Margin="0,0,0,20"/>
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
 
-            <!-- Header Section -->
-            <Grid Grid.Row="1" Margin="0,0,0,20">
+            <!-- Content Area -->
+            <Grid Grid.Row="1" Margin="10,10,10,10" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Title & Actions -->
+                    <RowDefinition Height="*"/>
+                    <!-- DataGrid -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Pagination -->
+                </Grid.RowDefinitions>
+
+                <!-- Header Section -->
+                <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -321,8 +328,8 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Main Content Card -->
-            <Border Grid.Row="2" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
+                <!-- Main Content Card -->
+                <Border Grid.Row="1" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -379,14 +386,7 @@
                             <DataGridTemplateColumn Header="SỰ CỐ" Width="1.5*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Grid>
-                                            <TextBlock Text="{Binding MoTaSuCo}" FontWeight="Medium"
-                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
-                                            <TextBox Text="{Binding MoTaSuCo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                                                     Background="White"
-                                                     BorderBrush="#DDDDDD" FontWeight="Medium"
-                                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        </Grid>
+                                        <TextBlock Text="{Binding MoTaSuCo}" FontWeight="Medium" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -395,14 +395,7 @@
                             <DataGridTemplateColumn Header="MÃ PHÒNG" Width="1*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Grid>
-                                            <TextBlock Text="{Binding MaPhong}"
-                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
-                                            <TextBox Text="{Binding MaPhong, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
-                                                     Background="White"
-                                                     BorderBrush="#DDDDDD"
-                                                     Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        </Grid>
+                                        <TextBlock Text="{Binding MaPhong}" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -411,14 +404,7 @@
                             <DataGridTemplateColumn Header="NGÀY BÁO CÁO" Width="1.2*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Grid>
-                                            <TextBlock Text="{Binding NgayBaoCao, StringFormat='dd/MM/yyyy'}"
-                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
-                                            <DatePicker SelectedDate="{Binding NgayBaoCao, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
-                                                        Background="White"
-                                                        BorderBrush="#DDDDDD"
-                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"/>
-                                        </Grid>
+                                        <TextBlock Text="{Binding NgayBaoCao, StringFormat='dd/MM/yyyy'}" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -510,8 +496,8 @@
                 </Grid>
             </Border>
 
-            <!-- Pagination -->
-            <Grid Grid.Row="3" Margin="0,20,0,0">
+                <!-- Pagination -->
+                <Grid Grid.Row="2" Margin="0,20,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <TextBlock Text="{Binding PaginationText}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
                     <Button Command="{Binding PrevPageCommand}" Content="&lt;" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
@@ -536,6 +522,7 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

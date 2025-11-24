@@ -284,25 +284,32 @@
         <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
         <!-- MAIN CONTENT -->
-        <Grid Margin="20" Grid.Column="1">
+        <Grid Margin="223,15,15,15" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="80"/>
                 <!-- Top Bar -->
-                <RowDefinition Height="Auto"/>
-                <!-- Title & Actions -->
-                <RowDefinition Height="Auto"/>
-                <!-- Action Buttons -->
                 <RowDefinition Height="*"/>
-                <!-- DataGrid -->
-                <RowDefinition Height="Auto"/>
-                <!-- Pagination -->
+                <!-- Content Area -->
             </Grid.RowDefinitions>
 
             <!-- Top Bar -->
-            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" Margin="0,0,0,20"/>
+            <components:TopbarControl Grid.Row="0" x:Name="TopbarControl" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
 
-            <!-- Header Section -->
-            <Grid Grid.Row="1" Margin="0,0,0,20">
+            <!-- Content Area -->
+            <Grid Grid.Row="1" Margin="10,10,10,10" VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Title & Actions -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Action Buttons -->
+                    <RowDefinition Height="*"/>
+                    <!-- DataGrid -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Pagination -->
+                </Grid.RowDefinitions>
+
+                <!-- Header Section -->
+                <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -356,8 +363,8 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Action Buttons Bar -->
-            <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" Effect="{StaticResource CardShadow}">
+                <!-- Action Buttons Bar -->
+                <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,20" Effect="{StaticResource CardShadow}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                     <Button Content="Sửa" 
                             Style="{StaticResource PrimaryButtonStyle}" 
@@ -387,8 +394,8 @@
                 </StackPanel>
             </Border>
 
-            <!-- Main Content Card -->
-            <Border Grid.Row="3" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
+                <!-- Main Content Card -->
+                <Border Grid.Row="2" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -442,8 +449,8 @@
                 </Grid>
             </Border>
 
-            <!-- Pagination -->
-            <Grid Grid.Row="4" Margin="0,20,0,0">
+                <!-- Pagination -->
+                <Grid Grid.Row="3" Margin="0,20,0,0">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <TextBlock Text="{Binding PaginationText}" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,16,0"/>
                     <Button Command="{Binding PrevPageCommand}" Content="◀" Width="32" Height="32" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Cursor="Hand">
@@ -470,6 +477,7 @@
                         </Button.Template>
                     </Button>
                 </StackPanel>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

@@ -85,7 +85,7 @@
                                      SettingsButtonClicked="TopbarControl_SettingsButtonClicked"/>
 
             <!-- Carousel Container -->
-            <Grid Grid.Row="1" Margin="10,0,10,0">
+            <Grid Grid.Row="1" Margin="10,10,10,10">
                 <Grid x:Name="CarouselContainer">
                     <!-- Image 1 -->
                     <Image x:Name="Image1" 

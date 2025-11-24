@@ -22,26 +22,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
             get => _isEditing;
             set { _isEditing = value; OnPropertyChanged(); }
         }
-        // Backup fields for cancel
-        private int _oldMaPhong;
-        private string _oldMoTaSuCo = string.Empty;
-        private DateTime _oldNgayBaoCao;
+        // Backup fields for cancel (chỉ backup các trường có thể chỉnh sửa)
         private string _oldTrangThai = string.Empty;
         private decimal _oldChiPhi;
         public void BeginEdit()
         {
-            _oldMaPhong = MaPhong;
-            _oldMoTaSuCo = MoTaSuCo;
-            _oldNgayBaoCao = NgayBaoCao;
+            // Chỉ backup các trường có thể chỉnh sửa: ChiPhi và TrangThai
             _oldTrangThai = TrangThai;
             _oldChiPhi = ChiPhi;
             IsEditing = true;
         }
         public void CancelEdit()
         {
-            MaPhong = _oldMaPhong;
-            MoTaSuCo = _oldMoTaSuCo;
-            NgayBaoCao = _oldNgayBaoCao;
+            // Chỉ restore các trường có thể chỉnh sửa: ChiPhi và TrangThai
             TrangThai = _oldTrangThai;
             ChiPhi = _oldChiPhi;
             IsEditing = false;
@@ -125,7 +118,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             var maintenanceRepo = new MaintenanceRepository();
             var roomRepo = new RentedRoomRepository();
-            _controller = new MaintenanceController(maintenanceRepo, null, roomRepo);
+            var tenantRepo = new TenantRepository();
+            _controller = new MaintenanceController(maintenanceRepo, null, roomRepo, tenantRepo);
             EditCommand = new RelayCommand<MaintenanceIncidentViewModel>(EditRow);
             SaveCommand = new RelayCommand<MaintenanceIncidentViewModel>(async item => await SaveRow(item));
             CancelCommand = new RelayCommand<MaintenanceIncidentViewModel>(CancelRow);
