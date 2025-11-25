@@ -177,6 +177,38 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }).ToList();
         }
 
+        public async Task<List<RecentPaymentInfoDto>> GetMostRecentPaymentsInfoAsync(int count)
+        {
+            var current = AuthController.CurrentUser;
+            List<DataLayer.Models.Payment> payments;
+
+            // Lấy thanh toán theo MaNha nếu có
+            if (current != null && current.MaNha > 0)
+            {
+                payments = await _paymentRepository.GetAllByMaNhaAsync(current.MaNha);
+            }
+            else
+            {
+                payments = await _paymentRepository.GetAllAsync();
+            }
+
+            // Lọc chỉ lấy thanh toán "Đã trả" và sắp xếp theo ngày thanh toán giảm dần
+            var paidPayments = payments
+                .Where(p => string.Equals(p.TrangThaiThanhToan, "Đã trả", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(p => p.NgayThanhToan ?? DateTime.MinValue)
+                .ThenByDescending(p => p.MaThanhToan)
+                .Take(count)
+                .ToList();
+
+            return paidPayments.Select(p => new RecentPaymentInfoDto
+            {
+                MaThanhToan = p.MaThanhToan,
+                HoTen = !string.IsNullOrWhiteSpace(p.TenKhachHang) ? p.TenKhachHang : "Không xác định",
+                TrangThai = "Đã trả",
+                TongTien = p.TongTien
+            }).ToList();
+        }
+
         /// <summary>
         /// Đọc dữ liệu từ Google Form và tạo công nợ tự động
         /// </summary>
@@ -832,6 +864,128 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             payment.TongTien = CalculateTotalAmount(payment);
 
             return await _paymentRepository.UpdateAsync(payment);
+        }
+
+        /// <summary>
+        /// Cập nhật đơn giá điện/nước cho thanh toán hiện tại và tất cả các thanh toán "Chưa trả" trong hệ thống
+        /// </summary>
+        public async Task<bool> UpdateUnitPricesForCurrentAndUnpaidPaymentsAsync(
+            int maThanhToan,
+            decimal? donGiaDien,
+            decimal? donGiaNuoc)
+        {
+            // Lấy thanh toán hiện tại để đảm bảo nó tồn tại
+            var currentPayment = await _paymentRepository.GetByIdAsync(maThanhToan);
+            if (currentPayment == null) 
+            {
+                System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Không tìm thấy thanh toán: {maThanhToan}");
+                return false;
+            }
+
+            // Lấy tất cả thanh toán có trạng thái "Chưa trả"
+            var unpaidPayments = await _paymentRepository.GetPaymentsByStatusAsync("Chưa trả");
+            
+            System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Tìm thấy {unpaidPayments.Count} thanh toán chưa trả");
+
+            if (unpaidPayments == null || unpaidPayments.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Không có thanh toán nào chưa trả");
+                // Vẫn cập nhật thanh toán hiện tại nếu nó không phải "Chưa trả"
+                unpaidPayments = new List<DataLayer.Models.Payment>();
+            }
+
+            // Thêm thanh toán hiện tại vào danh sách nếu chưa có (để đảm bảo nó được cập nhật)
+            if (!unpaidPayments.Any(p => p.MaThanhToan == maThanhToan))
+            {
+                unpaidPayments.Add(currentPayment);
+                System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Thêm thanh toán hiện tại {maThanhToan} vào danh sách cập nhật");
+            }
+
+            bool allSuccess = true;
+            int updateCount = 0;
+
+            // Cập nhật từng thanh toán
+            foreach (var payment in unpaidPayments)
+            {
+                System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Đang cập nhật thanh toán {payment.MaThanhToan}, Trạng thái: {payment.TrangThaiThanhToan}");
+
+                bool paymentUpdated = false;
+
+                // Cập nhật đơn giá điện nếu có
+                if (donGiaDien.HasValue && donGiaDien.Value > 0)
+                {
+                    decimal oldDonGiaDien = payment.DonGiaDien ?? 0;
+                    payment.DonGiaDien = donGiaDien.Value;
+                    
+                    // Tính lại tiền điện dựa trên số điện và đơn giá mới
+                    // Công thức: TienDien = SoDien * DonGiaDien
+                    if (payment.SoDien.HasValue && payment.SoDien.Value > 0)
+                    {
+                        decimal oldTienDien = payment.TienDien ?? 0;
+                        payment.TienDien = payment.SoDien.Value * donGiaDien.Value;
+                        System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Thanh toán {payment.MaThanhToan}: Đơn giá điện {oldDonGiaDien} -> {donGiaDien.Value}, Tiền điện {oldTienDien} -> {payment.TienDien} (Số điện: {payment.SoDien.Value})");
+                    }
+                    else
+                    {
+                        // Nếu chưa có số điện, đặt tiền điện = 0
+                        payment.TienDien = 0;
+                        System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Thanh toán {payment.MaThanhToan}: Đơn giá điện {oldDonGiaDien} -> {donGiaDien.Value}, Tiền điện = 0 (chưa có số điện)");
+                    }
+                    paymentUpdated = true;
+                }
+
+                // Cập nhật đơn giá nước nếu có
+                if (donGiaNuoc.HasValue && donGiaNuoc.Value > 0)
+                {
+                    payment.DonGiaNuoc = donGiaNuoc.Value;
+                    // Tính lại tiền nước dựa trên số nước và đơn giá mới
+                    // Lưu ý: SoNuoc có thể là số người, cần tính lại tiền nước
+                    if (payment.SoNuoc.HasValue && payment.SoNuoc.Value > 0)
+                    {
+                        payment.TienNuoc = payment.SoNuoc.Value * donGiaNuoc.Value;
+                    }
+                    else
+                    {
+                        // Nếu chưa có số nước, đặt tiền nước = 0
+                        payment.TienNuoc = 0;
+                    }
+                    paymentUpdated = true;
+                    System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Cập nhật đơn giá nước: {donGiaNuoc.Value}, Tiền nước: {payment.TienNuoc}");
+                }
+
+                if (paymentUpdated)
+                {
+                    // Tính lại tổng tiền (KHÔNG trừ tiền cọc, chỉ tính tổng các khoản phí)
+                    // TongTien = TienThue + TienDien + TienNuoc + TienInternet + TienVeSinh + TienGiuXe + ChiPhiKhac
+                    payment.TongTien = CalculateTotalAmount(payment);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Tính lại TongTien cho thanh toán {payment.MaThanhToan}:");
+                    System.Diagnostics.Debug.WriteLine($"  - TienThue: {payment.TienThue ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TienDien: {payment.TienDien ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TienNuoc: {payment.TienNuoc ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TienInternet: {payment.TienInternet ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TienVeSinh: {payment.TienVeSinh ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TienGiuXe: {payment.TienGiuXe ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - ChiPhiKhac: {payment.ChiPhiKhac ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"  - TongTien (KHÔNG trừ tiền cọc): {payment.TongTien}");
+
+                    // Cập nhật vào database
+                    var success = await _paymentRepository.UpdateAsync(payment);
+                    if (success)
+                    {
+                        updateCount++;
+                        System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Đã cập nhật thành công thanh toán {payment.MaThanhToan} vào database, TongTien = {payment.TongTien}");
+                    }
+                    else
+                    {
+                        allSuccess = false;
+                        System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Lỗi khi cập nhật thanh toán {payment.MaThanhToan} vào database");
+                    }
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[UpdateUnitPrices] Hoàn thành: Đã cập nhật {updateCount}/{unpaidPayments.Count} thanh toán");
+            return allSuccess;
         }
 
         public async Task<List<TransactionHistoryDto>> GetTransactionHistoryAsync(

@@ -237,76 +237,66 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header Section -->
-                <StackPanel Grid.Row="0">
-                    <TextBlock Text="Quản lý khách thuê" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <!-- Action Bar Container - GIỐNG FinancialWindow -->
-                    <Grid Margin="0,0,0,20">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Quản lý khách thuê" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="Quản lý tất cả khách thuê" FontSize="14" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0"/>
+                    </StackPanel>
 
-                        <!-- Left Actions -->
-                        <StackPanel Grid.Column="0" Orientation="Horizontal">
-                            <Button Command="{Binding ShowAddTenantPanelCommand}" 
-                                    Style="{StaticResource ModernPrimaryButton}"
-                                    Height="40" Cursor="Hand">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Thêm khách thuê" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <!-- Search Box -->
+                        <Border Background="White" CornerRadius="8" BorderThickness="1" Width="280" Height="40" Margin="0,0,12,0">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=TenantSearchTextBox}" Value="True">
+                                            <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <Grid>
+                                <TextBlock Text="Tìm kiếm khách thuê..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                          Visibility="{Binding Text.IsEmpty, ElementName=TenantSearchTextBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                <TextBox x:Name="TenantSearchTextBox"
+                                         Background="Transparent" 
+                                         BorderThickness="0" 
+                                         VerticalContentAlignment="Center" 
+                                         Padding="12,0" 
+                                         FontSize="14"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" TextChanged="TenantSearchTextBox_TextChanged"/>
+                            </Grid>
+                        </Border>
 
-                        <!-- Right Actions - GIỐNG FinancialWindow -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <!-- Search Box -->
-                            <Border Background="White" CornerRadius="8" BorderThickness="1" Width="240" Height="40" Margin="0,0,12,0">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=TenantSearchTextBox}" Value="True">
-                                                <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <Grid>
-                                    <TextBlock Text="Tìm kiếm..." Foreground="{StaticResource TextSecondary}" FontSize="14" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,0,0">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text, ElementName=TenantSearchTextBox}" Value="">
-                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBox x:Name="TenantSearchTextBox"
-                                             Background="Transparent" 
-                                             BorderThickness="0" 
-                                             VerticalContentAlignment="Center" 
-                                             Padding="12,0" 
-                                             FontSize="14"
-                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                                </Grid>
-                            </Border>
+                        <!-- Sort ComboBox -->
+                        <ComboBox Width="140" 
+                                  Style="{StaticResource ComboBoxStyle}"
+                                  Margin="0,0,12,0"
+                                  SelectedValue="{Binding SortOrder, Mode=TwoWay}"
+                                  SelectedValuePath="Tag">
+                            <ComboBoxItem Tag="newest" IsSelected="True">Mới nhất</ComboBoxItem>
+                            <ComboBoxItem Tag="oldest">Cũ nhất</ComboBoxItem>
+                        </ComboBox>
 
-                            <!-- Sort ComboBox -->
-                            <ComboBox Width="140" 
-                                      Style="{StaticResource ComboBoxStyle}"
-                                      SelectedValue="{Binding SortOrder, Mode=TwoWay}"
-                                      SelectedValuePath="Tag">
-                                <ComboBoxItem Tag="newest" IsSelected="True">Mới nhất</ComboBoxItem>
-                                <ComboBoxItem Tag="oldest">Cũ nhất</ComboBoxItem>
-                            </ComboBox>
-                        </StackPanel>
-                    </Grid>
-                </StackPanel>
+                        <!-- Add Tenant Button -->
+                        <Button Command="{Binding ShowAddTenantPanelCommand}" 
+                                Style="{StaticResource ModernPrimaryButton}"
+                                Height="40" 
+                                MinWidth="140"
+                                Cursor="Hand">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Thêm khách thuê" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Main Content - GIỐNG FinancialWindow -->
                 <Grid Grid.Row="1">

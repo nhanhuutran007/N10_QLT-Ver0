@@ -334,7 +334,7 @@
                             </Style>
                         </Border.Style>
                         <Grid>
-                            <TextBlock Text="🔍 Tìm kiếm hợp đồng..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
+                            <TextBlock Text="Tìm kiếm hợp đồng..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
                                       Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                   Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
@@ -354,7 +354,9 @@
                     <!-- Add Contract Button -->
                     <Button Command="{Binding AddContractCommand}" 
                             Style="{StaticResource ModernPrimaryButton}"
-                            Height="40" Cursor="Hand">
+                            Height="40" 
+                            MinWidth="140"
+                            Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Thêm hợp đồng" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -382,7 +384,7 @@
                             Style="{StaticResource PrimaryButtonStyle}" 
                             Background="#8FBC8F" 
                             Command="{Binding LoadExpiringContractsCommand}" 
-                            Width="230"
+                            Width="206"
                             Margin="0,0,10,0"/>
                     <Button Content="📧 Gửi cảnh báo hết hạn"
                             Style="{StaticResource PrimaryButtonStyle}"

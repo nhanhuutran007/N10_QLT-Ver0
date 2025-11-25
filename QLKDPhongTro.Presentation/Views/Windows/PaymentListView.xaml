@@ -137,6 +137,57 @@
             </Style.Triggers>
         </Style>
 
+        <!-- ComboBox Style -->
+        <Style TargetType="{x:Type ComboBox}" x:Key="ComboBoxStyle">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                            <Grid>
+                                <ToggleButton Name="ToggleButton" Template="{DynamicResource ComboBoxToggleButton}" Focusable="false" IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press"/>
+                                <ContentPresenter Name="ContentSite" IsHitTestVisible="False"  Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Margin="10,0,30,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                                <TextBox x:Name="PART_EditableTextBox" Style="{x:Null}" Template="{x:Null}" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,30,0" Focusable="True" Background="Transparent" Visibility="Hidden" IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                <Popup Name="Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Slide">
+                                    <Grid Name="DropDown" SnapsToDevicePixels="True" MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                        <Border x:Name="DropDownBorder" Background="White" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" CornerRadius="6" Effect="{StaticResource CardShadow}" Margin="0,2,0,0">
+                                            <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
+                                            </ScrollViewer>
+                                        </Border>
+                                    </Grid>
+                                </Popup>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Helper for ComboBox Toggle Button -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="6" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" />
+                <Path x:Name="Arrow" Grid.Column="1" Fill="{StaticResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
+            </Grid>
+        </ControlTemplate>
+
         <Style TargetType="Border" x:Key="StatusBadgeStyle">
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -289,7 +340,7 @@
                             </Style>
                         </Border.Style>
                         <Grid>
-                            <TextBlock Text="🔍 Tìm kiếm thanh toán..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
+                            <TextBlock Text="Tìm kiếm thanh toán..." Foreground="{StaticResource TextTertiary}" VerticalAlignment="Center" Margin="12,0,0,0"
                                      Visibility="{Binding Text.IsEmpty, ElementName=SearchBox, Converter={StaticResource BoolToVisibilityConverter}}"/>
                             <TextBox x:Name="SearchBox" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                      Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Padding="12,0" FontSize="14"/>
@@ -298,7 +349,9 @@
 
                     <Button Command="{Binding ShowAddPaymentCommand}" 
                             Style="{StaticResource ModernPrimaryButton}"
-                            Height="40" Cursor="Hand">
+                            Height="40" 
+                            MinWidth="140"
+                            Cursor="Hand">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Thêm thanh toán" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -309,49 +362,71 @@
 
                 <!-- Main Content Card -->
                 <Border Grid.Row="1" Background="White" CornerRadius="12" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}" Padding="0" ClipToBounds="True">
-                <DataGrid ItemsSource="{Binding Payments}" SelectedItem="{Binding SelectedPayment}"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Page Size Selector -->
+                    <Border Grid.Row="0" Background="{StaticResource BackgroundLighter}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderColor}" Padding="16">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Hiển thị:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondary}" Margin="0,0,8,0"/>
+                            <ComboBox Width="120"
+                                      Style="{StaticResource ComboBoxStyle}"
+                                      SelectedValue="{Binding PageSize, Mode=TwoWay}"
+                                      SelectedValuePath="Tag">
+                                <ComboBoxItem Tag="5">5 hàng</ComboBoxItem>
+                                <ComboBoxItem Tag="10">10 hàng</ComboBoxItem>
+                                <ComboBoxItem Tag="20">20 hàng</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- DataGrid -->
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Payments}" SelectedItem="{Binding SelectedPayment}"
                           AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
                           GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BorderLightColor}" 
                           HeadersVisibility="Column" BorderThickness="0" Background="White"
-                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
-                          Margin="0">
+                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" 
+                          Margin="0" SelectionChanged="DataGrid_SelectionChanged">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="MÃ THANH TOÁN" Binding="{Binding Id}" Width="1.5*" MinWidth="150">
+                        <DataGridTextColumn Header="MÃ THANH TOÁN" Binding="{Binding Id}" Width="Auto" MinWidth="120" MaxWidth="140">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="FontWeight" Value="SemiBold"/>
                                     <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="10,0"/>
+                                    <Setter Property="Padding" Value="8,0"/>
                                     <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                     <Setter Property="ToolTip" Value="{Binding Id}"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="PHÒNG" Binding="{Binding RoomName}" Width="*" MinWidth="120">
+                        <DataGridTextColumn Header="PHÒNG" Binding="{Binding RoomName}" Width="Auto" MinWidth="90" MaxWidth="130">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="16,0"/>
+                                    <Setter Property="Padding" Value="8,0"/>
                                     <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="NGÀY THANH TOÁN" Binding="{Binding Date, StringFormat='dd/MM/yyyy'}" Width="Auto" MinWidth="160">
+                        <DataGridTextColumn Header="NGÀY THANH TOÁN" Binding="{Binding Date, StringFormat='dd/MM/yyyy'}" Width="Auto" MinWidth="120" MaxWidth="140">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="16,0"/>
+                                    <Setter Property="Padding" Value="8,0"/>
                                 </Style>
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="TỔNG TIỀN" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="1.2*" MinWidth="150">
+                        <DataGridTextColumn Header="TỔNG TIỀN" Binding="{Binding TotalAmount, StringFormat='{}{0:N0} VNĐ'}" Width="Auto" MinWidth="150" MaxWidth="190">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="VerticalAlignment" Value="Center"/>
-                                    <Setter Property="Padding" Value="0,0"/>
+                                    <Setter Property="Padding" Value="8,0"/>
                                     <Setter Property="Foreground" Value="#059669"/>
                                     <Setter Property="FontWeight" Value="Bold"/>
                                     <Setter Property="FontSize" Value="15"/>
@@ -360,10 +435,10 @@
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTemplateColumn Header="TRẠNG THÁI" Width="Auto" MinWidth="280">
+                        <DataGridTemplateColumn Header="TRẠNG THÁI" Width="Auto" MinWidth="190" MaxWidth="230">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="12,8,20,8">
+                                    <Grid Margin="10,8,0,8">
                                         <StackPanel Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                                             <Border Style="{StaticResource StatusBadgeStyle}" Margin="0,0,0,8" HorizontalAlignment="Left">
                                                 <TextBlock Text="{Binding Status}"
@@ -428,10 +503,10 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Header="THAO TÁC" Width="Auto" MinWidth="140">
+                        <DataGridTemplateColumn Header="THAO TÁC" Width="Auto" MinWidth="140" MaxWidth="160">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,16,0">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,0">
                                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}">
                                             <Button Command="{Binding DataContext.ViewCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
                                                     CommandParameter="{Binding}" 
@@ -481,6 +556,7 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
+                </Grid>
                 </Border>
 
                 <!-- Pagination -->

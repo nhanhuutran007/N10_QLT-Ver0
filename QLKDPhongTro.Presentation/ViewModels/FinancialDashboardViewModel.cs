@@ -161,6 +161,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
+        private ObservableCollection<RecentPaymentInfoDto> _recentPayments = new();
+        public ObservableCollection<RecentPaymentInfoDto> RecentPayments
+        {
+            get => _recentPayments;
+            set
+            {
+                _recentPayments = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _isLoading;
         public bool IsLoading
         {
@@ -327,6 +338,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 				if (SetProperty(ref _selectedMonth, value))
 				{
 					FilterRevenueByMonthYear();
+					// Reload dữ liệu doanh thu theo tháng/năm được chọn
+					_ = RefreshRevenueDataAsync();
 				}
 			}
 		}
@@ -340,6 +353,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 				if (SetProperty(ref _selectedYear, value))
 				{
 					FilterRevenueByMonthYear();
+					// Reload dữ liệu doanh thu theo tháng/năm được chọn
+					_ = RefreshRevenueDataAsync();
 				}
 			}
 		}
@@ -349,10 +364,69 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
 		private void FilterRevenueByMonthYear()
 		{
-			// Luôn hiển thị tất cả dữ liệu trong biểu đồ
-			// Filter chỉ áp dụng khi xuất báo cáo
-			// Giữ nguyên biểu đồ để người dùng có thể xem tổng quan
-			PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(_allPaidMonthlyStats);
+			if (_selectedMonth == null || _selectedYear == null)
+			{
+				// Nếu chưa chọn, hiển thị tất cả
+				PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(_allPaidMonthlyStats);
+				return;
+			}
+
+			// Filter biểu đồ theo năm (không filter theo tháng)
+			var filteredByYear = _allPaidMonthlyStats
+				.Where(m =>
+				{
+					var parts = m.ThangNam.Split('/');
+					if (parts.Length == 2 && int.TryParse(parts[1], out int year))
+					{
+						return year == _selectedYear.Value;
+					}
+					return false;
+				})
+				.ToList();
+
+			PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(filteredByYear);
+
+			// Cập nhật doanh thu tháng được chọn
+			UpdateRevenueBySelectedMonth();
+		}
+
+		private void UpdateRevenueBySelectedMonth()
+		{
+			if (_selectedMonth == null || _selectedYear == null)
+			{
+				return;
+			}
+
+			// Tính doanh thu cho tháng được chọn
+			var selectedMonthLabel = $"{_selectedMonth.Value.ToString().PadLeft(2, '0')}/{_selectedYear.Value}";
+			
+			// Lọc từ TransactionHistory theo tháng/năm được chọn
+			if (TransactionHistory != null && TransactionHistory.Any())
+			{
+				var monthRevenue = TransactionHistory
+					.Where(t => t.ThoiGian.Year == _selectedYear.Value && t.ThoiGian.Month == _selectedMonth.Value)
+					.Sum(x => x.SoTien);
+
+				LatestPaidMonthRevenue = monthRevenue;
+				LatestPaidMonthLabel = _selectedMonth.Value.ToString().PadLeft(2, '0');
+
+				// Tính phần trăm tăng trưởng so với tháng trước
+				var previousMonth = _selectedMonth.Value == 1 ? 12 : _selectedMonth.Value - 1;
+				var previousYear = _selectedMonth.Value == 1 ? _selectedYear.Value - 1 : _selectedYear.Value;
+
+				var previousMonthRevenue = TransactionHistory
+					.Where(t => t.ThoiGian.Year == previousYear && t.ThoiGian.Month == previousMonth)
+					.Sum(x => x.SoTien);
+
+				if (previousMonthRevenue == 0)
+				{
+					RevenueGrowthPercent = 0;
+				}
+				else
+				{
+					RevenueGrowthPercent = ((monthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100m;
+				}
+			}
 		}
 
 		#endregion
@@ -445,6 +519,39 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             await LoadDataAsync();
             DataRefreshed?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async Task RefreshRevenueDataAsync()
+        {
+            // Chỉ reload dữ liệu doanh thu theo tháng/năm được chọn
+            // Không reload các dữ liệu khác (khách đang ở, phòng đang thuê, khách hàng thân thiết)
+            if (_selectedMonth == null || _selectedYear == null)
+            {
+                // Nếu chưa chọn, reset về dữ liệu mặc định
+                await CalculateRevenueGrowthPercentByPaidDateAsync();
+                return;
+            }
+
+            try
+            {
+                // Đảm bảo TransactionHistory đã được load
+                if (_financialController != null && (TransactionHistory == null || !TransactionHistory.Any()))
+                {
+                    var transactions = await _financialController.GetTransactionHistoryAsync(null, null);
+                    TransactionHistory = new ObservableCollection<TransactionHistoryDto>(transactions);
+                }
+
+                // Cập nhật doanh thu theo tháng/năm được chọn
+                UpdateRevenueBySelectedMonth();
+
+                // Cập nhật biểu đồ theo năm (không filter theo tháng)
+                FilterRevenueByMonthYear();
+            }
+            catch (Exception ex)
+            {
+                // Log error nhưng không hiển thị để không làm gián đoạn
+                System.Diagnostics.Debug.WriteLine($"Error refreshing revenue data: {ex.Message}");
+            }
         }
 
         public async Task LoadDataAsync()
@@ -860,6 +967,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 RecentTenant = await _financialController.GetMostRecentTenantInfoAsync();
                 var top3 = await _financialController.GetMostRecentTenantsInfoAsync(3);
                 RecentTenants = new ObservableCollection<RecentTenantInfoDto>(top3);
+
+                // Lấy danh sách thanh toán "Đã trả" gần nhất
+                var recentPayments = await _financialController.GetMostRecentPaymentsInfoAsync(10);
+                RecentPayments = new ObservableCollection<RecentPaymentInfoDto>(recentPayments);
             }
             catch (Exception ex)
             {
@@ -901,6 +1012,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 new() { MaNguoiThue = 2, HoTen = "Trần Thị B", TienCoc = 1500000m, TrangThai = "Đang ở" },
                 new() { MaNguoiThue = 3, HoTen = "Lê Văn C", TienCoc = 1200000m, TrangThai = "Đang ở" }
             });
+
+            // Dữ liệu mẫu cho thanh toán gần nhất
+            RecentPayments = new ObservableCollection<RecentPaymentInfoDto>(new List<RecentPaymentInfoDto>
+            {
+                new() { MaThanhToan = 1, HoTen = "Nguyễn Văn A", TrangThai = "Đã trả", TongTien = 4700000 },
+                new() { MaThanhToan = 2, HoTen = "Trần Thị B", TrangThai = "Đã trả", TongTien = 5200000 },
+                new() { MaThanhToan = 3, HoTen = "Lê Văn C", TrangThai = "Đã trả", TongTien = 4500000 }
+            });
             RevenueGrowthPercent = 0;
             await Task.CompletedTask;
         }
@@ -935,7 +1054,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     .Take(2)
                     .ToList();
 
-                var year = DateTime.Now.Year;
+                // Sử dụng năm được chọn, nếu không có thì dùng năm hiện tại
+                var year = _selectedYear ?? DateTime.Now.Year;
                 var paidByMonth = TransactionHistory
                     .Where(t => t.ThoiGian.Year == year)
                     .GroupBy(t => t.ThoiGian.Month)
@@ -954,17 +1074,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     });
                 }
                 _allPaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
-				PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
+				
+                // Áp dụng filter theo năm (không filter theo tháng cho biểu đồ)
+                FilterRevenueByMonthYear();
 
-                if (lastTwoMonths.Count >= 1)
+                // Cập nhật doanh thu tháng được chọn nếu đã chọn
+                if (_selectedMonth != null && _selectedYear != null)
                 {
-                    LatestPaidMonthRevenue = lastTwoMonths[0].Sum;
-                    LatestPaidMonthLabel = lastTwoMonths[0].m.ToString().PadLeft(2, '0');
+                    UpdateRevenueBySelectedMonth();
                 }
                 else
                 {
-                    LatestPaidMonthRevenue = 0;
-                    LatestPaidMonthLabel = DateTime.Now.Month.ToString().PadLeft(2, '0');
+                    // Nếu chưa chọn, dùng logic cũ
+                    if (lastTwoMonths.Count >= 1)
+                    {
+                        LatestPaidMonthRevenue = lastTwoMonths[0].Sum;
+                        LatestPaidMonthLabel = lastTwoMonths[0].m.ToString().PadLeft(2, '0');
+                    }
+                    else
+                    {
+                        LatestPaidMonthRevenue = 0;
+                        LatestPaidMonthLabel = DateTime.Now.Month.ToString().PadLeft(2, '0');
+                    }
                 }
 
                 if (lastTwoMonths.Count < 2)

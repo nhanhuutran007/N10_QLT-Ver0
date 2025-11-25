@@ -30,5 +30,6 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<int> GenerateMonthlyPaymentsAsync(string thangNam);
         Task<bool> MarkAsPaidAsync(int maThanhToan, DateTime ngayThanhToan, string phuongThucThanhToan = "Tiền mặt");
         Task<List<Payment>> GetPaymentsByRoomAsync(int maPhong);
+        Task<List<Payment>> GetPaymentsByContractAsync(int maHopDong);
     }
 }

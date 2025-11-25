@@ -169,5 +169,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
             WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
+
+        private void TenantSearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 }

@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using QLKDPhongTro.Presentation.Utils; // Chứa InvoiceMappingExtensions
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -16,6 +17,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
     public partial class InvoiceDetailView : Window
     {
         private readonly FinancialController _financialController = FinancialController.CreateDefault();
+        private readonly TenantController _tenantController = new TenantController(new DataLayer.Repositories.TenantRepository());
 
         // Helper property để cast DataContext sang DTO
         public InvoiceDetailDto? InvoiceData
@@ -79,23 +81,63 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             if (e.Key != Key.Enter) return;
             if (sender is not System.Windows.Controls.TextBox tb) return;
 
+            // Lưu giá trị khi nhấn Enter
+            await SaveUnitPriceAsync(tb);
+        }
+
+        // Xử lý khi mất focus (thoát khỏi ô nhập) để tự động lưu
+        private async void UnitPriceTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is not System.Windows.Controls.TextBox tb) return;
+            
+            // Chỉ lưu nếu đang ở chế độ chỉnh sửa (IsReadOnly = false)
+            if (tb.IsReadOnly) return;
+
+            // Lưu giá trị khi mất focus
+            await SaveUnitPriceAsync(tb);
+        }
+
+        // Method chung để lưu đơn giá
+        private async Task SaveUnitPriceAsync(System.Windows.Controls.TextBox textBox)
+        {
             // 1. Khóa lại ô nhập liệu
-            tb.IsReadOnly = true;
+            textBox.IsReadOnly = true;
 
             if (InvoiceData == null) return;
 
             try
             {
-                // 2. Gọi Controller cập nhật dữ liệu
-                var success = await _financialController.UpdateInvoiceUnitPricesAsync(
+                // Sử dụng NumberFormatConverter để parse giá trị từ TextBox
+                var converter = new QLKDPhongTro.Presentation.Converters.NumberFormatConverter();
+                var parsedValue = converter.ConvertBack(textBox.Text, typeof(decimal), null, System.Globalization.CultureInfo.InvariantCulture);
+
+                // Xác định đây là đơn giá điện hay nước
+                decimal? donGiaDien = null;
+                decimal? donGiaNuoc = null;
+                string unitPriceType = "";
+
+                if (textBox.Name == "TxtDonGiaDien" && parsedValue is decimal giaDien && giaDien > 0)
+                {
+                    donGiaDien = giaDien;
+                    unitPriceType = "điện";
+                }
+                else if (textBox.Name == "TxtDonGiaNuoc" && parsedValue is decimal giaNuoc && giaNuoc > 0)
+                {
+                    donGiaNuoc = giaNuoc;
+                    unitPriceType = "nước";
+                }
+
+                // Nếu không có giá trị nào được cập nhật, không làm gì
+                if (!donGiaDien.HasValue && !donGiaNuoc.HasValue)
+                {
+                    return;
+                }
+
+                // 2. Cập nhật đơn giá cho thanh toán hiện tại và tất cả thanh toán "Chưa trả" trong hệ thống
+                var success = await _financialController.UpdateUnitPricesForCurrentAndUnpaidPaymentsAsync(
                     InvoiceData.MaThanhToan,
-                    InvoiceData.SoDienThangTruoc,
-                    InvoiceData.SoDien,
-                    InvoiceData.TienThue,
-                    InvoiceData.TienInternet,
-                    InvoiceData.TienVeSinh,
-                    InvoiceData.TienGiuXe,
-                    InvoiceData.ChiPhiKhac
+                    donGiaDien,
+                    donGiaNuoc
                 );
 
                 if (!success)
@@ -104,12 +146,16 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     return;
                 }
 
-                // 3. Refresh DataContext để tính toán lại các con số (Tổng tiền, Thành tiền...)
-                var currentData = InvoiceData;
-                InvoiceData = null;         // Ngắt binding
-                InvoiceData = currentData;  // Gán lại để trigger NotifyPropertyChanged (nếu có) hoặc cập nhật UI
+                // 3. Cập nhật lại InvoiceData để UI hiển thị đúng
+                // Cần reload lại dữ liệu từ database
+                var updatedPayment = await _financialController.GetInvoiceDetailAsync(InvoiceData.MaThanhToan);
+                if (updatedPayment != null)
+                {
+                    InvoiceData = updatedPayment;
+                }
 
-                MessageBox.Show("Cập nhật thông tin thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Đã cập nhật đơn giá {unitPriceType} cho thanh toán này và tất cả các thanh toán chưa trả trong hệ thống!", 
+                    "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -167,11 +213,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             try
             {
                 var extendedInfo = await GetInvoiceExtendedInfoAsync();
+                int soNguoiLuuTru = await GetSoNguoiLuuTruAsync(extendedInfo.contract);
                 var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
                     extendedInfo.contract,
                     InvoiceData.Email,
                     extendedInfo.tenPhong,
-                    1
+                    soNguoiLuuTru
                 );
                 string logoPath = FindLogoPath();
 
@@ -241,13 +288,14 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 // Lấy thông tin mở rộng
                 var extendedInfo = await GetInvoiceExtendedInfoAsync();
+                int soNguoiLuuTru = await GetSoNguoiLuuTruAsync(extendedInfo.contract);
 
                 // Chuyển đổi DTO
                 var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
                     extendedInfo.contract,
                     InvoiceData.Email,
                     extendedInfo.tenPhong,
-                    1
+                    soNguoiLuuTru
                 );
 
                 string logoPath = FindLogoPath();
@@ -322,6 +370,35 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 }
             }
             return (contract, tenPhong);
+        }
+
+        /// <summary>
+        /// Lấy số lượng người lưu trú trong phòng từ hợp đồng
+        /// </summary>
+        private async Task<int> GetSoNguoiLuuTruAsync(ContractDto? contract)
+        {
+            if (contract == null || contract.MaPhong <= 0)
+            {
+                return 1; // Mặc định 1 người nếu không có hợp đồng hoặc mã phòng
+            }
+
+            try
+            {
+                // Lấy danh sách người thuê trong phòng
+                var roomTenants = await _tenantController.GetTenantsByRoomIdAsync(contract.MaPhong);
+                
+                // Đếm số người có trạng thái "Đang ở"
+                int soNguoi = roomTenants?.Count(t => 
+                    string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                
+                // Đảm bảo ít nhất 1 người
+                return soNguoi < 1 ? 1 : soNguoi;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Lỗi khi lấy số người lưu trú: {ex.Message}");
+                return 1; // Fallback về 1 nếu có lỗi
+            }
         }
 
         private void LoadQrCode()

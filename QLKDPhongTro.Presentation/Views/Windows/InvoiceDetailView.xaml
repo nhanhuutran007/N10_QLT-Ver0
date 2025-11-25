@@ -164,13 +164,13 @@
                         <Run Text="Hóa đơn thanh toán tiền điện nước tháng "/>
                         <Run Text="{Binding ThangNam}"/>
                     </TextBlock>
-                    <TextBlock Text="19, Nguyễn Hữu Thọ, Tân Hưng, TP.HCM"
+                    <TextBlock Text="HỆ THỐNG QUẢN LÝ TRỌ HOMESTEAD"
                             Foreground="#666"
                             Margin="0,10,0,0"/>
-                    <TextBlock Text="Tên Chủ Tài Khoản: TRAN HUU NHAN"
+                    <TextBlock Text="19, Nguyễn Hữu Thọ, Tân Hưng, TP.HCM"
                             Foreground="#666"
                             Margin="0,2,0,0"/>
-                    <TextBlock Text="Số Tài Khoản: 0869918250"
+                    <TextBlock
                             Foreground="#666"
                             Margin="0,2,0,0"/>
                 </StackPanel>
@@ -460,7 +460,8 @@
                                                 VerticalContentAlignment="Center"
                                                 IsReadOnly="True"
                                                 MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
-                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                                KeyDown="UnitPriceTextBox_KeyDown"
+                                                LostFocus="UnitPriceTextBox_LostFocus"/>
                                         <TextBlock Grid.Column="3"
                                                 Text="{Binding SoDien, StringFormat='{}{0:N0}', TargetNullValue=''}"
                                                 Foreground="#555"
@@ -516,7 +517,8 @@
                                                 VerticalContentAlignment="Center"
                                                 IsReadOnly="True"
                                                 MouseDoubleClick="UnitPriceTextBox_MouseDoubleClick"
-                                                KeyDown="UnitPriceTextBox_KeyDown"/>
+                                                KeyDown="UnitPriceTextBox_KeyDown"
+                                                LostFocus="UnitPriceTextBox_LostFocus"/>
                                         <TextBlock Grid.Column="3"
                                                 Text="{Binding SoNuoc, StringFormat='{}{0:N0}', TargetNullValue=''}"
                                                 Foreground="#555"

@@ -590,6 +590,39 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return payments;
         }
 
+        public async Task<List<Payment>> GetPaymentsByContractAsync(int maHopDong)
+        {
+            var payments = new List<Payment>();
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var cmd = new MySqlCommand(@"
+                    SELECT tt.MaThanhToan, tt.MaHopDong, tt.ThangNam, tt.TienThue, tt.TienDien, tt.TienNuoc, 
+                           tt.TienInternet, tt.TienVeSinh, tt.TienGiuXe, tt.ChiPhiKhac, tt.TongTien, tt.SoTienDaTra,
+                           tt.TrangThaiThanhToan, tt.NgayThanhToan, tt.GhiChu,
+                           nt.HoTen, p.TenPhong, nt.SoDienThoai, n.DiaChi,
+                           tt.DonGiaDien, tt.DonGiaNuoc, tt.SoDien, tt.ChiSoDienCu, tt.ChiSoDienMoi, tt.SoNuoc
+                    FROM ThanhToan tt
+                    LEFT JOIN HopDong hd ON tt.MaHopDong = hd.MaHopDong
+                    LEFT JOIN NguoiThue nt ON hd.MaNguoiThue = nt.MaNguoiThue
+                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                    LEFT JOIN Nha n ON p.MaNha = n.MaNha
+                    WHERE tt.MaHopDong = @MaHopDong
+                    ORDER BY tt.ThangNam DESC", conn);
+
+                cmd.Parameters.AddWithValue("@MaHopDong", maHopDong);
+
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        payments.Add(MapReaderToPayment(reader));
+                    }
+                }
+            }
+            return payments;
+        }
+
         // --- HELPER METHODS ---
 
         private void AddParameters(MySqlCommand cmd, Payment payment)
