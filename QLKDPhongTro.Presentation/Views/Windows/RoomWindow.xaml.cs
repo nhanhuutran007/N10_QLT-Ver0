@@ -1,4 +1,5 @@
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 using System.Windows;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -13,6 +14,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             this.MinWidth = 800;
 
             this.DataContext = new RentedRoomViewModel();
+
+            // Thêm event handler để kiểm tra và đóng ứng dụng khi đóng cửa sổ
+            this.Closed += RoomWindow_Closed;
         }
 
         // Hàm thêm lại để fix lỗi
@@ -24,6 +28,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         private void DataGrid_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void RoomWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
     }
 }

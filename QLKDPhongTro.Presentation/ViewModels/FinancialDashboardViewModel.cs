@@ -288,6 +288,75 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
 		#endregion
 
+		#region Month/Year Filter Properties
+
+		public class MonthOption
+		{
+			public string Label { get; set; } = string.Empty;
+			public int Value { get; set; }
+		}
+
+		private ObservableCollection<MonthOption> _monthOptions = new();
+		public ObservableCollection<MonthOption> MonthOptions
+		{
+			get => _monthOptions;
+			private set
+			{
+				_monthOptions = value;
+				OnPropertyChanged();
+			}
+		}
+
+		private ObservableCollection<int> _yearOptions = new();
+		public ObservableCollection<int> YearOptions
+		{
+			get => _yearOptions;
+			private set
+			{
+				_yearOptions = value;
+				OnPropertyChanged();
+			}
+		}
+
+		private MonthOption? _selectedMonth;
+		public MonthOption? SelectedMonth
+		{
+			get => _selectedMonth;
+			set
+			{
+				if (SetProperty(ref _selectedMonth, value))
+				{
+					FilterRevenueByMonthYear();
+				}
+			}
+		}
+
+		private int? _selectedYear;
+		public int? SelectedYear
+		{
+			get => _selectedYear;
+			set
+			{
+				if (SetProperty(ref _selectedYear, value))
+				{
+					FilterRevenueByMonthYear();
+				}
+			}
+		}
+
+		// Dữ liệu gốc để filter
+		private ObservableCollection<MonthlyStatsDto> _allPaidMonthlyStats = new();
+
+		private void FilterRevenueByMonthYear()
+		{
+			// Luôn hiển thị tất cả dữ liệu trong biểu đồ
+			// Filter chỉ áp dụng khi xuất báo cáo
+			// Giữ nguyên biểu đồ để người dùng có thể xem tổng quan
+			PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(_allPaidMonthlyStats);
+		}
+
+		#endregion
+
         #region Events
 
         public event EventHandler? ShowPaymentFormRequested;
@@ -331,6 +400,35 @@ namespace QLKDPhongTro.Presentation.ViewModels
             ClearDateFilterCommand = new RelayCommand(ClearDateFilter);
             SearchCommand = new RelayCommand(async () => await SearchDebtsAsync());
             ToggleChartViewCommand = new RelayCommand(ToggleChartView);
+
+            // Khởi tạo danh sách tháng
+            MonthOptions = new ObservableCollection<MonthOption>
+            {
+                new() { Label = "Tháng 1", Value = 1 },
+                new() { Label = "Tháng 2", Value = 2 },
+                new() { Label = "Tháng 3", Value = 3 },
+                new() { Label = "Tháng 4", Value = 4 },
+                new() { Label = "Tháng 5", Value = 5 },
+                new() { Label = "Tháng 6", Value = 6 },
+                new() { Label = "Tháng 7", Value = 7 },
+                new() { Label = "Tháng 8", Value = 8 },
+                new() { Label = "Tháng 9", Value = 9 },
+                new() { Label = "Tháng 10", Value = 10 },
+                new() { Label = "Tháng 11", Value = 11 },
+                new() { Label = "Tháng 12", Value = 12 }
+            };
+
+            // Khởi tạo danh sách năm (5 năm gần nhất)
+            var currentYear = DateTime.Now.Year;
+            YearOptions = new ObservableCollection<int>();
+            for (int i = 0; i < 5; i++)
+            {
+                YearOptions.Add(currentYear - i);
+            }
+
+            // Đặt giá trị mặc định
+            SelectedMonth = MonthOptions.FirstOrDefault(m => m.Value == DateTime.Now.Month);
+            SelectedYear = DateTime.Now.Year;
 
             // Load dữ liệu ban đầu
             _ = InitializeAsync();
@@ -528,7 +626,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
 					exportFormat = p.EndsWith("Excel", StringComparison.OrdinalIgnoreCase) ? "Excel" : "PDF";
 				}
 
-				var monthLabel = DateTime.Now.ToString("MM/yyyy");
+				// Sử dụng tháng/năm được chọn, nếu không có thì dùng tháng/năm hiện tại
+				var selectedMonth = SelectedMonth?.Value ?? DateTime.Now.Month;
+				var selectedYear = SelectedYear ?? DateTime.Now.Year;
+				var monthLabel = $"{selectedMonth.ToString().PadLeft(2, '0')}/{selectedYear}";
 
 				// Choose save path
 				var sfd = new SaveFileDialog
@@ -852,7 +953,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         LoiNhuan = sum
                     });
                 }
-                PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
+                _allPaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
+				PaidMonthlyStats = new ObservableCollection<MonthlyStatsDto>(list);
 
                 if (lastTwoMonths.Count >= 1)
                 {

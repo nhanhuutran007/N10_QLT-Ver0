@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -15,6 +16,13 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             InitializeComponent();
             this.DataContext = viewModel;
+            this.Closed += ViewRoomWindow_Closed;
+        }
+
+        private void ViewRoomWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

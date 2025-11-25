@@ -5,6 +5,7 @@ using System.Windows.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -18,6 +19,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             InitializeComponent();
             _houseController = new HouseController(new HouseRepository());
             Loaded += HouseInfoWindow_Loaded;
+            Closed += HouseInfoWindow_Closed;
         }
 
         private async void HouseInfoWindow_Loaded(object sender, RoutedEventArgs e)
@@ -147,6 +149,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             DragMove();
+        }
+
+        private void HouseInfoWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
     }
 }

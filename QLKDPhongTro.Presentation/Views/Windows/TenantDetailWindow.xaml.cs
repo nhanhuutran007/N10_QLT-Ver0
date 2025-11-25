@@ -1,4 +1,5 @@
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 using System.Windows;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -15,6 +16,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             _viewModel = viewModel;
             DataContext = _viewModel;
             Loaded += TenantDetailWindow_Loaded;
+            Closed += TenantDetailWindow_Closed;
         }
 
         private async void TenantDetailWindow_Loaded(object sender, RoutedEventArgs e)
@@ -25,6 +27,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void TenantDetailWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
     }
 }

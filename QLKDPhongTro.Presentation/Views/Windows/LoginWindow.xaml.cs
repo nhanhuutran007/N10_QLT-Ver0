@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Linq;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -31,6 +32,15 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 EmailTextBox?.Focus();
                 ResetLoginButton();
             };
+
+            // Thêm event handler để kiểm tra và đóng ứng dụng khi đóng cửa sổ
+            this.Closed += LoginWindow_Closed;
+        }
+
+        private void LoginWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
 
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

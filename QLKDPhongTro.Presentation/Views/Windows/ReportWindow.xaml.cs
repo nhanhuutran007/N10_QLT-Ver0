@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 using System.Threading.Tasks;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -46,6 +47,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 _viewModel.ShowMessageRequested -= ViewModel_ShowMessageRequested;
             }
+
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
 
         private void ViewModel_ShowMessageRequested(object? sender, string e)
@@ -88,6 +92,23 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Chỉ xử lý logic riêng của ReportWindow nếu cần
         }
 
+        // Handler cho nút Xuất - mở popup
+        private void ExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ExportPopup != null)
+            {
+                ExportPopup.IsOpen = true;
+            }
+        }
+
+        // Handler cho nút Xuất báo cáo trong popup - đóng popup sau khi xuất
+        private void ExportConfirmButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ExportPopup != null)
+            {
+                ExportPopup.IsOpen = false;
+            }
+        }
 
     }
 }

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.ViewModels;
 using QLKDPhongTro.BusinessLayer.DTOs;
+using QLKDPhongTro.Presentation.Utils;
 using System.Windows.Input; // Cần thiết cho MouseButtonEventArgs
 
 namespace QLKDPhongTro.Presentation.Views.Windows
@@ -81,6 +82,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         MessageBox.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 };
+
+                // Thêm event handler để kiểm tra và đóng ứng dụng khi đóng cửa sổ
+                this.Closed += FinancialWindow_Closed;
             }
             catch (Exception ex)
             {
@@ -95,6 +99,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     // Ignore
                 }
             }
+        }
+
+        private void FinancialWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
 
         private async void ManualInputButton_Click(object sender, RoutedEventArgs e)

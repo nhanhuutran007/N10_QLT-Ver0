@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -32,14 +33,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             InitializeCarousel();
             
             // Dừng timer khi window đóng
-            this.Closing += (s, e) => 
-            {
-                if (_carouselTimer != null)
-                {
-                    _carouselTimer.Stop();
-                    _carouselTimer = null;
-                }
-            };
+            this.Closing += DashWindow_Closing;
+            // Kiểm tra và đóng ứng dụng sau khi window đã đóng
+            this.Closed += DashWindow_Closed;
         }
 
         private void LoadInitialImages()
@@ -169,6 +165,22 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Chỉ xử lý logic riêng của DashWindow nếu cần
         }
 
+        private void DashWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Dừng timer
+            if (_carouselTimer != null)
+            {
+                _carouselTimer.Stop();
+                _carouselTimer = null;
+            }
+        }
+
+        private void DashWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            // Sử dụng Closed event để đảm bảo cửa sổ đã thực sự đóng
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
+        }
 
     }
 }

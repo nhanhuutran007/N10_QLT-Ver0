@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -18,11 +19,19 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             
             // Đăng ký sự kiện Closing để đánh dấu cửa sổ đang đóng
             Closing += UserSecurityWindow_Closing;
+            // Đăng ký sự kiện Closed để kiểm tra và đóng ứng dụng
+            Closed += UserSecurityWindow_Closed;
         }
 
         private void UserSecurityWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             _isClosing = true;
+        }
+
+        private void UserSecurityWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
 
         private void UserSecurityWindow_Loaded(object sender, RoutedEventArgs e)

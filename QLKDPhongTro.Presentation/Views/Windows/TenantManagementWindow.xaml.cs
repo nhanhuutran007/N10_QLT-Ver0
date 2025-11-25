@@ -1,6 +1,7 @@
 using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.Presentation.ViewModels;
 using QLKDPhongTro.Presentation.Views.Windows;
+using QLKDPhongTro.Presentation.Utils;
 using System;
 using System.Linq;
 using System.Windows;
@@ -32,6 +33,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
             // Thêm event handler cho việc thay đổi kích thước cửa sổ
             this.SizeChanged += TenantManagementWindow_SizeChanged;
+
+            // Thêm event handler để kiểm tra và đóng ứng dụng khi đóng cửa sổ
+            this.Closed += TenantManagementWindow_Closed;
         }
 
         // Load dữ liệu khách thuê
@@ -158,6 +162,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
+        }
+
+        private void TenantManagementWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
     }
 }

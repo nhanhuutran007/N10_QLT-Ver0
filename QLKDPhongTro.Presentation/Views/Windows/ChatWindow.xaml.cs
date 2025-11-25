@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Linq;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -27,6 +28,9 @@ namespace QLKDPhongTro.Presentation.Views.Windows
 
             // Initialize system prompt
             _history.Add(new ChatMessage { role = "system", content = "You are a helpful assistant." });
+
+            // Thêm event handler để kiểm tra và đóng ứng dụng khi đóng cửa sổ
+            this.Closed += ChatWindow_Closed;
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -135,6 +139,12 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 partsReversedWithNoise[i] = new string(s.Reverse().ToArray());
             }
             return string.Concat(partsReversedWithNoise);
+        }
+
+        private void ChatWindow_Closed(object? sender, EventArgs e)
+        {
+            // Kiểm tra và đóng ứng dụng nếu không còn cửa sổ nào mở
+            WindowHelper.CheckAndShutdownIfNoWindows(this);
         }
     }
 }
