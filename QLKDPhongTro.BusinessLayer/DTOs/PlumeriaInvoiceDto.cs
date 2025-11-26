@@ -46,11 +46,13 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public List<KhoanMucDto> CacKhoanMuc { get; set; } = new List<KhoanMucDto>();
         public decimal TongCong { get; set; }
 
-        // Thông tin ngân hàng
+        // Thông tin ngân hàng & liên hệ chủ nhà
         public string TenTaiKhoanNH { get; set; } = string.Empty;
         public string SoTaiKhoanNH { get; set; } = string.Empty;
         public string NganHang { get; set; } = string.Empty;
         public string ChiNhanh { get; set; } = string.Empty;
+        public string OwnerPhone { get; set; } = string.Empty;
+        public string OwnerEmail { get; set; } = string.Empty;
 
         // Thời hạn thanh toán
         public DateTime ThoiHanThanhToan { get; set; }

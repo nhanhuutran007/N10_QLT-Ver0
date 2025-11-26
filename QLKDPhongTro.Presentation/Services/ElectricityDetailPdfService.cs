@@ -106,7 +106,9 @@ namespace QLKDPhongTro.Presentation.Services
             }
 
             // Thông tin liên hệ
-            gfx.DrawString("[T. +84 09 0808 3890] [E. plumeriafamily@outlook.com]", FontSmall, 
+            var ownerPhone = string.IsNullOrWhiteSpace(invoice.OwnerPhone) ? "+84 09 0808 3890" : invoice.OwnerPhone;
+            var ownerEmail = string.IsNullOrWhiteSpace(invoice.OwnerEmail) ? "plumeriafamily@outlook.com" : invoice.OwnerEmail;
+            gfx.DrawString($"[T. {ownerPhone}] [E. {ownerEmail}]", FontSmall, 
                 new XSolidBrush(ColorGrayText), 
                 new XRect(0, 30, page.Width.Point - 40, 20), XStringFormats.TopRight);
 

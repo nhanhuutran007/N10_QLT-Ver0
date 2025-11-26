@@ -3,6 +3,8 @@ using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -13,8 +15,29 @@ namespace QLKDPhongTro.Presentation.ViewModels
     public class PaymentFormViewModel : ViewModelBase
     {
         private readonly FinancialController _financialController;
+        private readonly Dictionary<int, List<ContractDto>> _contractsByTenant = new();
 
         #region Properties Binding
+
+        private ObservableCollection<CustomerOption> _customers = new ObservableCollection<CustomerOption>();
+        public ObservableCollection<CustomerOption> Customers
+        {
+            get => _customers;
+            set => SetProperty(ref _customers, value);
+        }
+
+        private CustomerOption _selectedCustomer;
+        public CustomerOption SelectedCustomer
+        {
+            get => _selectedCustomer;
+            set
+            {
+                if (SetProperty(ref _selectedCustomer, value))
+                {
+                    LoadContractsForCustomer(value);
+                }
+            }
+        }
 
         private ObservableCollection<ContractDto> _contracts = new ObservableCollection<ContractDto>();
         public ObservableCollection<ContractDto> Contracts
@@ -108,15 +131,68 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
-                var activeContracts = await _financialController.GetActiveContractDtosAsync();
-                Contracts.Clear();
-                foreach (var c in activeContracts) Contracts.Add(c);
 
-                // Chọn hợp đồng đầu tiên nếu có
-                if (Contracts.Count > 0) SelectedContract = Contracts[0];
+                var activeContracts = await _financialController.GetActiveContractDtosAsync();
+                _contractsByTenant.Clear();
+
+                foreach (var contract in activeContracts)
+                {
+                    var tenantId = contract.MaNguoiThue;
+                    if (!_contractsByTenant.TryGetValue(tenantId, out var list))
+                    {
+                        list = new List<ContractDto>();
+                        _contractsByTenant[tenantId] = list;
+                    }
+                    list.Add(contract);
+                }
+
+                var tenants = await _financialController.GetAllTenantsAsync();
+                var tenantDict = tenants.ToDictionary(t => t.MaKhachThue, t => t.HoTen);
+
+                Customers.Clear();
+                foreach (var kvp in _contractsByTenant)
+                {
+                    string name = tenantDict.TryGetValue(kvp.Key, out var hoTen)
+                        ? hoTen
+                        : $"Khách #{kvp.Key}";
+                    Customers.Add(new CustomerOption
+                    {
+                        MaNguoiThue = kvp.Key,
+                        HoTen = name
+                    });
+                }
+
+                SelectedCustomer = Customers.FirstOrDefault();
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message); }
-            finally { IsLoading = false; }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private void LoadContractsForCustomer(CustomerOption customer)
+        {
+            Contracts.Clear();
+
+            if (customer != null && _contractsByTenant.TryGetValue(customer.MaNguoiThue, out var contractList))
+            {
+                foreach (var contract in contractList)
+                {
+                    Contracts.Add(contract);
+                }
+
+                SelectedContract = Contracts.FirstOrDefault();
+            }
+            else
+            {
+                SelectedContract = null;
+                RoomName = string.Empty;
+                Amount = 0;
+            }
         }
 
         public async Task SavePaymentAsync()
@@ -170,6 +246,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"Lỗi hệ thống: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+    }
+
+    public sealed class CustomerOption
+    {
+        public int MaNguoiThue { get; set; }
+        public string HoTen { get; set; } = string.Empty;
+        public override string ToString() => HoTen;
     }
 
     public class ExpenseFormViewModel : ViewModelBase

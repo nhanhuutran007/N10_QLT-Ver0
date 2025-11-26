@@ -18,7 +18,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         // Sử dụng ConnectDB chung để quản lý connection string
         private string connectionString => ConnectDB.GetConnectionString();
 
-        private const string UserSelectColumns = "MaAdmin, TenDangNhap, Email, SoDienThoai, MaNha, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi";
+        private const string UserSelectColumns = "MaAdmin, TenDangNhap, Email, SoDienThoai, MaNha, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, TenTK, SoTK, LinkQr";
         private const string UserSelectColumnsWithPassword = UserSelectColumns + ", MatKhau";
 
         private static User MapUser(DbDataReader reader)
@@ -36,7 +36,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 CCCD = ReadString(reader, "CCCD"),
                 NgayCap = ReadDate(reader, "NgayCap"),
                 NoiCap = ReadString(reader, "NoiCap"),
-                DiaChi = ReadString(reader, "DiaChi")
+                DiaChi = ReadString(reader, "DiaChi"),
+                TenTK = ReadString(reader, "TenTK"),
+                SoTK = ReadString(reader, "SoTK"),
+                LinkQr = ReadString(reader, "LinkQr")
             };
         }
 
@@ -381,7 +384,10 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                       CCCD = @CCCD,
                                       NgayCap = @NgayCap,
                                       NoiCap = @NoiCap,
-                                      DiaChi = @DiaChi
+                                      DiaChi = @DiaChi,
+                                      TenTK = @TenTK,
+                                      SoTK = @SoTK,
+                                      LinkQr = @LinkQr
                                   WHERE MaAdmin = @MaAdmin";
                     using (var command = new MySqlCommand(query, connection))
                     {
@@ -395,6 +401,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         command.Parameters.AddWithValue("@NgayCap", DbNull(user.NgayCap));
                         command.Parameters.AddWithValue("@NoiCap", DbNull(user.NoiCap));
                         command.Parameters.AddWithValue("@DiaChi", DbNull(user.DiaChi));
+                        command.Parameters.AddWithValue("@TenTK", DbNull(user.TenTK));
+                        command.Parameters.AddWithValue("@SoTK", DbNull(user.SoTK));
+                        command.Parameters.AddWithValue("@LinkQr", DbNull(user.LinkQr));
                         
                         var result = await command.ExecuteNonQueryAsync();
                         return result > 0;

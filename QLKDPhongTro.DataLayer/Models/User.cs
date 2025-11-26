@@ -19,5 +19,8 @@ namespace QLKDPhongTro.DataLayer.Models
         public string NoiCap { get; set; } = string.Empty;
         public string DiaChi { get; set; } = string.Empty;
         public int MaNha { get; set; }
+        public string TenTK { get; set; } = string.Empty;
+        public string SoTK { get; set; } = string.Empty;
+        public string LinkQr { get; set; } = string.Empty;
     }
 }

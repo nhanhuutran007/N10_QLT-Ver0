@@ -276,6 +276,70 @@
                                  AcceptsReturn="True"
                                  Margin="0,0,0,30"/>
 
+                        <!-- Section: Thông tin tài khoản ngân hàng -->
+                        <TextBlock Text="Thông tin tài khoản ngân hàng" 
+                                   Style="{StaticResource SectionTitleStyle}"/>
+
+                        <!-- Trường Tên tài khoản ngân hàng -->
+                        <TextBlock Text="Tên tài khoản ngân hàng" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding TenTK, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường Số tài khoản -->
+                        <TextBlock Text="Số tài khoản" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <TextBox Text="{Binding SoTK, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 Style="{StaticResource InputTextBoxStyle}"
+                                 Height="42" 
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Trường Mã QR -->
+                        <TextBlock Text="Mã QR" 
+                                   Style="{StaticResource LabelStyle}"/>
+                        <Grid Margin="0,0,0,30">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox x:Name="LinkQrTextBox"
+                                     Grid.Column="0"
+                                     Text="{Binding LinkQr, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                     Style="{StaticResource InputTextBoxStyle}"
+                                     Height="42" 
+                                     Margin="0,0,10,0"
+                                     IsReadOnly="True"/>
+                            <Button Grid.Column="1"
+                                    Content="Chọn hình"
+                                    Height="42"
+                                    MinWidth="120"
+                                    Background="#319DFF"
+                                    Foreground="White"
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Click="SelectQrImageButton_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="border"
+                                                CornerRadius="6" 
+                                                Background="{TemplateBinding Background}">
+                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                            VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="border" Property="Background" Value="#2B8CE8"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </Grid>
+
                         <!-- Section: Thay đổi mật khẩu -->
                         <TextBlock Text="Thay đổi mật khẩu" 
                                    Style="{StaticResource SectionTitleStyle}"/>

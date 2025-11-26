@@ -222,7 +222,9 @@ namespace QLKDPhongTro.Presentation.Services
             }
 
             // Thông tin liên hệ
-            gfx.DrawString("[T. +84 0869 089 999] [E. nhanhuutran007@gmail.com]", FontSmall, new XSolidBrush(ColorGrayText), new XRect(0, 30, page.Width.Point - 40, 20), XStringFormats.TopRight);
+            var ownerPhone = string.IsNullOrWhiteSpace(invoice.OwnerPhone) ? "+84 0869 089 999" : invoice.OwnerPhone;
+            var ownerEmail = string.IsNullOrWhiteSpace(invoice.OwnerEmail) ? "nhanhuutran007@gmail.com" : invoice.OwnerEmail;
+            gfx.DrawString($"[T. {ownerPhone}] [E. {ownerEmail}]", FontSmall, new XSolidBrush(ColorGrayText), new XRect(0, 30, page.Width.Point - 40, 20), XStringFormats.TopRight);
 
             // Tiêu đề
             gfx.DrawString(title, FontTitle, XBrushes.Black, new XRect(0, 70, page.Width.Point, 40), XStringFormats.Center);

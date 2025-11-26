@@ -16,7 +16,11 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
             ContractDto? contract = null, 
             string email = "", 
             string tenPhong = "", 
-            int soNguoiLuuTru = 1)
+            int soNguoiLuuTru = 1,
+            string tenTaiKhoan = "",
+            string soTaiKhoan = "",
+            string ownerPhone = "",
+            string ownerEmail = "")
         {
             var result = new PlumeriaInvoiceDto
             {
@@ -54,11 +58,13 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
                 MucTieuThuNuoc = (int)(invoice.SoNuoc ?? 0),
                 ThanhTienNuoc = invoice.TamTinhNuoc,
 
-                // Thông tin ngân hàng (mặc định)
-                TenTaiKhoanNH = "TRAN HUU NHAN",
-                SoTaiKhoanNH = "0869918250",
+                // Thông tin ngân hàng (mặc định có thể được ghi đè từ Admin)
+                TenTaiKhoanNH = string.IsNullOrWhiteSpace(tenTaiKhoan) ? "TRAN HUU NHAN" : tenTaiKhoan,
+                SoTaiKhoanNH = string.IsNullOrWhiteSpace(soTaiKhoan) ? "0869918250" : soTaiKhoan,
                 NganHang = "Vietcombank",
                 ChiNhanh = "TP.HCM",
+                OwnerPhone = ownerPhone,
+                OwnerEmail = ownerEmail,
 
                 // Thời hạn thanh toán (mặc định 30 ngày)
                 ThoiHanThanhToan = DateTime.Now.AddDays(30)

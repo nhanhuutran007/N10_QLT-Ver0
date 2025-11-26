@@ -47,6 +47,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private string _diaChi = string.Empty;
 
         [ObservableProperty]
+        private string _tenTK = string.Empty;
+
+        [ObservableProperty]
+        private string _soTK = string.Empty;
+
+        [ObservableProperty]
+        private string _linkQr = string.Empty;
+
+        [ObservableProperty]
         private string _oldPassword = string.Empty;
 
         [ObservableProperty]
@@ -195,6 +204,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     NgayCap = userFromDb.NgayCap;
                     NoiCap = userFromDb.NoiCap ?? string.Empty;
                     DiaChi = userFromDb.DiaChi ?? string.Empty;
+                    TenTK = userFromDb.TenTK ?? string.Empty;
+                    SoTK = userFromDb.SoTK ?? string.Empty;
+                    LinkQr = userFromDb.LinkQr ?? string.Empty;
 
                     // Đồng bộ lại AuthController.CurrentUser phòng trường hợp dữ liệu đã thay đổi
                     AuthController.CurrentUser.TenDangNhap = TenDangNhap;
@@ -255,7 +267,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     CCCD = CCCD,
                     NgayCap = NgayCap,
                     NoiCap = NoiCap,
-                    DiaChi = DiaChi
+                    DiaChi = DiaChi,
+                    TenTK = TenTK,
+                    SoTK = SoTK,
+                    LinkQr = LinkQr
                 };
 
                 // 1. Cập nhật thông tin profile
@@ -280,6 +295,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     AuthController.CurrentUser.NgayCap = NgayCap;
                     AuthController.CurrentUser.NoiCap = NoiCap;
                     AuthController.CurrentUser.DiaChi = DiaChi;
+                    AuthController.CurrentUser.TenTK = TenTK;
+                    AuthController.CurrentUser.SoTK = SoTK;
+                    AuthController.CurrentUser.LinkQr = LinkQr;
                 }
 
                 // 2. Cập nhật mật khẩu nếu người dùng có nhập

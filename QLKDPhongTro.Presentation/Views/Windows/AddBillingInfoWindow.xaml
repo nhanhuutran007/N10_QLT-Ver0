@@ -4,10 +4,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
+
     mc:Ignorable="d"
     Title="Thêm thông tin thanh toán - Quản Lý Phòng Trọ"
     Height="650" Width="700"
-    WindowStartupLocation="CenterOwner"
+    WindowStartupLocation="CenterScreen"
     ResizeMode="NoResize"
     WindowStyle="None"
     AllowsTransparency="True"
@@ -218,9 +219,10 @@
                 <StackPanel>
                     <TextBlock Text="Khách hàng" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="CustomerComboBox"
-                            Style="{StaticResource ComboBoxStyle}"
-                            IsEditable="True">
-                    </ComboBox>
+                              Style="{StaticResource ComboBoxStyle}"
+                              ItemsSource="{Binding Customers}"
+                              SelectedItem="{Binding SelectedCustomer}"
+                              DisplayMemberPath="HoTen"/>
 
                     <TextBlock Text="Mã hợp đồng" Style="{StaticResource LabelStyle}"/>
                     <ComboBox x:Name="ContractIdComboBox"

@@ -12,6 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Images\avatar_20251126120157.jpg" />
     <None Remove="Resources\Images\QR_Baotri.png" />
   </ItemGroup>
 
@@ -41,6 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\Images\avatar_20251126120157.jpg" />
     <Resource Include="Resources\Images\Logo.png" />
     <Resource Include="Resources\Images\avatar.jpg" />
     <Resource Include="Resources\Images\avatar1.jpg" />

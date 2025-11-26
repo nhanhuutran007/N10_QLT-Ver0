@@ -13,11 +13,14 @@ CREATE TABLE IF NOT EXISTS Admin (
   NgayCap DATE NULL,
   NoiCap VARCHAR(100),
   DiaChi VARCHAR(255),
-  MaNha INT NOT NULL UNIQUE
+  MaNha INT NOT NULL UNIQUE,
+  TenTK VARCHAR(255) NULL,
+  SoTK VARCHAR(50) NULL,
+  LinkQr VARCHAR(500) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Kiểm tra tồn tại trước khi Insert để tránh lỗi duplicate khi chạy lại script
-INSERT IGNORE INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha)
+INSERT IGNORE INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha, TenTK, SoTK, LinkQr)
 VALUES (
   'admin',
   'admin123',
@@ -29,7 +32,10 @@ VALUES (
   '2020-01-15',
   'Công an TP.HCM',
   '123 Đường A, Quận 1, TP.HCM',
-  1
+  1,
+  NULL,
+  NULL,
+  NULL
 );
 
 -- ===================== Bảng Nha =====================

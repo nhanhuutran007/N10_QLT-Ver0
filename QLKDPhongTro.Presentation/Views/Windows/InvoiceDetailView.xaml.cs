@@ -4,13 +4,16 @@ using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.Presentation.Services;
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows.Input;
 using Microsoft.Win32;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using QLKDPhongTro.Presentation.Utils; // Chứa InvoiceMappingExtensions
+using QLKDPhongTro.DataLayer.Repositories;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -214,11 +217,16 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 var extendedInfo = await GetInvoiceExtendedInfoAsync();
                 int soNguoiLuuTru = await GetSoNguoiLuuTruAsync(extendedInfo.contract);
+                var ownerInfo = await GetOwnerInfoAsync();
                 var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
                     extendedInfo.contract,
                     InvoiceData.Email,
                     extendedInfo.tenPhong,
-                    soNguoiLuuTru
+                    soNguoiLuuTru,
+                    ownerInfo.TenTaiKhoan,
+                    ownerInfo.SoTaiKhoan,
+                    ownerInfo.SoDienThoai,
+                    ownerInfo.Email
                 );
                 string logoPath = FindLogoPath();
 
@@ -290,12 +298,18 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 var extendedInfo = await GetInvoiceExtendedInfoAsync();
                 int soNguoiLuuTru = await GetSoNguoiLuuTruAsync(extendedInfo.contract);
 
+                var ownerInfo = await GetOwnerInfoAsync();
+
                 // Chuyển đổi DTO
                 var plumeriaInvoice = InvoiceData.ToPlumeriaInvoiceDto(
                     extendedInfo.contract,
                     InvoiceData.Email,
                     extendedInfo.tenPhong,
-                    soNguoiLuuTru
+                    soNguoiLuuTru,
+                    ownerInfo.TenTaiKhoan,
+                    ownerInfo.SoTaiKhoan,
+                    ownerInfo.SoDienThoai,
+                    ownerInfo.Email
                 );
 
                 string logoPath = FindLogoPath();
@@ -401,11 +415,172 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             }
         }
 
-        private void LoadQrCode()
+        private async void LoadQrCode()
         {
-            // Logic nạp ảnh QR: Ưu tiên Resource Stream -> Fallback file hệ thống
+            // Logic nạp ảnh QR: Ưu tiên LinkQr từ Admin -> Fallback mặc định
             if (QrImage?.Source != null) return;
 
+            // 1. Lấy LinkQr từ database (reload để đảm bảo có dữ liệu mới nhất)
+            string? qrPath = null;
+            try
+            {
+                var currentUser = AuthController.CurrentUser;
+                if (currentUser != null)
+                {
+                    // Reload user từ database để lấy LinkQr mới nhất
+                    var userRepository = new DataLayer.Repositories.UserRepository();
+                    var userFromDb = await userRepository.GetByMaAdminAsync(currentUser.MaAdmin);
+                    
+                    if (userFromDb != null && !string.IsNullOrWhiteSpace(userFromDb.LinkQr))
+                    {
+                        qrPath = userFromDb.LinkQr.Trim();
+                        // Cập nhật lại AuthController.CurrentUser để đồng bộ
+                        AuthController.CurrentUser.LinkQr = qrPath;
+                        System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Loaded LinkQr from database: {qrPath}");
+                    }
+                    else
+                    {
+                        // Fallback: thử lấy từ CurrentUser (nếu có)
+                        if (!string.IsNullOrWhiteSpace(currentUser.LinkQr))
+                        {
+                            qrPath = currentUser.LinkQr.Trim();
+                            System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Using LinkQr from CurrentUser: {qrPath}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[LoadQrCode] No LinkQr found in database or CurrentUser");
+                        }
+                    }
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"[LoadQrCode] CurrentUser is null");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Error loading LinkQr from database: {ex.Message}");
+                // Fallback: thử lấy từ CurrentUser
+                var currentUser = AuthController.CurrentUser;
+                if (currentUser != null && !string.IsNullOrWhiteSpace(currentUser.LinkQr))
+                {
+                    qrPath = currentUser.LinkQr.Trim();
+                }
+            }
+
+            // 2. Nếu có LinkQr, thử load từ đó
+            if (!string.IsNullOrWhiteSpace(qrPath))
+            {
+                try
+                {
+                    // Xử lý đường dẫn tương đối (bắt đầu với /)
+                    if (qrPath.StartsWith("/"))
+                    {
+                        // Đường dẫn tương đối: /Resources/Images/filename.jpg
+                        // Thử load từ Resource Stream trước
+                        var resourceUri = new Uri($"/QLKDPhongTro.Presentation;component{qrPath}", UriKind.Relative);
+                        var streamInfo = Application.GetResourceStream(resourceUri);
+                        if (streamInfo != null)
+                        {
+                            using var s = streamInfo.Stream;
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.StreamSource = s;
+                            bitmap.EndInit();
+                            QrImage.Source = bitmap;
+                            return;
+                        }
+
+                        // Nếu không load được từ Resource, thử load từ file system
+                        // Ưu tiên tìm trong thư mục source code trước
+                        var projectDirectory = FindProjectDirectory();
+                        var sourceFilePath = Path.Combine(projectDirectory, qrPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        
+                        if (File.Exists(sourceFilePath))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.UriSource = new Uri(sourceFilePath, UriKind.Absolute);
+                            bitmap.EndInit();
+                            QrImage.Source = bitmap;
+                            System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Loaded from source directory: {sourceFilePath}");
+                            return;
+                        }
+                        
+                        // Fallback: thử tìm trong output directory
+                        var outputFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, qrPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (File.Exists(outputFilePath))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.UriSource = new Uri(outputFilePath, UriKind.Absolute);
+                            bitmap.EndInit();
+                            QrImage.Source = bitmap;
+                            System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Loaded from output directory: {outputFilePath}");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // Đường dẫn tuyệt đối hoặc tên file
+                        // Thử load trực tiếp
+                        if (File.Exists(qrPath))
+                        {
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.UriSource = new Uri(qrPath, UriKind.Absolute);
+                            bitmap.EndInit();
+                            QrImage.Source = bitmap;
+                            return;
+                        }
+                        else
+                        {
+                            // Nếu không phải đường dẫn tuyệt đối, thử tìm trong Resources/Images
+                            var fileName = Path.GetFileName(qrPath);
+                            
+                            // Ưu tiên tìm trong thư mục source code trước
+                            var projectDirectory = FindProjectDirectory();
+                            var sourceFilePath = Path.Combine(projectDirectory, "Resources", "Images", fileName);
+                            
+                            if (File.Exists(sourceFilePath))
+                            {
+                                var bitmap = new BitmapImage();
+                                bitmap.BeginInit();
+                                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                bitmap.UriSource = new Uri(sourceFilePath, UriKind.Absolute);
+                                bitmap.EndInit();
+                                QrImage.Source = bitmap;
+                                System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Loaded from source directory: {sourceFilePath}");
+                                return;
+                            }
+                            
+                            // Fallback: thử tìm trong output directory
+                            var outputFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Images", fileName);
+                            if (File.Exists(outputFilePath))
+                            {
+                                var bitmap = new BitmapImage();
+                                bitmap.BeginInit();
+                                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                                bitmap.UriSource = new Uri(outputFilePath, UriKind.Absolute);
+                                bitmap.EndInit();
+                                QrImage.Source = bitmap;
+                                System.Diagnostics.Debug.WriteLine($"[LoadQrCode] Loaded from output directory: {outputFilePath}");
+                                return;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi load QR từ LinkQr ({qrPath}): {ex.Message}");
+                }
+            }
+
+            // 3. Fallback về đường dẫn mặc định nếu không load được từ LinkQr
             try
             {
                 var resourceUri = new Uri("/QLKDPhongTro.Presentation;component/Resources/Images/QR.jpg", UriKind.Relative);
@@ -454,6 +629,148 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 if (File.Exists(path)) return path;
             }
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Tìm thư mục source code của project (QLKDPhongTro.Presentation)
+        /// </summary>
+        private string FindProjectDirectory()
+        {
+            try
+            {
+                // Lấy đường dẫn của assembly hiện tại
+                var assemblyLocation = Assembly.GetExecutingAssembly().Location;
+                var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+                
+                if (string.IsNullOrEmpty(assemblyDirectory))
+                {
+                    // Fallback: sử dụng AppDomain.CurrentDomain.BaseDirectory
+                    assemblyDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Assembly Location: {assemblyLocation}");
+                System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Assembly Directory: {assemblyDirectory}");
+                
+                // Đi lên các cấp thư mục để tìm thư mục chứa file .csproj
+                var currentDir = new DirectoryInfo(assemblyDirectory);
+                
+                while (currentDir != null)
+                {
+                    // Kiểm tra xem có file .csproj trong thư mục này không
+                    var csprojFiles = currentDir.GetFiles("*.csproj", SearchOption.TopDirectoryOnly);
+                    if (csprojFiles.Length > 0)
+                    {
+                        // Kiểm tra xem có thư mục Resources/Images không
+                        var resourcesPath = Path.Combine(currentDir.FullName, "Resources", "Images");
+                        if (Directory.Exists(resourcesPath) || currentDir.Name == "QLKDPhongTro.Presentation")
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Found project directory: {currentDir.FullName}");
+                            return currentDir.FullName;
+                        }
+                    }
+                    
+                    // Đi lên một cấp
+                    currentDir = currentDir.Parent;
+                }
+                
+                // Nếu không tìm thấy, thử tìm thư mục có tên "QLKDPhongTro.Presentation"
+                currentDir = new DirectoryInfo(assemblyDirectory);
+                while (currentDir != null)
+                {
+                    if (currentDir.Name == "QLKDPhongTro.Presentation")
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Found by name: {currentDir.FullName}");
+                        return currentDir.FullName;
+                    }
+                    currentDir = currentDir.Parent;
+                }
+                
+                // Fallback cuối cùng: sử dụng thư mục hiện tại và đi lên 3 cấp (bin/Debug/net8.0-windows -> QLKDPhongTro.Presentation)
+                var fallbackDir = new DirectoryInfo(assemblyDirectory);
+                for (int i = 0; i < 3 && fallbackDir != null; i++)
+                {
+                    fallbackDir = fallbackDir.Parent;
+                }
+                
+                if (fallbackDir != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Using fallback: {fallbackDir.FullName}");
+                    return fallbackDir.FullName;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Error: {ex.Message}");
+            }
+            
+            // Fallback cuối cùng: sử dụng AppDomain.CurrentDomain.BaseDirectory
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            System.Diagnostics.Debug.WriteLine($"[FindProjectDirectory] Using AppDomain.BaseDirectory: {baseDir}");
+            return baseDir;
+        }
+
+        private async Task<OwnerInfo> GetOwnerInfoAsync()
+        {
+            var info = new OwnerInfo();
+
+            try
+            {
+                var currentUser = AuthController.CurrentUser;
+                if (currentUser == null)
+                {
+                    return info;
+                }
+
+                info.TenTaiKhoan = currentUser.TenTK?.Trim() ?? string.Empty;
+                info.SoTaiKhoan = currentUser.SoTK?.Trim() ?? string.Empty;
+                info.SoDienThoai = currentUser.SoDienThoai?.Trim() ?? string.Empty;
+                info.Email = currentUser.Email?.Trim() ?? string.Empty;
+
+                var userRepository = new UserRepository();
+                var userFromDb = await userRepository.GetByMaAdminAsync(currentUser.MaAdmin);
+                if (userFromDb != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(userFromDb.TenTK))
+                    {
+                        info.TenTaiKhoan = userFromDb.TenTK.Trim();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(userFromDb.SoTK))
+                    {
+                        info.SoTaiKhoan = userFromDb.SoTK.Trim();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(userFromDb.SoDienThoai))
+                    {
+                        info.SoDienThoai = userFromDb.SoDienThoai.Trim();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(userFromDb.Email))
+                    {
+                        info.Email = userFromDb.Email.Trim();
+                    }
+
+                    // Đồng bộ lại CurrentUser để các nơi khác sử dụng
+                    AuthController.CurrentUser.TenTK = info.TenTaiKhoan;
+                    AuthController.CurrentUser.SoTK = info.SoTaiKhoan;
+                    AuthController.CurrentUser.SoDienThoai = info.SoDienThoai;
+                    AuthController.CurrentUser.Email = info.Email;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[GetOwnerInfoAsync] Error: {ex.Message}");
+            }
+
+            return info;
+        }
+
+        private sealed class OwnerInfo
+        {
+            public string TenTaiKhoan { get; set; } = string.Empty;
+            public string SoTaiKhoan { get; set; } = string.Empty;
+            public string SoDienThoai { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
         }
 
         private string GenerateEmailBody()
