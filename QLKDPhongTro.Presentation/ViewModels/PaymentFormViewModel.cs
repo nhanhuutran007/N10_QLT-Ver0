@@ -138,11 +138,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 foreach (var contract in activeContracts)
                 {
                     var tenantId = contract.MaNguoiThue;
+
                     if (!_contractsByTenant.TryGetValue(tenantId, out var list))
                     {
                         list = new List<ContractDto>();
                         _contractsByTenant[tenantId] = list;
                     }
+
                     list.Add(contract);
                 }
 
@@ -171,27 +173,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
             finally
             {
                 IsLoading = false;
-            }
-        }
-
-        private void LoadContractsForCustomer(CustomerOption customer)
-        {
-            Contracts.Clear();
-
-            if (customer != null && _contractsByTenant.TryGetValue(customer.MaNguoiThue, out var contractList))
-            {
-                foreach (var contract in contractList)
-                {
-                    Contracts.Add(contract);
-                }
-
-                SelectedContract = Contracts.FirstOrDefault();
-            }
-            else
-            {
-                SelectedContract = null;
-                RoomName = string.Empty;
-                Amount = 0;
             }
         }
 
@@ -246,6 +227,31 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MessageBox.Show($"Lỗi hệ thống: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        #region Private Methods
+
+        private void LoadContractsForCustomer(CustomerOption customer)
+        {
+            Contracts.Clear();
+
+            if (customer != null && _contractsByTenant.TryGetValue(customer.MaNguoiThue, out var contractList))
+            {
+                foreach (var contract in contractList)
+                {
+                    Contracts.Add(contract);
+                }
+
+                SelectedContract = Contracts.FirstOrDefault();
+            }
+            else
+            {
+                SelectedContract = null;
+                RoomName = string.Empty;
+                Amount = 0;
+            }
+        }
+
+        #endregion
     }
 
     public sealed class CustomerOption

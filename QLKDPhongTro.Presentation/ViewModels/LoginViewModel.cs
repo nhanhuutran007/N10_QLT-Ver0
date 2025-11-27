@@ -47,50 +47,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                //// ✅ Đăng nhập có OTP (tạm thời không dùng)
-                ////var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-                ////if (otpResult.IsSuccess)
-                ////{
-                ////    MessageBox.Show(otpResult.Message, "Thông báo",
-                ////        MessageBoxButton.OK, MessageBoxImage.Information);
-                ////
-                ////    var email = otpResult.User?.Email ?? string.Empty;
-                ////    var otpWindow = new OtpLoginWindow(Username, email, Password)
-                ////    {
-                ////        WindowStartupLocation = WindowStartupLocation.CenterScreen
-                ////    };
-                ////
-                ////    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
-                ////    loginWindow?.Close();
-                ////
-                ////    Application.Current.MainWindow = otpWindow;
-                ////    otpWindow.Show();
-                ////}
-                ////else
-                ////{
-                ////    MessageBox.Show(otpResult.Message, "Lỗi",
-                ////        MessageBoxButton.OK, MessageBoxImage.Error);
-                ////    ResetLoginButtonState();
-                ////}
-
-                // ✅ Đăng nhập bình thường, không dùng OTP
-                var result = await _authController.LoginAsync(Username, Password);
-                if (result.IsSuccess)
+                // ✅ Đăng nhập có OTP
+                var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
+                if (otpResult.IsSuccess)
                 {
-                    MessageBox.Show("Đăng nhập thành công!", "Thông báo",
+                    MessageBox.Show(otpResult.Message, "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
-                    // Mở Dashboard
-                    var dashboardWindow = new DashWindow
+
+                    var email = otpResult.User?.Email ?? string.Empty;
+                    var otpWindow = new OtpLoginWindow(Username, email, Password)
                     {
-                        DataContext = new DashboardViewModel()
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen
                     };
-                    dashboardWindow.Show();
-                    Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = dashboardWindow;
+
+                    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                    loginWindow?.Close();
+
+                    Application.Current.MainWindow = otpWindow;
+                    otpWindow.Show();
                 }
                 else
                 {
-                    MessageBox.Show(result.Message, "Lỗi",
+                    MessageBox.Show(otpResult.Message, "Lỗi",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     // Reset button state khi đăng nhập thất bại
                     ResetLoginButtonState();

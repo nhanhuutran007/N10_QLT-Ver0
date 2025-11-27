@@ -383,7 +383,7 @@
 
                             <StackPanel Grid.Column="0"
                                         VerticalAlignment="Center">
-                                <TextBlock Text="Khách hàng đã có hợp đồng"
+                                <TextBlock Text="Khách hàng đang ở"
                                            Foreground="{StaticResource TextSecondary}"
                                            FontSize="12"
                                            FontWeight="Medium"

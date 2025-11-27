@@ -95,35 +95,33 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         {
             var current = AuthController.CurrentUser;
 
-            // Nếu đang đăng nhập và có MaNha, chỉ lấy khách thuộc nhà đó
+            // Ưu tiên lấy khách theo nhà hiện tại và trạng thái "Đang ở"
             if (current != null && current.MaNha > 0)
             {
-                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
-                if (contractsByHouse == null || contractsByHouse.Count == 0)
+                var tenants = await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+                if (tenants == null || tenants.Count == 0)
                     return null;
 
-                var mostRecentPerTenant = contractsByHouse
-                    .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
-                    .GroupBy(c => c.MaNguoiThue)
-                    .Select(g => g.OrderByDescending(c => c.NgayBatDau)
-                                  .ThenByDescending(c => c.MaHopDong)
-                                  .First())
-                    .OrderByDescending(c => c.NgayBatDau)
-                    .ThenByDescending(c => c.MaHopDong)
+                var activeTenants = tenants
+                    .Where(t => string.Equals(t.TrangThai, "Đang ở", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(t => t.NgayTao)
+                    .ThenByDescending(t => t.MaKhachThue)
                     .ToList();
 
-                var first = mostRecentPerTenant.FirstOrDefault();
+                var first = activeTenants.FirstOrDefault();
                 if (first == null) return null;
 
                 return new RecentTenantInfoDto
                 {
-                    MaNguoiThue = first.MaNguoiThue,
-                    HoTen = first.TenNguoiThue ?? first.MaNguoiThue.ToString(),
-                    TienCoc = first.TienCoc,
-                    TrangThai = first.TrangThai
+                    MaNguoiThue = first.MaKhachThue,
+                    HoTen = first.HoTen,
+                    // Không bắt buộc phải có hợp đồng, nên TienCoc để 0 nếu không có thông tin
+                    TienCoc = 0,
+                    TrangThai = first.TrangThai ?? "Đang ở"
                 };
             }
 
+            // Fallback cũ nếu không có thông tin nhà hiện tại
             var result = await _contractRepository.GetMostRecentTenantWithDepositAsync();
             if (result == null) return null;
             return new RecentTenantInfoDto
@@ -141,29 +139,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             if (current != null && current.MaNha > 0)
             {
-                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
-                if (contractsByHouse == null || contractsByHouse.Count == 0)
+                var tenants = await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+                if (tenants == null || tenants.Count == 0)
                     return new List<RecentTenantInfoDto>();
 
                 var limit = Math.Max(1, Math.Min(10, count));
 
-                var mostRecentPerTenant = contractsByHouse
-                    .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
-                    .GroupBy(c => c.MaNguoiThue)
-                    .Select(g => g.OrderByDescending(c => c.NgayBatDau)
-                                  .ThenByDescending(c => c.MaHopDong)
-                                  .First())
-                    .OrderByDescending(c => c.NgayBatDau)
-                    .ThenByDescending(c => c.MaHopDong)
+                var activeTenants = tenants
+                    .Where(t => string.Equals(t.TrangThai, "Đang ở", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(t => t.NgayTao)
+                    .ThenByDescending(t => t.MaKhachThue)
                     .Take(limit)
                     .ToList();
 
-                return mostRecentPerTenant.Select(c => new RecentTenantInfoDto
+                return activeTenants.Select(t => new RecentTenantInfoDto
                 {
-                    MaNguoiThue = c.MaNguoiThue,
-                    HoTen = c.TenNguoiThue ?? c.MaNguoiThue.ToString(),
-                    TienCoc = c.TienCoc,
-                    TrangThai = c.TrangThai
+                    MaNguoiThue = t.MaKhachThue,
+                    HoTen = t.HoTen,
+                    TienCoc = 0,
+                    TrangThai = t.TrangThai ?? "Đang ở"
                 }).ToList();
             }
 
@@ -766,22 +760,19 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 .Distinct()
                 .Count();
 
-            IEnumerable<DataLayer.Models.Contract> activeContracts;
+            List<DataLayer.Models.Tenant> tenantsScope;
             if (current != null && current.MaNha > 0)
             {
-                var contractsByHouse = await _contractRepository.GetAllByMaNhaAsync(current.MaNha);
-                activeContracts = contractsByHouse;
+                tenantsScope = await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
             }
             else
             {
-                activeContracts = await _contractRepository.GetActiveContractsAsync();
+                tenantsScope = await _tenantRepository.GetAllAsync();
             }
-            var validActiveTenants = activeContracts
-                .Where(c => string.Equals(c.TrangThai, "Hiệu lực", StringComparison.OrdinalIgnoreCase))
-                .Select(c => c.MaNguoiThue)
-                .Distinct()
-                .Count();
-            stats.SoKhachDangThue = validActiveTenants;
+
+            var activeTenantCount = tenantsScope
+                .Count(t => string.Equals(t.TrangThai, "Đang ở", StringComparison.OrdinalIgnoreCase));
+            stats.SoKhachDangThue = activeTenantCount;
 
             var roomsAll = (current != null && current.MaNha > 0)
                 ? await _roomRepository.GetAllByMaNhaAsync(current.MaNha)

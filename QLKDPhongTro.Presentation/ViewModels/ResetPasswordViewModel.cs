@@ -11,14 +11,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
     public partial class ResetPasswordViewModel : ObservableObject
     {
         private readonly AuthController _authController;
+        private readonly UserRepository _userRepository;
         private readonly string _email;
 
         public ResetPasswordViewModel(string email)
         {
             _email = email;
-            var userRepository = new UserRepository();
-            _authController = new AuthController(userRepository);
+            _userRepository = new UserRepository();
+            _authController = new AuthController(_userRepository);
+
+            // Tải sẵn tên đăng nhập hiện tại theo email
+            _ = LoadUserAsync();
         }
+
+        [ObservableProperty]
+        private string _username = string.Empty;
 
         [ObservableProperty]
         private string _newPassword = string.Empty;
@@ -28,6 +35,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         [ObservableProperty]
         private bool _isSaving = false;
+
+        private async Task LoadUserAsync()
+        {
+            try
+            {
+                var user = await _userRepository.GetByEmailAsync(_email);
+                if (user != null)
+                {
+                    Username = user.TenDangNhap ?? string.Empty;
+                }
+            }
+            catch
+            {
+                // Bỏ qua lỗi load tên đăng nhập, vẫn cho phép đặt lại mật khẩu
+            }
+        }
 
         [RelayCommand]
         private async Task ResetAsync()
@@ -51,7 +74,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsSaving = true;
 
-                var result = await _authController.ResetPasswordAsync(_email, NewPassword);
+                var result = await _authController.ResetPasswordAsync(_email, NewPassword, Username);
                 if (result.IsSuccess)
                 {
                     MessageBox.Show(result.Message, "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);

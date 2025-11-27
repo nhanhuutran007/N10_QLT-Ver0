@@ -571,9 +571,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Đặt lại mật khẩu sau khi đã xác thực OTP
+        /// Đặt lại mật khẩu sau khi đã xác thực OTP, cho phép cập nhật cả tên đăng nhập
         /// </summary>
-        public async Task<LoginResult> ResetPasswordAsync(string email, string newPassword)
+        public async Task<LoginResult> ResetPasswordAsync(string email, string newPassword, string? newUsername = null)
         {
             try
             {
@@ -605,9 +605,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     };
                 }
 
+                // Nếu có truyền tên đăng nhập mới và khác tên hiện tại thì cập nhật
+                if (!string.IsNullOrWhiteSpace(newUsername) &&
+                    !string.Equals(newUsername, user.TenDangNhap, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (await _userRepository.IsUsernameExistsAsync(newUsername))
+                    {
+                        return new LoginResult
+                        {
+                            IsSuccess = false,
+                            Message = "Tên đăng nhập mới đã tồn tại. Vui lòng chọn tên khác!"
+                        };
+                    }
+
+                    user.TenDangNhap = newUsername;
+                }
+
                 var hashedPassword = PasswordHelper.HashPassword(newPassword);
-                // Update the password using the correct method signature
                 user.MatKhau = hashedPassword;
+
                 var success = await _userRepository.UpdateAsync(user);
 
                 if (!success)

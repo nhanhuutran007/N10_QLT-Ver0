@@ -347,7 +347,7 @@
                         </Grid>
                     </Border>
 
-                    <Button Command="{Binding ShowAddPaymentCommand}" 
+                    <!--<Button Command="{Binding ShowAddPaymentCommand}" 
                             Style="{StaticResource ModernPrimaryButton}"
                             Height="40" 
                             MinWidth="140"
@@ -356,7 +356,7 @@
                             <TextBlock Text="+" FontSize="18" FontWeight="Bold" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Thêm thanh toán" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
-                    </Button>
+                    </Button> -->
                 </StackPanel>
                 </Grid>
 
