@@ -400,46 +400,68 @@
                                            Margin="6,0,0,0"/>
                             </StackPanel>
 
-                            <UniformGrid Columns="3" Margin="0,12,0,0" HorizontalAlignment="Stretch">
+                            <UniformGrid Columns="4" Margin="0,12,0,0" HorizontalAlignment="Stretch">
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
-                                        <TextBlock Text="Tiền nước (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding WaterFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBlock Text="Tiền điện (VND/kWh)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding ElectricityFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=LostFocus}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
                                                  Background="White"
-                                                 TextAlignment="Right"/>
+                                                 TextAlignment="Right"
+                                                 InputMethod.IsInputMethodEnabled="False"
+                                                 Language="en-US"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
+                                    <StackPanel>
+                                        <TextBlock Text="Tiền nước (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding WaterFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=LostFocus}"
+                                                 Height="36"
+                                                 VerticalContentAlignment="Center"
+                                                 BorderBrush="{StaticResource BorderColor}"
+                                                 BorderThickness="1"
+                                                 Padding="10,0"
+                                                 Background="White"
+                                                 TextAlignment="Right"
+                                                 InputMethod.IsInputMethodEnabled="False"
+                                                 Language="en-US"/>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
                                         <TextBlock Text="Tiền internet (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding InternetFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding InternetFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=LostFocus}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
                                                  Background="White"
-                                                 TextAlignment="Right"/>
+                                                 TextAlignment="Right"
+                                                 InputMethod.IsInputMethodEnabled="False"
+                                                 Language="en-US"/>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Background="{StaticResource BackgroundLighter}" CornerRadius="8" Padding="12" Margin="4">
                                     <StackPanel>
                                         <TextBlock Text="Tiền vệ sinh (VND)" FontWeight="SemiBold" Foreground="{StaticResource TextSecondary}" Margin="0,0,0,6"/>
-                                        <TextBox Text="{Binding SanitationFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=PropertyChanged}"
+                                        <TextBox Text="{Binding SanitationFeeInput, Converter={StaticResource NumberFormatConverter}, UpdateSourceTrigger=LostFocus}"
                                                  Height="36"
                                                  VerticalContentAlignment="Center"
                                                  BorderBrush="{StaticResource BorderColor}"
                                                  BorderThickness="1"
                                                  Padding="10,0"
                                                  Background="White"
-                                                 TextAlignment="Right"/>
+                                                 TextAlignment="Right"
+                                                 InputMethod.IsInputMethodEnabled="False"
+                                                 Language="en-US"/>
                                     </StackPanel>
                                 </Border>
                             </UniformGrid>
@@ -476,14 +498,17 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <!-- REMOVE: Loại bỏ MouseEnter/MouseLeave, dùng Style Trigger -->
-                                        <Border Style="{StaticResource ModernFinanceCard}" Width="320" Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=Window}}" Cursor="Hand">
+                                        <Border Style="{StaticResource ModernFinanceCard}" Width="320" Cursor="Hand">
                                             <Border.ContextMenu>
                                                 <ContextMenu>
-                                                    <MenuItem Header="Xem chi tiết" Command="{Binding PlacementTarget.Tag.ViewDetailCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                    <MenuItem Header="Đánh dấu đã trả" Command="{Binding PlacementTarget.Tag.MarkAsPaidCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <ContextMenu.DataContext>
+                                                        <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="DataContext"/>
+                                                    </ContextMenu.DataContext>
+                                                    <MenuItem Header="Xem chi tiết" Command="{Binding ViewDetailCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="Đánh dấu đã trả" Command="{Binding MarkAsPaidCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
                                                     <Separator/>
-                                                    <MenuItem Header="Chỉnh sửa" Command="{Binding PlacementTarget.Tag.EditCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                    <MenuItem Header="Xóa" Command="{Binding PlacementTarget.Tag.DeleteCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Foreground="{StaticResource ErrorColor}"/>
+                                                    <MenuItem Header="Chỉnh sửa" Command="{Binding EditCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                    <MenuItem Header="Xóa" Command="{Binding DeleteCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Foreground="{StaticResource ErrorColor}"/>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
 

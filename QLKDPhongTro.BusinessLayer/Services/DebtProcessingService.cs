@@ -14,13 +14,13 @@ using QLKDPhongTro.BusinessLayer.DTOs;
 using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
-using QLKDPhongTro.Presentation.Services;
+using QLKDPhongTro.BusinessLayer.Services;
 // Thêm thư viện HttpClient (hiện đại hơn WebClient)
 using System.Net.Http;
 using System.Text.RegularExpressions;
 
 
-namespace QLKDPhongTro.Presentation.Services
+namespace QLKDPhongTro.BusinessLayer.Services
 {
     public class DebtProcessingService
     {
@@ -407,7 +407,7 @@ namespace QLKDPhongTro.Presentation.Services
 
                 // 4. Tính toán
                 decimal electricityUsage = finalElectricValue - dbOldElectricValue;
-                decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
+                decimal electricityCost = electricityUsage * normalizedSettings.ElectricityFee;
                 decimal totalDebt = electricityCost + waterCost + internetCost + sanitationCost + parkingFee + otherCost;
 
                 // ✅ LƯU NGAY VÀO DATABASE KHI DETECT DISCREPANCY (sau khi đã tính toán xong)
@@ -562,7 +562,7 @@ namespace QLKDPhongTro.Presentation.Services
                     ChiSoDienCu = oldElectricValue,
                     ChiSoDienMoi = finalElectricValue, // Tạm dùng giá trị nhập tay
                     SoDien = electricityUsage,
-                    DonGiaDien = ELECTRICITY_RATE,
+                    DonGiaDien = settings.ElectricityFee,
                     TienDien = electricityCost,
                     SoNuoc = soNguoiTrongPhong,
                     DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người
@@ -649,7 +649,7 @@ namespace QLKDPhongTro.Presentation.Services
 
                 // 5. Tính toán lại
                 decimal electricityUsage = confirmedValue - oldElectricValue;
-                decimal electricityCost = electricityUsage * ELECTRICITY_RATE;
+                decimal electricityCost = electricityUsage * normalizedSettings.ElectricityFee;
                 var parkingFee = await CalculateParkingFeeAsync(contractId.Value, normalizedSettings);
                 var additionalCosts = await CalculateAdditionalCostsAsync(contractId.Value, normalizedSettings);
 
@@ -673,7 +673,7 @@ namespace QLKDPhongTro.Presentation.Services
                     existingPayment.ChiSoDienMoi = confirmedValue;
                     existingPayment.SoDien = electricityUsage;
                     existingPayment.TienDien = electricityCost;
-                    existingPayment.DonGiaDien = ELECTRICITY_RATE;
+                    existingPayment.DonGiaDien = normalizedSettings.ElectricityFee;
                     existingPayment.SoNuoc = soNguoiTrongPhong;
                     existingPayment.TienNuoc = tienNuocTong; // Tổng tiền nước = tiền nước/đầu người × số người
                     existingPayment.DonGiaNuoc = tienNuocDauNguoi; // Lưu tiền nước/đầu người
@@ -715,7 +715,7 @@ namespace QLKDPhongTro.Presentation.Services
                         ChiSoDienCu = oldElectricValue,
                         ChiSoDienMoi = confirmedValue,
                         SoDien = electricityUsage,
-                        DonGiaDien = ELECTRICITY_RATE,
+                        DonGiaDien = normalizedSettings.ElectricityFee,
                         TienDien = electricityCost,
                         SoNuoc = 1,
                         DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người
@@ -881,7 +881,7 @@ namespace QLKDPhongTro.Presentation.Services
                             ChiSoDienCu = debt.OldElectricValue,
                             ChiSoDienMoi = debt.CurrentElectricValue,
                             SoDien = debt.ElectricityUsage,
-                            DonGiaDien = ELECTRICITY_RATE,
+                            DonGiaDien = normalizedSettings.ElectricityFee,
                             TienDien = debt.ElectricityCost,
                             SoNuoc = 1,
                             DonGiaNuoc = tienNuocDauNguoi, // Tiền nước/đầu người

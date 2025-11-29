@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq; // FIX: Thêm 'using' cho .Cast<object>()
 using System.Threading.Tasks;
 using QLKDPhongTro.BusinessLayer.DTOs;
-namespace QLKDPhongTro.Presentation.Services
+namespace QLKDPhongTro.BusinessLayer.Services
 {
     /// <summary>
     /// Service sử dụng YOLOv9 để đọc chỉ số điện/nước từ ảnh
@@ -121,3 +121,4 @@ namespace QLKDPhongTro.Presentation.Services
     /// Kết quả đọc chỉ số từ YOLOv9
     /// </summary>
 }
+

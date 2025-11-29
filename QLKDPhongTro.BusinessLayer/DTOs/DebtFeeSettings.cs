@@ -5,6 +5,7 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
     /// </summary>
     public class DebtFeeSettings
     {
+        public decimal ElectricityFee { get; set; } = 3_500m;
         public decimal WaterFee { get; set; } = 100_000m;
         public decimal InternetFee { get; set; } = 100_000m;
         public decimal SanitationFee { get; set; } = 60_000m;

@@ -1,6 +1,6 @@
 ﻿using QLKDPhongTro.BusinessLayer.DTOs; // Các DTO tài chính khác
 using QLKDPhongTro.Presentation.Commands;
-using QLKDPhongTro.Presentation.Services; // Chứa MeterReadingResult
+using QLKDPhongTro.BusinessLayer.Services; // Chứa MeterReadingResult
 using System;
 using System.ComponentModel;
 using System.IO;

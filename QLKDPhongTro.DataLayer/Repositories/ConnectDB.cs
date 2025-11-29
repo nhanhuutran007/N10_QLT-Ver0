@@ -17,7 +17,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
             if (_connectionString != null)
                 return _connectionString;
 
-            // ===== CẤU HÌNH KẾT NỐI MYSQL =====
+            //// ===== CẤU HÌNH KẾT NỐI MYSQL =====
             string server = "host80.vietnix.vn";
             string database = "githubio_QLT_Ver1";
             string username = "githubio_admin";
@@ -28,14 +28,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
             //_connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};SslMode=Preferred;CharSet=utf8mb4;";
             // Cấu hình cho Localhost (XAMPP/WAMP/MySQL Workbench)
             //string server = "localhost";          // Hoặc dùng "127.0.0.1" đều được
-            //string database = "githubio_QLT_Ver2"; // Tên database mới theo script Ver2
+            //string database = "githubio_qlt_ver2"; // Tên database mới theo script Ver2
             //string username = "root";             // Mặc định của Localhost là 'root', không phải 'admin'
             //string password = "";                 // Mặc định thường để trống (chuỗi rỗng)
             //string port = "3306";                 // Cổng mặc định
 
             // Tạo chuỗi kết nối đầy đủ (Connection String)
             _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};Charset=utf8mb4;";
-
             return _connectionString;
         }
 
@@ -46,12 +45,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             var connection = new MySqlConnection(GetConnectionString());
             await connection.OpenAsync();
-            
+
             // Đảm bảo connection sử dụng charset utf8mb4 để nhận diện đúng ký tự tiếng Việt
             // Chỉ set charset, không set COLLATE để tránh lỗi với các cột có CHARACTER SET khác
             var setCharsetCmd = new MySqlCommand("SET NAMES utf8mb4", connection);
             await setCharsetCmd.ExecuteNonQueryAsync();
-            
+
             return connection;
         }
 

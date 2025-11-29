@@ -4,7 +4,7 @@ using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Commands;
 using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.Presentation.Views.Windows;
-using QLKDPhongTro.Presentation.Services;
+using QLKDPhongTro.BusinessLayer.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -188,6 +188,19 @@ namespace QLKDPhongTro.Presentation.ViewModels
         public decimal TotalExpense { get; private set; }
         public decimal TotalProfit { get; private set; }
         public decimal TotalDebt { get; private set; }
+
+        private decimal _electricityFeeInput = 3_500m;
+        public decimal ElectricityFeeInput
+        {
+            get => _electricityFeeInput;
+            set
+            {
+                var sanitized = Math.Max(0, value);
+                if (_electricityFeeInput == sanitized) return;
+                _electricityFeeInput = sanitized;
+                OnPropertyChanged();
+            }
+        }
 
         private decimal _waterFeeInput = 100_000m;
         public decimal WaterFeeInput
@@ -1431,6 +1444,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             return new DebtFeeSettings
             {
+                ElectricityFee = ElectricityFeeInput,
                 WaterFee = WaterFeeInput,
                 InternetFee = InternetFeeInput,
                 SanitationFee = SanitationFeeInput

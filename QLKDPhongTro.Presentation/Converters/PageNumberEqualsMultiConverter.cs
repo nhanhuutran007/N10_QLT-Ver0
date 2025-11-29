@@ -12,15 +12,25 @@ namespace QLKDPhongTro.Presentation.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values == null || values.Length < 2 || values[0] == null || values[1] == null)
+            try
+            {
+                if (values == null || values.Length < 2)
+                    return false;
+
+                // values[0] là CurrentPage (từ ViewModel)
+                // values[1] là DataContext của Button (số trang của nút đó)
+                if (values[0] == null || values[1] == null)
+                    return false;
+
+                string val1 = values[0].ToString() ?? string.Empty;
+                string val2 = values[1].ToString() ?? string.Empty;
+
+                return val1.Equals(val2);
+            }
+            catch
+            {
                 return false;
-
-            // values[0] là CurrentPage (từ ViewModel)
-            // values[1] là DataContext của Button (số trang của nút đó)
-            string val1 = values[0].ToString();
-            string val2 = values[1].ToString();
-
-            return val1.Equals(val2);
+            }
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)

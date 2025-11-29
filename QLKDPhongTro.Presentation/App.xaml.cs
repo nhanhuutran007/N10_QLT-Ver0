@@ -1,8 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using QLKDPhongTro.BusinessLayer.Services;
 using QLKDPhongTro.Presentation.Services;
-
 namespace QLKDPhongTro.Presentation
 {
     /// <summary>
