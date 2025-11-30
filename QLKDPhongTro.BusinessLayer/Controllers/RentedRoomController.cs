@@ -66,7 +66,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return "Tài khoản chưa được gán mã nhà";
             }
 
-            var maNha = AuthController.CurrentUser.MaNha;
+            var maNha = AuthController.CurrentUser!.MaNha;
 
             // Lấy thông tin nhà để biết tổng số phòng tối đa
             var house = await _houseRepository.GetByIdAsync(maNha);
@@ -127,9 +127,29 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
             return await _rentedRoomRepository.UpdateAsync(room);
         }
-        public async Task<bool> DeleteRoomAsync(int id)
+        /// <summary>
+        /// Xóa phòng với validation: Không cho xóa nếu phòng còn người thuê hoặc hợp đồng còn hiệu lực
+        /// </summary>
+        public async Task<(bool Success, string? ErrorMessage)> DeleteRoomAsync(int id)
         {
-            return await _rentedRoomRepository.DeleteAsync(id);
+            // Kiểm tra xem phòng có hợp đồng còn hiệu lực không
+            var activeContract = await _contractRepository.GetActiveByRoomIdAsync(id);
+            if (activeContract != null)
+            {
+                return (false, "Không thể xóa phòng vì phòng đang có hợp đồng còn hiệu lực.");
+            }
+
+            // Kiểm tra xem phòng có khách thuê "Đang ở" không
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(id);
+            if (roomTenants != null && roomTenants.Any(t => 
+                !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase)))
+            {
+                return (false, "Không thể xóa phòng vì phòng đang có khách thuê.");
+            }
+
+            // Nếu validation pass, thực hiện xóa
+            var result = await _rentedRoomRepository.DeleteAsync(id);
+            return (result, null);
         }
 
         /// <summary>

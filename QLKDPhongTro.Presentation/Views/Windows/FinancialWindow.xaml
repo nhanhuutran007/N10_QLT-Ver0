@@ -498,17 +498,11 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <!-- REMOVE: Loại bỏ MouseEnter/MouseLeave, dùng Style Trigger -->
-                                        <Border Style="{StaticResource ModernFinanceCard}" Width="320" Cursor="Hand">
+                                        <Border Style="{StaticResource ModernFinanceCard}" Width="320" Cursor="Hand" DataContext="{Binding}">
                                             <Border.ContextMenu>
-                                                <ContextMenu>
-                                                    <ContextMenu.DataContext>
-                                                        <Binding RelativeSource="{RelativeSource AncestorType=Window}" Path="DataContext"/>
-                                                    </ContextMenu.DataContext>
-                                                    <MenuItem Header="Xem chi tiết" Command="{Binding ViewDetailCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                    <MenuItem Header="Đánh dấu đã trả" Command="{Binding MarkAsPaidCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                    <Separator/>
-                                                    <MenuItem Header="Chỉnh sửa" Command="{Binding EditCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                                    <MenuItem Header="Xóa" Command="{Binding DeleteCommand}" CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" Foreground="{StaticResource ErrorColor}"/>
+                                                <ContextMenu Opened="ContextMenu_Opened">
+                                                    <MenuItem Header="Chỉnh sửa" Click="EditMenuItem_Click" Tag="{Binding}"/>
+                                                    <MenuItem Header="Xóa" Click="DeleteMenuItem_Click" Foreground="{StaticResource ErrorColor}" Tag="{Binding}"/>
                                                 </ContextMenu>
                                             </Border.ContextMenu>
 

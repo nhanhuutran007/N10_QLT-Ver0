@@ -251,5 +251,49 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 }
             }
         }
+
+        private void EditMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            if (sender is MenuItem menuItem && menuItem.Tag is FinancialRecordDto record)
+            {
+                if (_viewModel.EditCommand.CanExecute(record))
+                {
+                    _viewModel.EditCommand.Execute(record);
+                }
+            }
+        }
+
+        private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel == null) return;
+
+            if (sender is MenuItem menuItem && menuItem.Tag is FinancialRecordDto record)
+            {
+                if (_viewModel.DeleteCommand.CanExecute(record))
+                {
+                    _viewModel.DeleteCommand.Execute(record);
+                }
+            }
+        }
+
+        private void ContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (sender is ContextMenu contextMenu && contextMenu.PlacementTarget is Border border)
+            {
+                var record = border.DataContext as FinancialRecordDto;
+                if (record != null)
+                {
+                    foreach (MenuItem item in contextMenu.Items)
+                    {
+                        if (item.Tag == null || !(item.Tag is FinancialRecordDto))
+                        {
+                            item.Tag = record;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

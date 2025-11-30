@@ -57,6 +57,14 @@
                 <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang bảo trì">
                     <Setter Property="Background" Value="#FEE2E2"/>
                 </DataTrigger>
+                <!-- Đổi màu khi có người thuê nhưng chưa có hợp đồng -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding SelectedRoom.TrangThai}" Value="Đang thuê"/>
+                        <Condition Binding="{Binding NeedsContractWarning}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="#FEF3C7"/>
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -73,6 +81,14 @@
                 <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang bảo trì">
                     <Setter Property="Foreground" Value="#B91C1C"/>
                 </DataTrigger>
+                <!-- Đổi màu khi có người thuê nhưng chưa có hợp đồng -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding SelectedRoom.TrangThai}" Value="Đang thuê"/>
+                        <Condition Binding="{Binding NeedsContractWarning}" Value="True"/>
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Foreground" Value="#92400E"/>
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -218,6 +234,16 @@
                                     </ItemsControl>
                                     <TextBlock Text="Chưa có dữ liệu người thuê." Margin="0,12,0,0" FontStyle="Italic" Foreground="#9CA3AF"
                                                Visibility="{Binding HasCurrentTenants, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                    
+                                    <!-- Cảnh báo khi có người thuê nhưng chưa có hợp đồng -->
+                                    <Border Background="#FEF3C7" CornerRadius="8" Padding="12" Margin="0,12,0,0" BorderBrush="#FCD34D" BorderThickness="1"
+                                            Visibility="{Binding NeedsContractWarning, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <StackPanel>
+                                            <TextBlock Text="⚠️ CẦN TẠO HỢP ĐỒNG" FontSize="12" FontWeight="Bold" Foreground="#92400E" Margin="0,0,0,4"/>
+                                            <TextBlock Text="Phòng này đã có người thuê nhưng chưa có hợp đồng. Vui lòng tạo hợp đồng để quản lý chính thức." 
+                                                       FontSize="11" Foreground="#78350F" TextWrapping="Wrap" LineHeight="16"/>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 

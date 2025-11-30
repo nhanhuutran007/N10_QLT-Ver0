@@ -204,7 +204,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
                 if (user != null)
                 {
-                    //// Sinh OTP
+                    // Sinh OTP
                     var otp = OtpHelper.GenerateOtp();
 
                     // Gửi email với layout HTML đẹp (tương tự mail nhắc thanh toán)
@@ -352,13 +352,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 </body>
 </html>";
 
+                    // Gửi email OTP
                     await EmailService.SendEmailAsync(
                         user.Email,
                         subject,
                         body
                     );
 
-                    //CurrentUser = user;
+                    CurrentUser = user;
 
                     return new LoginResult
                     {

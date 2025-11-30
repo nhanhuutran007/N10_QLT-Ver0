@@ -384,8 +384,28 @@ namespace QLKDPhongTro.Presentation.ViewModels
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             ViewDetailCommand = new RelayCommand<FinancialRecordDto>(async (record) => await ViewDetailAsync(record));
             MarkAsPaidCommand = new RelayCommand<FinancialRecordDto>(async (record) => await MarkAsPaidAsync(record));
-            DeleteCommand = new RelayCommand<FinancialRecordDto>(async (record) => await DeleteAsync(record));
-            EditCommand = new RelayCommand<FinancialRecordDto>(async (record) => await EditAsync(record));
+            DeleteCommand = new RelayCommand<FinancialRecordDto>(async (record) => 
+            {
+                try
+                {
+                    await DeleteAsync(record);
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi xóa: {ex.Message}");
+                }
+            });
+            EditCommand = new RelayCommand<FinancialRecordDto>(async (record) => 
+            {
+                try
+                {
+                    await EditAsync(record);
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi chỉnh sửa: {ex.Message}");
+                }
+            });
             RefreshCommand = new RelayCommand(async () => await LoadDataAsync());
             ExportCommand = new RelayCommand(() => { });
             ProcessDebtsFromGoogleFormCommand = new RelayCommand(async () => await ProcessDebtsFromGoogleFormAsync());
@@ -1203,10 +1223,6 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 return;
             }
 
-            // FIX: Đã loại bỏ nhánh logic xử lý "Cảnh báo"
-            // EditCommand chỉ dành cho FinancialRecordDto
-
-            // Logic cũ cho các trường hợp khác
             if (_financialController == null)
             {
                 ShowMessageRequested?.Invoke(this, "Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
@@ -1215,49 +1231,63 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             try
             {
-                var payment = await _financialController.GetPaymentByIdAsync(record.MaThanhToan).ConfigureAwait(false);
-                if (payment != null)
+                var dispatcher = Application.Current?.Dispatcher;
+                bool? dialogResult = false;
+
+                if (dispatcher != null && !dispatcher.CheckAccess())
                 {
-                    var dispatcher = Application.Current?.Dispatcher;
-                    bool? dialogResult = false;
-
-                    if (dispatcher != null && !dispatcher.CheckAccess())
+                    dialogResult = await dispatcher.InvokeAsync(() =>
                     {
-                        dialogResult = await dispatcher.InvokeAsync(() =>
+                        try
                         {
-                            var editDialog = new ManualInputView();
-                            editDialog.Owner = Application.Current?.MainWindow;
+                            var editDialog = new EditPaymentDialog(record.MaThanhToan)
+                            {
+                                Owner = Application.Current?.MainWindow
+                            };
                             return editDialog.ShowDialog();
-                        });
-                    }
-                    else
-                    {
-                        var editDialog = new ManualInputView();
-                        editDialog.Owner = Application.Current?.MainWindow;
-                        dialogResult = editDialog.ShowDialog();
-                    }
-
-                    if (dialogResult == true)
-                    {
-                        // Giữ nguyên CurrentView khi refresh data
-                        string savedView = _currentView;
-                        await LoadDataAsync().ConfigureAwait(false);
-                        // Đảm bảo CurrentView không bị thay đổi sau khi load
-                        if (_currentView != savedView)
-                        {
-                            _currentView = savedView;
-                            OnPropertyChanged(nameof(CurrentView));
-                            OnPropertyChanged(nameof(IsAllRecordsView));
-                            OnPropertyChanged(nameof(IsDebtsView));
-                            OnPropertyChanged(nameof(IsReportsView));
                         }
-                        // Load lại data cho view hiện tại
-                        await LoadViewDataAsync().ConfigureAwait(false);
-                    }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}", 
+                                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return false;
+                        }
+                    });
                 }
                 else
                 {
-                    ShowMessageRequested?.Invoke(this, "Không tìm thấy thông tin thanh toán để chỉnh sửa.");
+                    try
+                    {
+                        var editDialog = new EditPaymentDialog(record.MaThanhToan)
+                        {
+                            Owner = Application.Current?.MainWindow
+                        };
+                        dialogResult = editDialog.ShowDialog();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}", 
+                            "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        dialogResult = false;
+                    }
+                }
+
+                if (dialogResult == true)
+                {
+                    // Giữ nguyên CurrentView khi refresh data
+                    string savedView = _currentView;
+                    await LoadDataAsync().ConfigureAwait(false);
+                    // Đảm bảo CurrentView không bị thay đổi sau khi load
+                    if (_currentView != savedView)
+                    {
+                        _currentView = savedView;
+                        OnPropertyChanged(nameof(CurrentView));
+                        OnPropertyChanged(nameof(IsAllRecordsView));
+                        OnPropertyChanged(nameof(IsDebtsView));
+                        OnPropertyChanged(nameof(IsReportsView));
+                    }
+                    // Load lại data cho view hiện tại
+                    await LoadViewDataAsync().ConfigureAwait(false);
                 }
             }
             catch (Exception ex)

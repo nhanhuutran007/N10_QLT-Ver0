@@ -85,6 +85,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private bool _hasActiveTenant;
         [ObservableProperty] private ObservableCollection<RoomTenantDto> _currentTenants = new();
         [ObservableProperty] private int _openMaintenanceCount;
+        [ObservableProperty] private bool _hasActiveContract = false;
+        [ObservableProperty] private bool _needsContractWarning = false;
 
         public bool HasMaintenanceIssues => SelectedRoomMaintenance?.Count > 0;
         public bool HasCurrentTenants => CurrentTenants?.Count > 0;
@@ -191,6 +193,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     CurrentTenants = new ObservableCollection<RoomTenantDto>(roomTenants);
                     var displayTenant = CurrentTenants.FirstOrDefault(t => t.IsContractHolder)
                         ?? CurrentTenants.FirstOrDefault();
+
+                    // Kiểm tra xem phòng có người thuê nhưng chưa có hợp đồng
+                    HasActiveContract = activeContract != null;
+                    NeedsContractWarning = roomTenants != null && roomTenants.Any() && activeContract == null;
 
                     if (activeContract != null)
                     {
@@ -431,7 +437,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 var confirm = MessageBox.Show($"Xóa phòng {room.TenPhong}?", "Xác nhận", MessageBoxButton.YesNo);
                 if (confirm == MessageBoxResult.Yes)
                 {
-                    if (await _rentedRoomController.DeleteRoomAsync(room.MaPhong)) await LoadRooms();
+                    var (success, errorMessage) = await _rentedRoomController.DeleteRoomAsync(room.MaPhong);
+                    if (success)
+                    {
+                        await LoadRooms();
+                        MessageBox.Show("Đã xóa phòng thành công!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show(errorMessage ?? "Không thể xóa phòng", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
                 }
             }
         }

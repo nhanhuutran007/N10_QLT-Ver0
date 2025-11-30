@@ -7,6 +7,7 @@ using System.Windows;
 using QLKDPhongTro.Presentation.Views.Windows;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.DataLayer.Repositories;
+using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -47,24 +48,25 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                // ✅ Đăng nhập có OTP
+                // Đăng nhập với OTP - gửi OTP qua email
                 var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-                if (otpResult.IsSuccess)
+                
+                if (otpResult.IsSuccess && otpResult.User != null)
                 {
-                    MessageBox.Show(otpResult.Message, "Thông báo",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    // OTP đã được gửi - mở cửa sổ nhập OTP
+                    var otpWindow = new OtpLoginWindow(
+                        otpResult.User.TenDangNhap,
+                        otpResult.User.Email ?? string.Empty,
+                        Password
+                    );
+                    otpWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    otpWindow.Show();
 
-                    var email = otpResult.User?.Email ?? string.Empty;
-                    var otpWindow = new OtpLoginWindow(Username, email, Password)
-                    {
-                        WindowStartupLocation = WindowStartupLocation.CenterScreen
-                    };
-
+                    // Đóng LoginWindow
                     var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
                     loginWindow?.Close();
 
                     Application.Current.MainWindow = otpWindow;
-                    otpWindow.Show();
                 }
                 else
                 {

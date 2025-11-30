@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
@@ -50,6 +51,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 bool isValid = await _userRepository.VerifyOtpAsync(OtpCode);
                 if (isValid)
                 {
+                    // Đảm bảo CurrentUser được set sau khi verify OTP thành công
+                    // (đã được set trong LoginWithOtpAsync, nhưng set lại để chắc chắn)
+                    var user = await _userRepository.LoginAsync(_username, _password);
+                    if (user != null)
+                    {
+                        AuthController.CurrentUser = user;
+                    }
+
                     MessageBox.Show("✅ Xác thực OTP thành công!", "Thông báo",
                         MessageBoxButton.OK, MessageBoxImage.Information);
 

@@ -65,7 +65,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<RoomTenantDto>> GetTenantsByRoomIdAsync(int maPhong)
         {
             var tenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
-            return tenants.Select(MapRoomTenant).ToList();
+            
+            // Lấy hợp đồng hiện tại của phòng để xác định người đứng tên
+            var contractController = new ContractController(new DataLayer.Repositories.ContractRepository());
+            var activeContract = await contractController.GetActiveContractByRoomIdAsync(maPhong);
+            int? contractHolderMaNguoiThue = activeContract?.MaNguoiThue;
+            
+            return tenants.Select(info => MapRoomTenant(info, contractHolderMaNguoiThue)).ToList();
         }
 
         public async Task<ValidationResult> CreateTenantAsync(TenantDto dto)
@@ -96,10 +102,29 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var success = await _tenantRepository.CreateAsync(tenant);
             
-            // Sau khi tạo người thuê thành công, cập nhật trạng thái phòng sang "Đang thuê" nếu có phòng
+            // Sau khi tạo người thuê thành công
             if (success && dto.MaPhong.HasValue)
             {
-                await _roomRepository.UpdateStatusAsync(dto.MaPhong.Value, "Đang thuê");
+                var maPhong = dto.MaPhong.Value;
+                
+                // Kiểm tra xem phòng đã có hợp đồng chưa
+                var contractController = new ContractController(new DataLayer.Repositories.ContractRepository());
+                var activeContract = await contractController.GetActiveContractByRoomIdAsync(maPhong);
+                
+                // Nếu chưa có hợp đồng, đổi trạng thái phòng sang "Đang thuê" (nếu đang "Trống")
+                if (activeContract == null)
+                {
+                    var room = await _roomRepository.GetByIdAsync(maPhong);
+                    if (room != null && string.Equals(room.TrangThai, "Trống", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+                    }
+                }
+                else
+                {
+                    // Nếu đã có hợp đồng, đảm bảo trạng thái là "Đang thuê"
+                    await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+                }
             }
             
             return new ValidationResult
@@ -206,10 +231,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 {
                     // Lấy danh sách người thuê còn lại trong phòng (trước khi xóa)
                     var allRoomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong.Value);
+                    int? contractHolderMaNguoiThue = activeContract.MaNguoiThue;
                     var remainingTenants = allRoomTenants
                         .Where(t => t.MaNguoiThue != maKhachThue && 
                                    string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase))
-                        .Select(MapRoomTenant)
+                        .Select(info => MapRoomTenant(info, contractHolderMaNguoiThue))
                         .ToList();
 
                     // Nếu còn người thuê khác, cần tạo hợp đồng mới
@@ -344,14 +370,27 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 PhiPhuThu = asset.PhiPhuThu
             };
 
-        private static RoomTenantDto MapRoomTenant(RoomTenantInfo info)
+        private static RoomTenantDto MapRoomTenant(RoomTenantInfo info, int? contractHolderMaNguoiThue = null)
         {
-            var isActiveContract = string.Equals(info.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(info.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase);
-
-            if (info.NgayKetThuc.HasValue && info.NgayKetThuc.Value.Date < DateTime.Today)
+            // Kiểm tra xem người thuê này có phải là người đứng tên hợp đồng không
+            // Nếu có contractHolderMaNguoiThue, so sánh với MaNguoiThue của người thuê
+            bool isContractHolder = false;
+            if (contractHolderMaNguoiThue.HasValue)
             {
-                isActiveContract = false;
+                isContractHolder = info.MaNguoiThue == contractHolderMaNguoiThue.Value;
+            }
+            else
+            {
+                // Fallback: Nếu không có thông tin hợp đồng, kiểm tra xem người thuê có hợp đồng hiệu lực không
+                var isActiveContract = string.Equals(info.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(info.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase);
+
+                if (info.NgayKetThuc.HasValue && info.NgayKetThuc.Value.Date < DateTime.Today)
+                {
+                    isActiveContract = false;
+                }
+                
+                isContractHolder = isActiveContract && info.MaHopDong.HasValue;
             }
 
             return new RoomTenantDto
@@ -364,7 +403,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TrangThaiHopDong = info.TrangThaiHopDong,
                 NgayBatDau = info.NgayBatDau,
                 NgayKetThuc = info.NgayKetThuc,
-                IsContractHolder = isActiveContract
+                IsContractHolder = isContractHolder
             };
         }
 
