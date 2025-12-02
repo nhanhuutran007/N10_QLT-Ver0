@@ -71,7 +71,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private RentedRoomDto? _selectedRoom;
 
         public string[] GenderOptions { get; } = new[] { "Nam", "Nữ", "Khác" };
-        public string[] TenantStatuses { get; } = new[] { "Đang ở", "Đặt cọc", "Sắp trả phòng", "Đã trả phòng" };
+        // Bỏ trạng thái "Đặt cọc" của người thuê
+        public string[] TenantStatuses { get; } = new[] { "Đang ở", "Sắp trả phòng", "Đã trả phòng" };
 
         // === Pagination & Sorting ===
         [ObservableProperty] private string _sortOrder = "newest"; // newest | oldest

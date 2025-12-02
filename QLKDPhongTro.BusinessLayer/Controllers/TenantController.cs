@@ -76,6 +76,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<ValidationResult> CreateTenantAsync(TenantDto dto)
         {
+            if (!TryValidateTenantInfo(dto, out var validationError))
+            {
+                return new ValidationResult { IsValid = false, Message = validationError };
+            }
+
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD))
             {
                 return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
@@ -102,33 +107,31 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var success = await _tenantRepository.CreateAsync(tenant);
             
-            // Sau khi tạo người thuê thành công
+            // Sau khi tạo người thuê thành công, cập nhật trạng thái phòng theo quy tắc:
+            // - Có người thuê nhưng chưa có hợp đồng  => Phòng "Dự kiến"
+            // - Có người thuê và đã có hợp đồng       => Phòng "Đang thuê"
+            // - Không có người thuê và không hợp đồng  => Phòng "Trống"
             if (success && dto.MaPhong.HasValue)
             {
                 var maPhong = dto.MaPhong.Value;
-                
-                // Kiểm tra xem phòng đã có hợp đồng chưa
-                var contractController = new ContractController(new DataLayer.Repositories.ContractRepository());
-                var activeContract = await contractController.GetActiveContractByRoomIdAsync(maPhong);
-                
-                // Nếu người thuê ở trạng thái "Đặt cọc" thì phòng chuyển sang "Dự kiến"
-                if (string.Equals(dto.TrangThai, "Đặt cọc", StringComparison.OrdinalIgnoreCase))
+
+                var contractRepo = new DataLayer.Repositories.ContractRepository();
+                var activeContract = await contractRepo.GetActiveByRoomIdAsync(maPhong);
+
+                var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
+                var hasTenant = roomTenants.Any(); // Đã filter loại "Đã trả phòng"
+
+                if (!hasTenant && activeContract == null)
                 {
-                    await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
+                    await _roomRepository.UpdateStatusAsync(maPhong, "Trống");
                 }
-                else if (activeContract != null)
+                else if (hasTenant && activeContract != null)
                 {
-                    // Nếu đã có hợp đồng, đảm bảo trạng thái là "Đang thuê"
                     await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
                 }
-                else
+                else if (hasTenant && activeContract == null)
                 {
-                    // Nếu chưa có hợp đồng và không phải "Đặt cọc", đổi trạng thái phòng sang "Đang thuê" (nếu đang "Trống")
-                    var room = await _roomRepository.GetByIdAsync(maPhong);
-                    if (room != null && string.Equals(room.TrangThai, "Trống", StringComparison.OrdinalIgnoreCase))
-                    {
-                        await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
-                    }
+                    await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
                 }
             }
             
@@ -141,6 +144,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<ValidationResult> UpdateTenantAsync(TenantDto dto)
         {
+            if (!TryValidateTenantInfo(dto, out var validationError))
+            {
+                return new ValidationResult { IsValid = false, Message = validationError };
+            }
+
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD, dto.MaKhachThue))
             {
                 return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
@@ -445,10 +453,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         /// <summary>
         /// Đồng bộ trạng thái phòng sau khi trạng thái người thuê thay đổi.
-        /// Đảm bảo: 
-        /// - Khi người thuê ở trạng thái "Đặt cọc" thì phòng chuyển sang "Dự kiến"
-        /// - Không set phòng Trống nếu vẫn còn hợp đồng còn hiệu lực.
-        /// - Khi tất cả khách thuê trong phòng đã trả phòng và không còn hợp đồng active thì set phòng Trống.
+        /// Quy tắc:
+        /// - Có người thuê nhưng chưa có hợp đồng  => Phòng "Dự kiến"
+        /// - Có người thuê và đã có hợp đồng       => Phòng "Đang thuê"
+        /// - Không có người thuê và không hợp đồng  => Phòng "Trống"
         /// </summary>
         private async Task UpdateRoomStatusAfterTenantChangeAsync(Tenant tenant, TenantStayInfo? stayInfo)
         {
@@ -459,46 +467,97 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var maPhong = tenant.MaPhong.Value;
 
-            // Nếu còn hợp đồng còn hiệu lực cho người này thì giữ phòng ở trạng thái đang thuê
-            var hasContract = stayInfo?.MaHopDong != null &&
-                              !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
-            var contractStillActive = hasContract &&
-                ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
-                 (string.Equals(stayInfo.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
-                 (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
-
-            if (contractStillActive)
-            {
-                // Phòng có hợp đồng còn hiệu lực => luôn là Đang thuê
-                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
-                return;
-            }
-
-            // Kiểm tra xem có người thuê nào trong phòng ở trạng thái "Đặt cọc" không
             var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
-            var hasDepositTenant = roomTenants.Any(t =>
-                string.Equals(t.TrangThaiNguoiThue, "Đặt cọc", StringComparison.OrdinalIgnoreCase));
+            var hasTenant = roomTenants.Any(); // Đã loại "Đã trả phòng" trong repository
 
-            if (hasDepositTenant)
-            {
-                // Nếu có người thuê "Đặt cọc" thì phòng chuyển sang "Dự kiến"
-                await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
-                return;
-            }
+            var contractRepo = new DataLayer.Repositories.ContractRepository();
+            var activeContract = await contractRepo.GetActiveByRoomIdAsync(maPhong);
 
-            // Không còn hợp đồng active và không có người "Đặt cọc":
-            // Kiểm tra còn khách thuê "Đang ở" trong phòng không
-            var hasActiveTenant = roomTenants.Any(t =>
-                !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase));
-
-            if (hasActiveTenant)
-            {
-                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
-            }
-            else
+            if (!hasTenant && activeContract == null)
             {
                 await _roomRepository.UpdateStatusAsync(maPhong, "Trống");
             }
+            else if (hasTenant && activeContract != null)
+            {
+                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+            }
+            else if (hasTenant && activeContract == null)
+            {
+                await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
+            }
+        }
+
+        private static bool TryValidateTenantInfo(TenantDto dto, out string errorMessage)
+        {
+            // Kiểm tra các trường bắt buộc (ngoại trừ GhiChu)
+            if (string.IsNullOrWhiteSpace(dto.HoTen))
+            {
+                errorMessage = "Họ tên người thuê không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.CCCD))
+            {
+                errorMessage = "Số CCCD không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.SoDienThoai))
+            {
+                errorMessage = "Số điện thoại không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.Email))
+            {
+                errorMessage = "Email không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.GioiTinh))
+            {
+                errorMessage = "Vui lòng chọn giới tính.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.NgheNghiep))
+            {
+                errorMessage = "Nghề nghiệp không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.TrangThai))
+            {
+                errorMessage = "Trạng thái người thuê không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.NoiCap))
+            {
+                errorMessage = "Nơi cấp CCCD không được để trống.";
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(dto.DiaChi))
+            {
+                errorMessage = "Địa chỉ thường trú không được để trống.";
+                return false;
+            }
+
+            if (!dto.NgaySinh.HasValue)
+            {
+                errorMessage = "Ngày sinh không được để trống.";
+                return false;
+            }
+
+            var today = DateTime.Today;
+            var minBirthDate = today.AddYears(-18);
+            if (dto.NgaySinh.Value.Date > minBirthDate)
+            {
+                errorMessage = "Người thuê phải từ 18 tuổi trở lên.";
+                return false;
+            }
+
+            if (!dto.NgayCap.HasValue)
+            {
+                errorMessage = "Ngày cấp CCCD không được để trống.";
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
         }
 
         private Task<StatusConsistencyResult> EnsureStatusConsistencyAsync(Tenant tenant, TenantStayInfo? stayInfo)

@@ -70,11 +70,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             // Giới hạn tối đa 10 phòng mỗi nhà
             const int maxRoomsPerHouse = 10;
-            var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
-            var currentCount = roomsOfHouse?.Count ?? 0;
+                var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
+                var currentCount = roomsOfHouse?.Count ?? 0;
 
             if (currentCount >= maxRoomsPerHouse)
-            {
+                {
                 return $"Nhà hiện tại đã đủ {maxRoomsPerHouse} phòng, không thể tạo thêm.";
             }
 

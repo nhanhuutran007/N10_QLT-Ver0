@@ -429,9 +429,6 @@
                                                                 <DataTrigger Binding="{Binding TrangThai}" Value="Đang ở">
                                                                     <Setter Property="Background" Value="#D1FAE5"/>
                                                                 </DataTrigger>
-                                                                <DataTrigger Binding="{Binding TrangThai}" Value="Đặt cọc">
-                                                                    <Setter Property="Background" Value="#DBEAFE"/>
-                                                                </DataTrigger>
                                                                 <DataTrigger Binding="{Binding TrangThai}" Value="Sắp trả phòng">
                                                                     <Setter Property="Background" Value="#FEF3C7"/>
                                                                 </DataTrigger>
@@ -448,9 +445,6 @@
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding TrangThai}" Value="Đang ở">
                                                                         <Setter Property="Foreground" Value="#065F46"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Đặt cọc">
-                                                                        <Setter Property="Foreground" Value="#1D4ED8"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding TrangThai}" Value="Sắp trả phòng">
                                                                         <Setter Property="Foreground" Value="#92400E"/>

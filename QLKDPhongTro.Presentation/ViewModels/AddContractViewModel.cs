@@ -427,8 +427,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (value != null)
             {
                 if (!IsEditMode)
-                {
-                    _ = UpdateTienCocFromRoomAsync();
+            {
+                _ = UpdateTienCocFromRoomAsync();
                 }
                 // Luôn load danh sách người thuê trong phòng (cả khi thêm mới và chỉnh sửa)
                 _ = LoadTenantsForRoomAsync(value.MaPhong);
@@ -460,11 +460,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     if (!seenTenantIds.Contains(tenantInfo.MaNguoiThue))
                     {
                         seenTenantIds.Add(tenantInfo.MaNguoiThue);
-                        NguoiThueList.Add(new NguoiThueTmp 
-                        { 
-                            MaNguoiThue = tenantInfo.MaNguoiThue, 
-                            HoTen = tenantInfo.HoTen 
-                        });
+                    NguoiThueList.Add(new NguoiThueTmp 
+                    { 
+                        MaNguoiThue = tenantInfo.MaNguoiThue, 
+                        HoTen = tenantInfo.HoTen 
+                    });
                     }
                 }
 

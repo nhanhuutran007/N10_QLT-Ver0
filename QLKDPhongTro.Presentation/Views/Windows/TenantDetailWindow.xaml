@@ -132,23 +132,20 @@
                                         </Border>
                                         <Border Margin="10,0,0,0">
                                             <Border.Style>
-                                                <Style TargetType="Border" BasedOn="{StaticResource BadgeStyle}">
-                                                    <Setter Property="Background" Value="#E5E7EB"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đang ở">
-                                                            <Setter Property="Background" Value="#D1FAE5"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đặt cọc">
-                                                            <Setter Property="Background" Value="#DBEAFE"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Sắp trả phòng">
-                                                            <Setter Property="Background" Value="#FEF3C7"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đã trả phòng">
-                                                            <Setter Property="Background" Value="#E5E7EB"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource BadgeStyle}">
+                                                        <Setter Property="Background" Value="#E5E7EB"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đang ở">
+                                                                <Setter Property="Background" Value="#D1FAE5"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Sắp trả phòng">
+                                                                <Setter Property="Background" Value="#FEF3C7"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đã trả phòng">
+                                                                <Setter Property="Background" Value="#E5E7EB"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
                                             </Border.Style>
 
                                             <TextBlock Text="{Binding BasicInfo.TrangThai}" FontWeight="SemiBold">
@@ -158,9 +155,6 @@
                                                         <Style.Triggers>
                                                             <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đang ở">
                                                                 <Setter Property="Foreground" Value="#065F46"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Đặt cọc">
-                                                                <Setter Property="Foreground" Value="#1D4ED8"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding BasicInfo.TrangThai}" Value="Sắp trả phòng">
                                                                 <Setter Property="Foreground" Value="#92400E"/>

@@ -56,19 +56,19 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
                 
                 return new ContractDto
-                {
-                    MaHopDong = e.MaHopDong,
-                    MaNguoiThue = e.MaNguoiThue,
-                    MaPhong = e.MaPhong,
-                    NgayBatDau = e.NgayBatDau,
-                    NgayKetThuc = e.NgayKetThuc,
-                    TienCoc = e.TienCoc,
-                    FileHopDong = e.FileHopDong,
+            {
+                MaHopDong = e.MaHopDong,
+                MaNguoiThue = e.MaNguoiThue,
+                MaPhong = e.MaPhong,
+                NgayBatDau = e.NgayBatDau,
+                NgayKetThuc = e.NgayKetThuc,
+                TienCoc = e.TienCoc,
+                FileHopDong = e.FileHopDong,
                     TrangThai = trangThai,
-                    GhiChu = e.GhiChu,
-                    // Lấy từ JOIN trong repository
-                    TenNguoiThue = e.TenNguoiThue,
-                    TenPhong = e.TenPhong
+                GhiChu = e.GhiChu,
+                // Lấy từ JOIN trong repository
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
                 };
             }).ToList();
         }
@@ -133,18 +133,18 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
                 
                 return new ContractDto
-                {
-                    MaHopDong = e.MaHopDong,
-                    MaNguoiThue = e.MaNguoiThue,
-                    MaPhong = e.MaPhong,
-                    NgayBatDau = e.NgayBatDau,
-                    NgayKetThuc = e.NgayKetThuc,
-                    TienCoc = e.TienCoc,
-                    FileHopDong = e.FileHopDong,
+            {
+                MaHopDong = e.MaHopDong,
+                MaNguoiThue = e.MaNguoiThue,
+                MaPhong = e.MaPhong,
+                NgayBatDau = e.NgayBatDau,
+                NgayKetThuc = e.NgayKetThuc,
+                TienCoc = e.TienCoc,
+                FileHopDong = e.FileHopDong,
                     TrangThai = trangThai,
-                    GhiChu = e.GhiChu,
-                    TenNguoiThue = e.TenNguoiThue,
-                    TenPhong = e.TenPhong
+                GhiChu = e.GhiChu,
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
                 };
             }).ToList();
         }
@@ -165,7 +165,32 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TrangThai = trangThai,
                 GhiChu = dto.GhiChu
             };
-            return await _repository.AddHopDongAsync(entity);
+            var contractId = await _repository.AddHopDongAsync(entity);
+
+            // Sau khi tạo hợp đồng thành công:
+            // Nếu phòng đã có khách thuê thì chuyển trạng thái phòng sang "Đang thuê"
+            try
+            {
+                if (dto.MaPhong > 0)
+                {
+                    var tenantRepo = new TenantRepository();
+                    var roomRepo = new RentedRoomRepository();
+
+                    var roomTenants = await tenantRepo.GetTenantsByRoomIdAsync(dto.MaPhong);
+                    var hasTenant = roomTenants.Any(); // Đã loại "Đã trả phòng" trong repository
+
+                    if (hasTenant)
+                    {
+                        await roomRepo.UpdateStatusAsync(dto.MaPhong, "Đang thuê");
+                    }
+                }
+            }
+            catch
+            {
+                // Không làm gián đoạn việc tạo hợp đồng nếu lỗi khi cập nhật trạng thái phòng
+            }
+
+            return contractId;
         }
 
         public async Task UpdateHopDongAsync(ContractDto dto)
@@ -202,18 +227,18 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
                 
                 return new ContractDto
-                {
-                    MaHopDong = e.MaHopDong,
-                    MaNguoiThue = e.MaNguoiThue,
-                    MaPhong = e.MaPhong,
-                    NgayBatDau = e.NgayBatDau,
-                    NgayKetThuc = e.NgayKetThuc,
-                    TienCoc = e.TienCoc,
-                    FileHopDong = e.FileHopDong,
+            {
+                MaHopDong = e.MaHopDong,
+                MaNguoiThue = e.MaNguoiThue,
+                MaPhong = e.MaPhong,
+                NgayBatDau = e.NgayBatDau,
+                NgayKetThuc = e.NgayKetThuc,
+                TienCoc = e.TienCoc,
+                FileHopDong = e.FileHopDong,
                     TrangThai = trangThai,
-                    GhiChu = e.GhiChu,
-                    TenNguoiThue = e.TenNguoiThue,
-                    TenPhong = e.TenPhong
+                GhiChu = e.GhiChu,
+                TenNguoiThue = e.TenNguoiThue,
+                TenPhong = e.TenPhong
                 };
             }).ToList();
         }

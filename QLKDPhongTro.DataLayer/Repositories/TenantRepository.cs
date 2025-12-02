@@ -454,7 +454,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LIMIT 1
                 )
                 WHERE nt.MaPhong = @MaPhong
-                  AND nt.TrangThai = 'Đang ở'
+                  AND nt.TrangThai <> 'Đã trả phòng'
                 ORDER BY 
                     CASE 
                         WHEN hd.TrangThai = 'Hiệu lực' THEN 0
