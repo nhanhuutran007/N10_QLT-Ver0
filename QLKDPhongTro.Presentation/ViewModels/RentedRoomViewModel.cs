@@ -123,7 +123,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private string _title = "Thêm phòng mới";
         [ObservableProperty] private string _buttonContent = "Thêm phòng";
         [ObservableProperty] private IAsyncRelayCommand _saveCommand = null!;
-        public string[] StatusOptions { get; } = new[] { "Trống", "Đang thuê", "Đang bảo trì" };
+        [ObservableProperty] private bool _isEditMode = false;
+        
+        // Trạng thái cho form tạo phòng (chỉ có Trống và Dự kiến)
+        public string[] CreateRoomStatusOptions { get; } = new[] { "Trống", "Dự kiến" };
+        // Trạng thái cho form chỉnh sửa phòng (tất cả các trạng thái)
+        public string[] StatusOptions { get; } = new[] { "Trống", "Dự kiến", "Đang thuê", "Đang bảo trì" };
+        
+        // Property để binding trong XAML - trả về danh sách phù hợp với chế độ
+        public string[] CurrentStatusOptions => IsEditMode ? StatusOptions : CreateRoomStatusOptions;
 
 
         // === LOGIC CHÍNH: TẢI DỮ LIỆU CHI TIẾT ===
@@ -333,8 +341,11 @@ namespace QLKDPhongTro.Presentation.ViewModels
             var validationMessage = await _rentedRoomController.CheckCanCreateRoomAsync();
             if (!string.IsNullOrEmpty(validationMessage)) { MessageBox.Show(validationMessage); return; }
 
+            // Khi tạo phòng, trạng thái mặc định là "Trống" hoặc có thể chọn "Dự kiến"
+            IsEditMode = false;
             NewRoom = new RentedRoomDto { TrangThai = "Trống" };
             Title = "Thêm phòng mới"; ButtonContent = "Thêm phòng"; SaveCommand = SaveRoomCommand;
+            OnPropertyChanged(nameof(CurrentStatusOptions));
 
             var window = new AddRoomWindow(this) { Owner = Application.Current.MainWindow };
             window.ShowDialog();
@@ -345,20 +356,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             if (SelectedRoom == null) return;
 
-            // Clone object để sửa
+            // Clone object để sửa, giữ nguyên trạng thái hiện tại của phòng
+            IsEditMode = true;
             NewRoom = new RentedRoomDto
             {
                 MaPhong = SelectedRoom.MaPhong,
                 TenPhong = SelectedRoom.TenPhong,
                 DienTich = SelectedRoom.DienTich,
                 GiaCoBan = SelectedRoom.GiaCoBan,
-                TrangThai = SelectedRoom.TrangThai,
+                TrangThai = SelectedRoom.TrangThai, // Giữ nguyên trạng thái hiện tại
                 GhiChu = SelectedRoom.GhiChu,
                 GiaBangChu = SelectedRoom.GiaBangChu,
                 TrangThietBi = SelectedRoom.TrangThietBi
             };
 
             Title = "Sửa thông tin phòng"; ButtonContent = "Cập nhật"; SaveCommand = UpdateRoomCommand;
+            OnPropertyChanged(nameof(CurrentStatusOptions));
             var window = new AddRoomWindow(this) { Owner = Application.Current.MainWindow };
             window.ShowDialog();
         }

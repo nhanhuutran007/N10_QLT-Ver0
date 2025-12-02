@@ -49,27 +49,64 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<ContractDto>> GetAllHopDongAsync()
         {
             var entities = await _repository.GetAllHopDongAsync();
-            return entities.Select(e => new ContractDto
+            var now = DateTime.Now.Date;
+            return entities.Select(e => 
             {
-                MaHopDong = e.MaHopDong,
-                MaNguoiThue = e.MaNguoiThue,
-                MaPhong = e.MaPhong,
-                NgayBatDau = e.NgayBatDau,
-                NgayKetThuc = e.NgayKetThuc,
-                TienCoc = e.TienCoc,
-                FileHopDong = e.FileHopDong,
-                TrangThai = e.TrangThai,
-                GhiChu = e.GhiChu,
-                // Lấy từ JOIN trong repository
-                TenNguoiThue = e.TenNguoiThue,
-                TenPhong = e.TenPhong
+                // Tính toán trạng thái dựa trên ngày kết thúc
+                string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
+                
+                return new ContractDto
+                {
+                    MaHopDong = e.MaHopDong,
+                    MaNguoiThue = e.MaNguoiThue,
+                    MaPhong = e.MaPhong,
+                    NgayBatDau = e.NgayBatDau,
+                    NgayKetThuc = e.NgayKetThuc,
+                    TienCoc = e.TienCoc,
+                    FileHopDong = e.FileHopDong,
+                    TrangThai = trangThai,
+                    GhiChu = e.GhiChu,
+                    // Lấy từ JOIN trong repository
+                    TenNguoiThue = e.TenNguoiThue,
+                    TenPhong = e.TenPhong
+                };
             }).ToList();
+        }
+
+        /// <summary>
+        /// Tính toán trạng thái hợp đồng dựa trên ngày kết thúc
+        /// Nếu từ ngày hiện tại đến ngày kết thúc < 31 ngày thì "Sắp hết hạn", còn lại là "Hiệu lực"
+        /// </summary>
+        private static string CalculateContractStatus(DateTime ngayKetThuc, string? trangThaiHienTai)
+        {
+            var now = DateTime.Now.Date;
+            var endDate = ngayKetThuc.Date;
+            
+            // Nếu hợp đồng đã hết hạn
+            if (endDate < now)
+            {
+                return "Hết hạn";
+            }
+            
+            // Tính số ngày còn lại
+            int daysRemaining = (endDate - now).Days;
+            
+            // Nếu còn dưới 31 ngày thì "Sắp hết hạn", còn lại là "Hiệu lực"
+            if (daysRemaining < 31)
+            {
+                return "Sắp hết hạn";
+            }
+            
+            return "Hiệu lực";
         }
 
         public async Task<ContractDto?> GetByIdAsync(int maHopDong)
         {
             var entity = await _repository.GetByIdAsync(maHopDong);
             if (entity == null) return null;
+
+            // Tính toán trạng thái dựa trên ngày kết thúc
+            string trangThai = CalculateContractStatus(entity.NgayKetThuc, entity.TrangThai);
 
             return new ContractDto
             {
@@ -80,7 +117,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = entity.NgayKetThuc,
                 TienCoc = entity.TienCoc,
                 FileHopDong = entity.FileHopDong,
-                TrangThai = entity.TrangThai,
+                TrangThai = trangThai,
                 GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
@@ -90,24 +127,33 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<ContractDto>> GetActiveContractsAsync()
         {
             var entities = await _repository.GetActiveContractsAsync();
-            return entities.Select(e => new ContractDto
+            return entities.Select(e => 
             {
-                MaHopDong = e.MaHopDong,
-                MaNguoiThue = e.MaNguoiThue,
-                MaPhong = e.MaPhong,
-                NgayBatDau = e.NgayBatDau,
-                NgayKetThuc = e.NgayKetThuc,
-                TienCoc = e.TienCoc,
-                FileHopDong = e.FileHopDong,
-                TrangThai = e.TrangThai,
-                GhiChu = e.GhiChu,
-                TenNguoiThue = e.TenNguoiThue,
-                TenPhong = e.TenPhong
+                // Tính toán trạng thái dựa trên ngày kết thúc
+                string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
+                
+                return new ContractDto
+                {
+                    MaHopDong = e.MaHopDong,
+                    MaNguoiThue = e.MaNguoiThue,
+                    MaPhong = e.MaPhong,
+                    NgayBatDau = e.NgayBatDau,
+                    NgayKetThuc = e.NgayKetThuc,
+                    TienCoc = e.TienCoc,
+                    FileHopDong = e.FileHopDong,
+                    TrangThai = trangThai,
+                    GhiChu = e.GhiChu,
+                    TenNguoiThue = e.TenNguoiThue,
+                    TenPhong = e.TenPhong
+                };
             }).ToList();
         }
 
         public async Task<int> CreateHopDongAsync(ContractDto dto)
         {
+            // Tính toán trạng thái dựa trên ngày kết thúc
+            string trangThai = CalculateContractStatus(dto.NgayKetThuc, dto.TrangThai);
+            
             var entity = new Contract
             {
                 MaNguoiThue = dto.MaNguoiThue,
@@ -116,7 +162,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai,
+                TrangThai = trangThai,
                 GhiChu = dto.GhiChu
             };
             return await _repository.AddHopDongAsync(entity);
@@ -124,6 +170,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task UpdateHopDongAsync(ContractDto dto)
         {
+            // Tính toán trạng thái dựa trên ngày kết thúc
+            string trangThai = CalculateContractStatus(dto.NgayKetThuc, dto.TrangThai);
+            
             var entity = new Contract
             {
                 MaHopDong = dto.MaHopDong,
@@ -133,7 +182,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = dto.NgayKetThuc,
                 TienCoc = dto.TienCoc,
                 FileHopDong = dto.FileHopDong,
-                TrangThai = dto.TrangThai,
+                TrangThai = trangThai,
                 GhiChu = dto.GhiChu
             };
             await _repository.UpdateHopDongAsync(entity);
@@ -147,19 +196,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<ContractDto>> GetExpiringContractsAsync(int days)
         {
             var entities = await _repository.GetExpiringContractsAsync(days);
-            return entities.Select(e => new ContractDto
+            return entities.Select(e => 
             {
-                MaHopDong = e.MaHopDong,
-                MaNguoiThue = e.MaNguoiThue,
-                MaPhong = e.MaPhong,
-                NgayBatDau = e.NgayBatDau,
-                NgayKetThuc = e.NgayKetThuc,
-                TienCoc = e.TienCoc,
-                FileHopDong = e.FileHopDong,
-                TrangThai = e.TrangThai,
-                GhiChu = e.GhiChu,
-                TenNguoiThue = e.TenNguoiThue,
-                TenPhong = e.TenPhong
+                // Tính toán trạng thái dựa trên ngày kết thúc
+                string trangThai = CalculateContractStatus(e.NgayKetThuc, e.TrangThai);
+                
+                return new ContractDto
+                {
+                    MaHopDong = e.MaHopDong,
+                    MaNguoiThue = e.MaNguoiThue,
+                    MaPhong = e.MaPhong,
+                    NgayBatDau = e.NgayBatDau,
+                    NgayKetThuc = e.NgayKetThuc,
+                    TienCoc = e.TienCoc,
+                    FileHopDong = e.FileHopDong,
+                    TrangThai = trangThai,
+                    GhiChu = e.GhiChu,
+                    TenNguoiThue = e.TenNguoiThue,
+                    TenPhong = e.TenPhong
+                };
             }).ToList();
         }
         // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn kèm file hợp đồng (gửi cho cả người thuê và admin)
@@ -174,6 +229,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             if (entity == null) return null;
 
+            // Tính toán trạng thái dựa trên ngày kết thúc
+            string trangThai = CalculateContractStatus(entity.NgayKetThuc, entity.TrangThai);
+
             return new ContractDto
             {
                 MaHopDong = entity.MaHopDong,
@@ -187,7 +245,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GiaThue = entity.GiaThue,
 
                 FileHopDong = entity.FileHopDong,
-                TrangThai = entity.TrangThai,
+                TrangThai = trangThai,
                 GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong

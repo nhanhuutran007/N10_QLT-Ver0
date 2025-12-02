@@ -111,19 +111,24 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var contractController = new ContractController(new DataLayer.Repositories.ContractRepository());
                 var activeContract = await contractController.GetActiveContractByRoomIdAsync(maPhong);
                 
-                // Nếu chưa có hợp đồng, đổi trạng thái phòng sang "Đang thuê" (nếu đang "Trống")
-                if (activeContract == null)
+                // Nếu người thuê ở trạng thái "Đặt cọc" thì phòng chuyển sang "Dự kiến"
+                if (string.Equals(dto.TrangThai, "Đặt cọc", StringComparison.OrdinalIgnoreCase))
                 {
+                    await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
+                }
+                else if (activeContract != null)
+                {
+                    // Nếu đã có hợp đồng, đảm bảo trạng thái là "Đang thuê"
+                    await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
+                }
+                else
+                {
+                    // Nếu chưa có hợp đồng và không phải "Đặt cọc", đổi trạng thái phòng sang "Đang thuê" (nếu đang "Trống")
                     var room = await _roomRepository.GetByIdAsync(maPhong);
                     if (room != null && string.Equals(room.TrangThai, "Trống", StringComparison.OrdinalIgnoreCase))
                     {
                         await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
                     }
-                }
-                else
-                {
-                    // Nếu đã có hợp đồng, đảm bảo trạng thái là "Đang thuê"
-                    await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
                 }
             }
             
@@ -441,6 +446,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// <summary>
         /// Đồng bộ trạng thái phòng sau khi trạng thái người thuê thay đổi.
         /// Đảm bảo: 
+        /// - Khi người thuê ở trạng thái "Đặt cọc" thì phòng chuyển sang "Dự kiến"
         /// - Không set phòng Trống nếu vẫn còn hợp đồng còn hiệu lực.
         /// - Khi tất cả khách thuê trong phòng đã trả phòng và không còn hợp đồng active thì set phòng Trống.
         /// </summary>
@@ -468,9 +474,20 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 return;
             }
 
-            // Không còn hợp đồng active cho người này:
-            // Kiểm tra còn khách thuê "Đang ở" trong phòng không
+            // Kiểm tra xem có người thuê nào trong phòng ở trạng thái "Đặt cọc" không
             var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
+            var hasDepositTenant = roomTenants.Any(t =>
+                string.Equals(t.TrangThaiNguoiThue, "Đặt cọc", StringComparison.OrdinalIgnoreCase));
+
+            if (hasDepositTenant)
+            {
+                // Nếu có người thuê "Đặt cọc" thì phòng chuyển sang "Dự kiến"
+                await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
+                return;
+            }
+
+            // Không còn hợp đồng active và không có người "Đặt cọc":
+            // Kiểm tra còn khách thuê "Đang ở" trong phòng không
             var hasActiveTenant = roomTenants.Any(t =>
                 !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase));
 

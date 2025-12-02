@@ -68,17 +68,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var maNha = AuthController.CurrentUser!.MaNha;
 
-            // Lấy thông tin nhà để biết tổng số phòng tối đa
-            var house = await _houseRepository.GetByIdAsync(maNha);
-            if (house != null && house.TongSoPhong > 0)
-            {
-                var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
-                var currentCount = roomsOfHouse?.Count ?? 0;
+            // Giới hạn tối đa 10 phòng mỗi nhà
+            const int maxRoomsPerHouse = 10;
+            var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
+            var currentCount = roomsOfHouse?.Count ?? 0;
 
-                if (currentCount >= house.TongSoPhong)
-                {
-                    return $"Nhà hiện tại đã đủ {house.TongSoPhong} phòng, không thể tạo thêm.";
-                }
+            if (currentCount >= maxRoomsPerHouse)
+            {
+                return $"Nhà hiện tại đã đủ {maxRoomsPerHouse} phòng, không thể tạo thêm.";
             }
 
             return null;
@@ -94,6 +91,15 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             var maNha = AuthController.CurrentUser!.MaNha;
 
+            // Đảm bảo trạng thái khi tạo phòng chỉ là "Trống" hoặc "Dự kiến"
+            string trangThai = dto.TrangThai;
+            if (string.IsNullOrWhiteSpace(trangThai) || 
+                (!string.Equals(trangThai, "Trống", StringComparison.OrdinalIgnoreCase) && 
+                 !string.Equals(trangThai, "Dự kiến", StringComparison.OrdinalIgnoreCase)))
+            {
+                trangThai = "Trống"; // Mặc định là "Trống" nếu không hợp lệ
+            }
+
             // Không kiểm tra mã phòng trùng nữa vì database tự động tạo
             var room = new RentedRoom
             {
@@ -101,7 +107,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TenPhong = dto.TenPhong,
                 DienTich = (decimal)dto.DienTich,
                 GiaCoBan = dto.GiaCoBan,
-                TrangThai = dto.TrangThai,
+                TrangThai = trangThai,
                 GhiChu = dto.GhiChu,
                 GiaBangChu = dto.GiaBangChu,
                 TrangThietBi = dto.TrangThietBi,

@@ -130,8 +130,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     FormTitle = "Cập nhật hợp đồng";
 
-                    // Chọn phòng trước, sau đó OnSelectedPhongChanged sẽ tự động load danh sách người thuê
+                    // Chọn phòng trước, OnSelectedPhongChanged sẽ tự động load danh sách người thuê
                     SelectedPhong = PhongList.FirstOrDefault(x => x.MaPhong == _editingContract.MaPhong);
+                    
                     NgayBatDau = _editingContract.NgayBatDau;
                     NgayKetThuc = _editingContract.NgayKetThuc;
 
@@ -422,10 +423,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             RefreshSuggestedSavePath();
             HasSelectedRoom = value != null;
 
-            // Khi chọn phòng, tự động set tiền cọc = giá thuê phòng
-            if (value != null && !IsEditMode)
+            // Khi chọn phòng, tự động set tiền cọc = giá thuê phòng và load danh sách người thuê
+            if (value != null)
             {
-                _ = UpdateTienCocFromRoomAsync();
+                if (!IsEditMode)
+                {
+                    _ = UpdateTienCocFromRoomAsync();
+                }
+                // Luôn load danh sách người thuê trong phòng (cả khi thêm mới và chỉnh sửa)
                 _ = LoadTenantsForRoomAsync(value.MaPhong);
             }
             else if (value == null)
@@ -446,13 +451,21 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 // Lấy danh sách người thuê trong phòng
                 var roomTenants = await _tenantRepo.GetTenantsByRoomIdAsync(maPhong);
                 
+                // Sử dụng HashSet để loại bỏ trùng lặp theo MaNguoiThue
+                var seenTenantIds = new HashSet<int>();
+                
                 foreach (var tenantInfo in roomTenants)
                 {
-                    NguoiThueList.Add(new NguoiThueTmp 
-                    { 
-                        MaNguoiThue = tenantInfo.MaNguoiThue, 
-                        HoTen = tenantInfo.HoTen 
-                    });
+                    // Chỉ thêm nếu chưa có trong danh sách (tránh trùng lặp)
+                    if (!seenTenantIds.Contains(tenantInfo.MaNguoiThue))
+                    {
+                        seenTenantIds.Add(tenantInfo.MaNguoiThue);
+                        NguoiThueList.Add(new NguoiThueTmp 
+                        { 
+                            MaNguoiThue = tenantInfo.MaNguoiThue, 
+                            HoTen = tenantInfo.HoTen 
+                        });
+                    }
                 }
 
                 // Nếu đang chỉnh sửa, tự động chọn người thuê của hợp đồng

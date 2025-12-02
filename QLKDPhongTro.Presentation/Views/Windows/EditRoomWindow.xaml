@@ -87,7 +87,7 @@
                             <TextBox Text="{Binding NewRoom.GiaBangChu, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,20"/>
 
                             <TextBlock Text="Trạng thái" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,8"/>
-                            <ComboBox ItemsSource="{Binding StatusOptions}" SelectedValue="{Binding NewRoom.TrangThai}" Height="44" 
+                            <ComboBox ItemsSource="{Binding CurrentStatusOptions}" SelectedValue="{Binding NewRoom.TrangThai}" Height="44" 
                                       VerticalContentAlignment="Center" Padding="12,0" Background="#F9FAFB" BorderBrush="#E5E7EB" BorderThickness="1">
                                 <ComboBox.Resources>
                                     <Style TargetType="Border">
