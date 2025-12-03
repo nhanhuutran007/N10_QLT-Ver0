@@ -214,6 +214,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 var validDebts = debtData.Where(d => d.IsValid).ToList();
                 var errors = debtData.Where(d => !d.IsValid).ToList();
 
+                // Lấy toàn bộ payments hiện có để tránh tạo trùng công nợ
+                var allExistingPayments = await _paymentRepository.GetAllAsync();
+
                 int successCount = 0;
 
                 foreach (var debt in validDebts)
@@ -229,6 +232,25 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                                 ErrorMessage = $"Không tìm thấy hợp đồng cho phòng {debt.TenPhong}"
                             });
                             continue;
+                        }
+
+                        // === CHẶN TRÙNG CÔNG NỢ: Nếu đã tồn tại payment cho cùng hợp đồng + tháng, thì bỏ qua ===
+                        if (!string.IsNullOrWhiteSpace(debt.ThangNam))
+                        {
+                            var hasExistingForMonth = allExistingPayments.Any(p =>
+                                p.MaHopDong == contract.MaHopDong &&
+                                string.Equals(p.ThangNam, debt.ThangNam, StringComparison.OrdinalIgnoreCase));
+
+                            if (hasExistingForMonth)
+                            {
+                                // Ghi chú lỗi mềm để báo trong summary nhưng không tạo thêm bản ghi
+                                errors.Add(new DebtCreationDto
+                                {
+                                    RoomName = debt.RoomName,
+                                    ErrorMessage = $"Đã tồn tại công nợ cho phòng {debt.TenPhong} tháng {debt.ThangNam}, bỏ qua dòng Google Form tương ứng."
+                                });
+                                continue;
+                            }
                         }
 
                         var previousPayment = await GetLastPaymentByContractIdAsync(contract.MaHopDong);

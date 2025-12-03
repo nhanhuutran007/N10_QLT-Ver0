@@ -424,8 +424,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             var roomTenants = new List<RoomTenantInfo>();
             using var conn = new MySqlConnection(connectionString);
             await conn.OpenAsync();
-            // ✅ SỬA: Chỉ lấy người thuê ĐANG Ở trong phòng (không lấy người đã trả phòng)
-            // Filter theo TrangThaiNguoiThue = 'Đang ở' và MaPhong = @MaPhong
+            // ✅ Lấy tất cả người thuê còn gắn với phòng (mọi trạng thái trừ 'Đã trả phòng')
+            // Dùng cho nhiều nghiệp vụ: tính tiền, trạng thái phòng, chọn người lập hợp đồng...
             var sql = @"
                 SELECT 
                     nt.MaNguoiThue,
@@ -454,7 +454,11 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     LIMIT 1
                 )
                 WHERE nt.MaPhong = @MaPhong
+<<<<<<< HEAD
                   AND nt.TrangThai <> 'Đã trả phòng'
+=======
+                  AND (nt.TrangThai IS NULL OR nt.TrangThai <> 'Đã trả phòng')
+>>>>>>> b6ca2e928a785fd0c7c3af7de127d9d7400110f3
                 ORDER BY 
                     CASE 
                         WHEN hd.TrangThai = 'Hiệu lực' THEN 0

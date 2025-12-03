@@ -48,18 +48,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 IsLoading = true;
 
-                // Đăng nhập với OTP - gửi OTP qua email
+                // Đăng nhập trực tiếp (OTP đang tắt tạm thời)
+                //var loginResult = await _authController.LoginAsync(Username, Password);
                 var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-                
+
                 if (otpResult.IsSuccess && otpResult.User != null)
                 {
-                    // OTP đã được gửi - mở cửa sổ nhập OTP
-                    var otpWindow = new OtpLoginWindow(
-                        otpResult.User.TenDangNhap,
-                        otpResult.User.Email ?? string.Empty,
-                        Password
-                    );
-                    otpWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    // Mở dashboard sau khi đăng nhập thành công
+                    // FIX: Truyền đủ 3 tham số (Username, Email, Password) khớp với OtpLoginWindow
+                    var otpWindow = new OtpLoginWindow(Username, otpResult.User.Email, Password);
+
                     otpWindow.Show();
 
                     // Đóng LoginWindow

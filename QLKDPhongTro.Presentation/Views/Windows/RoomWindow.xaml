@@ -372,6 +372,10 @@
                                                     <DataTrigger Binding="{Binding TrangThai}" Value="Đang bảo trì">
                                                         <Setter Property="Background" Value="#FEE2E2"/>
                                                     </DataTrigger>
+                                                    <!-- Màu nền cho trạng thái Dự kiến (đồng bộ ViewRoomWindow) -->
+                                                    <DataTrigger Binding="{Binding TrangThai}" Value="Dự kiến">
+                                                        <Setter Property="Background" Value="#E0F2FE"/>
+                                                    </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </Border.Style>
@@ -387,6 +391,10 @@
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding TrangThai}" Value="Đang bảo trì">
                                                             <Setter Property="Foreground" Value="#991B1B"/>
+                                                        </DataTrigger>
+                                                        <!-- Màu chữ cho trạng thái Dự kiến -->
+                                                        <DataTrigger Binding="{Binding TrangThai}" Value="Dự kiến">
+                                                            <Setter Property="Foreground" Value="#0369A1"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>

@@ -82,6 +82,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private string _currentTenantStatus = "Trống";
         [ObservableProperty] private string _currentContractRange = string.Empty;
         [ObservableProperty] private string _tenantStatusNote = string.Empty;
+        [ObservableProperty] private string _roomStatusDetail = string.Empty;
         [ObservableProperty] private bool _hasActiveTenant;
         [ObservableProperty] private ObservableCollection<RoomTenantDto> _currentTenants = new();
         [ObservableProperty] private int _openMaintenanceCount;
@@ -94,6 +95,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         partial void OnCurrentTenantsChanged(ObservableCollection<RoomTenantDto> value)
         {
             OnPropertyChanged(nameof(HasCurrentTenants));
+            UpdateRoomStatusDetail();
         }
 
         [ObservableProperty] private bool _isLoading;
@@ -123,6 +125,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty] private string _title = "Thêm phòng mới";
         [ObservableProperty] private string _buttonContent = "Thêm phòng";
         [ObservableProperty] private IAsyncRelayCommand _saveCommand = null!;
+<<<<<<< HEAD
         [ObservableProperty] private bool _isEditMode = false;
         
         // Trạng thái cho form tạo phòng (chỉ có Trống và Dự kiến)
@@ -132,6 +135,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         
         // Property để binding trong XAML - trả về danh sách phù hợp với chế độ
         public string[] CurrentStatusOptions => IsEditMode ? StatusOptions : CreateRoomStatusOptions;
+=======
+        public string[] StatusOptions { get; } = new[] { "Trống", "Đang thuê", "Dự kiến", "Đang bảo trì" };
+>>>>>>> b6ca2e928a785fd0c7c3af7de127d9d7400110f3
 
 
         // === LOGIC CHÍNH: TẢI DỮ LIỆU CHI TIẾT ===
@@ -151,6 +157,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             // 2. Gọi hàm async để tải dữ liệu động từ DB (Bảo trì & Tài chính)
             // Sử dụng fire-and-forget pattern nhưng an toàn vì cập nhật trên UI Thread
             _ = LoadRoomRealDataAsync(value.MaPhong, value.GiaCoBan);
+            UpdateRoomStatusDetail();
         }
 
         private void ResetDetailProperties()
@@ -168,6 +175,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             CurrentTenantStatus = "Trống";
             CurrentContractRange = string.Empty;
             TenantStatusNote = string.Empty;
+            RoomStatusDetail = string.Empty;
             HasActiveTenant = false;
             CurrentTenants = new ObservableCollection<RoomTenantDto>();
         }
@@ -263,6 +271,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                                 ? "Người đứng tên đang cư trú."
                                 : "Khách thuê lịch sử gần nhất.")
                             : "Phòng sẵn sàng cho khách mới.");
+                    UpdateRoomStatusDetail();
                 });
             }
             catch (Exception ex)
@@ -480,6 +489,38 @@ namespace QLKDPhongTro.Presentation.ViewModels
             return raw.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                       .Select(s => s.Trim())
                       .Where(s => !string.IsNullOrEmpty(s));
+        }
+
+        private void UpdateRoomStatusDetail()
+        {
+            if (SelectedRoom == null ||
+                !string.Equals(SelectedRoom.TrangThai, "Dự kiến", StringComparison.OrdinalIgnoreCase))
+            {
+                RoomStatusDetail = string.Empty;
+                return;
+            }
+
+            var tenantStatuses = CurrentTenants?
+                .Select(t => t.TrangThaiNguoiThue)
+                .Where(s => !string.IsNullOrWhiteSpace(s)) ?? Enumerable.Empty<string>();
+
+            var hasDeposit = tenantStatuses.Any(status =>
+                string.Equals(status, "Đặt cọc", StringComparison.OrdinalIgnoreCase));
+            var hasLeavingSoon = tenantStatuses.Any(status =>
+                string.Equals(status, "Sắp trả phòng", StringComparison.OrdinalIgnoreCase));
+
+            if (hasDeposit)
+            {
+                RoomStatusDetail = "Dự kiến người thuê chuẩn bị vào ở";
+            }
+            else if (hasLeavingSoon)
+            {
+                RoomStatusDetail = "Dự kiến người thuê rời đi";
+            }
+            else
+            {
+                RoomStatusDetail = "Phòng đang trong trạng thái dự kiến.";
+            }
         }
 
         // Window control commands

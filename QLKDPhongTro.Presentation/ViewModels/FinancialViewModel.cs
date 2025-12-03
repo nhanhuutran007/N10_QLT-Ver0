@@ -379,7 +379,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
             _debtProcessingService = new DebtProcessingService();
 
             // Khởi tạo commands
-            ManualInputRentCommand = new RelayCommand(() => { });
+            ManualInputRentCommand = new RelayCommand(OpenManualDebtWindow);
             ScanImageCommand = new RelayCommand(() => { });
             LoadDataCommand = new RelayCommand(async () => await LoadDataAsync());
             ViewDetailCommand = new RelayCommand<FinancialRecordDto>(async (record) => await ViewDetailAsync(record));
@@ -775,54 +775,121 @@ namespace QLKDPhongTro.Presentation.ViewModels
             }
         }
 
-        // Phương thức kiểm tra sự cố
+        // Phương thức kiểm tra / chỉnh sửa công nợ từ tab "Quản lý công nợ"
         private async Task InspectDiscrepancyAsync(DebtReportDto? debt)
         {
-            // FIX: Kiểm tra 'TrangThaiThanhToan'
-            if (debt == null || debt.TrangThaiThanhToan != "Cảnh báo") return;
+            if (debt == null) return;
 
+            // Case 1: Công nợ ở trạng thái "Cảnh báo" -> mở workflow kiểm tra sai lệch chỉ số
+            if (debt.TrangThaiThanhToan == "Cảnh báo")
+            {
+                try
+                {
+                    IsLoading = true;
+
+                    // Lấy thông tin chi tiết sự cố từ service
+                    var discrepancyInfo = await _debtProcessingService.GetDiscrepancyInfoAsync(debt.TenPhong);
+                    if (discrepancyInfo != null)
+                    {
+                        SelectedDebtDiscrepancy = discrepancyInfo;
+
+                        // Hiển thị cửa sổ kiểm tra chi tiết
+                        var inspectVM = new MeterReadingInspectionViewModel(
+                            discrepancyInfo.MeterReadingResult as MeterReadingResult,
+                            discrepancyInfo.OriginalImagePath);
+
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            var window = new MeterReadingInspectionWindow(inspectVM)
+                            {
+                                Owner = Application.Current.MainWindow
+                            };
+
+                            // Xử lý khi cửa sổ đóng
+                            window.Closed += async (s, e) =>
+                            {
+                                if (inspectVM.IsConfirmed)
+                                {
+                                    // Cập nhật giá trị đã xác nhận
+                                    await ResolveDiscrepancyWithValue(debt, inspectVM.FinalValue);
+                                }
+                            };
+
+                            window.ShowDialog();
+                        });
+                    }
+                    else
+                    {
+                        ShowMessageRequested?.Invoke(this, "Không tìm thấy thông tin chi tiết sự cố.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowMessageRequested?.Invoke(this, $"Lỗi khi kiểm tra sự cố: {ex.Message}");
+                }
+                finally
+                {
+                    IsLoading = false;
+                }
+
+                return;
+            }
+
+            // Case 2: Các trạng thái khác ("Chờ duyệt", "Đã xác nhận", "Chưa trả", ...) -> mở form chỉnh sửa thanh toán
             try
             {
                 IsLoading = true;
 
-                // Lấy thông tin chi tiết sự cố từ service
-                // FIX: Dùng 'TenPhong'
-                var discrepancyInfo = await _debtProcessingService.GetDiscrepancyInfoAsync(debt.TenPhong);
-                if (discrepancyInfo != null)
+                var dispatcher = Application.Current?.Dispatcher;
+                bool? dialogResult;
+
+                if (dispatcher != null && !dispatcher.CheckAccess())
                 {
-                    SelectedDebtDiscrepancy = discrepancyInfo;
-
-                    // Hiển thị cửa sổ kiểm tra chi tiết
-                    var inspectVM = new MeterReadingInspectionViewModel(
-                        discrepancyInfo.MeterReadingResult as MeterReadingResult,
-                        discrepancyInfo.OriginalImagePath);
-
-                    await Application.Current.Dispatcher.InvokeAsync(() =>
+                    dialogResult = await dispatcher.InvokeAsync<bool?>(() =>
                     {
-                        var window = new MeterReadingInspectionWindow(inspectVM);
-                        window.Owner = Application.Current.MainWindow;
-
-                        // Xử lý khi cửa sổ đóng
-                        window.Closed += async (s, e) =>
+                        try
                         {
-                            if (inspectVM.IsConfirmed)
+                            var editDialog = new EditPaymentDialog(debt.MaThanhToan)
                             {
-                                // Cập nhật giá trị đã xác nhận
-                                await ResolveDiscrepancyWithValue(debt, inspectVM.FinalValue);
-                            }
-                        };
-
-                        window.ShowDialog();
+                                Owner = Application.Current?.MainWindow
+                            };
+                            return editDialog.ShowDialog();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}",
+                                "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return false;
+                        }
                     });
                 }
                 else
                 {
-                    ShowMessageRequested?.Invoke(this, "Không tìm thấy thông tin chi tiết sự cố.");
+                    try
+                    {
+                        var editDialog = new EditPaymentDialog(debt.MaThanhToan)
+                        {
+                            Owner = Application.Current?.MainWindow
+                        };
+                        dialogResult = editDialog.ShowDialog();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}",
+                            "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+                        dialogResult = false;
+                    }
+                }
+
+                if (dialogResult == true)
+                {
+                    // Sau khi chỉnh sửa xong, reload lại danh sách công nợ để UI cập nhật
+                    await ReloadDebtsAsync().ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                ShowMessageRequested?.Invoke(this, $"Lỗi khi kiểm tra sự cố: {ex.Message}");
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi chỉnh sửa công nợ: {ex.Message}");
             }
             finally
             {
@@ -1479,6 +1546,38 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 InternetFee = InternetFeeInput,
                 SanitationFee = SanitationFeeInput
             };
+        }
+
+        /// <summary>
+        /// Mở cửa sổ thêm công nợ thủ công
+        /// </summary>
+        private void OpenManualDebtWindow()
+        {
+            if (_financialController == null)
+            {
+                ShowMessageRequested?.Invoke(this, "Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
+                return;
+            }
+
+            var vm = new ManualDebtViewModel(_financialController);
+            var window = new ManualDebtWindow(vm)
+            {
+                Owner = Application.Current?.MainWindow
+            };
+            window.ShowDialog();
+
+            // Sau khi cửa sổ đóng, reload lại tab công nợ để thấy công nợ mới nếu đã tạo
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await ReloadDebtsAsync().ConfigureAwait(false);
+                }
+                catch
+                {
+                    // ignore
+                }
+            });
         }
 
         private DebtFeeSettings GetActiveFeeSettings()

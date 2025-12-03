@@ -162,6 +162,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// Cập nhật trạng thái phòng với validation:
         /// - Không cho chuyển sang "Trống" nếu phòng đang có khách thuê hoặc hợp đồng còn hiệu lực
         /// - Không cho chuyển sang "Đang thuê" nếu phòng trống và không có người thuê
+        /// - Không cho chuyển sang "Dự kiến" nếu vẫn còn khách \"Đang ở\"
+        ///   hoặc không có khách nào ở trạng thái \"Sắp trả phòng\" / \"Đặt cọc\"
         /// </summary>
         public async Task<(bool Success, string? ErrorMessage)> UpdateRoomStatusAsync(int id, string status)
         {
@@ -190,10 +192,30 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 // Kiểm tra xem phòng có khách thuê hoặc hợp đồng không
                 var activeContract = await _contractRepository.GetActiveByRoomIdAsync(id);
                 var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(id);
-                
+
                 if (activeContract == null && (roomTenants == null || !roomTenants.Any()))
                 {
                     return (false, "Không thể chuyển phòng sang trạng thái 'Đang thuê' vì phòng đang trống và không có người thuê.");
+                }
+            }
+
+            // Kiểm tra nếu muốn chuyển sang "Dự kiến"
+            if (string.Equals(status, "Dự kiến", StringComparison.OrdinalIgnoreCase))
+            {
+                var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(id) ?? new List<DataLayer.Models.RoomTenantInfo>();
+
+                bool HasStatus(DataLayer.Models.RoomTenantInfo t, string s) =>
+                    string.Equals(t.TrangThaiNguoiThue, s, StringComparison.OrdinalIgnoreCase);
+
+                var hasActiveOccupant = roomTenants.Any(t => HasStatus(t, "Đang ở"));
+                var hasPendingTenant = roomTenants.Any(t =>
+                    HasStatus(t, "Đặt cọc") || HasStatus(t, "Sắp trả phòng"));
+
+                // Nếu còn người đang ở hoặc không có ai Đặt cọc / Sắp trả phòng thì không cho set Dự kiến
+                if (hasActiveOccupant || !hasPendingTenant)
+                {
+                    return (false,
+                        "Không thể chuyển phòng sang trạng thái 'Dự kiến' khi vẫn còn khách Đang ở hoặc chưa có khách nào ở trạng thái 'Sắp trả phòng' / 'Đặt cọc'.");
                 }
             }
 
