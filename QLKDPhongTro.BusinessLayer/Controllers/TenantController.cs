@@ -439,10 +439,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Đồng bộ trạng thái phòng sau khi trạng thái người thuê thay đổi.
-        /// Đảm bảo: 
-        /// - Không set phòng Trống nếu vẫn còn hợp đồng còn hiệu lực.
-        /// - Khi tất cả khách thuê trong phòng đã trả phòng và không còn hợp đồng active thì set phòng Trống.
+        /// Đồng bộ trạng thái phòng sau khi trạng thái người thuê thay đổi,
+        /// dựa THẲNG vào trạng thái tất cả người thuê trong phòng.
+        /// Rule:
+        /// - Nếu còn bất kỳ người thuê "Đang ở"  -> phòng "Đang thuê"
+        /// - Ngược lại, nếu có người "Đặt cọc" hoặc "Sắp trả phòng" -> phòng "Dự kiến"
+        /// - Ngược lại (tất cả đã trả phòng hoặc không còn ai) -> phòng "Trống"
         /// </summary>
         private async Task UpdateRoomStatusAfterTenantChangeAsync(Tenant tenant, TenantStayInfo? stayInfo)
         {
@@ -452,36 +454,27 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
 
             var maPhong = tenant.MaPhong.Value;
+            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong) ?? new List<RoomTenantInfo>();
 
-            // Nếu còn hợp đồng còn hiệu lực cho người này thì giữ phòng ở trạng thái đang thuê
-            var hasContract = stayInfo?.MaHopDong != null &&
-                              !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
-            var contractStillActive = hasContract &&
-                ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
-                 (string.Equals(stayInfo.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
-                 (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
+            bool HasStatus(RoomTenantInfo t, string status) =>
+                string.Equals(t.TrangThaiNguoiThue, status, StringComparison.OrdinalIgnoreCase);
 
-            if (contractStillActive)
+            // Còn bất kỳ người đang ở -> phòng Đang thuê
+            if (roomTenants.Any(t => HasStatus(t, "Đang ở")))
             {
-                // Phòng có hợp đồng còn hiệu lực => luôn là Đang thuê
                 await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
                 return;
             }
 
-            // Không còn hợp đồng active cho người này:
-            // Kiểm tra còn khách thuê "Đang ở" trong phòng không
-            var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(maPhong);
-            var hasActiveTenant = roomTenants.Any(t =>
-                !string.Equals(t.TrangThaiNguoiThue, "Đã trả phòng", StringComparison.OrdinalIgnoreCase));
+            // Không còn "Đang ở", nhưng có người Đặt cọc / Sắp trả phòng -> phòng Dự kiến
+            if (roomTenants.Any(t => HasStatus(t, "Đặt cọc") || HasStatus(t, "Sắp trả phòng")))
+            {
+                await _roomRepository.UpdateStatusAsync(maPhong, "Dự kiến");
+                return;
+            }
 
-            if (hasActiveTenant)
-            {
-                await _roomRepository.UpdateStatusAsync(maPhong, "Đang thuê");
-            }
-            else
-            {
-                await _roomRepository.UpdateStatusAsync(maPhong, "Trống");
-            }
+            // Còn lại: hoặc tất cả đã trả phòng, hoặc không còn người thuê -> Trống
+            await _roomRepository.UpdateStatusAsync(maPhong, "Trống");
         }
 
         private Task<StatusConsistencyResult> EnsureStatusConsistencyAsync(Tenant tenant, TenantStayInfo? stayInfo)
@@ -503,18 +496,35 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     ? (stayInfo.NgayKetThuc.Value.Date - DateTime.Today).TotalDays
                     : 999;
 
-                expectedTenantStatus = daysLeft <= 7 ? "Sắp trả phòng" : "Đang ở";
-                expectedRoomStatus = "Đang thuê";
+                if (daysLeft <= 7)
+                {
+                    expectedTenantStatus = "Sắp trả phòng";
+                    expectedRoomStatus = "Dự kiến";
+                }
+                else
+                {
+                    expectedTenantStatus = "Đang ở";
+                    expectedRoomStatus = "Đang thuê";
+                }
             }
             else if (hasContract && stayInfo!.NgayBatDau.HasValue && stayInfo.NgayBatDau.Value.Date > DateTime.Today)
             {
-                expectedTenantStatus = "Sắp trả phòng";
+                expectedTenantStatus = "Đặt cọc";
                 expectedRoomStatus = "Dự kiến";
             }
             else
             {
-                expectedTenantStatus = tenant.TrangThai;
-                expectedRoomStatus = "Trống";
+                var tenantStatus = tenant.TrangThai ?? string.Empty;
+                expectedTenantStatus = tenantStatus;
+                if (string.Equals(tenantStatus, "Đặt cọc", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(tenantStatus, "Sắp trả phòng", StringComparison.OrdinalIgnoreCase))
+                {
+                    expectedRoomStatus = "Dự kiến";
+                }
+                else
+                {
+                    expectedRoomStatus = "Trống";
+                }
             }
 
             // Không tự động overwrite trạng thái người thuê/phòng ở đây – chỉ tính toán và gợi ý

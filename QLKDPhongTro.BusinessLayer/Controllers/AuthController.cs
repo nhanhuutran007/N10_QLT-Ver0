@@ -210,147 +210,147 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     // Gửi email với layout HTML đẹp (tương tự mail nhắc thanh toán)
                     var subject = "Mã OTP đăng nhập hệ thống quản lý thuê nhà";
                     var body = $@"<!DOCTYPE html>
-<html lang='vi'>
-<head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>Mã OTP đăng nhập</title>
-    <style>
-        body {{
-            margin: 0;
-            padding: 0;
-            background-color: #f3f4f6;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            color: #111827;
-        }}
-        .wrapper {{
-            width: 100%;
-            background-color: #f3f4f6;
-            padding: 24px 0;
-        }}
-        .container {{
-            max-width: 640px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-        }}
-        .header {{
-            background: linear-gradient(135deg, #0ea5e9, #6366f1);
-            padding: 20px 28px;
-            color: #ffffff;
-        }}
-        .brand-name {{
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 0.03em;
-        }}
-        .subtitle {{
-            font-size: 13px;
-            opacity: 0.9;
-            margin-top: 4px;
-        }}
-        .content {{
-            padding: 24px 28px 28px 28px;
-        }}
-        .greeting {{
-            font-size: 15px;
-            margin-bottom: 12px;
-        }}
-        .lead {{
-            font-size: 14px;
-            color: #374151;
-            margin-bottom: 18px;
-        }}
-        .otp-card {{
-            border-radius: 10px;
-            border: 1px solid #e5e7eb;
-            padding: 18px 20px;
-            background: linear-gradient(135deg, #eff6ff 0%, #f9fafb 60%, #fefce8 100%);
-            margin-bottom: 18px;
-            text-align: center;
-        }}
-        .otp-label {{
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: #6b7280;
-            margin-bottom: 8px;
-        }}
-        .otp-value {{
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 0.35em;
-            color: #111827;
-        }}
-        .note {{
-            font-size: 12px;
-            color: #6b7280;
-            line-height: 1.6;
-            margin-top: 10px;
-        }}
-        .footer {{
-            padding: 16px 28px 22px 28px;
-            font-size: 11px;
-            color: #9ca3af;
-            text-align: center;
-        }}
-        .divider {{
-            height: 1px;
-            background: linear-gradient(to right, transparent, #e5e7eb, transparent);
-            margin: 18px 0 14px 0;
-        }}
-        @media (max-width: 640px) {{
-            .container {{
-                border-radius: 0;
-            }}
-            .content {{
-                padding: 20px 18px 22px 18px;
-            }}
-            .header {{
-                padding: 18px 18px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class='wrapper'>
-        <div class='container'>
-            <div class='header'>
-                <div class='brand-name'>HỆ THỐNG QUẢN LÝ THUÊ NHÀ</div>
-                <div class='subtitle'>Xác thực đăng nhập bằng mã OTP</div>
-            </div>
-            <div class='content'>
-                <div class='greeting'>Xin chào {user.TenDangNhap},</div>
-                <div class='lead'>
-                    Bạn vừa yêu cầu đăng nhập vào hệ thống. Vui lòng sử dụng mã OTP bên dưới để hoàn tất bước xác thực.
-                </div>
-                <div class='otp-card'>
-                    <div class='otp-label'>MÃ OTP ĐĂNG NHẬP</div>
-                    <div class='otp-value'>{otp}</div>
-                    <div class='note' style='margin-top:12px;'>
-                        Mã OTP này có hiệu lực trong <strong>5 phút</strong>. 
-                        Vui lòng không chia sẻ mã này cho bất kỳ ai.
+        <html lang='vi'>
+        <head>
+            <meta charset='UTF-8' />
+            <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+            <title>Mã OTP đăng nhập</title>
+            <style>
+                body {{
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f3f4f6;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    color: #111827;
+                }}
+                .wrapper {{
+                    width: 100%;
+                    background-color: #f3f4f6;
+                    padding: 24px 0;
+                }}
+                .container {{
+                    max-width: 640px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #0ea5e9, #6366f1);
+                    padding: 20px 28px;
+                    color: #ffffff;
+                }}
+                .brand-name {{
+                    font-size: 20px;
+                    font-weight: 700;
+                    letter-spacing: 0.03em;
+                }}
+                .subtitle {{
+                    font-size: 13px;
+                    opacity: 0.9;
+                    margin-top: 4px;
+                }}
+                .content {{
+                    padding: 24px 28px 28px 28px;
+                }}
+                .greeting {{
+                    font-size: 15px;
+                    margin-bottom: 12px;
+                }}
+                .lead {{
+                    font-size: 14px;
+                    color: #374151;
+                    margin-bottom: 18px;
+                }}
+                .otp-card {{
+                    border-radius: 10px;
+                    border: 1px solid #e5e7eb;
+                    padding: 18px 20px;
+                    background: linear-gradient(135deg, #eff6ff 0%, #f9fafb 60%, #fefce8 100%);
+                    margin-bottom: 18px;
+                    text-align: center;
+                }}
+                .otp-label {{
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.12em;
+                    color: #6b7280;
+                    margin-bottom: 8px;
+                }}
+                .otp-value {{
+                    font-size: 28px;
+                    font-weight: 700;
+                    letter-spacing: 0.35em;
+                    color: #111827;
+                }}
+                .note {{
+                    font-size: 12px;
+                    color: #6b7280;
+                    line-height: 1.6;
+                    margin-top: 10px;
+                }}
+                .footer {{
+                    padding: 16px 28px 22px 28px;
+                    font-size: 11px;
+                    color: #9ca3af;
+                    text-align: center;
+                }}
+                .divider {{
+                    height: 1px;
+                    background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+                    margin: 18px 0 14px 0;
+                }}
+                @media (max-width: 640px) {{
+                    .container {{
+                        border-radius: 0;
+                    }}
+                    .content {{
+                        padding: 20px 18px 22px 18px;
+                    }}
+                    .header {{
+                        padding: 18px 18px;
+                    }}
+                }}
+            </style>
+        </head>
+        <body>
+            <div class='wrapper'>
+                <div class='container'>
+                    <div class='header'>
+                        <div class='brand-name'>HỆ THỐNG QUẢN LÝ THUÊ NHÀ</div>
+                        <div class='subtitle'>Xác thực đăng nhập bằng mã OTP</div>
+                    </div>
+                    <div class='content'>
+                        <div class='greeting'>Xin chào {user.TenDangNhap},</div>
+                        <div class='lead'>
+                            Bạn vừa yêu cầu đăng nhập vào hệ thống. Vui lòng sử dụng mã OTP bên dưới để hoàn tất bước xác thực.
+                        </div>
+                        <div class='otp-card'>
+                            <div class='otp-label'>MÃ OTP ĐĂNG NHẬP</div>
+                            <div class='otp-value'>{otp}</div>
+                            <div class='note' style='margin-top:12px;'>
+                                Mã OTP này có hiệu lực trong <strong>5 phút</strong>. 
+                                Vui lòng không chia sẻ mã này cho bất kỳ ai.
+                            </div>
+                        </div>
+                        <div class='note'>
+                            Nếu bạn không thực hiện yêu cầu đăng nhập này, có thể tài khoản của bạn đang bị truy cập trái phép. 
+                            Hãy đổi mật khẩu ngay sau khi đăng nhập thành công hoặc liên hệ quản trị viên để được hỗ trợ.
+                        </div>
+                        <div class='divider'></div>
+                        <div class='note'>
+                            Trân trọng,<br/>
+                            Đội ngũ vận hành hệ thống Quản lý Thuê Nhà
+                        </div>
+                    </div>
+                    <div class='footer'>
+                        Email được gửi tự động, vui lòng không trả lời trực tiếp.
                     </div>
                 </div>
-                <div class='note'>
-                    Nếu bạn không thực hiện yêu cầu đăng nhập này, có thể tài khoản của bạn đang bị truy cập trái phép. 
-                    Hãy đổi mật khẩu ngay sau khi đăng nhập thành công hoặc liên hệ quản trị viên để được hỗ trợ.
-                </div>
-                <div class='divider'></div>
-                <div class='note'>
-                    Trân trọng,<br/>
-                    Đội ngũ vận hành hệ thống Quản lý Thuê Nhà
-                </div>
             </div>
-            <div class='footer'>
-                Email được gửi tự động, vui lòng không trả lời trực tiếp.
-            </div>
-        </div>
-    </div>
-</body>
-</html>";
+        </body>
+        </html>";
 
                     // Gửi email OTP
                     await EmailService.SendEmailAsync(

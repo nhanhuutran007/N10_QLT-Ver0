@@ -57,6 +57,10 @@
                 <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang bảo trì">
                     <Setter Property="Background" Value="#FEE2E2"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Dự kiến">
+                    <!-- Màu xanh lam nhạt cho trạng thái dự kiến / sắp thay đổi -->
+                    <Setter Property="Background" Value="#E0F2FE"/>
+                </DataTrigger>
                 <!-- Đổi màu khi có người thuê nhưng chưa có hợp đồng -->
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
@@ -80,6 +84,10 @@
                 </DataTrigger>
                 <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Đang bảo trì">
                     <Setter Property="Foreground" Value="#B91C1C"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding SelectedRoom.TrangThai}" Value="Dự kiến">
+                    <!-- Màu chữ xanh lam đậm tương ứng với badge Dự kiến -->
+                    <Setter Property="Foreground" Value="#0369A1"/>
                 </DataTrigger>
                 <!-- Đổi màu khi có người thuê nhưng chưa có hợp đồng -->
                 <MultiDataTrigger>
@@ -164,6 +172,9 @@
                                                 </Border>
                                                 <TextBlock Text="{Binding SelectedRoom.MaPhong, StringFormat='ID: {0}'}" Foreground="#9CA3AF" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                             </StackPanel>
+                                            <TextBlock Text="{Binding RoomStatusDetail}" 
+                                                       Foreground="#0369A1" FontSize="12" Margin="0,6,0,0"
+                                                       Visibility="{Binding RoomStatusDetail, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter=inverse}"/>
                                         </StackPanel>
                                     </Grid>
 

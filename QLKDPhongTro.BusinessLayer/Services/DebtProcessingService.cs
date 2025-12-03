@@ -264,6 +264,26 @@ namespace QLKDPhongTro.BusinessLayer.Services
                     };
                 }
 
+                // 1.b Xác định tháng/năm của dòng Google Form này
+                string monthYear = DateTime.Now.ToString("MM/yyyy");
+                if (!string.IsNullOrWhiteSpace(formData.Timestamp))
+                {
+                    var ts = ParseTimestamp(formData.Timestamp);
+                    monthYear = ts.ToString("MM/yyyy");
+                }
+
+                // 1.c Nếu đã tồn tại công nợ (payment) cho cùng phòng (contract) và tháng đó thì BỎ QUA
+                var existingForMonth = await GetPaymentByMonthAsync(contractId.Value, monthYear);
+                if (existingForMonth != null)
+                {
+                    return new DebtCalculationResult
+                    {
+                        RoomName = formData.RoomName,
+                        IsProcessed = false,
+                        ErrorMessage = $"Đã tồn tại công nợ cho phòng {formData.RoomName} tháng {monthYear}, bỏ qua dòng Google Form tương ứng."
+                    };
+                }
+
                 var lastPayment = await GetLastPaymentByContractIdAsync(contractId.Value);
                 if (lastPayment != null)
                 {

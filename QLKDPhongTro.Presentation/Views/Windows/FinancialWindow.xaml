@@ -21,6 +21,7 @@
     <Window.Resources>
         <!-- Converters -->
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <!-- Note: Ensure the C# classes for these converters exist and are public -->
         <converters:PageNumberEqualsMultiConverter x:Key="PageNumberEqualsMultiConverter"/>
         <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
 
@@ -94,13 +95,23 @@
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{StaticResource PrimaryDarkColor}"/>
-                    <!-- ADD: Thêm hiệu ứng shadow khi hover cho nhất quán -->
                     <Setter Property="Effect" Value="{StaticResource HoverShadow}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- ComboBox Styles (Simplified for brevity but modern) -->
+        <!-- ComboBox Styles -->
+        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="6" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" />
+                <Path x:Name="Arrow" Grid.Column="1" Fill="{StaticResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
+            </Grid>
+        </ControlTemplate>
+
         <Style TargetType="{x:Type ComboBox}" x:Key="ComboBoxStyle">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Padding" Value="10,0"/>
@@ -126,7 +137,6 @@
                                 </Popup>
                             </Grid>
                         </Border>
-                        <!-- ADD: Thêm trigger cho hover và focus -->
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
@@ -139,18 +149,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <!-- Helper for ComboBox Toggle Button -->
-        <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="20" />
-                </Grid.ColumnDefinitions>
-                <Border x:Name="Border" Grid.ColumnSpan="2" CornerRadius="6" Background="Transparent" BorderBrush="Transparent" BorderThickness="0" />
-                <Path x:Name="Arrow" Grid.Column="1" Fill="{StaticResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 4 4 L 8 0 Z"/>
-            </Grid>
-        </ControlTemplate>
 
         <!-- Segment Button Styles -->
         <Style TargetType="{x:Type Button}" x:Key="ModernSegmentButton">
@@ -207,7 +205,6 @@
             <Setter Property="BorderBrush" Value="{StaticResource BorderLightColor}"/>
             <Setter Property="Margin" Value="8"/>
             <Setter Property="Effect" Value="{StaticResource CardShadow}"/>
-            <!-- ADD: Style Triggers cho hover effect -->
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="BorderBrush" Value="{StaticResource SecondaryColor}"/>
@@ -216,7 +213,7 @@
             </Style.Triggers>
         </Style>
 
-        <!-- DataGrid Styles (NEW & IMPROVED) -->
+        <!-- DataGrid Styles -->
         <Style TargetType="{x:Type DataGridColumnHeader}">
             <Setter Property="Height" Value="48"/>
             <Setter Property="Background" Value="{StaticResource BackgroundLighter}"/>
@@ -279,6 +276,7 @@
 
     </Window.Resources>
 
+    <!-- Root Grid -->
     <Grid Background="{StaticResource BackgroundLighter}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260" MinWidth="250"/>
@@ -286,6 +284,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- SIDEBAR -->
+        <!-- Note: If SidebarControl errors, ensure the namespace 'components' is correct and project is built -->
         <components:SidebarControl Grid.Column="0" x:Name="SidebarControl"/>
 
         <!-- MAIN CONTENT -->
@@ -311,41 +310,78 @@
                 <StackPanel Grid.Row="0">
                     <TextBlock Text="Quản lý tài chính" Foreground="{StaticResource TextPrimary}" FontSize="28" FontWeight="Bold" Margin="0,0,0,24"/>
 
-                    <!-- Action Bar & Tabs Container -->
+                    <!-- Tabs + Action Bar + Search -->
                     <Grid Margin="0,0,0,20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
+                            <!-- Tabs Area -->
                             <ColumnDefinition Width="*"/>
+                            <!-- Controls Area (Buttons + Search) -->
                         </Grid.ColumnDefinitions>
 
-                        <!-- Tabs -->
-                        <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="4" BorderThickness="1" BorderBrush="{StaticResource BorderColor}" Effect="{StaticResource CardShadow}">
+                        <!-- Tabs (Left) -->
+                        <Border Grid.Column="0"
+                                Background="White"
+                                CornerRadius="10"
+                                Padding="4"
+                                BorderThickness="1"
+                                BorderBrush="{StaticResource BorderColor}"
+                                Effect="{StaticResource CardShadow}"
+                                VerticalAlignment="Center"
+                                Margin="0,0,16,0">
                             <StackPanel Orientation="Horizontal">
                                 <Button Content="Tất cả bản ghi" 
                                         x:Name="ViewAllRecordsButton"
                                         Click="ViewAllRecords_Click"
                                         Style="{StaticResource ModernActiveSegmentButton}"
-                                        Width="140"/>
+                                        Width="130"/>
                                 <Button Content="Quản lý công nợ" 
                                         x:Name="ViewDebtsButton"
                                         Click="ViewDebts_Click"
                                         Style="{StaticResource ModernSegmentButton}"
-                                        Width="140"/>
-                                <!-- REMOVED: Báo cáo thu chi Tab -->
+                                        Width="130"/>
                             </StackPanel>
                         </Border>
 
-                        <!-- Actions -->
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <!-- REMOVED: Nhập tay Button -->
-                            <Button Content="Đồng bộ G.Form"
+                        <!-- Right Side Controls Group (Buttons + Search + Sort) -->
+                        <!-- UPDATE: Sử dụng Grid với cột tỷ lệ để co giãn linh hoạt, không bị chồng lấn -->
+                        <Grid Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <!-- Spacer: chiếm khoảng trống thừa -->
+                                <ColumnDefinition Width="*"/>
+                                <!-- Btn Thêm: co giãn theo tỷ lệ 1.2, tối đa 150px -->
+                                <ColumnDefinition Width="1.2*" MaxWidth="150"/>
+                                <!-- Btn Sync: co giãn theo tỷ lệ 1.4, tối đa 170px -->
+                                <ColumnDefinition Width="1.4*" MaxWidth="170"/>
+                                <!-- Search: co giãn theo tỷ lệ 2, tối đa 260px -->
+                                <ColumnDefinition Width="2*" MaxWidth="260"/>
+                                <!-- Combo: co giãn theo tỷ lệ 1.2, tối đa 150px -->
+                                <ColumnDefinition Width="1.2*" MaxWidth="150"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Button Thêm công nợ -->
+                            <Button Grid.Column="1"
+                                    Content="Thêm công nợ"
+                                    Style="{StaticResource ModernPrimaryButton}"
+                                    Command="{Binding ManualInputRentCommand}"
+                                    Margin="4,0"
+                                    HorizontalAlignment="Stretch"/>
+
+                            <!-- Button Đồng bộ G.Form -->
+                            <Button Grid.Column="2"
+                                    Content="Đồng bộ G.Form"
                                     Style="{StaticResource ScanButtonStyle}"
                                     Command="{Binding ProcessDebtsFromGoogleFormCommand}"
-                                    Width="150" Margin="0,0,12,0"/>
+                                    Margin="4,0"
+                                    HorizontalAlignment="Stretch"/>
 
                             <!-- Search Box -->
-                            <Border Background="White" CornerRadius="8" BorderThickness="1" Width="240" Height="40" Margin="0,0,12,0">
-                                <!-- ADD: Style cho Border để thay đổi màu khi TextBox focus -->
+                            <Border Grid.Column="3"
+                                    Background="White"
+                                    CornerRadius="8"
+                                    BorderThickness="1"
+                                    Height="40"
+                                    Margin="4,0">
                                 <Border.Style>
                                     <Style TargetType="Border">
                                         <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
@@ -357,7 +393,12 @@
                                     </Style>
                                 </Border.Style>
                                 <Grid>
-                                    <TextBlock Text="Tìm kiếm..." Foreground="{StaticResource TextSecondary}" FontSize="14" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,0,0,0">
+                                    <TextBlock Text="Tìm kiếm..."
+                                               Foreground="{StaticResource TextSecondary}"
+                                               FontSize="14"
+                                               IsHitTestVisible="False"
+                                               VerticalAlignment="Center"
+                                               Margin="12,0,0,0">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -369,15 +410,25 @@
                                             </Style>
                                         </TextBlock.Style>
                                     </TextBlock>
-                                    <TextBox x:Name="FinancialSearchTextBox" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center" Margin="12,0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                                    <TextBox x:Name="FinancialSearchTextBox"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             VerticalContentAlignment="Center"
+                                             Margin="12,0"
+                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
                                 </Grid>
                             </Border>
 
-                            <ComboBox Width="140" Style="{StaticResource ComboBoxStyle}" SelectedIndex="0">
+                            <!-- Sort ComboBox -->
+                            <ComboBox Grid.Column="4"
+                                      Style="{StaticResource ComboBoxStyle}"
+                                      SelectedIndex="0"
+                                      Margin="4,0"
+                                      HorizontalAlignment="Stretch">
                                 <ComboBoxItem>Mới nhất</ComboBoxItem>
                                 <ComboBoxItem>Cũ nhất</ComboBoxItem>
                             </ComboBox>
-                        </StackPanel>
+                        </Grid>
                     </Grid>
 
                     <!-- Fee configuration -->
@@ -497,7 +548,6 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <!-- REMOVE: Loại bỏ MouseEnter/MouseLeave, dùng Style Trigger -->
                                         <Border Style="{StaticResource ModernFinanceCard}" Width="320" Cursor="Hand" DataContext="{Binding}">
                                             <Border.ContextMenu>
                                                 <ContextMenu Opened="ContextMenu_Opened">
@@ -686,8 +736,6 @@
                             </StackPanel>
                         </Border>
                     </ScrollViewer>
-
-                    <!-- REMOVED: VIEW: BÁO CÁO THU CHI -->
 
                 </Grid>
             </Grid>
