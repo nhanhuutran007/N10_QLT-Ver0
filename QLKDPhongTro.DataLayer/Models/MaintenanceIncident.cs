@@ -8,6 +8,7 @@ namespace QLKDPhongTro.DataLayer.Models
         public int MaPhong { get; set; }
         public string MoTaSuCo { get; set; } = string.Empty;
         public DateTime NgayBaoCao { get; set; }
+        public DateTime? NgayCoTheSua { get; set; }
         public string TrangThai { get; set; } = string.Empty;
         public decimal ChiPhi { get; set; }
     }

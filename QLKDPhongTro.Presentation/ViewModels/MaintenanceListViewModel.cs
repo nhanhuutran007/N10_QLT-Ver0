@@ -25,16 +25,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
         // Backup fields for cancel (chỉ backup các trường có thể chỉnh sửa)
         private string _oldTrangThai = string.Empty;
         private decimal _oldChiPhi;
+        private DateTime _oldNgayBaoCao;
+        private DateTime? _oldNgayCoTheSua;
         public void BeginEdit()
         {
-            // Chỉ backup các trường có thể chỉnh sửa: ChiPhi và TrangThai
+            // Backup các trường có thể chỉnh sửa: NgayBaoCao, NgayCoTheSua, ChiPhi và TrangThai
+            _oldNgayBaoCao = NgayBaoCao;
+            _oldNgayCoTheSua = NgayCoTheSua;
             _oldTrangThai = TrangThai;
             _oldChiPhi = ChiPhi;
             IsEditing = true;
         }
         public void CancelEdit()
         {
-            // Chỉ restore các trường có thể chỉnh sửa: ChiPhi và TrangThai
+            // Restore các trường có thể chỉnh sửa: NgayBaoCao, NgayCoTheSua, ChiPhi và TrangThai
+            NgayBaoCao = _oldNgayBaoCao;
+            NgayCoTheSua = _oldNgayCoTheSua;
             TrangThai = _oldTrangThai;
             ChiPhi = _oldChiPhi;
             IsEditing = false;
@@ -179,6 +185,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 MaPhong = i.MaPhong,
                 MoTaSuCo = i.MoTaSuCo,
                 NgayBaoCao = i.NgayBaoCao,
+                NgayCoTheSua = i.NgayCoTheSua,
                 TrangThai = i.TrangThai,
                 ChiPhi = i.ChiPhi
             }).ToList();

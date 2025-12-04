@@ -92,18 +92,35 @@ namespace QLKDPhongTro.BusinessLayer.Services
             }
             fields.Add(currentField.Trim()); // Thêm field cuối cùng
 
-            // Cấu trúc: Dấu thời gian, Mã phòng, Mô tả sự cố, Ngày báo cáo
-            if (fields.Count < 4)
+            // Cấu trúc: Dấu thời gian (cột A), Mã phòng (cột B), Mô tả sự cố (cột C), Ngày có thể sửa (cột D)
+            // Chỉ cần ít nhất 3 cột: Timestamp, Mã phòng, Mô tả
+            if (fields.Count < 3)
                 return null;
 
             try
             {
+                // Lấy ngày báo cáo từ cột A (Dấu thời gian)
+                var timestamp = fields[0].Trim('"');
+                var ngayBaoCao = ParseDateOrDefault(timestamp);
+
+                // Lấy ngày có thể sửa từ cột D (nếu có)
+                DateTime? ngayCoTheSua = null;
+                if (fields.Count >= 4 && !string.IsNullOrWhiteSpace(fields[3]))
+                {
+                    var ngayCoTheSuaStr = fields[3].Trim('"');
+                    if (!string.IsNullOrWhiteSpace(ngayCoTheSuaStr))
+                    {
+                        ngayCoTheSua = ParseDateOrDefault(ngayCoTheSuaStr);
+                    }
+                }
+
                 var row = new GoogleSheetMaintenanceRow
                 {
-                    Timestamp = fields[0],
+                    Timestamp = timestamp,
                     MaPhong = ParseIntOrDefault(fields[1]),
                     MoTaSuCo = fields[2].Trim('"'), // Loại bỏ dấu ngoặc kép nếu có
-                    NgayBaoCao = ParseDateOrDefault(fields[3])
+                    NgayBaoCao = ngayBaoCao, // Sử dụng ngày từ cột A (Timestamp)
+                    NgayCoTheSua = ngayCoTheSua // Sử dụng ngày từ cột D (nếu có)
                 };
 
                 // Chỉ trả về nếu có đủ thông tin cần thiết
@@ -129,9 +146,19 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
         private DateTime ParseDateOrDefault(string value)
         {
-            // Thử các format ngày thường gặp
+            // Thử các format ngày thường gặp, bao gồm cả timestamp từ Google Sheets
             var formats = new[]
             {
+                // Google Sheets timestamp formats
+                "M/d/yyyy H:mm:ss",
+                "M/d/yyyy HH:mm:ss",
+                "MM/dd/yyyy H:mm:ss",
+                "MM/dd/yyyy HH:mm:ss",
+                "d/M/yyyy H:mm:ss",
+                "d/M/yyyy HH:mm:ss",
+                "dd/MM/yyyy H:mm:ss",
+                "dd/MM/yyyy HH:mm:ss",
+                // Date only formats
                 "dd/MM/yyyy",
                 "d/M/yyyy",
                 "dd-MM-yyyy",
@@ -169,5 +196,6 @@ namespace QLKDPhongTro.BusinessLayer.Services
         public int MaPhong { get; set; }
         public string MoTaSuCo { get; set; } = string.Empty;
         public DateTime NgayBaoCao { get; set; }
+        public DateTime? NgayCoTheSua { get; set; }
     }
 }
