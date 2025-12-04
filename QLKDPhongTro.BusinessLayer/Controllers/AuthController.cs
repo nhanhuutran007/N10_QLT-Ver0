@@ -282,7 +282,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     font-size: 28px;
                     font-weight: 700;
                     letter-spacing: 0.35em;
-                    color: #111827;
+                    color:rgb(0, 0, 0);
                 }}
                 .note {{
                     font-size: 12px;
