@@ -51,7 +51,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 // Đăng nhập trực tiếp (OTP đang tắt tạm thời)
                 //var loginResult = await _authController.LoginAsync(Username, Password);
                 var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-
+                //var loginResult = await _authController.LoginAsync(Username, Password);
                 if (otpResult.IsSuccess && otpResult.User != null)
                 {
                     // Mở dashboard sau khi đăng nhập thành công
@@ -59,12 +59,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     var otpWindow = new OtpLoginWindow(Username, otpResult.User.Email, Password);
 
                     otpWindow.Show();
+                    //var dashWindow = new DashWindow();
+                    //dashWindow.Show();
 
                     // Đóng LoginWindow
                     var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
                     loginWindow?.Close();
 
-                    Application.Current.MainWindow = otpWindow;
+                    Application.Current.MainWindow = loginWindow;
                 }
                 else
                 {
