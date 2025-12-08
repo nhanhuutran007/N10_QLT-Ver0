@@ -182,7 +182,32 @@ namespace QLKDPhongTro.BusinessLayer.Services
             {
                 var formDataList = await _googleFormService.GetFormDataAsync();
 
-                foreach (var formData in formDataList)
+                // Nhóm theo tên phòng đã chuẩn hóa và lấy bản nộp mới nhất
+                var latestFormDataByRoom = formDataList
+                    .Where(f => !string.IsNullOrWhiteSpace(f.RoomName))
+                    .GroupBy(f => NormalizeRoomName(f.RoomName))
+                    .Select(group =>
+                    {
+                        DebtFormData? latest = null;
+                        DateTime latestTimestamp = DateTime.MinValue;
+
+                        foreach (var item in group)
+                        {
+                            var ts = ParseTimestamp(item.Timestamp);
+                            if (ts >= latestTimestamp)
+                            {
+                                latestTimestamp = ts;
+                                latest = item;
+                            }
+                        }
+
+                        return latest;
+                    })
+                    .Where(item => item != null)
+                    .Select(item => item!)
+                    .ToList();
+
+                foreach (var formData in latestFormDataByRoom)
                 {
                     var result = await ProcessSingleDebtAsync(formData, settings);
                     if (result != null)
@@ -938,33 +963,6 @@ namespace QLKDPhongTro.BusinessLayer.Services
             if (string.IsNullOrWhiteSpace(roomName)) return null;
             
             var rooms = await _roomRepository.GetAllAsync();
-            
-            // Chuẩn hóa tên phòng: loại bỏ dấu chấm, khoảng trắng, dấu gạch ngang và chuyển thành chữ hoa
-            // Cũng xử lý các trường hợp như "Phòng 101", "P101", "P.101", "P-101" -> "P101"
-            string NormalizeRoomName(string name)
-            {
-                if (string.IsNullOrWhiteSpace(name)) return string.Empty;
-                var normalized = name.Trim()
-                    .Replace(".", "")
-                    .Replace(" ", "")
-                    .Replace("-", "")
-                    .Replace("_", "")
-                    .ToUpperInvariant();
-                
-                // Xử lý trường hợp "PHÒNG101" hoặc "PHONG101" -> "P101"
-                if (normalized.StartsWith("PHÒNG", StringComparison.OrdinalIgnoreCase) || 
-                    normalized.StartsWith("PHONG", StringComparison.OrdinalIgnoreCase))
-                {
-                    normalized = "P" + normalized.Substring(5); // Bỏ "PHÒNG" hoặc "PHONG", thêm "P"
-                }
-                // Xử lý trường hợp chỉ có số "101" -> "P101"
-                else if (System.Text.RegularExpressions.Regex.IsMatch(normalized, @"^\d+$"))
-                {
-                    normalized = "P" + normalized;
-                }
-                
-                return normalized;
-            }
 
             var normalizedRoomName = NormalizeRoomName(roomName);
             
@@ -1029,6 +1027,34 @@ namespace QLKDPhongTro.BusinessLayer.Services
         {
             var payments = await _paymentRepository.GetAllAsync();
             return payments.FirstOrDefault(p => p.MaHopDong == contractId && p.ThangNam == monthYear);
+        }
+
+        // Chuẩn hóa tên phòng: loại bỏ dấu chấm, khoảng trắng, dấu gạch ngang và chuyển thành chữ hoa
+        // Cũng xử lý các trường hợp như "Phòng 101", "P101", "P.101", "P-101" -> "P101"
+        private string NormalizeRoomName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return string.Empty;
+
+            var normalized = name.Trim()
+                .Replace(".", "")
+                .Replace(" ", "")
+                .Replace("-", "")
+                .Replace("_", "")
+                .ToUpperInvariant();
+
+            // Xử lý trường hợp "PHÒNG101" hoặc "PHONG101" -> "P101"
+            if (normalized.StartsWith("PHÒNG", StringComparison.OrdinalIgnoreCase) ||
+                normalized.StartsWith("PHONG", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = "P" + normalized.Substring(5); // Bỏ "PHÒNG"/"PHONG", thêm "P"
+            }
+            // Xử lý trường hợp chỉ có số "101" -> "P101"
+            else if (Regex.IsMatch(normalized, @"^\d+$"))
+            {
+                normalized = "P" + normalized;
+            }
+
+            return normalized;
         }
 
         /// <summary>

@@ -17,13 +17,13 @@ namespace QLKDPhongTro.BusinessLayer.Services
         private readonly SheetsService _sheetsService;
         public DriveService DriveService { get; }
         // ID file Google Sheet của bạn (giữ nguyên)
-        private const string SPREADSHEET_ID = "1TXLdDe8aYi41_RJj8ZseOi12xcA4CvFuNmOoMSiw5vw";
+        private const string SPREADSHEET_ID = "1uEHAOTSRmXTNINYWiZNonPt3TO7GbubmGKZyBremQxQ";
 
         // === FIX 1 ===
         // Sửa lại range theo đúng cú pháp A1 (Tên Sheet + Dải ô)
         // Thêm dấu nháy đơn '...' để hỗ trợ tên sheet có dấu cách
-        // Thêm !A:F để lấy dữ liệu từ cột A đến F
-        private const string SHEET_RANGE = "'ElectricReport'!A:F";
+        // Mở rộng tới cột Z để tránh thiếu cột khi form thêm trường mới
+        private const string SHEET_RANGE = "'Form Responses 1'!A:Z";
 
         public GoogleFormService()
         {
