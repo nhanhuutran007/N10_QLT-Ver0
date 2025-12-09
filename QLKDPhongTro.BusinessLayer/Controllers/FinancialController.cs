@@ -836,6 +836,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             decimal? soDienThangTruoc,
             decimal? soDienThangNay,
             decimal? tienThue,
+            decimal? tienNuoc,
             decimal? tienInternet,
             decimal? tienVeSinh,
             decimal? tienGiuXe,
@@ -860,11 +861,34 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 payment.ChiSoDienMoi = soDienThangNay;
             }
 
-            // Cập nhật các khoản cố định nếu cần thiết (hoặc giữ nguyên logic cho phép sửa tay)
-            // Ở đây giữ nguyên tham số truyền vào để cho phép điều chỉnh thủ công nếu có ngoại lệ
-            payment.TienNuoc = DON_GIA_NUOC;
-            payment.DonGiaNuoc = DON_GIA_NUOC;
-            payment.SoNuoc = 1;
+            // Cập nhật tiền nước từ input (nếu có), nếu không thì giữ nguyên giá trị hiện tại
+            if (tienNuoc.HasValue && tienNuoc.Value > 0)
+            {
+                // Tính lại đơn giá nước/đầu người dựa trên số người trong phòng
+                var contract = payment.MaHopDong.HasValue
+                    ? await _contractRepository.GetByIdAsync(payment.MaHopDong.Value)
+                    : null;
+                if (contract != null)
+                {
+                    var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(contract.MaPhong);
+                    int soNguoiTrongPhong = roomTenants?.Count(t =>
+                        string.Equals(t.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase)) ?? 1;
+                    if (soNguoiTrongPhong < 1) soNguoiTrongPhong = 1;
+                    
+                    decimal tienNuocDauNguoi = tienNuoc.Value / soNguoiTrongPhong;
+                    payment.TienNuoc = tienNuoc.Value; // Tổng tiền nước
+                    payment.DonGiaNuoc = tienNuocDauNguoi; // Đơn giá/đầu người
+                    payment.SoNuoc = soNguoiTrongPhong;
+                }
+                else
+                {
+                    // Fallback nếu không tìm thấy contract
+                    payment.TienNuoc = tienNuoc.Value;
+                    payment.DonGiaNuoc = tienNuoc.Value;
+                    payment.SoNuoc = 1;
+                }
+            }
+            // Nếu không có input, giữ nguyên giá trị hiện tại (không cập nhật)
 
             payment.TienThue = tienThue ?? payment.TienThue;
             payment.TienInternet = tienInternet ?? payment.TienInternet;

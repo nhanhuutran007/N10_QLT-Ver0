@@ -62,5 +62,13 @@
     </Content>
   </ItemGroup>
 
+  <!-- Copy YOLO model from BusinessLayer into output/publish -->
+  <ItemGroup>
+    <Content Include="..\QLKDPhongTro.BusinessLayer\yolov9n_meter_reading.onnx" Link="yolov9n_meter_reading.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 
 </Project>

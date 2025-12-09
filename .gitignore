@@ -11,3 +11,8 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+publish/ 
+*.exe 
+*.dll 
+credentials.json 
+*.onnx 

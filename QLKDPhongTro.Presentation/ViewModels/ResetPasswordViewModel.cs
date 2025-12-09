@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using QLKDPhongTro.BusinessLayer.Controllers;
 using QLKDPhongTro.DataLayer.Repositories;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -64,6 +65,24 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (NewPassword != ConfirmPassword)
             {
                 MessageBox.Show("Mật khẩu xác nhận không khớp!", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Kiểm tra điều kiện mật khẩu (giống như đăng ký)
+            if (NewPassword.Length < 6)
+            {
+                MessageBox.Show("Mật khẩu phải có ít nhất 6 ký tự!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Kiểm tra có ít nhất 1 ký tự viết hoa HOẶC 1 ký tự số
+            bool hasUppercase = NewPassword.Any(c => char.IsUpper(c));
+            bool hasDigit = NewPassword.Any(c => char.IsDigit(c));
+            if (!hasUppercase && !hasDigit)
+            {
+                MessageBox.Show("Mật khẩu phải chứa ít nhất 1 ký tự viết hoa HOẶC 1 ký tự số!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 

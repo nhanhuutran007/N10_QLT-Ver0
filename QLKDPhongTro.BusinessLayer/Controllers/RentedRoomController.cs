@@ -70,14 +70,24 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             // Lấy thông tin nhà để biết tổng số phòng tối đa
             var house = await _houseRepository.GetByIdAsync(maNha);
-            if (house != null && house.TongSoPhong > 0)
+            if (house != null)
             {
-                var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
-                var currentCount = roomsOfHouse?.Count ?? 0;
-
-                if (currentCount >= house.TongSoPhong)
+                // Tự động cập nhật TongSoPhong lên 10 nếu hiện tại < 10
+                if (house.TongSoPhong > 0 && house.TongSoPhong < 10)
                 {
-                    return $"Nhà hiện tại đã đủ {house.TongSoPhong} phòng, không thể tạo thêm.";
+                    house.TongSoPhong = 10;
+                    await _houseRepository.UpdateAsync(house);
+                }
+                
+                if (house.TongSoPhong > 0)
+                {
+                    var roomsOfHouse = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
+                    var currentCount = roomsOfHouse?.Count ?? 0;
+
+                    if (currentCount >= house.TongSoPhong)
+                    {
+                        return $"Nhà hiện tại đã đủ {house.TongSoPhong} phòng, không thể tạo thêm.";
+                    }
                 }
             }
 
@@ -93,6 +103,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             }
 
             var maNha = AuthController.CurrentUser!.MaNha;
+
+            // Kiểm tra tên phòng trùng trong cùng một nhà
+            var existingRooms = await _rentedRoomRepository.GetAllByMaNhaAsync(maNha);
+            if (existingRooms != null && existingRooms.Any(r => 
+                string.Equals(r.TenPhong?.Trim(), dto.TenPhong?.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                return $"Tên phòng '{dto.TenPhong}' đã tồn tại trong nhà này. Vui lòng chọn tên khác.";
+            }
 
             // Không kiểm tra mã phòng trùng nữa vì database tự động tạo
             var room = new RentedRoom
@@ -112,8 +130,26 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return result ? "Thêm phòng thành công!" : "Có lỗi xảy ra khi thêm phòng!";
         }
 
-        public async Task<bool> UpdateRoomAsync(RentedRoomDto dto)
+        public async Task<(bool Success, string? ErrorMessage)> UpdateRoomAsync(RentedRoomDto dto)
         {
+            // Kiểm tra tên phòng trùng (nhưng cho phép giữ nguyên tên của chính phòng đó)
+            var currentUser = AuthController.CurrentUser;
+            if (currentUser != null && currentUser.MaNha > 0)
+            {
+                var existingRooms = await _rentedRoomRepository.GetAllByMaNhaAsync(currentUser.MaNha);
+                if (existingRooms != null)
+                {
+                    var duplicateRoom = existingRooms.FirstOrDefault(r => 
+                        r.MaPhong != dto.MaPhong && // Không phải chính phòng đang sửa
+                        string.Equals(r.TenPhong?.Trim(), dto.TenPhong?.Trim(), StringComparison.OrdinalIgnoreCase));
+                    
+                    if (duplicateRoom != null)
+                    {
+                        return (false, $"Tên phòng '{dto.TenPhong}' đã tồn tại trong nhà này. Vui lòng chọn tên khác.");
+                    }
+                }
+            }
+
             var room = new RentedRoom
             {
                 MaPhong = dto.MaPhong, // Giữ mã phòng khi cập nhật
@@ -125,7 +161,8 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GiaBangChu = dto.GiaBangChu,
                 TrangThietBi = dto.TrangThietBi
             };
-            return await _rentedRoomRepository.UpdateAsync(room);
+            var result = await _rentedRoomRepository.UpdateAsync(room);
+            return result ? (true, null) : (false, "Có lỗi xảy ra khi cập nhật phòng!");
         }
         /// <summary>
         /// Xóa phòng với validation: Không cho xóa nếu phòng còn người thuê hoặc hợp đồng còn hiệu lực

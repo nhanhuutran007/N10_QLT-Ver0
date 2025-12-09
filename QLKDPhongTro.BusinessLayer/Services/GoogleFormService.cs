@@ -45,13 +45,32 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
         private GoogleCredential GetCredential()
         {
-            // Code lấy credential (đã sửa ở bước trước để báo lỗi rõ ràng)
+            // Code lấy credential - tìm file từ thư mục gốc project (ngang hàng với các thư mục QLKDPhongTro.*)
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
             var credentialPath = Path.Combine(baseDir, "credentials.json");
 
+            // Nếu không tìm thấy trong BaseDirectory, thử tìm trong thư mục gốc project
             if (!File.Exists(credentialPath))
             {
-                throw new FileNotFoundException($"CHƯA CÓ FILE KEY! Hãy copy file 'credentials.json' vào thư mục: {credentialPath}");
+                // Đi lên các cấp thư mục từ bin/Debug hoặc bin/Release để tìm thư mục gốc project
+                // Thư mục gốc project là nơi có file .sln và các thư mục QLKDPhongTro.*
+                var currentDir = new DirectoryInfo(baseDir);
+                while (currentDir != null)
+                {
+                    // Kiểm tra xem có file .sln trong thư mục này không (dấu hiệu của thư mục gốc project)
+                    var slnFiles = currentDir.GetFiles("*.sln");
+                    if (slnFiles.Length > 0)
+                    {
+                        credentialPath = Path.Combine(currentDir.FullName, "credentials.json");
+                        break;
+                    }
+                    currentDir = currentDir.Parent;
+                }
+            }
+
+            if (!File.Exists(credentialPath))
+            {
+                throw new FileNotFoundException($"CHƯA CÓ FILE KEY! Hãy copy file 'credentials.json' vào thư mục gốc project (nơi có file .sln) hoặc: {baseDir}");
             }
 
             try
@@ -127,11 +146,16 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 var debtDto = new DebtCreationDto
                 {
                     // Các tên cột này phải khớp với dòng 1 trong file Sheet của bạn
-                    Timestamp = GetCellValue(headers, row, "Dấu thời gian"), // Hoặc "Timestamp"
-                    RoomName = GetCellValue(headers, row, "Tên phòng"),
-                    CurrentElectricValue = ParseDecimal(GetCellValue(headers, row, "Chỉ số điện mới")),
-                    ElectricImageUrl = GetCellValue(headers, row, "Ảnh đồng hồ điện"),
-                    Email = GetCellValue(headers, row, "Địa chỉ email") // Hoặc "Email Address"
+                    Timestamp = GetCellValue(headers, row,
+                        "Dấu thời gian", "Timestamp", "Thời gian"),
+                    RoomName = GetCellValue(headers, row,
+                        "Tên phòng", "Ten phong", "Room", "Room Name", "RoomName", "Phòng"),
+                    CurrentElectricValue = ParseDecimal(GetCellValue(headers, row,
+                        "Chỉ số điện mới", "Chi so dien moi", "Electric", "Electric Value", "Chỉ số")),
+                    ElectricImageUrl = GetCellValue(headers, row,
+                        "Ảnh đồng hồ điện", "Anh dong ho dien", "Ảnh", "Image", "Photo"),
+                    Email = GetCellValue(headers, row,
+                        "Địa chỉ email", "Email", "Email Address")
                 };
 
                 // Validate
@@ -148,10 +172,17 @@ namespace QLKDPhongTro.BusinessLayer.Services
             }
         }
 
-        private static string GetCellValue(List<string> headers, List<string> row, string headerName)
+        private static string GetCellValue(List<string> headers, List<string> row, params string[] headerNames)
         {
-            var index = headers.FindIndex(h => h.IndexOf(headerName, StringComparison.OrdinalIgnoreCase) >= 0);
-            return index >= 0 && index < row.Count ? row[index] : string.Empty;
+            foreach (var headerName in headerNames)
+            {
+                var index = headers.FindIndex(h => h.IndexOf(headerName, StringComparison.OrdinalIgnoreCase) >= 0);
+                if (index >= 0 && index < row.Count)
+                {
+                    return row[index];
+                }
+            }
+            return string.Empty;
         }
 
         private static decimal ParseDecimal(string value)

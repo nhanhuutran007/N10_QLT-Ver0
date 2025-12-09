@@ -23,8 +23,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
             string username = "githubio_admin";
             string password = "nhanhuutran007";
             string port = "3306";
+            //string server = "localhost";
+            //string database = "githubio_QLT_Ver1";
+            //string username = "root";
+            //string password = "";
+            //string port = "3306";
 
-           
             // Tạo chuỗi kết nối đầy đủ (Connection String)
             _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};Charset=utf8mb4;";
             return _connectionString;

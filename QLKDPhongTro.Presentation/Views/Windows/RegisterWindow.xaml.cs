@@ -126,45 +126,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                // Tìm TextBox hiện tại bằng cách duyệt qua tất cả TextBox trong window
-                TextBox passwordTextBox = null;
-                TextBox confirmPasswordTextBox = null;
-                Panel parentPanel = null;
-                
-                // Tìm TextBox và parent panel của chúng
-                var mainGrid = this.Content as Grid;
-                if (mainGrid != null)
-                {
-                    foreach (var child in mainGrid.Children)
-                    {
-                        if (child is Grid grid && grid.Children != null)
-                        {
-                            foreach (var gridChild in grid.Children)
-                            {
-                                if (gridChild is TextBox tb)
-                                {
-                                    if (tb.Name == "PasswordTextBox")
-                                    {
-                                        passwordTextBox = tb;
-                                        parentPanel = grid;
-                                    }
-                                    else if (tb.Name == "ConfirmPasswordTextBox")
-                                    {
-                                        confirmPasswordTextBox = tb;
-                                        if (parentPanel == null) parentPanel = grid;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                // Tìm TextBox bằng FindName (đơn giản hơn)
+                var passwordTextBox = this.FindName("PasswordTextBox") as TextBox;
+                var confirmPasswordTextBox = this.FindName("ConfirmPasswordTextBox") as TextBox;
 
                 // Xử lý PasswordBox chính
-                if (passwordTextBox != null && parentPanel != null)
+                if (passwordTextBox != null)
                 {
-                    var index = parentPanel.Children.IndexOf(passwordTextBox);
-                    if (index != -1)
+                    var parent = passwordTextBox.Parent as Panel;
+                    if (parent != null)
                     {
+                        var index = parent.Children.IndexOf(passwordTextBox);
                         var passwordBox = new PasswordBox
                         {
                             Password = passwordTextBox.Text,
@@ -179,18 +151,19 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         };
                         passwordBox.PasswordChanged += PasswordBox_PasswordChanged;
 
-                        parentPanel.Children.Remove(passwordTextBox);
-                        parentPanel.Children.Insert(index, passwordBox);
+                        parent.Children.Remove(passwordTextBox);
+                        parent.Children.Insert(index, passwordBox);
                         passwordBox.Name = "PasswordBox";
                     }
                 }
 
                 // Xử lý ConfirmPasswordBox
-                if (confirmPasswordTextBox != null && parentPanel != null)
+                if (confirmPasswordTextBox != null)
                 {
-                    var index = parentPanel.Children.IndexOf(confirmPasswordTextBox);
-                    if (index != -1)
+                    var parent = confirmPasswordTextBox.Parent as Panel;
+                    if (parent != null)
                     {
+                        var index = parent.Children.IndexOf(confirmPasswordTextBox);
                         var confirmPasswordBox = new PasswordBox
                         {
                             Password = confirmPasswordTextBox.Text,
@@ -205,8 +178,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         };
                         confirmPasswordBox.PasswordChanged += ConfirmPasswordBox_PasswordChanged;
 
-                        parentPanel.Children.Remove(confirmPasswordTextBox);
-                        parentPanel.Children.Insert(index, confirmPasswordBox);
+                        parent.Children.Remove(confirmPasswordTextBox);
+                        parent.Children.Insert(index, confirmPasswordBox);
                         confirmPasswordBox.Name = "ConfirmPasswordBox";
                     }
                 }

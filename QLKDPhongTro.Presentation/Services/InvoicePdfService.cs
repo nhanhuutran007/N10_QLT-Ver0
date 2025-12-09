@@ -115,36 +115,23 @@ namespace QLKDPhongTro.Presentation.Services
             var page = document.AddPage();
             var gfx = XGraphics.FromPdfPage(page);
 
-            DrawHeader(gfx, invoice, logoPath, "Bảng chi tiết chỉ số nước");
+            DrawHeader(gfx, invoice, logoPath, "Bảng chi tiết tiền nước");
             DrawCustomerInfo(gfx, invoice, 160);
 
-            // Vẽ phần chi tiết nước (tương tự điện) với căn chỉnh tốt hơn
+            // Vẽ phần chi tiết nước: chỉ hiển thị đơn giá/người, số người và thành tiền
             double y = 280;
             double labelX = 50;
             double valueX = 250;
             double valueWidth = 200;
             
             gfx.DrawString("Đơn giá:", FontBody, XBrushes.Black, labelX, y);
-            gfx.DrawString($"{invoice.DonGiaNuoc:N0} VNĐ/m³", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
+            gfx.DrawString($"{invoice.DonGiaNuoc:N0} VNĐ/người", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
             y += 30;
 
-            gfx.DrawString("Chỉ số của tháng trước:", FontBodyBold, XBrushes.Black, labelX, y);
-            y += 18;
-            DrawDetailLine(gfx, "Ngày giờ ghi chỉ số:", invoice.NgayGhiNuocCu.ToString("dd/MM/yyyy"), y);
-            y += 18;
-            DrawDetailLineRight(gfx, "Chỉ số đồng hồ:", $"{invoice.ChiSoNuocCu} m³", y, valueX, valueWidth);
+            gfx.DrawString("Số người lưu trú:", FontBody, XBrushes.Black, labelX, y);
+            gfx.DrawString($"{invoice.SoNguoiLuuTru} người", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
             y += 30;
 
-            gfx.DrawString("Chỉ số của tháng này:", FontBodyBold, XBrushes.Black, labelX, y);
-            y += 18;
-            DrawDetailLine(gfx, "Ngày giờ ghi chỉ số:", invoice.NgayGhiNuocMoi.ToString("dd/MM/yyyy"), y);
-            y += 18;
-            DrawDetailLineRight(gfx, "Chỉ số đồng hồ:", $"{invoice.ChiSoNuocMoi} m³", y, valueX, valueWidth);
-            y += 30;
-
-            gfx.DrawString("Mức tiêu thụ:", FontBody, XBrushes.Black, labelX, y);
-            gfx.DrawString($"{invoice.MucTieuThuNuoc} m³", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
-            y += 18;
             gfx.DrawString("Thành tiền:", FontBody, XBrushes.Black, labelX, y);
             gfx.DrawString($"{invoice.ThanhTienNuoc:N0} VNĐ", FontBodyBold, XBrushes.Black, new XRect(valueX, y, valueWidth, 20), XStringFormats.TopRight);
 

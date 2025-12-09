@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using QLKDPhongTro.DataLayer.Models;
@@ -72,6 +73,16 @@ namespace QLKDPhongTro.Presentation.ViewModels
             if (Password.Length < 6)
             {
                 MessageBox.Show("Mật khẩu phải có ít nhất 6 ký tự!", "Thông báo", 
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Kiểm tra có ít nhất 1 ký tự viết hoa HOẶC 1 ký tự số
+            bool hasUppercase = Password.Any(c => char.IsUpper(c));
+            bool hasDigit = Password.Any(c => char.IsDigit(c));
+            if (!hasUppercase && !hasDigit)
+            {
+                MessageBox.Show("Mật khẩu phải chứa ít nhất 1 ký tự viết hoa HOẶC 1 ký tự số!", "Thông báo", 
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }

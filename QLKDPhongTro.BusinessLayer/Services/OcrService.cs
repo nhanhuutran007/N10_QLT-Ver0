@@ -23,9 +23,9 @@ namespace QLKDPhongTro.BusinessLayer.Services
             {
                 throw new InvalidOperationException(
                     $"YOLOv9 model không tìm thấy. Vui lòng đặt file 'yolov9n_meter_reading.onnx' vào thư mục:\n" +
-                    $"- {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models")}\n" +
+                    $"- C:\\Users\\User\\Desktop\\CNPM\\N10_QLT-Ver0\\QLKDPhongTro.BusinessLayer\\\n" +
                     $"- {AppDomain.CurrentDomain.BaseDirectory}\n" +
-                    $"- {Path.Combine(Directory.GetCurrentDirectory(), "models")}");
+                    $"- {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "models")}");
             }
         }
 
