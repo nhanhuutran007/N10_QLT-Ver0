@@ -126,6 +126,39 @@ namespace QLKDPhongTro.DataLayer.Repositories
         }
 
         /// <summary>
+        /// Lấy danh sách admin theo mã nhà
+        /// </summary>
+        public async Task<List<User>> GetByHouseIdAsync(int maNha)
+        {
+            var users = new List<User>();
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = $"SELECT {UserSelectColumns} FROM Admin WHERE MaNha = @MaNha";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaNha", maNha);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                users.Add(MapUser(reader));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting users by MaNha {maNha}: {ex.Message}");
+            }
+
+            return users;
+        }
+
+        /// <summary>
         /// Lấy user theo ID
         /// </summary>
         public async Task<User?> GetByIdAsync(string id)
