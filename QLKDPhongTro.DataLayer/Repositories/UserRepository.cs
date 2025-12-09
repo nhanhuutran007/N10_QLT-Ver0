@@ -256,6 +256,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             try
             {
+                // Hash password trước khi lưu vào database (đảm bảo nhất quán với RegisterAsync)
+                user.MatKhau = PasswordHelper.HashPassword(user.MatKhau);
+                
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
@@ -727,9 +730,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
                     {
                         try
                         {
-                            // Tạo Nha nếu chưa tồn tại với MaNha được nhập
+                            // Tạo Nha nếu chưa tồn tại với MaNha được nhập (TongSoPhong mặc định là 10)
                             var insertHouseQuery = @"INSERT INTO Nha (MaNha, DiaChi, TongSoPhong, GhiChu)
-                                                     VALUES (@MaNha, 'Chưa cập nhật', 1, NULL)";
+                                                     VALUES (@MaNha, 'Chưa cập nhật', 10, NULL)";
                             using (var houseCmd = new MySqlCommand(insertHouseQuery, connection, (MySqlTransaction)transaction))
                             {
                                 houseCmd.Parameters.AddWithValue("@MaNha", user.MaNha);

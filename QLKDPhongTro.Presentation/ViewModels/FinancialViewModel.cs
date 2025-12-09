@@ -1298,6 +1298,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
             try
             {
+                // KHAI BÁO LẦN 1 (Hợp lệ)
                 var dispatcher = Application.Current?.Dispatcher;
                 bool? dialogResult = false;
 
@@ -1315,7 +1316,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}", 
+                            MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}",
                                 "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                             return false;
                         }
@@ -1333,7 +1334,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}", 
+                        MessageBox.Show($"Lỗi khi mở dialog chỉnh sửa: {ex.Message}\n\nChi tiết: {ex.StackTrace}",
                             "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
                         dialogResult = false;
                     }
@@ -1343,7 +1344,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 {
                     // Giữ nguyên CurrentView khi refresh data
                     string savedView = _currentView;
+
+                    // Load lại dữ liệu từ database
                     await LoadDataAsync().ConfigureAwait(false);
+
                     // Đảm bảo CurrentView không bị thay đổi sau khi load
                     if (_currentView != savedView)
                     {
@@ -1353,13 +1357,46 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         OnPropertyChanged(nameof(IsDebtsView));
                         OnPropertyChanged(nameof(IsReportsView));
                     }
-                    // Load lại data cho view hiện tại
-                    await LoadViewDataAsync().ConfigureAwait(false);
+
+                    // Nếu đang ở view "AllRecords", LoadDataAsync đã gọi ApplySortAndFilterAsync rồi
+                    // Chỉ cần refresh UI. Nếu ở view khác, gọi LoadViewDataAsync
+                    if (_currentView == "AllRecords")
+                    {
+                        // Đảm bảo FinancialRecords được refresh trên UI thread
+                        // --- SỬA LỖI TẠI ĐÂY: Xóa dòng 'var dispatcher = ...' vì biến dispatcher đã tồn tại ở trên ---
+
+                        if (dispatcher != null && !dispatcher.CheckAccess())
+                        {
+                            await dispatcher.InvokeAsync(() =>
+                            {
+                                OnPropertyChanged(nameof(FinancialRecords));
+                                OnPropertyChanged(nameof(TotalPages));
+                                OnPropertyChanged(nameof(PageInfo));
+                                OnPropertyChanged(nameof(PageNumbers));
+                            });
+                        }
+                        else
+                        {
+                            OnPropertyChanged(nameof(FinancialRecords));
+                            OnPropertyChanged(nameof(TotalPages));
+                            OnPropertyChanged(nameof(PageInfo));
+                            OnPropertyChanged(nameof(PageNumbers));
+                        }
+                    }
+                    else
+                    {
+                        // Load lại data cho view hiện tại
+                        await LoadViewDataAsync().ConfigureAwait(false);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                ShowMessageRequested?.Invoke(this, $"Lỗi khi mở form chỉnh sửa: {ex.Message}");
+                ShowMessageRequested?.Invoke(this, $"Lỗi khi chỉnh sửa công nợ: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
@@ -1503,8 +1540,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 if (_currentView == "AllRecords")
                 {
-                    // Tab "Tất cả bản ghi" - luôn load lại để đảm bảo data mới nhất
-                    await LoadDataAsync().ConfigureAwait(false);
+                    // Tab "Tất cả bản ghi" - LoadDataAsync đã được gọi trước đó, chỉ cần apply filter/sort và refresh UI
+                    await ApplySortAndFilterAsync().ConfigureAwait(false);
                     // Đảm bảo UI được cập nhật trên UI thread
                     var dispatcher = Application.Current?.Dispatcher;
                     if (dispatcher != null && !dispatcher.CheckAccess())
@@ -1514,7 +1551,15 @@ namespace QLKDPhongTro.Presentation.ViewModels
                             OnPropertyChanged(nameof(FinancialRecords));
                             OnPropertyChanged(nameof(TotalPages));
                             OnPropertyChanged(nameof(PageInfo));
+                            OnPropertyChanged(nameof(PageNumbers));
                         });
+                    }
+                    else
+                    {
+                        OnPropertyChanged(nameof(FinancialRecords));
+                        OnPropertyChanged(nameof(TotalPages));
+                        OnPropertyChanged(nameof(PageInfo));
+                        OnPropertyChanged(nameof(PageNumbers));
                     }
                 }
                 else if (_currentView == "Debts")

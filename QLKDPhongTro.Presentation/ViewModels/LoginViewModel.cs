@@ -50,17 +50,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
                 // Đăng nhập trực tiếp (OTP đang tắt tạm thời)
                 //var loginResult = await _authController.LoginAsync(Username, Password);
-                var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-                //var loginResult = await _authController.LoginAsync(Username, Password);
-                if (otpResult.IsSuccess && otpResult.User != null)
+                //var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
+                var loginResult = await _authController.LoginAsync(Username, Password);
+                if (loginResult.IsSuccess && loginResult.User != null)
                 {
                     // Mở dashboard sau khi đăng nhập thành công
                     // FIX: Truyền đủ 3 tham số (Username, Email, Password) khớp với OtpLoginWindow
-                    var otpWindow = new OtpLoginWindow(Username, otpResult.User.Email, Password);
+                    //var otpWindow = new OtpLoginWindow(Username, loginResult.User.Email, Password);
 
-                    otpWindow.Show();
-                    //var dashWindow = new DashWindow();
-                    //dashWindow.Show();
+                    //otpWindow.Show();
+                    var dashWindow = new DashWindow();
+                    dashWindow.Show();
 
                     // Đóng LoginWindow
                     var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
@@ -70,7 +70,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show(otpResult.Message, "Lỗi",
+                    MessageBox.Show(loginResult.Message, "Lỗi",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     // Reset button state khi đăng nhập thất bại
                     ResetLoginButtonState();

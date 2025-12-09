@@ -355,6 +355,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     SoDienThangTruoc,
                     SoDienThangNay,
                     TienThue,
+                    TienNuoc,
                     TienInternet,
                     TienVeSinh,
                     TienGiuXe,

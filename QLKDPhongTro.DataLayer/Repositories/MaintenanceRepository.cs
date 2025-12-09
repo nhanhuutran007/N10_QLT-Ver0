@@ -75,11 +75,12 @@ namespace QLKDPhongTro.DataLayer.Repositories
             // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
             using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand(
-                "INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, NgayBaoCao, TrangThai, ChiPhi) VALUES (@MaPhong, @MoTaSuCo, @NgayBaoCao, @TrangThai, @ChiPhi)",
+                "INSERT INTO BaoTri_SuCo (MaPhong, MoTaSuCo, NgayBaoCao, NgayCoTheSua, TrangThai, ChiPhi) VALUES (@MaPhong, @MoTaSuCo, @NgayBaoCao, @NgayCoTheSua, @TrangThai, @ChiPhi)",
                 connection);
             cmd.Parameters.AddWithValue("@MaPhong", incident.MaPhong);
             cmd.Parameters.AddWithValue("@MoTaSuCo", incident.MoTaSuCo);
             cmd.Parameters.AddWithValue("@NgayBaoCao", incident.NgayBaoCao);
+            cmd.Parameters.AddWithValue("@NgayCoTheSua", incident.NgayCoTheSua.HasValue ? (object)incident.NgayCoTheSua.Value : DBNull.Value);
             cmd.Parameters.AddWithValue("@TrangThai", incident.TrangThai);
             cmd.Parameters.AddWithValue("@ChiPhi", incident.ChiPhi);
             await cmd.ExecuteNonQueryAsync();
@@ -90,12 +91,13 @@ namespace QLKDPhongTro.DataLayer.Repositories
             // Sử dụng ConnectDB.CreateConnectionAsync() để tự động set charset utf8mb4
             using var connection = await ConnectDB.CreateConnectionAsync();
             var cmd = new MySqlCommand(
-                "UPDATE BaoTri_SuCo SET MaPhong = @MaPhong, MoTaSuCo = @MoTaSuCo, NgayBaoCao = @NgayBaoCao, TrangThai = @TrangThai, ChiPhi = @ChiPhi WHERE MaSuCo = @MaSuCo",
+                "UPDATE BaoTri_SuCo SET MaPhong = @MaPhong, MoTaSuCo = @MoTaSuCo, NgayBaoCao = @NgayBaoCao, NgayCoTheSua = @NgayCoTheSua, TrangThai = @TrangThai, ChiPhi = @ChiPhi WHERE MaSuCo = @MaSuCo",
                 connection);
             cmd.Parameters.AddWithValue("@MaSuCo", incident.MaSuCo);
             cmd.Parameters.AddWithValue("@MaPhong", incident.MaPhong);
             cmd.Parameters.AddWithValue("@MoTaSuCo", incident.MoTaSuCo);
             cmd.Parameters.AddWithValue("@NgayBaoCao", incident.NgayBaoCao);
+            cmd.Parameters.AddWithValue("@NgayCoTheSua", incident.NgayCoTheSua.HasValue ? (object)incident.NgayCoTheSua.Value : DBNull.Value);
             cmd.Parameters.AddWithValue("@TrangThai", incident.TrangThai);
             cmd.Parameters.AddWithValue("@ChiPhi", incident.ChiPhi);
             await cmd.ExecuteNonQueryAsync();
@@ -205,12 +207,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
 
         private static MaintenanceIncident ReadIncident(DbDataReader reader)
         {
+            var ngayCoTheSuaOrdinal = reader.GetOrdinal("NgayCoTheSua");
             return new MaintenanceIncident
             {
                 MaSuCo = reader.GetInt32(reader.GetOrdinal("MaSuCo")),
                 MaPhong = reader.GetInt32(reader.GetOrdinal("MaPhong")),
                 MoTaSuCo = reader.GetString(reader.GetOrdinal("MoTaSuCo")),
                 NgayBaoCao = reader.GetDateTime(reader.GetOrdinal("NgayBaoCao")),
+                NgayCoTheSua = reader.IsDBNull(ngayCoTheSuaOrdinal) ? null : reader.GetDateTime(ngayCoTheSuaOrdinal),
                 TrangThai = reader.GetString(reader.GetOrdinal("TrangThai")),
                 ChiPhi = reader.GetDecimal(reader.GetOrdinal("ChiPhi")),
             };

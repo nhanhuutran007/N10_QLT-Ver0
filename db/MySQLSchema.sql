@@ -1,123 +1,70 @@
-USE githubio_QLT_Ver1;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET time_zone = "+00:00";
 
--- ===================== Bảng Admin =====================
-CREATE TABLE IF NOT EXISTS Admin (
-  MaAdmin INT AUTO_INCREMENT PRIMARY KEY,
-  TenDangNhap VARCHAR(50) NOT NULL UNIQUE,
-  MatKhau VARCHAR(255) NOT NULL,
-  Email VARCHAR(100),
-  SoDienThoai VARCHAR(15),
-  HoTen VARCHAR(100),
-  NgaySinh DATE NULL,
-  CCCD VARCHAR(20),
-  NgayCap DATE NULL,
-  NoiCap VARCHAR(100),
-  DiaChi VARCHAR(255),
-  MaNha INT NOT NULL UNIQUE,
-  TenTK VARCHAR(255) NULL,
-  SoTK VARCHAR(50) NULL,
-  LinkQr VARCHAR(500) NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Kiểm tra tồn tại trước khi Insert để tránh lỗi duplicate khi chạy lại script
-INSERT IGNORE INTO Admin (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha, TenTK, SoTK, LinkQr)
-VALUES (
-  'admin',
-  'admin123',
-  'admin@example.com',
-  '0901000001',
-  'Nguyễn Văn A',
-  '1985-05-20',
-  '012345678901',
-  '2020-01-15',
-  'Công an TP.HCM',
-  '123 Đường A, Quận 1, TP.HCM',
-  1,
-  NULL,
-  NULL,
-  NULL
-);
-
--- ===================== Bảng Nha =====================
-CREATE TABLE IF NOT EXISTS Nha (
-  MaNha INT AUTO_INCREMENT PRIMARY KEY,
-  DiaChi VARCHAR(255) NOT NULL,
-  TinhThanh VARCHAR(100) NOT NULL,
-  TongSoPhong INT CHECK (TongSoPhong BETWEEN 1 AND 10),
-  GhiChu VARCHAR(255)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT IGNORE INTO Nha (DiaChi, TinhThanh, TongSoPhong, GhiChu)
-VALUES
-('123 Đường A, Quận 1, TP.HCM', 'TP.HCM', 5, 'Nhà trung tâm'),
-('456 Đường B, Quận 7, TP.HCM', 'TP.HCM', 6, 'Gần khu công nghệ'),
-('789 Đường C, Bình Thạnh', 'TP.HCM', 4, 'Khu yên tĩnh'),
-('12 Nguyễn Văn Linh, Quận 7', 'TP.HCM', 8, 'Gần siêu thị'),
-('99 Lý Thường Kiệt, Quận 10', 'TP.HCM', 10, 'Gần trường học');
-
--- Thêm khóa ngoại cho Admin sau khi bảng Nha đã tồn tại
-ALTER TABLE Admin
-  ADD CONSTRAINT FK_Admin_Nha
-  FOREIGN KEY (MaNha) REFERENCES Nha(MaNha)
-  ON DELETE RESTRICT;
-
--- ===================== Bảng Phong (Đã Bổ Sung) =====================
-CREATE TABLE IF NOT EXISTS Phong (
-  MaPhong INT AUTO_INCREMENT PRIMARY KEY,
-  MaNha INT,
-  TenPhong VARCHAR(50) NOT NULL,
-  DienTich DECIMAL(5,2) CHECK (DienTich > 0),
-  GiaCoBan DECIMAL(18,0) DEFAULT 0 CHECK (GiaCoBan >= 0),
-  TrangThai ENUM('Đang thuê','Trống') DEFAULT 'Trống',
-  GhiChu VARCHAR(255),
-  -- Bổ sung các cột mới
-  GiaBangChu VARCHAR(255) NULL,
-  TrangThietBi VARCHAR(500) NULL,
-  FOREIGN KEY (MaNha) REFERENCES Nha(MaNha) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT IGNORE INTO Phong (MaNha, TenPhong, DienTich, GiaCoBan, TrangThai, GhiChu, GiaBangChu, TrangThietBi)
-VALUES
-(1, 'P101', 18.5, 3000000, 'Trống', 'Có cửa sổ', 'Ba triệu đồng', 'Điều hòa, Nóng lạnh'),
-(1, 'P102', 20.0, 3500000, 'Trống', 'Gần cầu thang', 'Ba triệu năm trăm nghìn đồng', 'Điều hòa'),
-(2, 'P201', 22.0, 3800000, 'Trống', 'Ban công nhỏ', 'Ba triệu tám trăm nghìn đồng', 'Full nội thất'),
-(3, 'P301', 25.0, 4000000, 'Trống', 'Có ban công lớn', 'Bốn triệu đồng', 'Không có'),
-(4, 'P401', 28.0, 4500000, 'Trống', 'Phòng mới xây', 'Bốn triệu năm trăm nghìn đồng', 'Điều hòa, Tủ lạnh');
-
--- ===================== Bảng NguoiThue (Đã Bổ Sung) =====================
-CREATE TABLE IF NOT EXISTS NguoiThue (
-  MaNguoiThue INT AUTO_INCREMENT PRIMARY KEY,
-  HoTen VARCHAR(100) NOT NULL,
-  SoDienThoai VARCHAR(15) NOT NULL,
-  CCCD VARCHAR(20) UNIQUE NOT NULL,
-  Email VARCHAR(100) NULL, -- Bổ sung
-  GioiTinh ENUM('Nam', 'Nữ', 'Khác') NULL, -- Bổ sung
-  NgheNghiep VARCHAR(100) NULL, -- Bổ sung
-  NgayBatDau DATE,
-  TrangThai ENUM('Đang ở','Đã trả phòng') DEFAULT 'Đang ở',
-  GhiChu VARCHAR(500) NULL,
-  -- Các trường mới chi tiết
-  NgaySinh DATE NULL, -- Bổ sung
-  NgayCap DATE NULL, -- Bổ sung
-  NoiCap VARCHAR(100) NULL, -- Bổ sung
-  DiaChi VARCHAR(255) NULL, -- Bổ sung
-  -- Audit
-  NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP, -- Bổ sung
-  NgayCapNhat DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Bổ sung
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
 
-INSERT IGNORE INTO NguoiThue (HoTen, SoDienThoai, CCCD, Email, GioiTinh, NgheNghiep, NgaySinh, NgayCap, NoiCap, DiaChi, NgayBatDau, TrangThai, GhiChu)
-VALUES
-('Nguyễn Văn A', '0911000001', '079123456001', 'vana@example.com', 'Nam', 'Sinh viên', '2000-01-15', '2020-05-10', 'CA TPHCM', '123 Nguyễn Trãi, Q1, TPHCM', CURRENT_DATE, 'Đang ở', ''),
-('Trần Thị B', '0911000002', '079123456002', 'thib@example.com', 'Nữ', 'Nhân viên văn phòng', '1998-11-20', '2019-02-20', 'CA Hà Nội', '456 Lê Lợi, Q3, TPHCM', CURRENT_DATE, 'Đang ở', ''),
-('Lê Văn C', '0911000003', '079123456003', 'vanc@example.com', 'Nam', 'Kỹ sư phần mềm', '1995-07-30', '2018-10-01', 'CA Đà Nẵng', '789 CMT8, Q10, TPHCM', CURRENT_DATE, 'Đang ở', ''),
-('Phạm Thị D', '0911000004', '079123456004', 'thid@example.com', 'Nữ', 'Thiết kế', '2002-03-05', '2021-01-01', 'CA TPHCM', '101 Hai Bà Trưng, Q1, TPHCM', CURRENT_DATE, 'Đã trả phòng', 'Chuyển đi'),
-('Huỳnh Văn E', '0911000005', '079123456005', 'vane@example.com', 'Nam', 'Tài xế', '1990-12-12', '2015-06-15', 'CA Cần Thơ', '202 Võ Thị Sáu, Q3, TPHCM', CURRENT_DATE, 'Đang ở', '');
+CREATE TABLE `Admin` (
+  `MaAdmin` int(11) NOT NULL,
+  `TenDangNhap` varchar(50) NOT NULL,
+  `MatKhau` varchar(255) NOT NULL,
+  `Email` varchar(100) DEFAULT NULL,
+  `SoDienThoai` varchar(15) DEFAULT NULL,
+  `HoTen` varchar(100) DEFAULT NULL,
+  `NgaySinh` date DEFAULT NULL,
+  `CCCD` varchar(20) DEFAULT NULL,
+  `NgayCap` date DEFAULT NULL,
+  `NoiCap` varchar(100) DEFAULT NULL,
+  `DiaChi` varchar(255) DEFAULT NULL,
+  `MaNha` int(11) NOT NULL,
+  `TenTK` varchar(255) DEFAULT NULL,
+  `SoTK` varchar(50) DEFAULT NULL,
+  `LinkQr` varchar(500) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Bảng Hợp Đồng
-CREATE TABLE IF NOT EXISTS `HopDong` (
-  `MaHopDong` int(11) NOT NULL AUTO_INCREMENT,
+INSERT INTO `Admin` (`MaAdmin`, `TenDangNhap`, `MatKhau`, `Email`, `SoDienThoai`, `HoTen`, `NgaySinh`, `CCCD`, `NgayCap`, `NoiCap`, `DiaChi`, `MaNha`, `TenTK`, `SoTK`, `LinkQr`) VALUES
+(1, 'admin', 'jZae727K08KaOmKSgOaGzww/XVqGr/PKEgIMkjrcbJI=', 'nhanhuutran009@gmail.com', '0909999888', 'Phạm Đức Mạnh', '1980-06-19', '918391391', '2025-10-30', 'Thanh Hóa', 'Bồ Đào Nha, Châu Âu', 1, 'TRAN HUU NHAN', '08699182255', '/Resources/Images/QR_20251126121439.jpg'),
+(2, 'trong', 'AlrF/WArcM+aP2AQPy9ctTAdJq+NKSVHwbnLaCa6hZk=', 'phuocvinh@gmail.com', '', NULL, NULL, NULL, NULL, NULL, NULL, 301, NULL, NULL, NULL);
+
+CREATE TABLE `BaoTri_SuCo` (
+  `MaSuCo` int(11) NOT NULL,
+  `MaPhong` int(11) DEFAULT NULL,
+  `MoTaSuCo` varchar(255) NOT NULL,
+  `NgayBaoCao` date DEFAULT curdate(),
+  `NgayCoTheSua` date DEFAULT NULL,
+  `TrangThai` enum('Chưa xử lý','Đang xử lý','Hoàn tất') DEFAULT 'Chưa xử lý',
+  `ChiPhi` decimal(18,0) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `BaoTri_SuCo` (`MaSuCo`, `MaPhong`, `MoTaSuCo`, `NgayBaoCao`, `NgayCoTheSua`, `TrangThai`, `ChiPhi`) VALUES
+(29, 18, 'Bị đẹp trai', '2025-12-04', '2025-12-04', 'Chưa xử lý', 0);
+
+CREATE TABLE `DeletedMaintenanceSignatures` (
+  `Id` int(11) NOT NULL,
+  `MaPhong` int(11) NOT NULL,
+  `MoTaSuCo` varchar(255) NOT NULL,
+  `NgayBaoCao` date NOT NULL,
+  `NgayCoTheSua` date NOT NULL,
+  `NgayXoa` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `GoogleFormLog` (
+  `MaLog` int(11) NOT NULL,
+  `RoomName` varchar(50) NOT NULL,
+  `ElectricImageUrl` varchar(500) DEFAULT NULL,
+  `SubmittedValue` decimal(18,2) DEFAULT NULL,
+  `ExtractedValue` decimal(18,2) DEFAULT NULL,
+  `IsValid` bit(1) DEFAULT b'0',
+  `ErrorMessage` varchar(500) DEFAULT NULL,
+  `Timestamp` datetime DEFAULT current_timestamp(),
+  `Processed` bit(1) DEFAULT b'0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `HopDong` (
+  `MaHopDong` int(11) NOT NULL,
   `MaNguoiThue` int(11) DEFAULT NULL,
   `MaPhong` int(11) DEFAULT NULL,
   `NgayBatDau` date NOT NULL,
@@ -125,105 +72,193 @@ CREATE TABLE IF NOT EXISTS `HopDong` (
   `TienCoc` decimal(18,0) DEFAULT 0 CHECK (`TienCoc` >= 0),
   `FileHopDong` varchar(255) DEFAULT NULL,
   `TrangThai` enum('Hiệu lực','Hết hạn','Hủy','Sắp hết hạn') DEFAULT 'Hiệu lực',
-  PRIMARY KEY (`MaHopDong`),
-  KEY `MaNguoiThue` (`MaNguoiThue`),
-  KEY `MaPhong` (`MaPhong`),
-  CONSTRAINT `FK_HopDong_NguoiThue` FOREIGN KEY (`MaNguoiThue`) REFERENCES `NguoiThue` (`MaNguoiThue`) ON DELETE CASCADE,
-  CONSTRAINT `FK_HopDong_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE CASCADE
+  `GhiChu` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ===================== Bảng TaiSanNguoiThue =====================
-CREATE TABLE IF NOT EXISTS TaiSanNguoiThue (
-  MaTaiSan INT AUTO_INCREMENT PRIMARY KEY,
-  MaNguoiThue INT,
-  LoaiTaiSan ENUM('Xe','Thú cưng'),
-  MoTa VARCHAR(255),
-  PhiPhuThu DECIMAL(18,0) DEFAULT 0,
-  FOREIGN KEY (MaNguoiThue) REFERENCES NguoiThue(MaNguoiThue) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT INTO `HopDong` (`MaHopDong`, `MaNguoiThue`, `MaPhong`, `NgayBatDau`, `NgayKetThuc`, `TienCoc`, `FileHopDong`, `TrangThai`, `GhiChu`) VALUES
+(27, 34, 18, '2025-12-04', '2026-12-04', 3000000, 'C:\\Users\\STRONGERMANY\\Documents\\HopDongPhongTro\\Beckham_COCONUT_20251204_154944.pdf', 'Hiệu lực', NULL),
+(28, 33, 19, '2025-12-04', '2026-12-04', 1500000, 'C:\\Users\\STRONGERMANY\\Documents\\HopDongPhongTro\\Ronaldo_PINEAPPLE_20251204_155709.pdf', 'Hiệu lực', 'Hợp đồng mới được tạo sau khi xóa người thuê cũ (HD#26)');
 
-INSERT IGNORE INTO TaiSanNguoiThue (MaNguoiThue, LoaiTaiSan, MoTa, PhiPhuThu)
-VALUES
-(1, 'Xe', 'Xe máy Vision', 100000),
-(2, 'Thú cưng', 'Mèo Anh lông ngắn', 200000),
-(3, 'Xe', 'Xe máy Sirius', 100000),
-(4, 'Thú cưng', 'Chó Poodle', 150000),
-(5, 'Xe', 'Xe SH Mode', 200000);
+CREATE TABLE `NguoiThue` (
+  `MaNguoiThue` int(11) NOT NULL,
+  `MaPhong` int(11) DEFAULT NULL COMMENT 'Liên kết phòng đang ở (NULL nếu đã trả)',
+  `HoTen` varchar(100) NOT NULL,
+  `SoDienThoai` varchar(15) NOT NULL,
+  `CCCD` varchar(20) DEFAULT NULL,
+  `Email` varchar(100) DEFAULT NULL,
+  `GioiTinh` enum('Nam','Nữ','Khác') DEFAULT NULL,
+  `NgayBatDau` date DEFAULT NULL,
+  `TrangThai` varchar(50) DEFAULT 'Đang ở',
+  `GhiChu` varchar(255) DEFAULT NULL,
+  `NgaySinh` date DEFAULT NULL,
+  `DiaChi` varchar(255) DEFAULT NULL,
+  `NgheNghiep` varchar(100) DEFAULT NULL,
+  `NgayCap` date DEFAULT NULL,
+  `NoiCap` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ===================== Bảng BaoTri_SuCo =====================
-CREATE TABLE IF NOT EXISTS BaoTri_SuCo (
-  MaSuCo INT AUTO_INCREMENT PRIMARY KEY,
-  MaPhong INT,
-  MoTaSuCo VARCHAR(255) NOT NULL,
-  NgayBaoCao DATE DEFAULT (CURRENT_DATE),
-  TrangThai ENUM('Chưa xử lý','Đang xử lý','Hoàn tất') DEFAULT 'Chưa xử lý',
-  ChiPhi DECIMAL(18,0) DEFAULT 0,
-  FOREIGN KEY (MaPhong) REFERENCES Phong(MaPhong) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+INSERT INTO `NguoiThue` (`MaNguoiThue`, `MaPhong`, `HoTen`, `SoDienThoai`, `CCCD`, `Email`, `GioiTinh`, `NgayBatDau`, `TrangThai`, `GhiChu`, `NgaySinh`, `DiaChi`, `NgheNghiep`, `NgayCap`, `NoiCap`) VALUES
+(33, 19, 'Ronaldo', '', '9283923823', '', 'Nam', '2025-12-04', 'Đang ở', '', '2025-12-04', '', '', '2025-12-04', ''),
+(34, 18, 'Beckham', '0998188238', '293283293192', 'smsfn@gmail.com', 'Nam', '2025-12-04', 'Đang ở', '', '2005-12-04', 'Việt Nam', 'Bác Sĩ', '2025-12-04', 'Hoàng Sa');
 
-INSERT IGNORE INTO BaoTri_SuCo (MaPhong, MoTaSuCo, TrangThai, ChiPhi)
-VALUES
-(1, 'Hư vòi nước', 'Chưa xử lý', 0),
-(2, 'Rò rỉ điện', 'Đang xử lý', 0),
-(3, 'Máy lạnh hỏng', 'Hoàn tất', 300000),
-(4, 'Cửa bị kẹt', 'Chưa xử lý', 0),
-(5, 'Nước yếu', 'Đang xử lý', 0);
+CREATE TABLE `Nha` (
+  `MaNha` int(11) NOT NULL,
+  `DiaChi` varchar(255) NOT NULL,
+  `TongSoPhong` int(11) DEFAULT NULL CHECK (`TongSoPhong` > 0),
+  `GhiChu` varchar(255) DEFAULT NULL,
+  `TinhThanh` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- ===================== Bảng ThanhToan (Đã Cập Nhật Logic Mới) =====================
--- Logic: Sử dụng cột thường thay vì Generated Columns để C# tự tính toán và cập nhật
-CREATE TABLE IF NOT EXISTS ThanhToan (
-  MaThanhToan INT AUTO_INCREMENT PRIMARY KEY,
-  MaHopDong INT,
-  ThangNam CHAR(7) NOT NULL, -- Định dạng MM/yyyy
+INSERT INTO `Nha` (`MaNha`, `DiaChi`, `TongSoPhong`, `GhiChu`, `TinhThanh`) VALUES
+(1, '15/2 Đường CMT8, Quận 10, TP.HCM', 5, 'Nhà trọ Happy House - Cổng vân tay', 'TPHCM'),
+(301, 'Chưa cập nhật', 1, NULL, '');
 
-  -- Các khoản tiền
-  TienThue DECIMAL(18,0) DEFAULT 0,
-  TienInternet DECIMAL(18,0) DEFAULT 0,
-  TienVeSinh DECIMAL(18,0) DEFAULT 0,
-  TienGiuXe DECIMAL(18,0) DEFAULT 0,
-  ChiPhiKhac DECIMAL(18,0) DEFAULT 0,
+CREATE TABLE `Phong` (
+  `MaPhong` int(11) NOT NULL,
+  `MaNha` int(11) DEFAULT NULL,
+  `TenPhong` varchar(50) NOT NULL,
+  `DienTich` decimal(5,2) DEFAULT NULL CHECK (`DienTich` > 0),
+  `GiaCoBan` decimal(18,0) DEFAULT 0 CHECK (`GiaCoBan` >= 0),
+  `TrangThai` enum('Đang thuê','Trống','Đang bảo trì','Dự kiến') DEFAULT 'Trống',
+  `GhiChu` varchar(255) DEFAULT NULL,
+  `NgayCoTheChoThue` date DEFAULT NULL COMMENT 'Ngày dự kiến phòng sẵn sàng',
+  `GiaBangChu` varchar(255) DEFAULT NULL,
+  `TrangThietBi` varchar(500) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-  -- Điện Nước
-  DonGiaDien DECIMAL(18,0) DEFAULT 3500,
-  DonGiaNuoc DECIMAL(18,0) DEFAULT 100000, 
-  
-  ChiSoDienCu DECIMAL(18,2) DEFAULT 0, -- Bổ sung: Lấy từ tháng trước
-  ChiSoDienMoi DECIMAL(18,2) DEFAULT 0, -- Bổ sung: Lấy từ Google Form
-  
-  SoDien DECIMAL(18,2) DEFAULT 0, -- Logic tính ở App: Mới - Cũ
-  SoNuoc DECIMAL(18,2) DEFAULT 1,
-  
-  -- Các cột tiền (Cột thường, không phải generated)
-  TienDien DECIMAL(18,0) DEFAULT 0, 
-  TienNuoc DECIMAL(18,0) DEFAULT 0,
-  TongTien DECIMAL(18,0) DEFAULT 0,
+INSERT INTO `Phong` (`MaPhong`, `MaNha`, `TenPhong`, `DienTich`, `GiaCoBan`, `TrangThai`, `GhiChu`, `NgayCoTheChoThue`, `GiaBangChu`, `TrangThietBi`) VALUES
+(18, 1, 'COCONUT', 50.00, 3000000, 'Đang thuê', 'Có 1 xe máy', NULL, 'Ba triệu đồng', ''),
+(19, 1, 'PINEAPPLE', 15.00, 1500000, 'Đang thuê', '', NULL, 'Một triệu năm trăm nghìn đồng', 'Máy lạnh, máy giặt'),
+(20, 1, 'BANANA', 45.00, 3000000, 'Trống', '', NULL, 'Ba trieu dong ', 'TV, tu lanh ');
 
-  TrangThaiThanhToan ENUM('Chưa trả','Đã trả') DEFAULT 'Chưa trả',
-  NgayThanhToan DATE,
-  NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
-  GhiChu VARCHAR(500),
-  
-  FOREIGN KEY (MaHopDong) REFERENCES HopDong(MaHopDong) ON DELETE CASCADE,
-  UNIQUE (MaHopDong, ThangNam)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `TaiSanNguoiThue` (
+  `MaTaiSan` int(11) NOT NULL,
+  `MaNguoiThue` int(11) DEFAULT NULL,
+  `LoaiTaiSan` enum('Xe','Thú cưng','Khác') DEFAULT 'Xe',
+  `MoTa` varchar(255) DEFAULT NULL,
+  `PhiPhuThu` decimal(18,0) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-INSERT IGNORE INTO ThanhToan (MaHopDong, ThangNam, TienThue, TienInternet, TienVeSinh, TienGiuXe, ChiPhiKhac, DonGiaDien, DonGiaNuoc, ChiSoDienCu, ChiSoDienMoi, SoDien, TienDien, TienNuoc, TongTien, TrangThaiThanhToan, NgayThanhToan, GhiChu)
-VALUES
-(1, '01/2025', 3000000, 100000, 50000, 100000, 0, 3500, 100000, 100, 150, 50, 175000, 100000, 3425000, 'Đã trả', '2025-01-05', 'Thanh toán đầy đủ'),
-(2, '02/2025', 3500000, 100000, 60000, 120000, 0, 3500, 100000, 150, 200, 50, 175000, 100000, 4055000, 'Đã trả', '2025-02-05', 'Khách hàng mới'),
-(3, '03/2025', 3800000, 100000, 50000, 100000, 50000, 3500, 100000, 130, 180, 50, 175000, 100000, 4375000, 'Chưa trả', NULL, 'Có chi phí phát sinh'),
-(4, '04/2025', 4000000, 100000, 60000, 120000, 0, 3500, 100000, 180, 220, 40, 140000, 100000, 4520000, 'Chưa trả', NULL, 'Chờ xác nhận'),
-(5, '05/2025', 4500000, 100000, 60000, 120000, 100000, 3500, 100000, 200, 250, 50, 175000, 100000, 5155000, 'Đã trả', '2025-05-06', 'Có chi phí sửa chữa');
+CREATE TABLE `ThanhToan` (
+  `MaThanhToan` int(11) NOT NULL,
+  `MaHopDong` int(11) DEFAULT NULL,
+  `ThangNam` varchar(20) DEFAULT NULL,
+  `TienThue` decimal(18,0) DEFAULT 0,
+  `TienDien` decimal(18,0) DEFAULT 0,
+  `TienNuoc` decimal(18,0) DEFAULT 0,
+  `TienInternet` decimal(18,0) DEFAULT 0,
+  `TienVeSinh` decimal(18,0) DEFAULT 0,
+  `TienGiuXe` decimal(18,0) DEFAULT 0,
+  `ChiPhiKhac` decimal(18,0) DEFAULT 0,
+  `DonGiaDien` decimal(18,0) DEFAULT 0,
+  `DonGiaNuoc` decimal(18,0) DEFAULT 0,
+  `ChiSoDienCu` double DEFAULT 0,
+  `ChiSoDienMoi` double DEFAULT 0,
+  `SoDien` double DEFAULT 0,
+  `SoNuoc` double DEFAULT 0,
+  `TongTien` decimal(18,0) DEFAULT 0,
+  `SoTienDaTra` decimal(18,0) DEFAULT 0,
+  `ConLai` decimal(18,0) DEFAULT 0,
+  `TrangThaiThanhToan` varchar(50) DEFAULT 'Chưa đóng',
+  `NgayThanhToan` datetime DEFAULT NULL,
+  `GhiChu` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ===================== Bảng GoogleFormLog (Bổ Sung Mới) =====================
-CREATE TABLE IF NOT EXISTS GoogleFormLog (
-    MaLog INT AUTO_INCREMENT PRIMARY KEY,
-    RoomName VARCHAR(50) NOT NULL,
-    ElectricImageUrl VARCHAR(500),
-    SubmittedValue DECIMAL(18,2),
-    ExtractedValue DECIMAL(18,2),
-    IsValid BIT DEFAULT 0, 
-    ErrorMessage VARCHAR(500),
-    Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Processed BIT DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `Admin`
+  ADD PRIMARY KEY (`MaAdmin`),
+  ADD UNIQUE KEY `TenDangNhap` (`TenDangNhap`),
+  ADD UNIQUE KEY `UK_Admin_MaNha` (`MaNha`);
+
+ALTER TABLE `BaoTri_SuCo`
+  ADD PRIMARY KEY (`MaSuCo`),
+  ADD KEY `MaPhong` (`MaPhong`);
+
+ALTER TABLE `DeletedMaintenanceSignatures`
+  ADD PRIMARY KEY (`Id`);
+
+ALTER TABLE `GoogleFormLog`
+  ADD PRIMARY KEY (`MaLog`);
+
+ALTER TABLE `HopDong`
+  ADD PRIMARY KEY (`MaHopDong`),
+  ADD KEY `MaNguoiThue` (`MaNguoiThue`),
+  ADD KEY `MaPhong` (`MaPhong`);
+
+ALTER TABLE `NguoiThue`
+  ADD PRIMARY KEY (`MaNguoiThue`),
+  ADD UNIQUE KEY `CCCD` (`CCCD`),
+  ADD KEY `MaPhong` (`MaPhong`);
+
+ALTER TABLE `Nha`
+  ADD PRIMARY KEY (`MaNha`);
+
+ALTER TABLE `Phong`
+  ADD PRIMARY KEY (`MaPhong`),
+  ADD KEY `MaNha` (`MaNha`);
+
+ALTER TABLE `TaiSanNguoiThue`
+  ADD PRIMARY KEY (`MaTaiSan`),
+  ADD KEY `MaNguoiThue` (`MaNguoiThue`);
+
+ALTER TABLE `ThanhToan`
+  ADD PRIMARY KEY (`MaThanhToan`),
+  ADD KEY `FK_ThanhToan_HopDong` (`MaHopDong`);
+
+
+ALTER TABLE `Admin`
+  MODIFY `MaAdmin` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+ALTER TABLE `BaoTri_SuCo`
+  MODIFY `MaSuCo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+ALTER TABLE `DeletedMaintenanceSignatures`
+  MODIFY `Id` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `GoogleFormLog`
+  MODIFY `MaLog` int(11) NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE `HopDong`
+  MODIFY `MaHopDong` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+ALTER TABLE `NguoiThue`
+  MODIFY `MaNguoiThue` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+
+ALTER TABLE `Nha`
+  MODIFY `MaNha` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=302;
+
+ALTER TABLE `Phong`
+  MODIFY `MaPhong` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+ALTER TABLE `TaiSanNguoiThue`
+  MODIFY `MaTaiSan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+ALTER TABLE `ThanhToan`
+  MODIFY `MaThanhToan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+
+ALTER TABLE `Admin`
+  ADD CONSTRAINT `FK_Admin_Nha` FOREIGN KEY (`MaNha`) REFERENCES `Nha` (`MaNha`);
+
+ALTER TABLE `BaoTri_SuCo`
+  ADD CONSTRAINT `FK_BaoTri_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE CASCADE;
+
+ALTER TABLE `HopDong`
+  ADD CONSTRAINT `FK_HopDong_NguoiThue` FOREIGN KEY (`MaNguoiThue`) REFERENCES `NguoiThue` (`MaNguoiThue`) ON DELETE CASCADE,
+  ADD CONSTRAINT `FK_HopDong_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE CASCADE;
+
+ALTER TABLE `NguoiThue`
+  ADD CONSTRAINT `FK_NguoiThue_Phong` FOREIGN KEY (`MaPhong`) REFERENCES `Phong` (`MaPhong`) ON DELETE SET NULL;
+
+ALTER TABLE `Phong`
+  ADD CONSTRAINT `FK_Phong_Nha` FOREIGN KEY (`MaNha`) REFERENCES `Nha` (`MaNha`) ON DELETE CASCADE;
+
+ALTER TABLE `TaiSanNguoiThue`
+  ADD CONSTRAINT `FK_TaiSan_NguoiThue` FOREIGN KEY (`MaNguoiThue`) REFERENCES `NguoiThue` (`MaNguoiThue`) ON DELETE CASCADE;
+
+ALTER TABLE `ThanhToan`
+  ADD CONSTRAINT `FK_ThanhToan_HopDong` FOREIGN KEY (`MaHopDong`) REFERENCES `HopDong` (`MaHopDong`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

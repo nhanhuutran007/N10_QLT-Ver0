@@ -16,6 +16,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
 {
     public class MaintenanceIncidentViewModel : MaintenanceIncident, INotifyPropertyChanged
     {
+        private string _tenPhong = string.Empty;
+        public string TenPhong
+        {
+            get => _tenPhong;
+            set { _tenPhong = value; OnPropertyChanged(); }
+        }
+
         private bool _isEditing;
         public bool IsEditing
         {
@@ -25,16 +32,22 @@ namespace QLKDPhongTro.Presentation.ViewModels
         // Backup fields for cancel (chỉ backup các trường có thể chỉnh sửa)
         private string _oldTrangThai = string.Empty;
         private decimal _oldChiPhi;
+        private DateTime _oldNgayBaoCao;
+        private DateTime? _oldNgayCoTheSua;
         public void BeginEdit()
         {
-            // Chỉ backup các trường có thể chỉnh sửa: ChiPhi và TrangThai
+            // Backup các trường có thể chỉnh sửa: NgayBaoCao, NgayCoTheSua, ChiPhi và TrangThai
+            _oldNgayBaoCao = NgayBaoCao;
+            _oldNgayCoTheSua = NgayCoTheSua;
             _oldTrangThai = TrangThai;
             _oldChiPhi = ChiPhi;
             IsEditing = true;
         }
         public void CancelEdit()
         {
-            // Chỉ restore các trường có thể chỉnh sửa: ChiPhi và TrangThai
+            // Restore các trường có thể chỉnh sửa: NgayBaoCao, NgayCoTheSua, ChiPhi và TrangThai
+            NgayBaoCao = _oldNgayBaoCao;
+            NgayCoTheSua = _oldNgayCoTheSua;
             TrangThai = _oldTrangThai;
             ChiPhi = _oldChiPhi;
             IsEditing = false;
@@ -173,15 +186,38 @@ namespace QLKDPhongTro.Presentation.ViewModels
         private async Task RefreshFromDbAsync()
         {
             var data = await _controller.GetAllForCurrentUserAsync();
-            _allMaintenances = data.Select(i => new MaintenanceIncidentViewModel
+            var roomRepo = new RentedRoomRepository();
+            
+            _allMaintenances = new List<MaintenanceIncidentViewModel>();
+            foreach (var i in data)
             {
-                MaSuCo = i.MaSuCo,
-                MaPhong = i.MaPhong,
-                MoTaSuCo = i.MoTaSuCo,
-                NgayBaoCao = i.NgayBaoCao,
-                TrangThai = i.TrangThai,
-                ChiPhi = i.ChiPhi
-            }).ToList();
+                // Lấy tên phòng từ database
+                string tenPhong = $"Phòng {i.MaPhong}"; // Mặc định
+                try
+                {
+                    var room = await roomRepo.GetByIdAsync(i.MaPhong);
+                    if (room != null && !string.IsNullOrEmpty(room.TenPhong))
+                    {
+                        tenPhong = room.TenPhong;
+                    }
+                }
+                catch
+                {
+                    // Nếu không lấy được, dùng mặc định
+                }
+
+                _allMaintenances.Add(new MaintenanceIncidentViewModel
+                {
+                    MaSuCo = i.MaSuCo,
+                    MaPhong = i.MaPhong,
+                    TenPhong = tenPhong,
+                    MoTaSuCo = i.MoTaSuCo,
+                    NgayBaoCao = i.NgayBaoCao,
+                    NgayCoTheSua = i.NgayCoTheSua,
+                    TrangThai = i.TrangThai,
+                    ChiPhi = i.ChiPhi
+                });
+            }
 
             // Reset trang và áp lại phân trang/sắp xếp trên thread UI
             PageIndex = 1;

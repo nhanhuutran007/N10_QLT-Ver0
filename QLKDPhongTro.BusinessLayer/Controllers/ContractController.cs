@@ -17,6 +17,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         private readonly IContractRepository _repository;
         private readonly ITenantRepository _tenantRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IRentedRoomRepository _roomRepository;
 
 
         public ContractController(IContractRepository repository)
@@ -24,6 +25,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _repository = repository;
             _tenantRepository = new TenantRepository();
             _userRepository = new UserRepository();
+            _roomRepository = new RentedRoomRepository();
         }
 
         public ContractController(IContractRepository repository, ITenantRepository tenantRepository)
@@ -31,6 +33,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _repository = repository;
             _tenantRepository = tenantRepository;
             _userRepository = new UserRepository();
+            _roomRepository = new RentedRoomRepository();
         }
 
         public ContractController(IContractRepository repository, ITenantRepository tenantRepository, IUserRepository userRepository)
@@ -38,6 +41,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _repository = repository;
             _tenantRepository = tenantRepository;
             _userRepository = userRepository;
+            _roomRepository = new RentedRoomRepository();
         }
 
         public static ContractController CreateDefault()
@@ -108,6 +112,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<int> CreateHopDongAsync(ContractDto dto)
         {
+            if (dto.MaPhong <= 0)
+            {
+                throw new ArgumentException("MaPhong is required when creating a contract.", nameof(dto));
+            }
+
+            // Kiểm tra hợp đồng đang hiệu lực hiện tại của phòng
+            var currentActiveContract = await _repository.GetActiveByRoomIdAsync(dto.MaPhong);
+
             var entity = new Contract
             {
                 MaNguoiThue = dto.MaNguoiThue,
@@ -119,7 +131,38 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 TrangThai = dto.TrangThai,
                 GhiChu = dto.GhiChu
             };
-            return await _repository.AddHopDongAsync(entity);
+
+            int newContractId = await _repository.AddHopDongAsync(entity);
+
+            // ❗ Nếu phòng này trước đó CHƯA có hợp đồng hiệu lực
+            //    => cập nhật tất cả người thuê của phòng sang "Đang ở"
+            //    => và cập nhật trạng thái phòng sang "Đang thuê"
+            if (currentActiveContract == null)
+            {
+                try
+                {
+                    // Lấy tất cả người thuê của phòng (trừ đã trả phòng)
+                    var roomTenants = await _tenantRepository.GetTenantsByRoomIdAsync(dto.MaPhong);
+                    foreach (var tenantInfo in roomTenants)
+                    {
+                        // Cập nhật trạng thái người thuê nếu khác "Đang ở"
+                        if (!string.Equals(tenantInfo.TrangThaiNguoiThue, "Đang ở", StringComparison.OrdinalIgnoreCase))
+                        {
+                            await _tenantRepository.UpdateTenantStatusAsync(tenantInfo.MaNguoiThue, "Đang ở");
+                        }
+                    }
+
+                    // Cập nhật trạng thái phòng
+                    await _roomRepository.UpdateStatusAsync(dto.MaPhong, "Đang thuê");
+                }
+                catch (Exception ex)
+                {
+                    // Ghi log lỗi nếu cần, nhưng không chặn việc tạo hợp đồng
+                    System.Diagnostics.Debug.WriteLine($"Lỗi khi đồng bộ trạng thái phòng/người thuê sau khi tạo hợp đồng: {ex.Message}");
+                }
+            }
+
+            return newContractId;
         }
 
         public async Task UpdateHopDongAsync(ContractDto dto)

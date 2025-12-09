@@ -394,27 +394,33 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
-                
+
                 // Kiểm tra nếu trạng thái thay đổi, validate trước
                 if (SelectedRoom != null && SelectedRoom.TrangThai != NewRoom.TrangThai)
                 {
-                    var (success, errorMessage) = await _rentedRoomController.UpdateRoomStatusAsync(NewRoom.MaPhong, NewRoom.TrangThai);
-                    if (!success)
+                    // FIX: Đổi tên biến thành statusSuccess và statusMessage để tránh trùng
+                    var (statusSuccess, statusMessage) = await _rentedRoomController.UpdateRoomStatusAsync(NewRoom.MaPhong, NewRoom.TrangThai);
+                    if (!statusSuccess)
                     {
-                        MessageBox.Show(errorMessage ?? "Không thể cập nhật trạng thái phòng", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show(statusMessage ?? "Không thể cập nhật trạng thái phòng", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
                 }
-                
-                var ok = await _rentedRoomController.UpdateRoomAsync(NewRoom);
-                if (ok)
+
+                // FIX: Đổi tên biến thành updateSuccess và updateMessage (hoặc giữ nguyên nếu bên trên đã đổi)
+                var (updateSuccess, updateMessage) = await _rentedRoomController.UpdateRoomAsync(NewRoom);
+
+                if (updateSuccess)
                 {
                     await RefreshRoomsData();
                     ApplySortAndPage();
                     MessageBox.Show("Cập nhật thành công", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
                     CloseAddRoomWindows();
                 }
-                else MessageBox.Show("Cập nhật thất bại");
+                else
+                {
+                    MessageBox.Show(updateMessage ?? "Cập nhật thất bại", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
             finally { IsLoading = false; }
         }

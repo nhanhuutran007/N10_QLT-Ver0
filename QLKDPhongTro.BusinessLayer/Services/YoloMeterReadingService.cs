@@ -47,9 +47,11 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 var possiblePaths = new[]
                 {
-                    @"C:\Users\User\Desktop\CNPM\N10_QLT-Ver0\QLKDPhongTro.Presentation\bin\Debug\net8.0-windows\models\yolov9n_meter_reading.onnx",
-                    System.IO.Path.Combine(baseDir, "models", "yolov9n_meter_reading.onnx"),
+                    // Vị trí chuẩn theo yêu cầu: đặt cạnh BusinessLayer
+                    @"C:\Users\User\Desktop\CNPM\N10_QLT-Ver0\QLKDPhongTro.BusinessLayer\yolov9n_meter_reading.onnx",
+                    // Khi publish/copy kèm file model (link trong csproj), baseDir sẽ chứa file
                     System.IO.Path.Combine(baseDir, "yolov9n_meter_reading.onnx"),
+                    System.IO.Path.Combine(baseDir, "models", "yolov9n_meter_reading.onnx"),
                 };
                 _modelPath = possiblePaths.FirstOrDefault(System.IO.File.Exists) ?? possiblePaths[0];
             }

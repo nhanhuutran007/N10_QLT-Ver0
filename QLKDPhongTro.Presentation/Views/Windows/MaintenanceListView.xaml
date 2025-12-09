@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         Title="Danh sách bảo trì sự cố - Quản Lý Phòng Trọ"
         MinHeight="600"
         MinWidth="800"
@@ -385,38 +386,63 @@
                             </DataGridTemplateColumn>
 
                             <!-- Mô tả sự cố -->
-                            <DataGridTemplateColumn Header="SỰ CỐ" Width="1.5*">
+                            <DataGridTemplateColumn Header="MÔ TẢ" Width="1.2*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding MoTaSuCo}" FontWeight="Medium" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding MoTaSuCo}" FontWeight="Medium" VerticalAlignment="Center" TextWrapping="Wrap"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <!-- Mã phòng -->
-                            <DataGridTemplateColumn Header="MÃ PHÒNG" Width="1*">
+                            <!-- Tên phòng -->
+                            <DataGridTemplateColumn Header="PHÒNG" Width="0.8*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding MaPhong}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding TenPhong}" VerticalAlignment="Center"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
                             <!-- Ngày báo cáo -->
-                            <DataGridTemplateColumn Header="NGÀY BÁO CÁO" Width="1.2*">
+                            <DataGridTemplateColumn Header="NGÀY BC" Width="0.9*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding NgayBaoCao, StringFormat='dd/MM/yyyy'}" VerticalAlignment="Center"/>
+                                        <Grid>
+                                            <TextBlock Text="{Binding NgayBaoCao, StringFormat='dd/MM/yyyy'}" VerticalAlignment="Center"
+                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                            <DatePicker SelectedDate="{Binding NgayBaoCao, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Background="White" BorderBrush="#DDDDDD"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                        VerticalAlignment="Center" Height="32" Margin="0,0,0,0"/>
+                                        </Grid>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
 
-                            <!-- Chi phí -->
-                            <DataGridTemplateColumn Header="CHI PHÍ" Width="1*">
+                            <!-- Ngày có thể sửa -->
+                            <DataGridTemplateColumn Header="NGÀY ĐẾN SỬA" Width="1*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Grid>
-                                            <TextBlock Text="{Binding ChiPhi, StringFormat='{}{0:N0} VNĐ'}"
+                                            <TextBlock Text="{Binding NgayCoTheSua, StringFormat='dd/MM/yyyy'}" VerticalAlignment="Center"
+                                                       Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
+                                            <DatePicker SelectedDate="{Binding NgayCoTheSua, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        Background="White" BorderBrush="#DDDDDD"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                        VerticalAlignment="Center" Height="32" Margin="0,0,0,0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            
+
+                            <!-- Chi phí -->
+                            <DataGridTemplateColumn Header="CHI PHÍ" Width="0.9*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid>
+                                            <TextBlock Text="{Binding ChiPhi, StringFormat='{}{0:N0} đ'}"
                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Invert}"/>
                                             <TextBox Text="{Binding ChiPhi, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, ValidatesOnExceptions=True}"
                                                      Background="White" BorderBrush="#DDDDDD"
@@ -427,7 +453,7 @@
                             </DataGridTemplateColumn>
 
                             <!-- Trạng thái -->
-                            <DataGridTemplateColumn Header="TRẠNG THÁI" Width="1.2*">
+                            <DataGridTemplateColumn Header="T.THÁI" Width="0.9*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Grid>

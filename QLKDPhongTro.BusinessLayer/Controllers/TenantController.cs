@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text;
+using System.ComponentModel.DataAnnotations;
+using ValidationResultDto = QLKDPhongTro.BusinessLayer.DTOs.ValidationResult;
 
 namespace QLKDPhongTro.BusinessLayer.Controllers
 {
@@ -74,11 +76,40 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             return tenants.Select(info => MapRoomTenant(info, contractHolderMaNguoiThue)).ToList();
         }
 
-        public async Task<ValidationResult> CreateTenantAsync(TenantDto dto)
+        public async Task<ValidationResultDto> CreateTenantAsync(TenantDto dto)
         {
+            // Validate dữ liệu đầu vào khi thêm khách thuê mới
+            var inputValidation = ValidateTenantInput(dto);
+            if (!inputValidation.IsValid)
+            {
+                return inputValidation;
+            }
+
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD))
             {
-                return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
+                return new ValidationResultDto { IsValid = false, Message = "CCCD đã tồn tại!" };
+            }
+
+            // Kiểm tra giới hạn tổng số người là 30 người (chỉ đếm người có trạng thái "Đang ở")
+            var current = AuthController.CurrentUser;
+            if (current != null && current.MaNha > 0)
+            {
+                var allTenants = await _tenantRepository.GetAllByMaNhaAsync(current.MaNha);
+                var activeTenantCount = allTenants.Count(t => 
+                    string.Equals(t.TrangThai, "Đang ở", StringComparison.OrdinalIgnoreCase));
+                
+                // Nếu tenant mới có trạng thái "Đang ở" hoặc trạng thái mặc định sẽ là "Đang ở"
+                var willBeActive = string.IsNullOrWhiteSpace(dto.TrangThai) || 
+                                  string.Equals(dto.TrangThai, "Đang ở", StringComparison.OrdinalIgnoreCase);
+                
+                if (willBeActive && activeTenantCount >= 30)
+                {
+                    return new ValidationResultDto 
+                    { 
+                        IsValid = false, 
+                        Message = "Tổng số người đang ở đã đạt giới hạn tối đa 30 người. Không thể thêm người thuê mới!" 
+                    };
+                }
             }
 
             var tenant = new Tenant
@@ -127,24 +158,29 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 }
             }
             
-            return new ValidationResult
+            return new ValidationResultDto
             {
                 IsValid = success,
                 Message = success ? "✅ Thêm khách thuê thành công!" : "❌ Thêm khách thuê thất bại!"
             };
         }
 
-        public async Task<ValidationResult> UpdateTenantAsync(TenantDto dto)
+        public async Task<ValidationResultDto> UpdateTenantAsync(TenantDto dto)
         {
             if (await _tenantRepository.IsCCCDExistsAsync(dto.CCCD, dto.MaKhachThue))
             {
-                return new ValidationResult { IsValid = false, Message = "CCCD đã tồn tại!" };
+                return new ValidationResultDto { IsValid = false, Message = "CCCD đã tồn tại!" };
+            }
+            var inputValidation = ValidateTenantInput(dto);
+            if (!inputValidation.IsValid)
+            {
+                return inputValidation;
             }
 
             var existingTenant = await _tenantRepository.GetByIdAsync(dto.MaKhachThue);
             if (existingTenant == null)
             {
-                return new ValidationResult { IsValid = false, Message = "❌ Không tìm thấy khách thuê để cập nhật!" };
+                return new ValidationResultDto { IsValid = false, Message = "❌ Không tìm thấy khách thuê để cập nhật!" };
             }
 
             // Lấy thông tin lưu trú hiện tại để kiểm tra hợp đồng/phòng
@@ -160,7 +196,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 !string.IsNullOrWhiteSpace(dto.TrangThai) &&
                 string.Equals(dto.TrangThai, "Đã trả phòng", StringComparison.OrdinalIgnoreCase))
             {
-                return new ValidationResult
+                return new ValidationResultDto
                 {
                     IsValid = false,
                     Message = "❌ Không thể chuyển trạng thái sang 'Đã trả phòng' khi hợp đồng vẫn còn hiệu lực. Vui lòng kết thúc/hủy hợp đồng trước."
@@ -193,10 +229,115 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 await UpdateRoomStatusAfterTenantChangeAsync(existingTenant, stayInfo);
             }
 
-            return new ValidationResult
+            return new ValidationResultDto
             {
                 IsValid = success,
                 Message = success ? "✅ Cập nhật khách thuê thành công!" : "❌ Cập nhật thất bại!"
+            };
+        }
+
+        /// <summary>
+        /// Ràng buộc dữ liệu khi thêm khách thuê:
+        /// - Bắt buộc điền đầy đủ tất cả thông tin trừ ghi chú
+        /// - Tuổi phải từ 18 trở lên
+        /// - CCCD đúng 12 số
+        /// - Số điện thoại đúng 10 số
+        /// </summary>
+        private static ValidationResultDto ValidateTenantInput(TenantDto dto)
+        {
+            var sb = new StringBuilder();
+
+            // Bắt buộc các trường chính (trừ GhiChu)
+            if (string.IsNullOrWhiteSpace(dto.HoTen))
+                sb.AppendLine("• Họ tên không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.CCCD))
+                sb.AppendLine("• CCCD không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.SoDienThoai))
+                sb.AppendLine("• Số điện thoại không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                sb.AppendLine("• Email không được để trống.");
+
+            if (!dto.NgaySinh.HasValue)
+                sb.AppendLine("• Ngày sinh không được để trống.");
+
+            if (!dto.NgayCap.HasValue)
+                sb.AppendLine("• Ngày cấp CCCD không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.NoiCap))
+                sb.AppendLine("• Nơi cấp CCCD không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.DiaChi))
+                sb.AppendLine("• Địa chỉ thường trú không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.GioiTinh))
+                sb.AppendLine("• Giới tính không được để trống.");
+
+            if (string.IsNullOrWhiteSpace(dto.NgheNghiep))
+                sb.AppendLine("• Nghề nghiệp không được để trống.");
+
+            if (!dto.MaPhong.HasValue || dto.MaPhong.Value <= 0)
+                sb.AppendLine("• Vui lòng chọn phòng cho khách thuê.");
+
+            // Kiểm tra tuổi >= 18
+            if (dto.NgaySinh.HasValue)
+            {
+                var today = DateTime.Today;
+                var ngaySinh = dto.NgaySinh.Value.Date;
+                var age = today.Year - ngaySinh.Year;
+                if (ngaySinh > today.AddYears(-age)) age--;
+
+                if (age < 18)
+                {
+                    sb.AppendLine("• Tuổi khách thuê phải từ 18 trở lên.");
+                }
+            }
+
+            // CCCD: đúng 12 số
+            if (!string.IsNullOrWhiteSpace(dto.CCCD))
+            {
+                var cccd = dto.CCCD.Trim();
+                if (cccd.Length != 12 || !cccd.All(char.IsDigit))
+                {
+                    sb.AppendLine("• CCCD phải gồm đúng 12 chữ số.");
+                }
+            }
+
+            // Số điện thoại: đúng 10 số
+            if (!string.IsNullOrWhiteSpace(dto.SoDienThoai))
+            {
+                var phone = dto.SoDienThoai.Trim();
+                if (phone.Length != 10 || !phone.All(char.IsDigit))
+                {
+                    sb.AppendLine("• Số điện thoại phải gồm đúng 10 chữ số.");
+                }
+            }
+
+            // Email format (nếu đã nhập)
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var emailAttr = new EmailAddressAttribute();
+                if (!emailAttr.IsValid(dto.Email))
+                {
+                    sb.AppendLine("• Email không hợp lệ.");
+                }
+            }
+
+            if (sb.Length == 0)
+            {
+                return new ValidationResultDto
+                {
+                    IsValid = true,
+                    Message = "Dữ liệu hợp lệ."
+                };
+            }
+
+            return new ValidationResultDto
+            {
+                IsValid = false,
+                Message = sb.ToString().Trim()
             };
         }
 
@@ -315,7 +456,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
         }
 
-        public async Task<ValidationResult> CreateAssetAsync(TenantAssetDto dto, int maNguoiThue)
+        public async Task<ValidationResultDto> CreateAssetAsync(TenantAssetDto dto, int maNguoiThue)
         {
             var asset = new TenantAsset
             {
@@ -326,14 +467,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
 
             var success = await _tenantRepository.CreateAssetAsync(asset);
-            return new ValidationResult
+            return new ValidationResultDto
             {
                 IsValid = success,
                 Message = success ? "✅ Thêm tài sản thành công!" : "❌ Thêm tài sản thất bại!"
             };
         }
 
-        public async Task<ValidationResult> UpdateAssetAsync(TenantAssetDto dto)
+        public async Task<ValidationResultDto> UpdateAssetAsync(TenantAssetDto dto)
         {
             var asset = new TenantAsset
             {
@@ -344,17 +485,17 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             };
 
             var success = await _tenantRepository.UpdateAssetAsync(asset);
-            return new ValidationResult
+            return new ValidationResultDto
             {
                 IsValid = success,
                 Message = success ? "✅ Cập nhật tài sản thành công!" : "❌ Cập nhật tài sản thất bại!"
             };
         }
 
-        public async Task<ValidationResult> DeleteAssetAsync(int maTaiSan)
+        public async Task<ValidationResultDto> DeleteAssetAsync(int maTaiSan)
         {
             var success = await _tenantRepository.DeleteAssetAsync(maTaiSan);
-            return new ValidationResult
+            return new ValidationResultDto
             {
                 IsValid = success,
                 Message = success ? "🗑️ Đã xóa tài sản thành công!" : "❌ Xóa tài sản thất bại!"

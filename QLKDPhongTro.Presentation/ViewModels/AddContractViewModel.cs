@@ -422,11 +422,17 @@ namespace QLKDPhongTro.Presentation.ViewModels
             RefreshSuggestedSavePath();
             HasSelectedRoom = value != null;
 
-            // Khi chọn phòng, tự động set tiền cọc = giá thuê phòng
-            if (value != null && !IsEditMode)
+            if (value != null)
             {
-                _ = UpdateTienCocFromRoomAsync();
+                // Luôn tải danh sách người thuê của phòng khi chọn phòng
+                // (kể cả khi đang chỉnh sửa hợp đồng) để hiển thị đúng danh sách
                 _ = LoadTenantsForRoomAsync(value.MaPhong);
+
+                // Khi thêm mới hợp đồng, tự động set tiền cọc = giá thuê phòng
+                if (!IsEditMode)
+                {
+                    _ = UpdateTienCocFromRoomAsync();
+                }
             }
             else if (value == null)
             {

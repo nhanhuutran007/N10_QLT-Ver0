@@ -100,6 +100,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         MaPhong = row.MaPhong,
                         MoTaSuCo = row.MoTaSuCo,
                         NgayBaoCao = row.NgayBaoCao,
+                        NgayCoTheSua = row.NgayCoTheSua, // Lấy từ cột D trong Google Sheets
                         TrangThai = "Chưa xử lý", // Mặc định trạng thái cho bảo trì mới
                         ChiPhi = 0 // Mặc định chi phí = 0
                     };
