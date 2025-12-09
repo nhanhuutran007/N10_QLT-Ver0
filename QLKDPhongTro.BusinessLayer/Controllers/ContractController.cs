@@ -44,6 +44,34 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             _roomRepository = new RentedRoomRepository();
         }
 
+        private static string NormalizeStatus(DateTime endDate, string? currentStatus)
+        {
+            if (string.Equals(currentStatus, "Hủy", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Hủy";
+            }
+
+            var daysLeft = (endDate.Date - DateTime.Today).TotalDays;
+
+            if (daysLeft < 0)
+            {
+                return "Hết hạn";
+            }
+
+            if (daysLeft <= 30)
+            {
+                return "Sắp hết hạn";
+            }
+
+            return string.IsNullOrWhiteSpace(currentStatus) ? "Hiệu lực" : currentStatus!;
+        }
+
+        private static ContractDto WithDerivedStatus(ContractDto dto)
+        {
+            dto.TrangThai = NormalizeStatus(dto.NgayKetThuc, dto.TrangThai);
+            return dto;
+        }
+
         public static ContractController CreateDefault()
         {
             var repository = new QLKDPhongTro.DataLayer.Repositories.ContractRepository();
@@ -66,7 +94,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 NgayKetThuc = e.NgayKetThuc,
                 TienCoc = e.TienCoc,
                 FileHopDong = e.FileHopDong,
-                TrangThai = e.TrangThai,
+                TrangThai = NormalizeStatus(e.NgayKetThuc, e.TrangThai),
                 GhiChu = e.GhiChu,
                 // Lấy từ JOIN trong repository
                 TenNguoiThue = e.TenNguoiThue,
@@ -79,7 +107,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var entity = await _repository.GetByIdAsync(maHopDong);
             if (entity == null) return null;
 
-            return new ContractDto
+            return WithDerivedStatus(new ContractDto
             {
                 MaHopDong = entity.MaHopDong,
                 MaNguoiThue = entity.MaNguoiThue,
@@ -92,13 +120,13 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
-            };
+            });
         }
 
         public async Task<List<ContractDto>> GetActiveContractsAsync()
         {
             var entities = await _repository.GetActiveContractsAsync();
-            return entities.Select(e => new ContractDto
+            return entities.Select(e => WithDerivedStatus(new ContractDto
             {
                 MaHopDong = e.MaHopDong,
                 MaNguoiThue = e.MaNguoiThue,
@@ -111,7 +139,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
-            }).ToList();
+            })).ToList();
         }
 
         public async Task<int> CreateHopDongAsync(ContractDto dto)
@@ -194,7 +222,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         public async Task<List<ContractDto>> GetExpiringContractsAsync(int days)
         {
             var entities = await _repository.GetExpiringContractsAsync(days);
-            return entities.Select(e => new ContractDto
+            return entities.Select(e => WithDerivedStatus(new ContractDto
             {
                 MaHopDong = e.MaHopDong,
                 MaNguoiThue = e.MaNguoiThue,
@@ -207,7 +235,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GhiChu = e.GhiChu,
                 TenNguoiThue = e.TenNguoiThue,
                 TenPhong = e.TenPhong
-            }).ToList();
+            })).ToList();
         }
         // 🔹 Gửi email cảnh báo cho hợp đồng sắp hết hạn kèm file hợp đồng (gửi cho cả người thuê và admin)
         /// <summary>
@@ -221,7 +249,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
             if (entity == null) return null;
 
-            return new ContractDto
+            return WithDerivedStatus(new ContractDto
             {
                 MaHopDong = entity.MaHopDong,
                 MaNguoiThue = entity.MaNguoiThue,
@@ -238,52 +266,67 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 GhiChu = entity.GhiChu,
                 TenNguoiThue = entity.TenNguoiThue,
                 TenPhong = entity.TenPhong
-            };
+            });
         }
         public async Task<(int Success, int Failed, List<string> Errors)> SendExpiryWarningEmailsAsync(int days)
         {
+            // Lấy hợp đồng còn trong khoảng nhắc nhở, loại bỏ đã hết hạn và đúng 30 ngày (gửi tự động)
             var expiringContracts = await GetExpiringContractsAsync(days);
+            var contractsToSend = expiringContracts
+                .Where(c =>
+                {
+                    var daysRemaining = (c.NgayKetThuc.Date - DateTime.Today).Days;
+                    return daysRemaining >= 0 && daysRemaining < days; // <30 gửi thủ công
+                })
+                .ToList();
 
-            if (expiringContracts == null || expiringContracts.Count == 0)
-                return (0, 0, new List<string> { "Không có hợp đồng nào sắp hết hạn trong khoảng thời gian này." });
+            if (contractsToSend.Count == 0)
+                return (0, 0, new List<string> { $"Không có hợp đồng nào còn dưới {days} ngày để gửi thủ công." });
 
             int success = 0, failed = 0;
             var errors = new List<string>();
             var sentEmailTracker = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Lấy danh sách tất cả admin để gửi email
-            var allAdmins = await _userRepository.GetAllAsync();
-            var adminEmails = allAdmins
-                .Where(a => !string.IsNullOrWhiteSpace(a.Email))
-                .Select(a => a.Email)
-                .ToList();
-
-            // Nếu không có admin nào có email, sử dụng email mặc định
-            if (adminEmails.Count == 0)
-            {
-                adminEmails.Add("ngochai1521@gmail.com");
-            }
-
-            foreach (var contract in expiringContracts)
+            foreach (var contract in contractsToSend)
             {
                 try
                 {
+                    var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
+                    int maNha = room?.MaNha ?? 0;
+
+                    // Lấy danh sách admin của căn nhà
+                    var houseAdmins = maNha > 0
+                        ? await _userRepository.GetByHouseIdAsync(maNha)
+                        : new List<DataLayer.Models.User>();
+
+                    var adminEmails = houseAdmins
+                        .Where(a => !string.IsNullOrWhiteSpace(a.Email))
+                        .Select(a => a.Email)
+                        .ToList();
+
+                    // Nếu chưa có admin cho nhà, fallback toàn bộ admin hệ thống
+                    if (adminEmails.Count == 0)
+                    {
+                        var allAdmins = await _userRepository.GetAllAsync();
+                        adminEmails = allAdmins
+                            .Where(a => !string.IsNullOrWhiteSpace(a.Email))
+                            .Select(a => a.Email)
+                            .ToList();
+                    }
+
+                    int daysRemaining = (contract.NgayKetThuc.Date - DateTime.Today).Days;
+
                     // === GỬI EMAIL CHO NGƯỜI THUÊ ===
                     var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
                     string tenantEmail = tenant?.Email;
 
-                    // Nếu tenant không có email, sử dụng email mặc định
                     if (string.IsNullOrWhiteSpace(tenantEmail))
                     {
                         tenantEmail = "ngochai1521@gmail.com";
                     }
 
-                    int daysRemaining = (contract.NgayKetThuc.Date - DateTime.Now.Date).Days;
+                    string tenantEmailBody = GenerateExpiringTenantEmailTemplate(contract, daysRemaining);
 
-                    // Tạo nội dung email HTML chuyên nghiệp cho người thuê
-                    string tenantEmailBody = GenerateTenantEmailTemplate(contract, daysRemaining);
-
-                    // Gửi email cho người thuê với file hợp đồng đính kèm (nếu có)
                     string attachmentPath = contract.FileHopDong;
                     if (await TrySendEmailOnceAsync(
                             sentEmailTracker,
@@ -296,34 +339,34 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         success++;
                     }
 
-                    // === GỬI EMAIL CHO TẤT CẢ ADMIN ===
-                    // Tạo nội dung email HTML chuyên nghiệp cho admin
-                    string adminEmailBody = GenerateAdminEmailTemplate(contract, daysRemaining);
-
-                    // Gửi email cho tất cả admin
-                    foreach (var adminEmail in adminEmails)
+                    // === GỬI EMAIL CHO ADMIN ===
+                    if (adminEmails.Count > 0)
                     {
-                        try
+                        string adminEmailBody = GenerateExpiringAdminEmailTemplate(contract, daysRemaining, maNha);
+
+                        foreach (var adminEmail in adminEmails)
                         {
-                            if (!string.IsNullOrWhiteSpace(adminEmail))
+                            try
                             {
-                                // Gửi email cho admin với file hợp đồng đính kèm (nếu có)
-                                if (await TrySendEmailOnceAsync(
-                                        sentEmailTracker,
-                                        contract.MaHopDong,
-                                        adminEmail,
-                                        $"🚨 Cảnh báo: Hợp đồng HD-{contract.MaHopDong} sắp hết hạn - Còn {daysRemaining} ngày",
-                                        adminEmailBody,
-                                        attachmentPath))
+                                if (!string.IsNullOrWhiteSpace(adminEmail))
                                 {
-                                    success++;
+                                    if (await TrySendEmailOnceAsync(
+                                            sentEmailTracker,
+                                            contract.MaHopDong,
+                                            adminEmail,
+                                            $"🚨 Cảnh báo: Hợp đồng HD-{contract.MaHopDong} sắp hết hạn - Còn {daysRemaining} ngày",
+                                            adminEmailBody,
+                                            attachmentPath))
+                                    {
+                                        success++;
+                                    }
                                 }
                             }
-                        }
-                        catch (Exception adminEx)
-                        {
-                            failed++;
-                            errors.Add($"Lỗi khi gửi email cho admin {adminEmail} (Hợp đồng {contract.MaHopDong}): {adminEx.Message}");
+                            catch (Exception adminEx)
+                            {
+                                failed++;
+                                errors.Add($"Lỗi khi gửi email cho admin {adminEmail} (Hợp đồng {contract.MaHopDong}): {adminEx.Message}");
+                            }
                         }
                     }
                 }
@@ -349,24 +392,10 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var errors = new List<string>();
             var sentEmailTracker = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Lấy danh sách tất cả admin để gửi email
-            var allAdmins = await _userRepository.GetAllAsync();
-            var adminEmails = allAdmins
-                .Where(a => !string.IsNullOrWhiteSpace(a.Email))
-                .Select(a => a.Email)
-                .ToList();
-
-            // Nếu không có admin nào có email, sử dụng email mặc định
-            if (adminEmails.Count == 0)
-            {
-                adminEmails.Add("ngochai1521@gmail.com");
-            }
-
             foreach (var contractEntity in expiringContracts)
             {
                 try
                 {
-                    // Chuyển đổi Contract entity sang ContractDto
                     var contract = new ContractDto
                     {
                         MaHopDong = contractEntity.MaHopDong,
@@ -382,20 +411,36 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         TenPhong = contractEntity.TenPhong
                     };
 
-                    // === GỬI EMAIL CHO NGƯỜI THUÊ ===
+                    var room = await _roomRepository.GetByIdAsync(contract.MaPhong);
+                    int maNha = room?.MaNha ?? 0;
+
+                    var houseAdmins = maNha > 0
+                        ? await _userRepository.GetByHouseIdAsync(maNha)
+                        : new List<DataLayer.Models.User>();
+
+                    var adminEmails = houseAdmins
+                        .Where(a => !string.IsNullOrWhiteSpace(a.Email))
+                        .Select(a => a.Email)
+                        .ToList();
+
+                    if (adminEmails.Count == 0)
+                    {
+                        var allAdmins = await _userRepository.GetAllAsync();
+                        adminEmails = allAdmins
+                            .Where(a => !string.IsNullOrWhiteSpace(a.Email))
+                            .Select(a => a.Email)
+                            .ToList();
+                    }
+
                     var tenant = await _tenantRepository.GetByIdAsync(contract.MaNguoiThue);
                     string tenantEmail = tenant?.Email;
-
-                    // Nếu tenant không có email, sử dụng email mặc định
                     if (string.IsNullOrWhiteSpace(tenantEmail))
                     {
                         tenantEmail = "ngochai1521@gmail.com";
                     }
 
-                    // Tạo nội dung email HTML chuyên nghiệp cho người thuê
-                    string tenantEmailBody = GenerateTenantEmailTemplate(contract, exactDays);
+                    string tenantEmailBody = GenerateExpiringTenantEmailTemplate(contract, exactDays);
 
-                    // Gửi email cho người thuê với file hợp đồng đính kèm (nếu có)
                     string attachmentPath = contract.FileHopDong;
                     if (await TrySendEmailOnceAsync(
                             sentEmailTracker,
@@ -408,18 +453,14 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                         success++;
                     }
 
-                    // === GỬI EMAIL CHO TẤT CẢ ADMIN ===
-                    // Tạo nội dung email HTML chuyên nghiệp cho admin
-                    string adminEmailBody = GenerateAdminEmailTemplate(contract, exactDays);
+                    string adminEmailBody = GenerateExpiringAdminEmailTemplate(contract, exactDays, maNha);
 
-                    // Gửi email cho tất cả admin
                     foreach (var adminEmail in adminEmails)
                     {
                         try
                         {
                             if (!string.IsNullOrWhiteSpace(adminEmail))
                             {
-                                // Gửi email cho admin với file hợp đồng đính kèm (nếu có)
                                 if (await TrySendEmailOnceAsync(
                                         sentEmailTracker,
                                         contract.MaHopDong,
@@ -452,9 +493,9 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
 
         /// <summary>
-        /// Tạo template HTML chuyên nghiệp cho email thông báo hết hạn hợp đồng (cho người thuê)
+        /// Tạo template HTML thông báo hợp đồng đã hết hạn (cho người thuê)
         /// </summary>
-        private static string GenerateTenantEmailTemplate(ContractDto contract, int daysRemaining)
+        private static string GenerateExpiringTenantEmailTemplate(ContractDto contract, int daysRemaining)
         {
             string tenantName = contract.TenNguoiThue ?? "Quý khách hàng";
             string roomName = contract.TenPhong ?? "N/A";
@@ -578,9 +619,137 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         }
 
         /// <summary>
-        /// Tạo template HTML chuyên nghiệp cho email thông báo hết hạn hợp đồng (cho admin)
+        /// Tạo template HTML thông báo hợp đồng đã hết hạn (cho người thuê)
         /// </summary>
-        private static string GenerateAdminEmailTemplate(ContractDto contract, int daysRemaining)
+        private static string GenerateExpiredTenantEmailTemplate(ContractDto contract)
+        {
+            string tenantName = contract.TenNguoiThue ?? "Quý khách hàng";
+            string roomName = contract.TenPhong ?? "N/A";
+            string contractId = contract.MaHopDong.ToString();
+            string startDate = contract.NgayBatDau.ToString("dd/MM/yyyy");
+            string endDate = contract.NgayKetThuc.ToString("dd/MM/yyyy");
+            int overdueDays = Math.Max(0, (DateTime.Today - contract.NgayKetThuc.Date).Days);
+            string overdueText = overdueDays > 0 ? $"{overdueDays} ngày" : "hôm nay";
+            string statusColor = "#EF4444";
+
+            return $@"<!DOCTYPE html>
+<html lang=""vi"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Thông báo hết hạn hợp đồng</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse; background-color: #f5f5f5; padding: 20px;"">
+        <tr>
+            <td align=""center"">
+                <table role=""presentation"" style=""max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"">
+                    <!-- Header -->
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 30px 20px; text-align: center;"">
+                            <h1 style=""margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;"">🏠 Quản Lý Phòng Trọ</h1>
+                            <p style=""margin: 8px 0 0 0; color: #d1fae5; font-size: 14px;"">Hệ thống quản lý chuyên nghiệp</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Title -->
+                    <tr>
+                        <td style=""padding: 30px 20px 20px 20px; text-align: center; border-bottom: 2px solid #f3f4f6;"">
+                            <h2 style=""margin: 0; color: #1F2937; font-size: 20px; font-weight: 600;"">⚠️ Thông Báo Quan Trọng</h2>
+                            <p style=""margin: 10px 0 0 0; color: #6B7280; font-size: 16px;"">Hợp đồng của bạn đã hết hạn</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style=""padding: 30px 20px;"">
+                            <p style=""margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+                                Kính gửi <strong style=""color: #1F2937;"">{tenantName}</strong>,
+                            </p>
+                            <p style=""margin: 0 0 25px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+                                Hợp đồng thuê phòng của bạn đã hết hạn từ <strong style=""color: {statusColor}; font-size: 16px;"">{overdueText}</strong>. 
+                                Vui lòng liên hệ với chúng tôi để gia hạn hoặc bàn giao phòng.
+                            </p>
+                            
+                            <!-- Contract Info Table -->
+                            <table role=""presentation"" style=""width: 100%; border-collapse: collapse; margin: 25px 0; background-color: #F9FAFB; border-radius: 8px; overflow: hidden;"">
+                                <tr>
+                                    <td style=""padding: 20px; background-color: #10B981; color: #ffffff; font-weight: 600; font-size: 16px; text-align: center;"">
+                                        📋 Thông Tin Hợp Đồng
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding: 0;"">
+                                        <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Mã hợp đồng:</strong>
+                                                    <span style=""color: #6B7280;"">HD-{contractId}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Phòng:</strong>
+                                                    <span style=""color: #6B7280;"">{roomName}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Ngày bắt đầu:</strong>
+                                                    <span style=""color: #6B7280;"">{startDate}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Ngày kết thúc:</strong>
+                                                    <span style=""color: #6B7280;"">{endDate}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; background-color: #FEF3C7; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #92400E; min-width: 140px; display: inline-block;"">⏰ Tình trạng:</strong>
+                                                    <span style=""color: {statusColor}; font-weight: 600; font-size: 15px;"">Đã hết hạn</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Call to Action -->
+                            <div style=""background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 15px 20px; margin: 25px 0; border-radius: 4px;"">
+                                <p style=""margin: 0; color: #1E40AF; font-size: 14px; line-height: 1.6;"">
+                                    <strong>💡 Lưu ý:</strong> Để tránh gián đoạn, vui lòng liên hệ với chúng tôi sớm nhất có thể để thảo luận về việc gia hạn hợp đồng.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style=""background-color: #F9FAFB; padding: 25px 20px; text-align: center; border-top: 1px solid #E5E7EB;"">
+                            <p style=""margin: 0 0 10px 0; color: #6B7280; font-size: 14px;"">
+                                <strong style=""color: #1F2937;"">Trân trọng,</strong><br>
+                                <span style=""color: #10B981; font-weight: 600;"">Đội ngũ Quản lý Phòng Trọ</span>
+                            </p>
+                            <p style=""margin: 15px 0 0 0; color: #9CA3AF; font-size: 12px; line-height: 1.6;"">
+                                Email này được gửi tự động từ hệ thống quản lý.<br>
+                                Vui lòng không trả lời email này.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+        }
+
+        /// <summary>
+        /// Tạo template HTML thông báo hợp đồng đã hết hạn (cho admin)
+        /// </summary>
+        private static string GenerateExpiringAdminEmailTemplate(ContractDto contract, int daysRemaining, int maNha)
         {
             string tenantName = contract.TenNguoiThue ?? "N/A";
             string roomName = contract.TenPhong ?? "N/A";
@@ -588,6 +757,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             string startDate = contract.NgayBatDau.ToString("dd/MM/yyyy");
             string endDate = contract.NgayKetThuc.ToString("dd/MM/yyyy");
             string statusColor = daysRemaining <= 7 ? "#EF4444" : daysRemaining <= 15 ? "#F59E0B" : "#10B981";
+            string houseText = maNha > 0 ? maNha.ToString() : "N/A";
 
             return $@"<!DOCTYPE html>
 <html lang=""vi"">
@@ -658,6 +828,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                                             </tr>
                                             <tr>
                                                 <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Mã nhà:</strong>
+                                                    <span style=""color: #6B7280;"">{houseText}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
                                                     <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Ngày bắt đầu:</strong>
                                                     <span style=""color: #6B7280;"">{startDate}</span>
                                                 </td>
@@ -672,6 +848,135 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                                                 <td style=""padding: 12px 20px; background-color: #FEE2E2; color: #374151; font-size: 14px;"">
                                                     <strong style=""color: #991B1B; min-width: 140px; display: inline-block;"">⏰ Số ngày còn lại:</strong>
                                                     <span style=""color: {statusColor}; font-weight: 600; font-size: 15px;"">{daysRemaining} ngày</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Call to Action -->
+                            <div style=""background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px 20px; margin: 25px 0; border-radius: 4px;"">
+                                <p style=""margin: 0; color: #92400E; font-size: 14px; line-height: 1.6;"">
+                                    <strong>📞 Hành động cần thiết:</strong> Vui lòng liên hệ với người thuê <strong>{tenantName}</strong> để thảo luận về việc gia hạn hợp đồng trước khi hết hạn.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style=""background-color: #F9FAFB; padding: 25px 20px; text-align: center; border-top: 1px solid #E5E7EB;"">
+                            <p style=""margin: 0 0 10px 0; color: #6B7280; font-size: 14px;"">
+                                <strong style=""color: #1F2937;"">Trân trọng,</strong><br>
+                                <span style=""color: #EF4444; font-weight: 600;"">Hệ thống Quản lý Phòng Trọ</span>
+                            </p>
+                            <p style=""margin: 15px 0 0 0; color: #9CA3AF; font-size: 12px; line-height: 1.6;"">
+                                Email cảnh báo tự động từ hệ thống.<br>
+                                Vui lòng xử lý thông báo này trong thời gian sớm nhất.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>";
+        }
+
+        private static string GenerateExpiredAdminEmailTemplate(ContractDto contract, int maNha)
+        {
+            string tenantName = contract.TenNguoiThue ?? "N/A";
+            string roomName = contract.TenPhong ?? "N/A";
+            string contractId = contract.MaHopDong.ToString();
+            string startDate = contract.NgayBatDau.ToString("dd/MM/yyyy");
+            string endDate = contract.NgayKetThuc.ToString("dd/MM/yyyy");
+            string statusColor = "#EF4444";
+            string houseText = maNha > 0 ? maNha.ToString() : "N/A";
+
+            return $@"<!DOCTYPE html>
+<html lang=""vi"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Cảnh báo hợp đồng đã hết hạn</title>
+</head>
+<body style=""margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;"">
+    <table role=""presentation"" style=""width: 100%; border-collapse: collapse; background-color: #f5f5f5; padding: 20px;"">
+        <tr>
+            <td align=""center"">
+                <table role=""presentation"" style=""max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"">
+                    <!-- Header -->
+                    <tr>
+                        <td style=""background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 30px 20px; text-align: center;"">
+                            <h1 style=""margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;"">🚨 Cảnh Báo Hệ Thống</h1>
+                            <p style=""margin: 8px 0 0 0; color: #FEE2E2; font-size: 14px;"">Hợp đồng đã hết hạn cần xử lý</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Title -->
+                    <tr>
+                        <td style=""padding: 30px 20px 20px 20px; text-align: center; border-bottom: 2px solid #f3f4f6;"">
+                            <h2 style=""margin: 0; color: #1F2937; font-size: 20px; font-weight: 600;"">⚠️ Hợp Đồng ĐÃ Hết Hạn</h2>
+                            <p style=""margin: 10px 0 0 0; color: #6B7280; font-size: 16px;"">Cần liên hệ với người thuê để xử lý ngay</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style=""padding: 30px 20px;"">
+                            <p style=""margin: 0 0 20px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+                                Kính gửi <strong style=""color: #1F2937;"">Quản trị viên</strong>,
+                            </p>
+                            <p style=""margin: 0 0 25px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+                                Hệ thống phát hiện một hợp đồng đã hết hạn. Vui lòng liên hệ với người thuê để gia hạn hoặc bàn giao phòng.
+                            </p>
+                            
+                            <!-- Contract Info Table -->
+                            <table role=""presentation"" style=""width: 100%; border-collapse: collapse; margin: 25px 0; background-color: #F9FAFB; border-radius: 8px; overflow: hidden;"">
+                                <tr>
+                                    <td style=""padding: 20px; background-color: #EF4444; color: #ffffff; font-weight: 600; font-size: 16px; text-align: center;"">
+                                        📋 Chi Tiết Hợp Đồng
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style=""padding: 0;"">
+                                        <table role=""presentation"" style=""width: 100%; border-collapse: collapse;"">
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Mã hợp đồng:</strong>
+                                                    <span style=""color: #6B7280;"">HD-{contractId}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Người thuê:</strong>
+                                                    <span style=""color: #6B7280;"">{tenantName}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Phòng:</strong>
+                                                    <span style=""color: #6B7280;"">{roomName}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Ngày bắt đầu:</strong>
+                                                    <span style=""color: #6B7280;"">{startDate}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; border-bottom: 1px solid #E5E7EB; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #1F2937; min-width: 140px; display: inline-block;"">Ngày kết thúc:</strong>
+                                                    <span style=""color: #6B7280;"">{endDate}</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style=""padding: 12px 20px; background-color: #FEE2E2; color: #374151; font-size: 14px;"">
+                                                    <strong style=""color: #991B1B; min-width: 140px; display: inline-block;"">⏰ Trạng thái:</strong>
+                                                    <span style=""color: {statusColor}; font-weight: 600; font-size: 15px;"">Đã hết hạn</span>
                                                 </td>
                                             </tr>
                                         </table>

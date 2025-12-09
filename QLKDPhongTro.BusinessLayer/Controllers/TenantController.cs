@@ -511,6 +511,32 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 PhiPhuThu = asset.PhiPhuThu
             };
 
+        private static string DeriveContractStatus(DateTime? endDate, string? status)
+        {
+            if (string.Equals(status, "Hủy", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Hủy";
+            }
+
+            if (!endDate.HasValue)
+            {
+                return string.IsNullOrWhiteSpace(status) ? "Hiệu lực" : status!;
+            }
+
+            var daysLeft = (endDate.Value.Date - DateTime.Today).TotalDays;
+            if (daysLeft < 0)
+            {
+                return "Hết hạn";
+            }
+
+            if (daysLeft <= 30)
+            {
+                return "Sắp hết hạn";
+            }
+
+            return string.IsNullOrWhiteSpace(status) ? "Hiệu lực" : status!;
+        }
+
         private static RoomTenantDto MapRoomTenant(RoomTenantInfo info, int? contractHolderMaNguoiThue = null)
         {
             // Kiểm tra xem người thuê này có phải là người đứng tên hợp đồng không
@@ -541,7 +567,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 SoDienThoai = info.SoDienThoai,
                 TrangThaiNguoiThue = info.TrangThaiNguoiThue,
                 MaHopDong = info.MaHopDong,
-                TrangThaiHopDong = info.TrangThaiHopDong,
+                TrangThaiHopDong = DeriveContractStatus(info.NgayKetThuc, info.TrangThaiHopDong),
                 NgayBatDau = info.NgayBatDau,
                 NgayKetThuc = info.NgayKetThuc,
                 IsContractHolder = isContractHolder
@@ -566,7 +592,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                 MaPhong = stayInfo.MaPhong,
                 TenPhong = stayInfo.TenPhong,
                 TrangThaiPhong = stayInfo.TrangThaiPhong,
-                TrangThaiHopDong = stayInfo.TrangThaiHopDong,
+                TrangThaiHopDong = DeriveContractStatus(stayInfo.NgayKetThuc, stayInfo.TrangThaiHopDong),
                 NgayBatDau = stayInfo.NgayBatDau,
                 NgayKetThuc = stayInfo.NgayKetThuc,
                 TienCoc = stayInfo.TienCoc,
@@ -623,10 +649,12 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
             var hasContract = stayInfo?.MaHopDong != null &&
                               !string.Equals(stayInfo.TrangThaiHopDong, "Hủy", StringComparison.OrdinalIgnoreCase);
 
+            var effectiveContractStatus = DeriveContractStatus(stayInfo?.NgayKetThuc, stayInfo?.TrangThaiHopDong);
+
             var contractStillActive = hasContract &&
-                ((string.Equals(stayInfo!.TrangThaiHopDong, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
-                 (string.Equals(stayInfo.TrangThaiHopDong, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
-                 (stayInfo.NgayKetThuc.HasValue && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
+                ((string.Equals(effectiveContractStatus, "Hiệu lực", StringComparison.OrdinalIgnoreCase)) ||
+                 (string.Equals(effectiveContractStatus, "Sắp hết hạn", StringComparison.OrdinalIgnoreCase)) ||
+                 (stayInfo?.NgayKetThuc.HasValue == true && stayInfo.NgayKetThuc.Value.Date >= DateTime.Today));
 
             string expectedTenantStatus;
             string expectedRoomStatus;
