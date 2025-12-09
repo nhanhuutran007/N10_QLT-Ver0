@@ -64,7 +64,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             // Tìm PasswordBox hiện tại
             var passwordBox = this.FindName("PasswordBox") as PasswordBox;
             var confirmPasswordBox = this.FindName("ConfirmPasswordBox") as PasswordBox;
-            
+
             if (passwordBox != null)
             {
                 // Tạo TextBox để hiển thị mật khẩu
@@ -81,15 +81,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     Foreground = passwordBox.Foreground
                 };
                 textBox.TextChanged += PasswordTextBox_TextChanged;
-                
+
                 // Thay thế PasswordBox bằng TextBox
                 var parent = passwordBox.Parent as Panel;
                 if (parent != null)
                 {
                     var index = parent.Children.IndexOf(passwordBox);
+                    SafeUnregisterName("PasswordBox");
                     parent.Children.Remove(passwordBox);
                     parent.Children.Insert(index, textBox);
                     textBox.Name = "PasswordTextBox";
+                    SafeRegisterName("PasswordTextBox", textBox);
                 }
             }
 
@@ -109,15 +111,17 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                     Foreground = confirmPasswordBox.Foreground
                 };
                 confirmTextBox.TextChanged += PasswordTextBox_TextChanged;
-                
+
                 // Thay thế ConfirmPasswordBox bằng TextBox
                 var parent = confirmPasswordBox.Parent as Panel;
                 if (parent != null)
                 {
                     var index = parent.Children.IndexOf(confirmPasswordBox);
+                    SafeUnregisterName("ConfirmPasswordBox");
                     parent.Children.Remove(confirmPasswordBox);
                     parent.Children.Insert(index, confirmTextBox);
                     confirmTextBox.Name = "ConfirmPasswordTextBox";
+                    SafeRegisterName("ConfirmPasswordTextBox", confirmTextBox);
                 }
             }
         }
@@ -151,9 +155,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         };
                         passwordBox.PasswordChanged += PasswordBox_PasswordChanged;
 
+                        SafeUnregisterName("PasswordTextBox");
                         parent.Children.Remove(passwordTextBox);
                         parent.Children.Insert(index, passwordBox);
                         passwordBox.Name = "PasswordBox";
+                        SafeRegisterName("PasswordBox", passwordBox);
                     }
                 }
 
@@ -178,9 +184,11 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                         };
                         confirmPasswordBox.PasswordChanged += ConfirmPasswordBox_PasswordChanged;
 
+                        SafeUnregisterName("ConfirmPasswordTextBox");
                         parent.Children.Remove(confirmPasswordTextBox);
                         parent.Children.Insert(index, confirmPasswordBox);
                         confirmPasswordBox.Name = "ConfirmPasswordBox";
+                        SafeRegisterName("ConfirmPasswordBox", confirmPasswordBox);
                     }
                 }
             }
@@ -188,6 +196,16 @@ namespace QLKDPhongTro.Presentation.Views.Windows
             {
                 MessageBox.Show($"Lỗi khi ẩn mật khẩu: {ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void SafeRegisterName(string name, object scopedElement)
+        {
+            try { this.RegisterName(name, scopedElement); } catch { }
+        }
+
+        private void SafeUnregisterName(string name)
+        {
+            try { this.UnregisterName(name); } catch { }
         }
 
         // Xử lý đăng ký
