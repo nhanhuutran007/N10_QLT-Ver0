@@ -248,7 +248,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
-                
+
+                // Validate số điện thoại trước khi gửi lên backend
+                if (!ValidatePhoneNumber(NewTenant.SoDienThoai))
+                {
+                    IsLoading = false;
+                    return;
+                }
+
                 // Gán MaPhong từ phòng được chọn
                 if (SelectedRoom != null)
                 {
@@ -292,7 +299,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
             try
             {
                 IsLoading = true;
-                
+
+                // Validate số điện thoại trước khi gửi lên backend
+                if (!ValidatePhoneNumber(NewTenant.SoDienThoai))
+                {
+                    IsLoading = false;
+                    return;
+                }
+
                 // Gán MaPhong từ phòng được chọn
                 if (SelectedRoom != null)
                 {
@@ -378,7 +392,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                                 selectWindow.SelectedTenant.MaKhachThue,
                                 result.MaPhong.Value,
                                 result.OldContract);
-                            
+
                             StatusMessage = result.Message + " Đã tạo hợp đồng mới với người thuê được chọn.";
                         }
                         else
@@ -406,6 +420,34 @@ namespace QLKDPhongTro.Presentation.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        /// <summary>
+        /// Kiểm tra số điện thoại: phải có 10 chữ số và bắt đầu bằng '0'
+        /// </summary>
+        private bool ValidatePhoneNumber(string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone))
+            {
+                MessageBox.Show("Số điện thoại không được để trống.", "Thông tin bắt buộc", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            var normalized = phone.Trim();
+            if (normalized.Length != 10 || !normalized.All(char.IsDigit))
+            {
+                MessageBox.Show("Số điện thoại phải gồm đúng 10 chữ số.", "Thông tin không hợp lệ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (!normalized.StartsWith("0"))
+            {
+                MessageBox.Show("Số điện thoại phải bắt đầu từ số 0.", "Thông tin không hợp lệ", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
+            }
+
+            NewTenant.SoDienThoai = normalized; // chuẩn hóa
+            return true;
         }
 
         private async Task CreateNewContractForRoomAsync(int maNguoiThue, int maPhong, ContractDto oldContract)
@@ -478,8 +520,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 string giaBangChu = NumberToVietnameseText((long)giaThue);
                 string ngayTraTien = "Ngày 05 hàng tháng";
                 DateTime ngayBatDau = DateTime.Today;
-                DateTime ngayKetThuc = oldContract.NgayKetThuc > DateTime.Today 
-                    ? oldContract.NgayKetThuc 
+                DateTime ngayKetThuc = oldContract.NgayKetThuc > DateTime.Today
+                    ? oldContract.NgayKetThuc
                     : DateTime.Today.AddYears(1);
                 int thoiHanNam = Math.Max(1, ngayKetThuc.Year - ngayBatDau.Year);
                 DateTime ngayGiaoNha = ngayBatDau;
@@ -539,7 +581,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 // Tạo hợp đồng mới trong database
                 var contractController = new BusinessLayer.Controllers.ContractController(
                     new DataLayer.Repositories.ContractRepository());
-                
+
                 var newContract = new ContractDto
                 {
                     MaNguoiThue = maNguoiThue,
@@ -554,7 +596,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 };
 
                 await contractController.CreateHopDongAsync(newContract);
-                
+
                 // Tự động mở thư mục chứa file hợp đồng
                 try
                 {
@@ -566,7 +608,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                             FileName = folderPath,
                             UseShellExecute = true
                         });
-                        
+
                         MessageBox.Show(
                             $"✅ Đã tạo hợp đồng mới và file hợp đồng thành công!\n\nĐã mở thư mục chứa file.\n\nĐường dẫn: {filePath}",
                             "Thông báo",

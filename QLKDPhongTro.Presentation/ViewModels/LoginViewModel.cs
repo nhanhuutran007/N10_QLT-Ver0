@@ -49,14 +49,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 IsLoading = true;
 
                 // Đăng nhập trực tiếp (OTP đang tắt tạm thời)
-                //var loginResult = await _authController.LoginAsync(Username, Password);
-                //var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
+          
+                var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
                 var loginResult = await _authController.LoginAsync(Username, Password);
                 if (loginResult.IsSuccess && loginResult.User != null)
                 {
                     // Mở dashboard sau khi đăng nhập thành công
                     // FIX: Truyền đủ 3 tham số (Username, Email, Password) khớp với OtpLoginWindow
-                    //var otpWindow = new OtpLoginWindow(Username, loginResult.User.Email, Password);
+                    var otpWindow = new OtpLoginWindow(Username, loginResult.User.Email, Password);
 
                     //otpWindow.Show();
                     var dashWindow = new DashWindow();
