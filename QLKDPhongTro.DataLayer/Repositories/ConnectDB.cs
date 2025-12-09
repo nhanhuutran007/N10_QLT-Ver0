@@ -18,16 +18,16 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 return _connectionString;
 
             ////// ===== CẤU HÌNH KẾT NỐI MYSQL =====
-            string server = "host80.vietnix.vn";
-            string database = "githubio_QLT_Ver1";
-            string username = "githubio_admin";
-            string password = "nhanhuutran007";
-            string port = "3306";
-            //string server = "localhost";
+            //string server = "host80.vietnix.vn";
             //string database = "githubio_QLT_Ver1";
-            //string username = "root";
-            //string password = "";
+            //string username = "githubio_admin";
+            //string password = "nhanhuutran007";
             //string port = "3306";
+            string server = "localhost";
+            string database = "githubio_QLT_Ver1";
+            string username = "root";
+            string password = "";
+            string port = "3306";
 
             // Tạo chuỗi kết nối đầy đủ (Connection String)
             _connectionString = $"Server={server};Port={port};Database={database};Uid={username};Pwd={password};Charset=utf8mb4;";

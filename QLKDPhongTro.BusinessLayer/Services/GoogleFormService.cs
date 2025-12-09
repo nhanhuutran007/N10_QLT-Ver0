@@ -146,8 +146,8 @@ namespace QLKDPhongTro.BusinessLayer.Services
                 var debtDto = new DebtCreationDto
                 {
                     // Các tên cột này phải khớp với dòng 1 trong file Sheet của bạn
-                    Timestamp = GetCellValue(headers, row,
-                        "Dấu thời gian", "Timestamp", "Thời gian"),
+                    Timestamp = NormalizeTimestamp(
+                        GetCellValue(headers, row, "Dấu thời gian", "Timestamp", "Thời gian")),
                     RoomName = GetCellValue(headers, row,
                         "Tên phòng", "Ten phong", "Room", "Room Name", "RoomName", "Phòng"),
                     CurrentElectricValue = ParseDecimal(GetCellValue(headers, row,
@@ -185,6 +185,58 @@ namespace QLKDPhongTro.BusinessLayer.Services
             return string.Empty;
         }
 
+        // Chuẩn hóa timestamp về định dạng dd/MM/yyyy HH:mm:ss (ưu tiên hiển thị theo Day/Month/Year)
+        private static string NormalizeTimestamp(string? rawTimestamp)
+        {
+            if (string.IsNullOrWhiteSpace(rawTimestamp))
+                return string.Empty;
+
+            string[] formats = {
+                // Ưu tiên US style vì Google Form đang Month/Day/Year
+                "MM/dd/yyyy",
+                "MM/dd/yyyy HH:mm",
+                "MM/dd/yyyy HH:mm:ss",
+                "MM/dd/yyyy h:mm tt",
+                "MM/dd/yyyy h:mm:ss tt",
+                "M/d/yyyy",
+                "M/d/yyyy HH:mm",
+                "M/d/yyyy HH:mm:ss",
+                "M/d/yyyy h:mm tt",
+                "M/d/yyyy h:mm:ss tt",
+
+                // VN style (hiển thị sẽ chuyển về dd/MM/yyyy)
+                "dd/MM/yyyy",
+                "dd/MM/yyyy HH:mm",
+                "dd/MM/yyyy HH:mm:ss",
+                "d/M/yyyy",
+                "d/M/yyyy HH:mm",
+                "d/M/yyyy HH:mm:ss",
+
+                // ISO
+                "yyyy-MM-dd",
+                "yyyy-MM-dd HH:mm:ss"
+            };
+
+            foreach (var format in formats)
+            {
+                if (DateTime.TryParseExact(rawTimestamp.Trim(), format,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out DateTime parsed))
+                {
+                    return parsed.ToString("dd/MM/yyyy HH:mm:ss");
+                }
+            }
+
+            // Thử parse tự do nếu không khớp format nào
+            if (DateTime.TryParse(rawTimestamp, out DateTime fallback))
+            {
+                return fallback.ToString("dd/MM/yyyy HH:mm:ss");
+            }
+
+            // Nếu vẫn không parse được, trả lại chuỗi gốc để dễ debug
+            return rawTimestamp;
+        }
+
         private static decimal ParseDecimal(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0;
@@ -204,12 +256,12 @@ namespace QLKDPhongTro.BusinessLayer.Services
             // và sẽ được dịch vụ DebtProcessingService cập nhật sau từ DB.
             return rawData.Select(item => new DebtFormData
             {
-                Timestamp = item.Timestamp,
+                Timestamp = NormalizeTimestamp(item.Timestamp),
                 Email = item.Email,
                 RoomName = item.RoomName,
                 ElectricImageUrl = item.ElectricImageUrl,
                 CurrentElectricValue = item.CurrentElectricValue
-       
+
             }).ToList();
         }
     }

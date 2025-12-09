@@ -1069,13 +1069,27 @@ namespace QLKDPhongTro.BusinessLayer.Services
 
             // Thử các format phổ biến của Google Form
             string[] formats = {
+                // Ưu tiên US style vì Google Form hiện đang Month/Day/Year
+                "MM/dd/yyyy",
+                "MM/dd/yyyy HH:mm",
+                "MM/dd/yyyy HH:mm:ss",
+                "MM/dd/yyyy h:mm tt",
+                "MM/dd/yyyy h:mm:ss tt",
+                "M/d/yyyy",
+                "M/d/yyyy HH:mm",
+                "M/d/yyyy HH:mm:ss",
+                "M/d/yyyy h:mm tt",
+                "M/d/yyyy h:mm:ss tt",
+
+                // VN style (hiển thị sẽ chuyển về dd/MM/yyyy)
                 "dd/MM/yyyy",           // 06/12/2025
                 "dd/MM/yyyy HH:mm:ss",  // 06/12/2025 10:30:00
                 "d/M/yyyy",             // 6/12/2025
-                "d/M/yyyy HH:mm:ss",     // 6/12/2025 10:30:00
-                "MM/dd/yyyy",            // Fallback cho format Mỹ
-                "yyyy-MM-dd",            // ISO format
-                "yyyy-MM-dd HH:mm:ss"    // ISO format với time
+                "d/M/yyyy HH:mm:ss",    // 6/12/2025 10:30:00
+
+                // ISO
+                "yyyy-MM-dd",
+                "yyyy-MM-dd HH:mm:ss"
             };
 
             // Thử parse với các format trên

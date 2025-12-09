@@ -192,9 +192,48 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 }
                 var roomTenants = await _tenantController.GetTenantsByRoomIdAsync(maPhong);
 
+                // Đảm bảo người đứng tên hợp đồng hiển thị đúng cho phòng này
+                RoomTenantDto? contractHolderDto = null;
+                if (activeContract != null)
+                {
+                    var contractHolderDetail = await _tenantController.GetTenantDetailAsync(activeContract.MaNguoiThue);
+                    if (contractHolderDetail != null)
+                    {
+                        contractHolderDto = new RoomTenantDto
+                        {
+                            MaKhachThue = contractHolderDetail.BasicInfo.MaKhachThue,
+                            HoTen = contractHolderDetail.BasicInfo.HoTen,
+                            SoDienThoai = contractHolderDetail.BasicInfo.SoDienThoai,
+                            TrangThaiNguoiThue = contractHolderDetail.BasicInfo.TrangThai ?? "Đang ở",
+                            MaHopDong = activeContract.MaHopDong,
+                            TrangThaiHopDong = activeContract.TrangThai ?? "Hiệu lực",
+                            NgayBatDau = activeContract.NgayBatDau,
+                            NgayKetThuc = activeContract.NgayKetThuc,
+                            IsContractHolder = true
+                        };
+                    }
+                }
+
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    CurrentTenants = new ObservableCollection<RoomTenantDto>(roomTenants);
+                    var tenantList = roomTenants.ToList();
+
+                    // Gán cờ người đứng tên theo hợp đồng
+                    if (activeContract != null)
+                    {
+                        foreach (var t in tenantList)
+                        {
+                            t.IsContractHolder = t.MaKhachThue == activeContract.MaNguoiThue;
+                        }
+                    }
+
+                    // Nếu danh sách không chứa người đứng tên (dữ liệu tenant lệch phòng), bổ sung từ hợp đồng
+                    if (contractHolderDto != null && !tenantList.Any(t => t.MaKhachThue == contractHolderDto.MaKhachThue))
+                    {
+                        tenantList.Insert(0, contractHolderDto);
+                    }
+
+                    CurrentTenants = new ObservableCollection<RoomTenantDto>(tenantList);
                     var displayTenant = CurrentTenants.FirstOrDefault(t => t.IsContractHolder)
                         ?? CurrentTenants.FirstOrDefault();
 
