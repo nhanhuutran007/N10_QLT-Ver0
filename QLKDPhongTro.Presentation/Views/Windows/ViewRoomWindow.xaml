@@ -238,6 +238,8 @@
                                                         <TextBlock Text="{Binding ContractRangeDisplay}" Foreground="#6B7280" Margin="0,2,0,0"/>
                                                         <TextBlock Text="{Binding SoDienThoai, StringFormat='Điện thoại: {0}'}" Foreground="#6B7280" Margin="0,2,0,0"
                                                                    Visibility="{Binding SoDienThoai, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter=inverse}"/>
+                                                        <TextBlock Text="{Binding ContractReminder}" Foreground="#B45309" Margin="0,4,0,0" FontWeight="SemiBold"
+                                                                   Visibility="{Binding ContractReminder, Converter={StaticResource EmptyToVisibilityConverter}, ConverterParameter=inverse}"/>
                                                     </StackPanel>
                                                 </Border>
                                             </DataTemplate>

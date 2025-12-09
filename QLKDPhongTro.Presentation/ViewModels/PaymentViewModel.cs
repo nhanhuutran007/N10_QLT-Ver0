@@ -525,6 +525,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                 _status = value; 
                 OnPropertyChanged(nameof(Status)); 
                 OnPropertyChanged(nameof(IsPartialStatus));
+                OnPropertyChanged(nameof(HasRemainingAmount));
             } 
         }
 
@@ -580,8 +581,8 @@ namespace QLKDPhongTro.Presentation.ViewModels
 
         public decimal RemainingAmount => Math.Max(0, TotalAmount - AmountPaid);
         public bool HasPaidAmount => AmountPaid > 0;
-        // Hiển thị tiền còn lại khi: còn nợ (RemainingAmount > 0) HOẶC chưa trả (Status = "Chưa trả")
-        public bool HasRemainingAmount => RemainingAmount > 0 || string.Equals(Status, "Chưa trả", StringComparison.OrdinalIgnoreCase);
+        // Chỉ hiển thị tiền còn lại khi đang ở trạng thái "Trả một phần" và còn nợ
+        public bool HasRemainingAmount => IsPartialStatus && RemainingAmount > 0;
 
         public decimal? PartialPaymentInput
         {

@@ -187,7 +187,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
         {
             var data = await _controller.GetAllForCurrentUserAsync();
             var roomRepo = new RentedRoomRepository();
-            
+
             _allMaintenances = new List<MaintenanceIncidentViewModel>();
             foreach (var i in data)
             {

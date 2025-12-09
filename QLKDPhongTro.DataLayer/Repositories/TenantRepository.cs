@@ -453,7 +453,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                         h.NgayKetThuc DESC
                     LIMIT 1
                 )
-                WHERE nt.MaPhong = @MaPhong
+                WHERE (nt.MaPhong = @MaPhong OR hd.MaPhong = @MaPhong)
                   AND (nt.TrangThai IS NULL OR nt.TrangThai <> 'Đã trả phòng')
                 ORDER BY 
                     CASE 

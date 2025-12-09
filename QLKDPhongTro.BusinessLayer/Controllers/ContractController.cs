@@ -52,7 +52,11 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
 
         public async Task<List<ContractDto>> GetAllHopDongAsync()
         {
-            var entities = await _repository.GetAllHopDongAsync();
+            // Nếu admin đang đăng nhập có MaNha, chỉ lấy hợp đồng thuộc nhà đó
+            var current = AuthController.CurrentUser;
+            var entities = (current != null && current.MaNha > 0)
+                ? await _repository.GetAllByMaNhaAsync(current.MaNha)
+                : await _repository.GetAllHopDongAsync();
             return entities.Select(e => new ContractDto
             {
                 MaHopDong = e.MaHopDong,

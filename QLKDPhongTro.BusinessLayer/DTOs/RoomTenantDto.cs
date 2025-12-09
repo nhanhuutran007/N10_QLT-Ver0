@@ -14,12 +14,17 @@ namespace QLKDPhongTro.BusinessLayer.DTOs
         public DateTime? NgayKetThuc { get; set; }
         public bool IsContractHolder { get; set; }
 
+        public bool HasContract => MaHopDong.HasValue;
+
         public string RoleLabel => IsContractHolder ? "Người đứng tên" : "Người ở cùng";
 
         public string ContractRangeDisplay =>
             NgayBatDau.HasValue && NgayKetThuc.HasValue
                 ? $"{NgayBatDau:dd/MM/yyyy} - {NgayKetThuc:dd/MM/yyyy}"
                 : "Chưa cập nhật thời hạn";
+
+        //public string ContractReminder =>
+        //    HasContract ? string.Empty : "Chưa có hợp đồng - vui lòng tạo hợp đồng";
     }
 }
 

@@ -452,6 +452,23 @@ namespace QLKDPhongTro.Presentation.ViewModels
                         records.Add(record);
                     }
 
+                    // Hiển thị nhanh trang đầu tiên ngay khi có dữ liệu để tránh cảm giác trống
+                    var firstPage = records.Take(_itemsPerPage).ToList();
+
+                    // --- SỬA LỖI TẠI ĐÂY ---
+                    // Thay thế DispatchAsync bằng Application.Current.Dispatcher.InvokeAsync
+                    if (Application.Current?.Dispatcher != null)
+                    {
+                        await Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            FinancialRecords = new ObservableCollection<FinancialRecordDto>(firstPage);
+                            OnPropertyChanged(nameof(TotalPages));
+                            OnPropertyChanged(nameof(PageInfo));
+                            OnPropertyChanged(nameof(PageNumbers));
+                        });
+                    }
+                    // -----------------------
+
                     var updateDispatcher = Application.Current?.Dispatcher;
                     if (updateDispatcher != null && !updateDispatcher.CheckAccess())
                     {

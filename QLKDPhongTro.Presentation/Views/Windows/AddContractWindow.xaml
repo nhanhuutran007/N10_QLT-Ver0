@@ -11,7 +11,8 @@
         FontFamily="Segoe UI"
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType"
-        Icon="/Resources/Images/Logo.png">
+        Icon="/Resources/Images/Logo.png"
+        Language="vi-VN">
     <Window.Resources>
         <converters:NumberFormatConverter x:Key="NumberFormatConverter"/>
         <SolidColorBrush x:Key="PrimaryColor" Color="#10B981"/>
@@ -311,12 +312,16 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Ngày bắt đầu *" Style="{StaticResource LabelStyle}"/>
                                 <DatePicker SelectedDate="{Binding NgayBatDau}"
+                                            SelectedDateFormat="Short"
+                                            Language="vi-VN"
                                             Height="44"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="Ngày kết thúc *" Style="{StaticResource LabelStyle}"/>
                                 <DatePicker SelectedDate="{Binding NgayKetThuc}"
+                                            SelectedDateFormat="Short"
+                                            Language="vi-VN"
                                             Height="44"/>
                             </StackPanel>
                         </Grid>

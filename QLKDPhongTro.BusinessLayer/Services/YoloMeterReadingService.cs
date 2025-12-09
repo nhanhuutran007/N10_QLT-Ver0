@@ -414,31 +414,43 @@ namespace QLKDPhongTro.BusinessLayer.Services
             string numberStrRaw = string.Join("", mainDigits.Select(d => d.ClassName)); // Sẽ là "007590"
             float avgConf = mainDigits.Average(d => d.Confidence);
 
-            // 5. Chèn dấu "." vào trước ký tự cuối cùng
+            // === NGHIỆP VỤ: 5 KÝ TỰ => ĐỌC NGUYÊN SỐ (00730 -> 730) ===
+            if (mainDigits.Count == 5)
+            {
+                var intOnly = numberStrRaw.TrimStart('0');
+                if (string.IsNullOrEmpty(intOnly)) intOnly = "0";
+
+                if (decimal.TryParse(intOnly, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal valInt))
+                {
+                    return new MeterReadingResult
+                    {
+                        Type = type,
+                        Value = valInt,
+                        Confidence = avgConf,
+                        RawText = numberStrRaw
+                    };
+                }
+            }
+
+            // === MẶC ĐỊNH / 6 KÝ TỰ: Giữ logic cũ (chèn dấu thập phân trước ký tự cuối) ===
             string numberStrParsed = numberStrRaw;
             if (numberStrParsed.Length > 1)
             {
-                // "007590" -> "00759.0"
+                // "007308" -> "00730.8"
                 numberStrParsed = numberStrParsed.Insert(numberStrParsed.Length - 1, ".");
             }
 
-            // 6. Bỏ số 0 ở đầu
-            numberStrParsed = numberStrParsed.TrimStart('0'); // "759.0"
-
+            // Bỏ 0 đầu
+            numberStrParsed = numberStrParsed.TrimStart('0');
             if (numberStrParsed.StartsWith(".")) { numberStrParsed = "0" + numberStrParsed; }
             if (string.IsNullOrEmpty(numberStrParsed)) { numberStrParsed = "0"; }
 
-            // 7. Parse
-            if (decimal.TryParse(numberStrParsed, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal val)) // val = 759.0m
+            if (decimal.TryParse(numberStrParsed, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal valParsed))
             {
-                // 8. LÀM TRÒN XUỐNG (theo yêu cầu)
-                // "chuyển thành 759"
-                val = Math.Floor(val); // val = 759m
-
                 return new MeterReadingResult
                 {
                     Type = type,
-                    Value = val, // Sẽ là 759
+                    Value = valParsed, // Ví dụ 730.8 cho "007308"
                     Confidence = avgConf,
                     RawText = numberStrRaw, // Giữ chuỗi gốc "007590"
                 };
