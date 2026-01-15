@@ -1,0 +1,353 @@
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows.RegisterWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Đăng Ký - Quản Lý Phòng Trọ"
+        MinHeight="600"
+        MinWidth="800"
+        Height="700"
+        Width="1200"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        Background="#F5F5F5"
+        AllowsTransparency="False"
+        FontFamily="Roboto"
+        Icon="/Resources/Images/Logo.png">
+    <!-- Thêm sự kiện này để di chuyển cửa sổ -->
+
+    <Window.Resources>
+        <!-- Style cho TextBox với hiệu ứng focus -->
+        <Style x:Key="InputTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#F2F6FA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#3B4758"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#319DFF"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect ShadowDepth="0" Color="#319DFF" Opacity="0.3" BlurRadius="5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Style cho PasswordBox với hiệu ứng focus -->
+        <Style x:Key="InputPasswordBoxStyle" TargetType="PasswordBox">
+            <Setter Property="Background" Value="#F2F6FA"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#3B4758"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="border"
+                                CornerRadius="6"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#319DFF"/>
+                                <Setter TargetName="border" Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect ShadowDepth="0" Color="#319DFF" Opacity="0.3" BlurRadius="5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button" x:Key="WindowControlButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="Gray"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <!-- Font chứa các icon hệ thống -->
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <TextBlock Text="{TemplateBinding Content}" 
+                               VerticalAlignment="Center" 
+                               HorizontalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E5E5E5"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Style cho Nút Đăng ký chính -->
+        <Style TargetType="Button" x:Key="PrimaryButtonStyle">
+            <Setter Property="Background" Value="#5B75D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <!-- Điều chỉnh CornerRadius để nút trông mềm mại hơn -->
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border CornerRadius="25" Background="{TemplateBinding Background}"
+                                Height="50">
+                            <!-- Giữ nguyên hoặc tăng nhẹ nếu muốn nút cao hơn -->
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#4A63C1"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid MouseLeftButtonDown="Grid_MouseLeftButtonDown">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="173*" MinWidth="400"/>
+            <ColumnDefinition Width="428*"/>
+            <ColumnDefinition Width="600*" MinWidth="400"/>
+        </Grid.ColumnDefinitions>
+
+
+        <!-- === CỘT TRÁI: PHẦN GIỚI THIỆU === -->
+        <Grid Grid.Column="0" Grid.ColumnSpan="2">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#2764FF" Offset="0.0" />
+                    <GradientStop Color="#0B459B" Offset="1.0" />
+                </LinearGradientBrush>
+            </Grid.Background>
+
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="80,0,80,0">
+                <Image Source="/Resources/Images/Logo.png" 
+                       Width="140" Height="167" />
+
+                <TextBlock Text="Hệ thống Quản lý Thuê Nhà" 
+                           Foreground="White" FontSize="30" FontWeight="Bold" 
+                           TextWrapping="Wrap" TextAlignment="Left" 
+                           Width="429" Height="34"/>
+
+                <StackPanel>
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Quản lý phòng &amp; tài sản" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Theo dõi danh sách nhà, phòng, tình trạng thuê (trống, đang thuê), và thông tin tài sản chi tiết." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Quản lý người thuê" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Lưu thông tin cá nhân, hợp đồng, tình trạng thuê; nhắc nhở khi đến hạn trả phòng hoặc hết hạn hợp đồng." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Quản lý tài chính" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Ghi nhận tiền thuê, chi phí điện nước, internet; tự động tổng hợp công nợ và lợi nhuận hàng tháng." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Thanh toán &amp; thông báo phí" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Tạo biên lai, gửi thông báo phí kèm mã QR, nhắc nợ qua email/Zalo." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Bảo trì &amp; sự cố" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Tiếp nhận yêu cầu sửa chữa, theo dõi tiến độ và chi phí bảo trì." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Margin="0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Ellipse Width="10" Height="10" Fill="White" Margin="0,6,12,0" VerticalAlignment="Top"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Báo cáo &amp; thống kê" Foreground="White" FontWeight="Medium" FontSize="16"/>
+                            <TextBlock Text="Xuất báo cáo chi tiết về doanh thu, công nợ, tình trạng phòng, hỗ trợ quyết định kinh doanh." Foreground="#E0E0E0" FontSize="14" TextWrapping="Wrap" Opacity="0.9"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+        <!-- PHẦN BÊN PHẢI (FORM ĐĂNG KÝ) -->
+        <Grid Grid.Column="2" Background="#F9FAFB">
+            <StackPanel Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
+                <!-- FORM ĐĂNG KÝ -->
+                    <!-- Tiêu đề -->
+                    <TextBlock Text="Đăng Ký" FontSize="28" FontWeight="Bold" Foreground="#3B4758" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                    <!-- Tiêu đề phụ -->
+
+                    <!-- Trường Email -->
+                    <TextBlock Text="Email" FontSize="13" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,4"/>
+                        <TextBox x:Name="EmailTextBox" 
+                             Style="{StaticResource InputTextBoxStyle}"
+                             Height="38" 
+                             Margin="0,0,0,10"
+                                 VerticalContentAlignment="Center"/>
+
+                    <!-- Trường Tên đăng nhập -->
+                    <TextBlock Text="Tên đăng nhập" FontSize="13" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,4"/>
+                        <TextBox x:Name="UsernameTextBox" 
+                             Style="{StaticResource InputTextBoxStyle}"
+                             Height="38" 
+                             Margin="0,0,0,10"
+                                 VerticalContentAlignment="Center"/>
+
+                    <!-- Trường Mã nhà -->
+                    <TextBlock Text="Mã nhà" FontSize="13" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,4"/>
+                    <TextBox x:Name="MaNhaTextBox"
+                             Style="{StaticResource InputTextBoxStyle}"
+                             Height="38"
+                             Margin="0,0,0,10"
+                             VerticalContentAlignment="Center"/>
+
+                    <!-- Trường Mật khẩu -->
+                    <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="PasswordBox" 
+                                 Style="{StaticResource InputPasswordBoxStyle}"
+                                 Height="38" 
+                                 Margin="0,0,0,10"
+                                 VerticalContentAlignment="Center"
+                                 PasswordChanged="PasswordBox_PasswordChanged"/>
+
+                    <!-- Trường Xác nhận mật khẩu -->
+                    <TextBlock Text="Xác nhận mật khẩu" FontSize="13" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="ConfirmPasswordBox" 
+                                 Style="{StaticResource InputPasswordBoxStyle}"
+                                 Height="38" 
+                                 Margin="0,0,0,10"
+                                 VerticalContentAlignment="Center"
+                                 PasswordChanged="ConfirmPasswordBox_PasswordChanged"/>
+
+                    <!-- Checkbox hiện/ẩn mật khẩu -->
+                    <CheckBox x:Name="ShowPasswordCheckBox" 
+                              Content="Hiện thị mật khẩu" 
+                              FontSize="12" 
+                              Foreground="#666" 
+                              Margin="0,5,0,10" 
+                              Checked="ShowPasswordCheckBox_Checked"
+                              Unchecked="ShowPasswordCheckBox_Unchecked" Height="14"/>
+
+                    <!-- Điều kiện đặt mật khẩu -->
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Điều kiện mật khẩu:" FontSize="12" Foreground="#666" Margin="0,0,0,2" Height="15" Width="409"/>
+                        <TextBlock x:Name="PasswordLengthRequirement" 
+                                   Text="• Mật khẩu tối thiểu 6 ký tự" 
+                                   FontSize="11" 
+                                   Foreground="Red" 
+                                   Margin="0,0,0,1"/>
+                        <TextBlock x:Name="PasswordUppercaseRequirement" 
+                                   Text="• Chứa ít nhất 1 ký tự viết hoa" 
+                                   FontSize="11" 
+                                   Foreground="Red" 
+                                   Margin="0,0,0,1"/>
+                        <TextBlock x:Name="PasswordDigitRequirement" 
+                                   Text="• Hoặc chứa ít nhất 1 kí tự số" 
+                                   FontSize="11" 
+                                   Foreground="Red" 
+                                   Margin="0,0,0,1"/>
+                    </StackPanel>
+
+                    <!-- Nút Đăng ký -->
+                    <Border CornerRadius="6" Background="#319DFF" Height="50" Margin="0,0,0,12">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#2B8CE8"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Button Content="Đăng Ký" 
+                                Foreground="White"
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Background="Transparent"
+                                Cursor="Hand"
+                                Click="RegisterButton_Click"/>
+                    </Border>
+
+                    <!-- Link quay lại đăng nhập -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+                        <TextBlock Text="Đã có tài khoản? " FontSize="13" Foreground="#586A84"/>
+                        <TextBlock Text=" Đăng nhập" FontSize="13" Foreground="#319DFF" Cursor="Hand" MouseLeftButtonDown="BackToLogin_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+    </Grid>
+</Window>

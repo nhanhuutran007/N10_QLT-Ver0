@@ -1,0 +1,18 @@
+# Visual Studio
+.vs/
+*.vsidx
+
+# Build results
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+publish/ 
+*.exe 
+*.dll 
+credentials.json 
+*.onnx 
