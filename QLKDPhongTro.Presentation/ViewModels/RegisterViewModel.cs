@@ -6,6 +6,7 @@ using System.Windows;
 using QLKDPhongTro.DataLayer.Models;
 using QLKDPhongTro.DataLayer.Repositories;
 using QLKDPhongTro.Presentation.Views.Windows;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
@@ -114,12 +115,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
                                   MessageBoxImage.Information);
 
                     // Chuyển về màn hình đăng nhập
-                    var loginWindow = new LoginWindow();
-                    loginWindow.Show();
-                    
-                    // Đóng cửa sổ đăng ký
-                    Application.Current.MainWindow?.Close();
-                    Application.Current.MainWindow = loginWindow;
+                    // Chuyển về màn hình đăng nhập
+                    var currentRegisterWindow = Application.Current.Windows.OfType<RegisterWindow>().FirstOrDefault();
+                    NavigationHelper.NavigateTo<LoginWindow>(currentRegisterWindow);
                 }
                 else
                 {
@@ -146,11 +144,10 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToLogin()
         {
-            var loginWindow = new LoginWindow();
-            loginWindow.Show();
+            var currentWindow = Application.Current.Windows.OfType<Window>().SingleOrDefault(x => x.IsActive);
+            NavigationHelper.NavigateTo<LoginWindow>(currentWindow);
 
-            Application.Current.MainWindow?.Close();
-            Application.Current.MainWindow = loginWindow;
+            // Application.Current.MainWindow = loginWindow; // Handled by NavigationHelper or implicitly
         }
     }
 }

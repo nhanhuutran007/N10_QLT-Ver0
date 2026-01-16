@@ -11,6 +11,8 @@ using QLKDPhongTro.Presentation.ViewModels;
 
 namespace QLKDPhongTro.Presentation.ViewModels
 {
+using QLKDPhongTro.Presentation.Utils;
+
     public partial class LoginViewModel : ObservableObject
     {
         private readonly AuthController _authController;
@@ -59,14 +61,14 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     var otpWindow = new OtpLoginWindow(Username, loginResult.User.Email, Password);
 
                     //otpWindow.Show();
+                    // Đóng tất cả các cửa sổ LoginWindow đang mở và mở DashWindow
+                    var currentLoginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
+                    
+                    // Tạo DashWindow mới
                     var dashWindow = new DashWindow();
-                    dashWindow.Show();
+                    NavigationHelper.NavigateTo(currentLoginWindow, dashWindow);
 
-                    // Đóng LoginWindow
-                    var loginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
-                    loginWindow?.Close();
-
-                    Application.Current.MainWindow = loginWindow;
+                    Application.Current.MainWindow = dashWindow;
                 }
                 else
                 {
@@ -110,11 +112,13 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [RelayCommand]
         private void NavigateToRegister()
         {
-            var registerWindow = new RegisterWindow();
-            registerWindow.Show();
-
-            Application.Current.MainWindow?.Close();
-            Application.Current.MainWindow = registerWindow;
+            var currentWindow = Application.Current.Windows.OfType<Window>().SingleOrDefault(x => x.IsActive);
+            NavigationHelper.NavigateTo<RegisterWindow>(currentWindow);
+            
+            // Note: Application.Current.MainWindow update is handled implicitly when the old one closes if we are careful, 
+            // but setting it explicitly is good practice if the new window is the main one.
+            // However, NavigationHelper closes the passed window.
+            // Application.Current.MainWindow = registerWindow; // Can be set after if needed, but Show() usually handles activation.
         }
     }
 }

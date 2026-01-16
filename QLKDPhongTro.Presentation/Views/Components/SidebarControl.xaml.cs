@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using QLKDPhongTro.Presentation.Views.Windows;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Components
 {
@@ -109,11 +110,8 @@ namespace QLKDPhongTro.Presentation.Views.Components
             if (currentWindow is T)
                 return;
 
-            var newWindow = new T();
-            newWindow.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            newWindow.Show();
-            Application.Current.MainWindow = newWindow;
-            currentWindow.Close();
+            NavigationHelper.NavigateTo<T>(currentWindow);
+            Application.Current.MainWindow = Application.Current.Windows.OfType<T>().FirstOrDefault();
 
             // Cập nhật selection theo window mới
             UpdateMenuSelection();

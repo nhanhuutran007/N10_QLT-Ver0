@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls; // <--- Cần thêm dòng này để sử dụng Button và TextBox
 using System.Windows.Input;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -29,9 +30,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var loginWindow = new LoginWindow();
-                loginWindow.Show();
-                this.Close();
+                NavigationHelper.NavigateTo<LoginWindow>(this);
             }
             catch (System.Exception ex)
             {

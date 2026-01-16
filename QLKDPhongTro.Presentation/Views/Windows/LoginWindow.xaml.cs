@@ -191,14 +191,8 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                var registerWindow = new RegisterWindow
-                {
-                    DataContext = new RegisterViewModel()
-                };
-                // Đóng cửa sổ login hiện tại
-                Application.Current.MainWindow?.Close();
-                Application.Current.MainWindow = registerWindow;
-                registerWindow.Show();
+                // Use NavigationHelper to switch to RegisterWindow
+                NavigationHelper.NavigateTo<RegisterWindow>(this);
             }
             catch (Exception ex)
             {

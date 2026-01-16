@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Controls;
 using System.Linq;
 using QLKDPhongTro.Presentation.ViewModels;
+using QLKDPhongTro.Presentation.Utils;
 
 namespace QLKDPhongTro.Presentation.Views.Windows
 {
@@ -355,12 +356,7 @@ namespace QLKDPhongTro.Presentation.Views.Windows
         {
             try
             {
-                // Tạo và hiển thị cửa sổ đăng nhập trước
-                var loginWindow = new LoginWindow();
-                loginWindow.Show();
-                
-                // Đóng cửa sổ đăng ký hiện tại
-                this.Close();
+                NavigationHelper.NavigateTo<LoginWindow>(this);
             }
             catch (Exception ex)
             {
