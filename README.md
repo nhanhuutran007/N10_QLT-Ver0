@@ -467,15 +467,57 @@ Cập nhật connection string trong `QLKDPhongTro.DataLayer/Repositories/Connec
 private static string _connectionString = "Server=localhost;Database=qlthuetra;Uid=root;Pwd=yourpassword;";
 ```
 
-### Bước 4: Cấu hình Email Service
-Cập nhật SMTP settings trong `QLKDPhongTro.DataLayer/Utils/EmailService.cs`:
-```csharp
-SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587)
-{
-    Credentials = new NetworkCredential("your-email@gmail.com", "your-app-password"),
-    EnableSsl = true
-};
-```
+### Bước 4: Cấu hình Email Service (Quan trọng!)
+
+> **⚠️ Lưu ý bảo mật**: Hệ thống sử dụng file `App.config` để lưu thông tin email, file này **KHÔNG** được commit lên Git để bảo vệ thông tin nhạy cảm.
+
+#### 4.1. Tạo file cấu hình email
+
+1. **Copy file mẫu**:
+   ```bash
+   cd QLKDPhongTro.Presentation
+   copy App.config.example App.config
+   ```
+
+2. **Mở file `App.config`** và cập nhật thông tin email của bạn:
+   ```xml
+   <appSettings>
+       <add key="SmtpHost" value="smtp.gmail.com" />
+       <add key="SmtpPort" value="587" />
+       <add key="SmtpEnableSsl" value="true" />
+       
+       <!-- Thay đổi email và mật khẩu của bạn -->
+       <add key="SmtpEmail" value="your-email@gmail.com" />
+       <add key="SmtpPassword" value="your-app-password-here" />
+   </appSettings>
+   ```
+
+#### 4.2. Tạo Gmail App Password
+
+> **Quan trọng**: Không sử dụng mật khẩu Gmail thông thường, phải sử dụng **App Password**
+
+1. Truy cập [Google Account Security](https://myaccount.google.com/security)
+2. Bật **2-Step Verification** (xác thực 2 bước)
+3. Vào **App passwords** (Mật khẩu ứng dụng)
+4. Chọn **Mail** và **Windows Computer**
+5. Click **Generate** để tạo mật khẩu
+6. Copy mật khẩu 16 ký tự (dạng: `xxxx xxxx xxxx xxxx`)
+7. Paste vào `SmtpPassword` trong `App.config`
+
+#### 4.3. Thay đổi email gửi OTP (Tùy chọn)
+
+Nếu muốn sử dụng email khác để gửi OTP:
+
+1. Mở file `QLKDPhongTro.Presentation/App.config`
+2. Thay đổi giá trị `SmtpEmail`:
+   ```xml
+   <add key="SmtpEmail" value="email-moi-cua-ban@gmail.com" />
+   ```
+3. Tạo App Password mới cho email này (theo bước 4.2)
+4. Cập nhật `SmtpPassword` với App Password mới
+
+> **Lưu ý**: File `App.config` đã được thêm vào `.gitignore`, vì vậy thông tin email của bạn sẽ **KHÔNG** bị đẩy lên Git repository.
+
 
 ### Bước 5: Build và chạy
 ```bash

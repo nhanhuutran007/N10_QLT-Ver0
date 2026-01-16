@@ -6,12 +6,16 @@
 bin/
 obj/
 
+# Exclude sensitive configuration files with credentials
+**/App.config
+# But keep the example template
+!**/App.config.example
+
 # User-specific files
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-publish/ 
 *.exe 
 *.dll 
 credentials.json 

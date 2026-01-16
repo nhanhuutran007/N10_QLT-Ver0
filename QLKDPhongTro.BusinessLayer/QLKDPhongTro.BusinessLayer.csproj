@@ -31,4 +31,10 @@
 		<ProjectReference Include="..\QLKDPhongTro.DataLayer\QLKDPhongTro.DataLayer.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Update="yolov9n_meter_reading.onnx">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 </Project>

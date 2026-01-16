@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+	<appSettings>
+		<!-- Email Configuration for OTP Authentication -->
+		<add key="SmtpHost" value="smtp.gmail.com" />
+		<add key="SmtpPort" value="587" />
+		<add key="SmtpEnableSsl" value="true" />
+		
+		<!-- ⚠️ IMPORTANT: Copy this file to App.config and fill in your credentials -->
+		<!-- This is just a template file - the actual App.config is not tracked by Git -->
+		<!-- To generate Gmail App Password: -->
+		<!-- 1. Go to Google Account → Security → 2-Step Verification (enable it) -->
+		<!-- 2. Scroll to "App passwords" and generate a new password -->
+		<!-- 3. Paste the generated password in App.config (not this file) -->
+		<add key="SmtpEmail" value="your-email@gmail.com" />
+		<add key="SmtpPassword" value="your-app-password-here" />
+	</appSettings>
+</configuration>

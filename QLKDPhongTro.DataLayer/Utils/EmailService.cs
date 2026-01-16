@@ -2,25 +2,37 @@
 using System.Net.Mail;
 using System.Threading.Tasks;
 using System.IO;
+using System.Configuration;
 
 namespace QLKDPhongTro.Presentation.Utils
 {
     public static class EmailService
     {
+        // Read configuration once and cache
+        private static readonly string SmtpHost = ConfigurationManager.AppSettings["SmtpHost"] ?? "smtp.gmail.com";
+        private static readonly int SmtpPort = int.TryParse(ConfigurationManager.AppSettings["SmtpPort"], out var port) ? port : 587;
+        private static readonly bool SmtpEnableSsl = bool.TryParse(ConfigurationManager.AppSettings["SmtpEnableSsl"], out var ssl) ? ssl : true;
+        private static readonly string SmtpEmail = ConfigurationManager.AppSettings["SmtpEmail"] ?? throw new ConfigurationErrorsException("SmtpEmail not configured in App.config");
+        private static readonly string SmtpPassword = ConfigurationManager.AppSettings["SmtpPassword"] ?? throw new ConfigurationErrorsException("SmtpPassword not configured in App.config");
+
         /// <summary>
         /// Gửi email bất đồng bộ qua Gmail SMTP
         /// </summary>
         public static async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
+            using (var client = new SmtpClient(SmtpHost, SmtpPort))
             {
-                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
-                client.EnableSsl = true;
+                client.Credentials = new NetworkCredential(SmtpEmail, SmtpPassword);
+                client.EnableSsl = SmtpEnableSsl;
 
-                var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
+                var mailMessage = new MailMessage()
                 {
-                    IsBodyHtml = true // có thể chuyển sang true nếu muốn gửi HTML
+                    From = new MailAddress(SmtpEmail, "HomeStead System"),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
                 };
+                mailMessage.To.Add(toEmail);
 
                 await client.SendMailAsync(mailMessage);
             }
@@ -31,15 +43,19 @@ namespace QLKDPhongTro.Presentation.Utils
         /// </summary>
         public static async Task SendEmailWithAttachmentAsync(string toEmail, string subject, string body, string attachmentFilePath)
         {
-            using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
+            using (var client = new SmtpClient(SmtpHost, SmtpPort))
             {
-                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
-                client.EnableSsl = true;
+                client.Credentials = new NetworkCredential(SmtpEmail, SmtpPassword);
+                client.EnableSsl = SmtpEnableSsl;
 
-                var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
+                var mailMessage = new MailMessage()
                 {
-                    IsBodyHtml = true // có thể chuyển sang true nếu muốn gửi HTML
+                    From = new MailAddress(SmtpEmail, "HomeStead System"),
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = true
                 };
+                mailMessage.To.Add(toEmail);
 
                 // Thêm file đính kèm nếu file tồn tại
                 if (!string.IsNullOrEmpty(attachmentFilePath) && File.Exists(attachmentFilePath))
@@ -57,15 +73,19 @@ namespace QLKDPhongTro.Presentation.Utils
         /// </summary>
         public static async Task SendEmailWithAttachmentsAsync(string toEmail, string subject, string body, System.Collections.Generic.List<string> attachmentFilePaths)
         {
-            using (var client = new SmtpClient("smtp.gmail.com", 587)) // Gmail SMTP
+            using (var client = new SmtpClient(SmtpHost, SmtpPort))
             {
-                client.Credentials = new NetworkCredential("ngochai1521@gmail.com", "osnnnsmxkhrbopbo"); // ⚠️ Không nên hard-code
-                client.EnableSsl = true;
+                client.Credentials = new NetworkCredential(SmtpEmail, SmtpPassword);
+                client.EnableSsl = SmtpEnableSsl;
 
-                var mailMessage = new MailMessage("ngochai1521@gmail.com", toEmail, subject, body)
+                var mailMessage = new MailMessage()
                 {
+                    From = new MailAddress(SmtpEmail, "HomeStead System"),
+                    Subject = subject,
+                    Body = body,
                     IsBodyHtml = true
                 };
+                mailMessage.To.Add(toEmail);
 
                 // Thêm tất cả file đính kèm
                 if (attachmentFilePaths != null)
