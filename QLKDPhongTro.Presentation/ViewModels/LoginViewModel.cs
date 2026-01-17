@@ -12,6 +12,7 @@ using QLKDPhongTro.Presentation.ViewModels;
 namespace QLKDPhongTro.Presentation.ViewModels
 {
 using QLKDPhongTro.Presentation.Utils;
+using QLKDPhongTro.Presentation.Views.Windows_User;
 
     public partial class LoginViewModel : ObservableObject
     {
@@ -64,14 +65,23 @@ using QLKDPhongTro.Presentation.Utils;
                     var otpWindow = new OtpLoginWindow(Username, loginResult.User.Email, Password);
 
                     //otpWindow.Show();
-                    // Đóng tất cả các cửa sổ LoginWindow đang mở và mở DashWindow
+                    // Đóng tất cả các cửa sổ LoginWindow đang mở
                     var currentLoginWindow = Application.Current.Windows.OfType<LoginWindow>().FirstOrDefault();
                     
-                    // Tạo DashWindow mới
-                    var dashWindow = new DashWindow();
-                    NavigationHelper.NavigateTo(currentLoginWindow, dashWindow);
+                    Window dashboardWindow;
+                    if (IsAdmin)
+                    {
+                        // Tạo Admin Dashboard
+                        dashboardWindow = new DashWindow();
+                    }
+                    else
+                    {
+                        // Tạo User Dashboard
+                        dashboardWindow = new UserDashboardWindow();
+                    }
 
-                    Application.Current.MainWindow = dashWindow;
+                    NavigationHelper.NavigateTo(currentLoginWindow, dashboardWindow);
+                    Application.Current.MainWindow = dashboardWindow;
                 }
                 else
                 {
