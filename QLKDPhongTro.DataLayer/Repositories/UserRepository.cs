@@ -824,6 +824,154 @@ namespace QLKDPhongTro.DataLayer.Repositories
             }
         }
 
+        /// <summary>
+        /// Lấy user theo MaUser (int) từ bảng User
+        /// </summary>
+        public async Task<User?> GetByMaUserAsync(int maUser)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    // Select from User table
+                    var query = $"SELECT {UserSelectColumnsWithPassword.Replace("MaAdmin", "MaUser")} FROM User WHERE MaUser = @MaUser";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaUser", maUser);
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (await reader.ReadAsync())
+                            {
+                                return MapUser(reader);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting user by MaUser: {ex.Message}");
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Cập nhật profile cho User (bảng User)
+        /// </summary>
+        public async Task<bool> UpdateProfileForUserAsync(User user)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    var query = @"UPDATE User 
+                                  SET TenDangNhap = @TenDangNhap, 
+                                      Email = @Email,
+                                      SoDienThoai = @SoDienThoai,
+                                      HoTen = @HoTen,
+                                      NgaySinh = @NgaySinh,
+                                      CCCD = @CCCD,
+                                      NgayCap = @NgayCap,
+                                      NoiCap = @NoiCap,
+                                      DiaChi = @DiaChi,
+                                      TenTK = @TenTK,
+                                      SoTK = @SoTK,
+                                      LinkQr = @LinkQr
+                                  WHERE MaUser = @MaUser";
+                    using (var command = new MySqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@MaUser", user.MaUser);
+                        command.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
+                        command.Parameters.AddWithValue("@Email", user.Email ?? string.Empty);
+                        command.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai ?? string.Empty);
+                        command.Parameters.AddWithValue("@HoTen", DbNull(user.HoTen));
+                        command.Parameters.AddWithValue("@NgaySinh", DbNull(user.NgaySinh));
+                        command.Parameters.AddWithValue("@CCCD", DbNull(user.CCCD));
+                        command.Parameters.AddWithValue("@NgayCap", DbNull(user.NgayCap));
+                        command.Parameters.AddWithValue("@NoiCap", DbNull(user.NoiCap));
+                        command.Parameters.AddWithValue("@DiaChi", DbNull(user.DiaChi));
+                        command.Parameters.AddWithValue("@TenTK", DbNull(user.TenTK));
+                        command.Parameters.AddWithValue("@SoTK", DbNull(user.SoTK));
+                        command.Parameters.AddWithValue("@LinkQr", DbNull(user.LinkQr));
+                        
+                        var result = await command.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user profile: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật mật khẩu cho User
+        /// </summary>
+        public async Task<bool> UpdatePasswordForUserAsync(int maUser, string oldPassword, string newPassword)
+        {
+            try
+            {
+                using (var connection = new MySqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    
+                    // Kiểm tra mật khẩu cũ
+                    var checkQuery = "SELECT MatKhau FROM User WHERE MaUser = @MaUser";
+                    string? storedPassword = null;
+                    using (var checkCommand = new MySqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@MaUser", maUser);
+                        var result = await checkCommand.ExecuteScalarAsync();
+                        storedPassword = result?.ToString();
+                    }
+
+                    if (string.IsNullOrEmpty(storedPassword))
+                    {
+                        return false;
+                    }
+
+                    // Kiểm tra mật khẩu cũ
+                    bool passwordMatch = false;
+                    if (storedPassword.Trim() == oldPassword.Trim())
+                    {
+                        passwordMatch = true;
+                    }
+                    else if (PasswordHelper.VerifyPassword(oldPassword, storedPassword))
+                    {
+                        passwordMatch = true;
+                    }
+
+                    if (!passwordMatch)
+                    {
+                        return false;
+                    }
+
+                    // Cập nhật mật khẩu mới
+                    var updateQuery = @"UPDATE User 
+                                       SET MatKhau = @MatKhau
+                                       WHERE MaUser = @MaUser";
+                    using (var updateCommand = new MySqlCommand(updateQuery, connection))
+                    {
+                        var hashedPassword = PasswordHelper.HashPassword(newPassword);
+                        updateCommand.Parameters.AddWithValue("@MaUser", maUser);
+                        updateCommand.Parameters.AddWithValue("@MatKhau", hashedPassword);
+                        
+                        var result = await updateCommand.ExecuteNonQueryAsync();
+                        return result > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating user password: {ex.Message}");
+                return false;
+            }
+        }
+
         private bool VerifyPassword(User user, string password)
         {
             var storedPassword = user.MatKhau;

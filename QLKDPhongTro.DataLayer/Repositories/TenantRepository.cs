@@ -90,6 +90,32 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return null;
         }
 
+        public async Task<Tenant?> GetByEmailAsync(string email)
+        {
+            using (MySqlConnection conn = new MySqlConnection(connectionString))
+            {
+                await conn.OpenAsync();
+                var sql = @"
+                    SELECT nt.*
+                    FROM NguoiThue nt
+                    WHERE nt.Email = @Email
+                    LIMIT 1";
+
+                using (var cmd = new MySqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Email", email);
+                    using (var reader = await cmd.ExecuteReaderAsync())
+                    {
+                        if (await reader.ReadAsync())
+                        {
+                            return MapReaderToTenant(reader);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         private Tenant MapReaderToTenant(DbDataReader reader)
         {
             return new Tenant

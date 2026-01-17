@@ -54,7 +54,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
 
         private string _selectedMenuItem = "";
 
-        private void UpdateMenuSelection()
+        public void UpdateMenuSelection()
         {
             var currentWindow = Window.GetWindow(this);
             if (currentWindow == null) return;
@@ -76,7 +76,11 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     OverviewButton.IsChecked = true; break;
                 // case ViewRoomWindow: // Ví dụ cho Thông tin nhà
                 //     HousingInfoButton.IsChecked = true; break;
-                case UserSecurityWindow:
+                case UserHousingWindow:
+                    HousingInfoButton.IsChecked = true; break;
+                case UserContractWindow:
+                    ContractsButton.IsChecked = true; break;
+                case UserProfileWindow:
                     SecurityButton.IsChecked = true; break;
                 // Các case khác sẽ thêm khi có window cụ thể
                 default:
@@ -115,16 +119,13 @@ namespace QLKDPhongTro.Presentation.Views.Components
         private void HousingInfo_Checked(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
-            // TODO: Navigate to User Housing Info Window
-            // NavigateToWindow<UserHousingWindow>(); 
-            MessageBox.Show("Tính năng Thông tin nhà ở đang phát triển");
+            NavigateToWindow<UserHousingWindow>();
         }
 
         private void Contracts_Checked(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
-            // TODO: Navigate to User Contract Window
-             MessageBox.Show("Tính năng Hợp đồng đang phát triển");
+            NavigateToWindow<UserContractWindow>();
         }
 
         private void Maintenance_Checked(object sender, RoutedEventArgs e)
@@ -144,7 +145,7 @@ namespace QLKDPhongTro.Presentation.Views.Components
         private void Security_Checked(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
-            NavigateToWindow<UserSecurityWindow>(); // Tạm dùng chung Window bảo mật nếu được, hoặc tạo riêng
+            NavigateToWindow<UserProfileWindow>(); // Sử dụng UserProfileWindow vừa tạo
         }
     }
 }

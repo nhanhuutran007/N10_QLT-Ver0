@@ -21,5 +21,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<User?> LoginAsync(string username, string password, bool isAdmin = false);
         Task<bool> RegisterAsync(User user, bool isAdmin = false);
         Task<User?> GetByEmailAsync(string email);
+        Task<User?> GetByMaUserAsync(int maUser);
+        Task<bool> UpdateProfileForUserAsync(User user);
+        Task<bool> UpdatePasswordForUserAsync(int maUser, string oldPassword, string newPassword);
     }
 }

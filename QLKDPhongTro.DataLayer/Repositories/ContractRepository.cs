@@ -390,8 +390,9 @@ namespace QLKDPhongTro.DataLayer.Repositories
             return new Contract
             {
                 MaHopDong = reader.GetInt32(ordMaHopDong),
-                MaNguoiThue = reader.GetInt32(ordMaNguoiThue),
-                MaPhong = reader.GetInt32(ordMaPhong),
+                // ✅ Fix: Handle NULL for MaNguoiThue and MaPhong
+                MaNguoiThue = reader.IsDBNull(ordMaNguoiThue) ? 0 : reader.GetInt32(ordMaNguoiThue),
+                MaPhong = reader.IsDBNull(ordMaPhong) ? 0 : reader.GetInt32(ordMaPhong),
                 NgayBatDau = reader.GetDateTime(ordNgayBatDau),
                 NgayKetThuc = reader.GetDateTime(ordNgayKetThuc),
                 TienCoc = reader.GetDecimal(ordTienCoc),
