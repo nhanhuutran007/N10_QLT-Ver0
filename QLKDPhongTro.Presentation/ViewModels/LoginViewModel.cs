@@ -32,6 +32,9 @@ using QLKDPhongTro.Presentation.Utils;
         [ObservableProperty]
         private bool _isLoading = false;
 
+        [ObservableProperty]
+        private bool _isAdmin = false; // False = User, True = Admin
+
         [RelayCommand]
         private async Task Login()
         {
@@ -52,8 +55,8 @@ using QLKDPhongTro.Presentation.Utils;
 
                 // Đăng nhập trực tiếp (OTP đang tắt tạm thời)
           
-                var otpResult = await _authController.LoginWithOtpAsync(Username, Password);
-                var loginResult = await _authController.LoginAsync(Username, Password);
+                // var otpResult = await _authController.LoginWithOtpAsync(Username, Password, IsAdmin);
+                var loginResult = await _authController.LoginAsync(Username, Password, IsAdmin);
                 if (loginResult.IsSuccess && loginResult.User != null)
                 {
                     // Mở dashboard sau khi đăng nhập thành công

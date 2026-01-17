@@ -7,6 +7,7 @@ namespace QLKDPhongTro.DataLayer.Models
     /// </summary>
     public class User
     {
+        public int MaUser { get; set; }
         public int MaAdmin { get; set; }
         public string TenDangNhap { get; set; } = string.Empty;
         public string MatKhau { get; set; } = string.Empty;

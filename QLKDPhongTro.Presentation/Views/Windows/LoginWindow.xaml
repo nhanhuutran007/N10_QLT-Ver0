@@ -223,8 +223,15 @@
                            Foreground="#3B4758"
                            FontSize="28"
                            FontWeight="Bold"
-                           Margin="0,0,0,32"
+                           Margin="0,0,0,24"
                            HorizontalAlignment="Center"/>
+
+                <!-- Lựa chọn vai trò -->
+                <TextBlock Text="Bạn là?" FontSize="14" FontWeight="SemiBold" Foreground="#3B4758" Margin="0,0,0,6"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <RadioButton x:Name="UserRadioButton" Content="Người thuê (User)" GroupName="LoginRoleGroup" IsChecked="True" Margin="0,0,20,0"/>
+                    <RadioButton x:Name="AdminRadioButton" Content="Chủ trọ (Admin)" GroupName="LoginRoleGroup"/>
+                </StackPanel>
 
                 <TextBlock Text="Tên đăng nhập" Foreground="#3B4758" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,8"/>
                 <TextBox x:Name="EmailTextBox" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,20" KeyDown="EmailTextBox_KeyDown"/>

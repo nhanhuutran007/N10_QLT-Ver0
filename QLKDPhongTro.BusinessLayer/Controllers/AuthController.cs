@@ -28,7 +28,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
         /// <summary>
         /// Xử lý đăng nhập thường
         /// </summary>
-        public async Task<LoginResult> LoginAsync(string tenDangNhap, string matKhau)
+        public async Task<LoginResult> LoginAsync(string tenDangNhap, string matKhau, bool isAdmin = false)
         {
             try
             {
@@ -41,7 +41,7 @@ namespace QLKDPhongTro.BusinessLayer.Controllers
                     };
                 }
 
-                var user = await _userRepository.LoginAsync(tenDangNhap, matKhau);
+                var user = await _userRepository.LoginAsync(tenDangNhap, matKhau, isAdmin);
 
                 if (user != null)
                 {

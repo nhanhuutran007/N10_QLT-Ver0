@@ -26,8 +26,14 @@ namespace QLKDPhongTro.DataLayer.Utils
         /// </summary>
         public static bool VerifyPassword(string password, string hashedPassword)
         {
+            // 1. Check if it matches the hash
             var hashedInput = HashPassword(password);
-            return hashedInput == hashedPassword;
+            if (hashedInput == hashedPassword) return true;
+
+            // 2. Fallback: Check if it matches plain text (for legacy data)
+            if (password.Trim() == hashedPassword.Trim()) return true;
+
+            return false;
         }
     }
 }

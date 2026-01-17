@@ -140,6 +140,10 @@ namespace QLKDPhongTro.Presentation.Views.Windows
                 viewModel.Username = EmailTextBox?.Text?.Trim() ?? string.Empty;
                 viewModel.Password = GetCurrentPassword();
 
+                // Cập nhật vai trò từ RadioButton
+                var adminRadioButton = this.FindName("AdminRadioButton") as RadioButton;
+                viewModel.IsAdmin = adminRadioButton?.IsChecked == true;
+
                 // Gọi login command từ ViewModel (ViewModel sẽ tự validate)
                 viewModel.LoginCommand?.Execute(null);
             }

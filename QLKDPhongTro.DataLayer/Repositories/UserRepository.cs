@@ -25,6 +25,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
         {
             return new User
             {
+                MaUser = ReadInt(reader, "MaUser"),
                 MaAdmin = ReadInt(reader, "MaAdmin"),
                 TenDangNhap = ReadString(reader, "TenDangNhap"),
                 MatKhau = ReadString(reader, "MatKhau"),
@@ -262,7 +263,7 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = @"INSERT INTO Admin 
+                    var query = @"INSERT INTO User 
                                   (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha) 
                                   VALUES 
                                   (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @HoTen, @NgaySinh, @CCCD, @NgayCap, @NoiCap, @DiaChi, @MaNha)";
@@ -520,14 +521,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM Admin WHERE TenDangNhap = @TenDangNhap";
-                    using (var command = new MySqlCommand(query, connection))
+                    // Kiểm tra cả 2 bảng để trảnh trùng lặp tên đăng nhập
+                    var queryUser = "SELECT COUNT(*) FROM User WHERE TenDangNhap = @TenDangNhap";
+                    var queryAdmin = "SELECT COUNT(*) FROM Admin WHERE TenDangNhap = @TenDangNhap";
+                    
+                    int userCount = 0;
+                    int adminCount = 0;
+
+                    using (var cmd = new MySqlCommand(queryUser, connection))
                     {
-                        command.Parameters.AddWithValue("@TenDangNhap", username);
-                        var result = await command.ExecuteScalarAsync();
-                        var count = result != null ? Convert.ToInt32(result) : 0;
-                        return count > 0;
+                         cmd.Parameters.AddWithValue("@TenDangNhap", username);
+                         userCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                     }
+                    
+                    using (var cmd = new MySqlCommand(queryAdmin, connection))
+                    {
+                         cmd.Parameters.AddWithValue("@TenDangNhap", username);
+                         adminCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                    }
+
+                    return (userCount + adminCount) > 0;
                 }
             }
             catch (Exception ex)
@@ -547,14 +560,26 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = "SELECT COUNT(*) FROM Admin WHERE Email = @Email";
-                    using (var command = new MySqlCommand(query, connection))
+                    // Kiểm tra cả 2 bảng
+                    var queryUser = "SELECT COUNT(*) FROM User WHERE Email = @Email";
+                    var queryAdmin = "SELECT COUNT(*) FROM Admin WHERE Email = @Email";
+
+                    int userCount = 0;
+                    int adminCount = 0;
+
+                    using (var cmd = new MySqlCommand(queryUser, connection))
                     {
-                        command.Parameters.AddWithValue("@Email", email);
-                        var result = await command.ExecuteScalarAsync();
-                        var count = result != null ? Convert.ToInt32(result) : 0;
-                        return count > 0;
+                         cmd.Parameters.AddWithValue("@Email", email);
+                         userCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                     }
+                    
+                    using (var cmd = new MySqlCommand(queryAdmin, connection))
+                    {
+                         cmd.Parameters.AddWithValue("@Email", email);
+                         adminCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                    }
+
+                    return (userCount + adminCount) > 0;
                 }
             }
             catch (Exception ex)
@@ -594,47 +619,38 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// <summary>
         /// Đăng nhập user
         /// </summary>
-        public async Task<User?> LoginAsync(string username, string password)
+        public async Task<User?> LoginAsync(string username, string password, bool isAdmin = false)
         {
             try
             {
                 using (var connection = new MySqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    var query = $"SELECT {UserSelectColumnsWithPassword} FROM Admin WHERE TenDangNhap = @TenDangNhap";
+
+                    string query;
+                    // Nếu là Admin, chỉ tìm trong bảng Admin
+                    if (isAdmin)
+                    {
+                        query = $"SELECT {UserSelectColumnsWithPassword} FROM Admin WHERE TenDangNhap = @TenDangNhap";
+                    }
+                    else
+                    {
+                        // Nếu là User, chỉ tìm trong bảng User
+                        // Note: Replace MaAdmin with MaUser for the query on User table if needed.
+                        query = $"SELECT {UserSelectColumnsWithPassword.Replace("MaAdmin", "MaUser")} FROM User WHERE TenDangNhap = @TenDangNhap";
+                    }
+
                     using (var command = new MySqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@TenDangNhap", username);
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
                             if (await reader.ReadAsync())
                             {
                                 var user = MapUser(reader);
-                                var storedPassword = user.MatKhau;
-                                var maAdmin = user.MaAdmin;
-                                var tenDangNhap = user.TenDangNhap;
-                                
-                                Console.WriteLine($"Debug Login - Username: '{username}', Password: '{password}'");
-                                Console.WriteLine($"Debug Login - Stored Password: '{storedPassword}'");
-                                Console.WriteLine($"Debug Login - MaAdmin: '{maAdmin}'");
-                                Console.WriteLine($"Debug Login - Password length: {password?.Length}, Stored length: {storedPassword?.Length}");
-                                Console.WriteLine($"Debug Login - Password equals: {storedPassword == password}");
-                                
-                                // Kiểm tra mật khẩu plain text trước (cho tài khoản cũ)
-                                if (storedPassword?.Trim() == password?.Trim())
-                                {
-                                    Console.WriteLine("Debug Login - Plain text password match!");
-                                    return user;
-                                }
-                                
-                                // Kiểm tra mật khẩu đã hash (cho tài khoản mới)
-                                if (!string.IsNullOrEmpty(storedPassword) && !string.IsNullOrEmpty(password) && PasswordHelper.VerifyPassword(password, storedPassword))
-                                {
-                                    Console.WriteLine("Debug Login - Hashed password match!");
-                                    return user;
-                                }
-                                
-                                Console.WriteLine("Debug Login - No password match found!");
+                                bool isPasswordValid = PasswordHelper.VerifyPassword(password, user.MatKhau);
+                                return isPasswordValid ? user : null;
                             }
                         }
                     }
@@ -642,7 +658,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error logging in: {ex.Message}");
+                // Log error
+                Console.WriteLine(ex.Message);
             }
             return null;
         }
@@ -712,10 +729,14 @@ namespace QLKDPhongTro.DataLayer.Repositories
         /// <summary>
         /// Phương thức RegisterAsync hiện tại vẫn được giữ nguyên
         /// </summary>
-        public async Task<bool> RegisterAsync(User user)
+        /// <summary>
+        /// Đăng ký user mới (Hỗ trợ phân quyền)
+        /// </summary>
+        public async Task<bool> RegisterAsync(User user, bool isAdmin = false)
         {
             try
             {
+                // Kiểm tra trùng trong cả 2 bảng để đảm bảo duy nhất
                 if (await IsUsernameExistsAsync(user.TenDangNhap) || await IsEmailExistsAsync(user.Email))
                 {
                     return false;
@@ -746,26 +767,38 @@ namespace QLKDPhongTro.DataLayer.Repositories
                                 }
                             }
 
-                            // Tạo Admin gắn với MaNha
-                            var insertAdminQuery = @"INSERT INTO Admin 
-                                                    (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha)
-                                                    VALUES 
-                                                    (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @HoTen, @NgaySinh, @CCCD, @NgayCap, @NoiCap, @DiaChi, @MaNha)";
-                            using (var adminCmd = new MySqlCommand(insertAdminQuery, connection, (MySqlTransaction)transaction))
+                            // Tạo Query dựa trên vai trò
+                            string insertQuery;
+                            if (isAdmin)
                             {
-                                adminCmd.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
-                                adminCmd.Parameters.AddWithValue("@MatKhau", user.MatKhau);
-                                adminCmd.Parameters.AddWithValue("@Email", user.Email ?? string.Empty);
-                                adminCmd.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai ?? string.Empty);
-                                adminCmd.Parameters.AddWithValue("@HoTen", DbNull(user.HoTen));
-                                adminCmd.Parameters.AddWithValue("@NgaySinh", DbNull(user.NgaySinh));
-                                adminCmd.Parameters.AddWithValue("@CCCD", DbNull(user.CCCD));
-                                adminCmd.Parameters.AddWithValue("@NgayCap", DbNull(user.NgayCap));
-                                adminCmd.Parameters.AddWithValue("@NoiCap", DbNull(user.NoiCap));
-                                adminCmd.Parameters.AddWithValue("@DiaChi", DbNull(user.DiaChi));
-                                adminCmd.Parameters.AddWithValue("@MaNha", user.MaNha);
+                                insertQuery = @"INSERT INTO Admin 
+                                                (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha)
+                                                VALUES 
+                                                (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @HoTen, @NgaySinh, @CCCD, @NgayCap, @NoiCap, @DiaChi, @MaNha)";
+                            }
+                            else
+                            {
+                                insertQuery = @"INSERT INTO User 
+                                                (TenDangNhap, MatKhau, Email, SoDienThoai, HoTen, NgaySinh, CCCD, NgayCap, NoiCap, DiaChi, MaNha)
+                                                VALUES 
+                                                (@TenDangNhap, @MatKhau, @Email, @SoDienThoai, @HoTen, @NgaySinh, @CCCD, @NgayCap, @NoiCap, @DiaChi, @MaNha)";
+                            }
 
-                                var rows = await adminCmd.ExecuteNonQueryAsync();
+                            using (var cmd = new MySqlCommand(insertQuery, connection, (MySqlTransaction)transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@TenDangNhap", user.TenDangNhap);
+                                cmd.Parameters.AddWithValue("@MatKhau", user.MatKhau);
+                                cmd.Parameters.AddWithValue("@Email", user.Email ?? string.Empty);
+                                cmd.Parameters.AddWithValue("@SoDienThoai", user.SoDienThoai ?? string.Empty);
+                                cmd.Parameters.AddWithValue("@HoTen", DbNull(user.HoTen));
+                                cmd.Parameters.AddWithValue("@NgaySinh", DbNull(user.NgaySinh));
+                                cmd.Parameters.AddWithValue("@CCCD", DbNull(user.CCCD));
+                                cmd.Parameters.AddWithValue("@NgayCap", DbNull(user.NgayCap));
+                                cmd.Parameters.AddWithValue("@NoiCap", DbNull(user.NoiCap));
+                                cmd.Parameters.AddWithValue("@DiaChi", DbNull(user.DiaChi));
+                                cmd.Parameters.AddWithValue("@MaNha", user.MaNha);
+
+                                var rows = await cmd.ExecuteNonQueryAsync();
                                 if (rows <= 0)
                                 {
                                     await transaction.RollbackAsync();
@@ -789,6 +822,19 @@ namespace QLKDPhongTro.DataLayer.Repositories
                 Console.WriteLine($"Error registering user: {ex.Message}");
                 return false;
             }
+        }
+
+        private bool VerifyPassword(User user, string password)
+        {
+            var storedPassword = user.MatKhau;
+            
+            // Kiểm tra mật khẩu plain text
+            if (storedPassword?.Trim() == password?.Trim()) return true;
+            
+            // Kiểm tra mật khẩu hash
+            if (!string.IsNullOrEmpty(storedPassword) && !string.IsNullOrEmpty(password) && PasswordHelper.VerifyPassword(password, storedPassword)) return true;
+            
+            return false;
         }
     }
 }

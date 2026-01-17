@@ -18,8 +18,8 @@ namespace QLKDPhongTro.DataLayer.Repositories
         Task<bool> IsUsernameExistsAsync(string username);
         Task<bool> IsEmailExistsAsync(string email);
         Task<bool> IsMaNhaExistsAsync(int maNha);
-        Task<User?> LoginAsync(string username, string password);
-        Task<bool> RegisterAsync(User user);
+        Task<User?> LoginAsync(string username, string password, bool isAdmin = false);
+        Task<bool> RegisterAsync(User user, bool isAdmin = false);
         Task<User?> GetByEmailAsync(string email);
     }
 }

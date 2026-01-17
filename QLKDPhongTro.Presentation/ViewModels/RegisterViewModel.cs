@@ -37,6 +37,9 @@ namespace QLKDPhongTro.Presentation.ViewModels
         [ObservableProperty]
         private bool _isLoading = false;
 
+        [ObservableProperty]
+        private bool _isAdmin = false; // Mặc định là User (false)
+
         [RelayCommand]
         public async Task RegisterAsync()
         {
@@ -101,7 +104,7 @@ namespace QLKDPhongTro.Presentation.ViewModels
                     MaNha = maNhaParsed
                 };
 
-                bool accountCreated = await _userRepository.RegisterAsync(newUser);
+                bool accountCreated = await _userRepository.RegisterAsync(newUser, IsAdmin);
                 
                 if (accountCreated)
                 {
