@@ -80,6 +80,8 @@ namespace QLKDPhongTro.Presentation.Views.Components
                     HousingInfoButton.IsChecked = true; break;
                 case UserContractWindow:
                     ContractsButton.IsChecked = true; break;
+                case UserPaymentWindow:
+                    PaymentButton.IsChecked = true; break;
                 case UserProfileWindow:
                     SecurityButton.IsChecked = true; break;
                 // Các case khác sẽ thêm khi có window cụ thể
@@ -138,14 +140,21 @@ namespace QLKDPhongTro.Presentation.Views.Components
         private void Payment_Checked(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
-            // TODO: Navigate to User Payment Window
-             MessageBox.Show("Tính năng Thanh toán đang phát triển");
+            NavigateToWindow<UserPaymentWindow>();
         }
 
         private void Security_Checked(object sender, RoutedEventArgs e)
         {
             if (_isInitializing) return;
             NavigateToWindow<UserProfileWindow>(); // Sử dụng UserProfileWindow vừa tạo
+        }
+
+        // Method to set current window reference for proper initialization
+        public void SetCurrentWindow(Window window)
+        {
+            // This method can be used to pass the current window reference if needed
+            // Currently, we use Window.GetWindow(this) to get the parent window
+            UpdateMenuSelection();
         }
     }
 }

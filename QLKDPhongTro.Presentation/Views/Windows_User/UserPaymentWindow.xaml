@@ -1,4 +1,4 @@
-<Window x:Class="QLKDPhongTro.Presentation.Views.Windows_User.UserContractWindow"
+<Window x:Class="QLKDPhongTro.Presentation.Views.Windows_User.UserPaymentWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,7 +7,7 @@
         xmlns:components="clr-namespace:QLKDPhongTro.Presentation.Views.Components"
         xmlns:converters="clr-namespace:QLKDPhongTro.Presentation.Converters"
         mc:Ignorable="d"
-        Title="Hợp đồng thuê - Quản Lý Phòng Trọ"
+        Title="Thanh toán - Quản Lý Phòng Trọ"
         MinHeight="600"
         MinWidth="800"
         Height="700"
@@ -151,71 +151,10 @@
                 </Trigger>
             </Style.Triggers>
         </Style>
-
-        <!-- Download Button Style -->
-        <Style x:Key="DownloadButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#3B82F6"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#2563EB"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="border" Property="Background" Value="#CBD5E1"/>
-                                <Setter Property="Foreground" Value="#94A3B8"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Icon Download Button Style (for DataGrid) -->
-        <Style x:Key="IconDownloadButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="#3B82F6"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="32"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="border"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#EFF6FF"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#CBD5E1"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Window.DataContext>
-        <vm:UserContractViewModel/>
+        <vm:UserPaymentViewModel/>
     </Window.DataContext>
 
     <Grid>
@@ -241,22 +180,42 @@
             <!-- Loading State -->
             <Grid Grid.Row="1" 
                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ProgressBar IsIndeterminate="True" 
-                             Width="200" 
-                             Height="20"
-                             HorizontalAlignment="Center"
-                             VerticalAlignment="Center"/>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <ProgressBar IsIndeterminate="True" 
+                                Width="200" 
+                                Height="4"
+                                Foreground="#319DFF"/>
+                    <TextBlock Text="Đang tải dữ liệu thanh toán..."
+                              FontSize="14"
+                              Foreground="#64748B"
+                              Margin="0,15,0,0"
+                              HorizontalAlignment="Center"/>
+                </StackPanel>
             </Grid>
 
             <!-- No Data State -->
             <Grid Grid.Row="1" 
                   Visibility="{Binding HasData, Converter={StaticResource BooleanToVisibilityInverseConverter}}">
-                <TextBlock Text="Không tìm thấy hợp đồng cho tài khoản này."
-                           FontSize="16"
-                           Foreground="#666"
-                           HorizontalAlignment="Center"
+                <StackPanel HorizontalAlignment="Center" 
                            VerticalAlignment="Center"
-                           Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityInverseConverter}}"/>
+                           Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityInverseConverter}}">
+                    <Path Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,9V11H13V9H11M11,13V17H13V13H11Z"
+                          Fill="#CBD5E1"
+                          Width="64"
+                          Height="64"
+                          Stretch="Uniform"
+                          HorizontalAlignment="Center"/>
+                    <TextBlock Text="Không tìm thấy thông tin thanh toán"
+                              FontSize="16"
+                              FontWeight="SemiBold"
+                              Foreground="#475569"
+                              Margin="0,20,0,5"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock Text="Tài khoản của bạn chưa có hóa đơn thanh toán nào."
+                              FontSize="14"
+                              Foreground="#94A3B8"
+                              HorizontalAlignment="Center"/>
+                </StackPanel>
             </Grid>
 
             <!-- Content: 2-Panel Layout -->
@@ -268,42 +227,72 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- LEFT PANEL: Contract List -->
+                <!-- LEFT PANEL: Payment List -->
                 <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,10,0">
                     <Grid>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
                         <!-- List Header -->
                         <StackPanel Grid.Row="0">
-                            <TextBlock Text="Danh sách hợp đồng" 
+                            <TextBlock Text="Lịch sử thanh toán" 
                                        FontSize="18" 
                                        FontWeight="Bold" 
                                        Foreground="#1E293B"
                                        Margin="0,0,0,5"/>
-                            <TextBlock Text="Các hợp đồng thuê của bạn"
+                            <TextBlock Text="Danh sách các hóa đơn của bạn"
                                        FontSize="12"
                                        Foreground="#94A3B8"
                                        Margin="0,0,0,15"/>
                         </StackPanel>
 
+                        <!-- Deposit Info Card -->
+                        <Border Grid.Row="1" 
+                                CornerRadius="10"
+                                Padding="15"
+                                Margin="0,0,0,15">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#667EEA" Offset="0"/>
+                                    <GradientStop Color="#764BA2" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <StackPanel>
+                                <TextBlock Text="💰 Tiền cọc" 
+                                          FontSize="12" 
+                                          Foreground="White" 
+                                          Opacity="0.9"
+                                          Margin="0,0,0,8"/>
+                                <TextBlock Text="{Binding TienCocBanDau}" 
+                                          FontSize="20" 
+                                          FontWeight="Bold" 
+                                          Foreground="White"
+                                          Margin="0,0,0,5"/>
+                                <TextBlock Text="Tiền cọc ban đầu" 
+                                          FontSize="11" 
+                                          Foreground="White" 
+                                          Opacity="0.8"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- DataGrid -->
-                        <DataGrid Grid.Row="1"
-                                  ItemsSource="{Binding Contracts}"
-                                  SelectedItem="{Binding SelectedContract, Mode=TwoWay}"
+                        <DataGrid Grid.Row="2"
+                                  ItemsSource="{Binding Payments}"
+                                  SelectedItem="{Binding SelectedPayment, Mode=TwoWay}"
                                   Style="{StaticResource ModernDataGridStyle}"
                                   ColumnHeaderStyle="{StaticResource ModernColumnHeaderStyle}"
                                   RowStyle="{StaticResource ModernRowStyle}"
                                   CellStyle="{StaticResource ModernCellStyle}">
                             <DataGrid.Columns>
-                                <!-- Contract Info Column with Icon -->
-                                <DataGridTemplateColumn Header="Hợp đồng" Width="*">
+                                <!-- Month/Year Column with Icon -->
+                                <DataGridTemplateColumn Header="Tháng" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Vertical">
-                                                <TextBlock Text="{Binding MaHopDongDisplay}" 
+                                                <TextBlock Text="{Binding ThangNam}" 
                                                           FontWeight="SemiBold"
                                                           FontSize="13"
                                                           Foreground="#1E293B"/>
@@ -332,46 +321,48 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-
-                                <!-- Download Button Column -->
-                                <DataGridTemplateColumn Header="" Width="60">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Style="{StaticResource IconDownloadButtonStyle}"
-                                                   Command="{Binding DataContext.DownloadContractCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                   CommandParameter="{Binding}"
-                                                   IsEnabled="{Binding HasFile}"
-                                                   ToolTip="Tải xuống hợp đồng">
-                                                <Path Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
-                                                     Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                                     Width="20"
-                                                     Height="20"
-                                                     Stretch="Uniform"/>
-                                            </Button>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
                 </Border>
 
-                <!-- RIGHT PANEL: Contract Details -->
+                <!-- RIGHT PANEL: Payment Details -->
                 <ScrollViewer Grid.Column="1" 
                               VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <Border Style="{StaticResource CardStyle}">
-                        <StackPanel DataContext="{Binding SelectedContract}">
-                            <!-- Tiêu đề -->
-                            <TextBlock Text="Chi tiết hợp đồng" 
-                                       FontSize="20" 
-                                       FontWeight="Bold" 
-                                       Foreground="#3B4758"
-                                       Margin="0,0,0,25"/>
+                        <StackPanel DataContext="{Binding SelectedPayment}">
+                            <!-- Header -->
+                            <Grid Margin="0,0,0,25">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Chi tiết hóa đơn" 
+                                               FontSize="22" 
+                                               FontWeight="Bold" 
+                                               Foreground="#1E293B"/>
+                                    <TextBlock Text="{Binding MaThanhToanDisplay}" 
+                                               FontSize="14" 
+                                               Foreground="#64748B"
+                                               Margin="0,5,0,0"/>
+                                </StackPanel>
+                                <Border Grid.Column="1"
+                                       Background="{Binding TrangThaiColor}"
+                                       CornerRadius="8"
+                                       Padding="15,8"
+                                       VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding TrangThai}" 
+                                              FontSize="13"
+                                              FontWeight="Bold"
+                                              Foreground="White"/>
+                                </Border>
+                            </Grid>
 
-                            <!-- Section: Thông tin cơ bản -->
-                            <TextBlock Text="Thông tin cơ bản" Style="{StaticResource SectionTitleStyle}"/>
-
+                            <!-- Section: Thông tin thanh toán -->
+                            <TextBlock Text="📋 Thông tin thanh toán" Style="{StaticResource SectionTitleStyle}"/>
+                            
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -380,38 +371,32 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
-                                    <TextBlock Text="Mã hợp đồng" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding MaHopDongDisplay, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" FontWeight="Bold"/>
+                                    <TextBlock Text="Tháng/Năm" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding ThangNam, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,15">
-                                    <TextBlock Text="Trạng thái" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding TrangThai, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="{Binding TrangThaiColor}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Ngày thanh toán" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding NgayThanhToan, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,15">
-                                    <TextBlock Text="Tên phòng" Style="{StaticResource LabelStyle}"/>
+                                    <TextBlock Text="Phòng" Style="{StaticResource LabelStyle}"/>
                                     <TextBox Text="{Binding TenPhong, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,15">
-                                    <TextBlock Text="Tên người thuê" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding TenNguoiThue, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.ColumnSpan="2">
-                                    <TextBlock Text="Ghi chú" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding GhiChu, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" TextWrapping="Wrap" Height="60"/>
+                                    <TextBlock Text="Người thuê" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TenKhachHang, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Section: Thời hạn hợp đồng -->
-                            <TextBlock Text="Thời hạn hợp đồng" Style="{StaticResource SectionTitleStyle}"/>
-
+                            <!-- Section: Chi tiết chi phí -->
+                            <TextBlock Text="💵 Chi tiết chi phí" Style="{StaticResource SectionTitleStyle}"/>
+                            
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -420,27 +405,49 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
-                                    <TextBlock Text="Ngày bắt đầu" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding NgayBatDau, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                    <TextBlock Text="Tiền thuê" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienThue, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#0EA5E9" FontWeight="SemiBold"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,15">
-                                    <TextBlock Text="Ngày kết thúc" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding NgayKetThuc, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                    <TextBlock Text="Tiền điện" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienDien, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#F59E0B" FontWeight="SemiBold"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
-                                    <TextBlock Text="Số ngày còn lại" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding SoNgayConLai, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#1976D2" FontWeight="SemiBold"/>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,15">
+                                    <TextBlock Text="Tiền nước" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienNuoc, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#06B6D4" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,15">
+                                    <TextBlock Text="Tiền Internet" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienInternet, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,15,15">
+                                    <TextBlock Text="Tiền vệ sinh" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienVeSinh, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,15">
+                                    <TextBlock Text="Tiền giữ xe" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding TienGiuXe, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
+                                    <TextBlock Text="Chi phí khác" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding ChiPhiKhac, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
                             </Grid>
 
-                            <!-- Section: Thông tin tài chính -->
-                            <TextBlock Text="Thông tin tài chính" Style="{StaticResource SectionTitleStyle}"/>
-
+                            <!-- Section: Điện nước chi tiết -->
+                            <TextBlock Text="⚡ Thông tin điện nước" Style="{StaticResource SectionTitleStyle}"/>
+                            
                             <Grid Margin="0,10,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -449,42 +456,84 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
-                                    <TextBlock Text="Tiền cọc" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding TienCoc, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#F57C00" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Chỉ số điện cũ" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding ChiSoDienCu, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,15">
-                                    <TextBlock Text="Giá thuê/tháng" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding GiaThue, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#C62828" FontWeight="SemiBold"/>
+                                    <TextBlock Text="Chỉ số điện mới" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding ChiSoDienMoi, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
 
-                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
-                                    <!-- Removed TextBlock and TextBox -->
-                                        
-                                    <Button Style="{StaticResource DownloadButtonStyle}"
-                                           Command="{Binding DataContext.DownloadContractCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                           CommandParameter="{Binding}"
-                                           Height="48"
-                                           HorizontalAlignment="Center"
-                                           MinWidth="220">
-                                        <StackPanel Orientation="Horizontal">
-                                            <Path Data="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"
-                                                 Fill="White"
-                                                 Width="18"
-                                                 Height="18"
-                                                 Stretch="Uniform"
-                                                 Margin="0,0,10,0"/>
-                                            <TextBlock Text="Tải xuống hợp đồng" 
-                                                      FontSize="14"
-                                                      FontWeight="SemiBold"
-                                                      VerticalAlignment="Center"/>
-                                        </StackPanel>
-                                    </Button>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,15,15">
+                                    <TextBlock Text="Số điện tiêu thụ (kWh)" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding SoDien, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,15">
+                                    <TextBlock Text="Đơn giá điện" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding DonGiaDien, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,15,15">
+                                    <TextBlock Text="Số nước tiêu thụ (m³)" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding SoNuoc, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" FontWeight="SemiBold"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,15">
+                                    <TextBlock Text="Đơn giá nước" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding DonGiaNuoc, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42"/>
                                 </StackPanel>
                             </Grid>
+
+                            <!-- Section: Tổng kết -->
+                            <TextBlock Text="💰 Tổng kết thanh toán" Style="{StaticResource SectionTitleStyle}"/>
+                            
+                            <Border Background="#F8FAFC" 
+                                   CornerRadius="10" 
+                                   Padding="20"
+                                   Margin="0,10,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,15,15">
+                                        <TextBlock Text="Tổng tiền" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding TongTien, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#DC2626" FontWeight="Bold" FontSize="15"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,15">
+                                        <TextBlock Text="Đã thanh toán" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding SoTienDaTra, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#16A34A" FontWeight="SemiBold"/>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
+                                        <TextBlock Text="Còn lại" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding SoTienConLai, Mode=OneWay}" Style="{StaticResource InputTextBoxStyle}" IsReadOnly="True" Height="42" Foreground="#EA580C" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <!-- Section: Ghi chú -->
+                            <TextBlock Text="📝 Ghi chú" Style="{StaticResource SectionTitleStyle}"/>
+                            <TextBox Text="{Binding GhiChu, Mode=OneWay}" 
+                                    Style="{StaticResource InputTextBoxStyle}" 
+                                    IsReadOnly="True" 
+                                    TextWrapping="Wrap" 
+                                    Height="80"
+                                    VerticalContentAlignment="Top"
+                                    Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
                 </ScrollViewer>

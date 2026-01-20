@@ -20,6 +20,8 @@ namespace QLKDPhongTro.Presentation.Models
         public string SoNgayConLai { get; set; } = string.Empty;
         public string GhiChu { get; set; } = string.Empty;
         public string FileHopDong { get; set; } = string.Empty;
+        public string FileHopDongPath { get; set; } = string.Empty; // Full path to the contract file
+        public bool HasFile { get; set; } = false; // Indicates if contract has a file
         public bool IsActive { get; set; } = false;
         
         // Raw values for calculations
